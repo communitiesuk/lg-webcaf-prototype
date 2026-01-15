@@ -1,0 +1,23 @@
+cat > .gitignore <<'EOF'
+# Node.js ignores
+node_modules/
+
+# Prototype ignores - per-user
+.tmp/
+.env
+.env.*
+!.env.example
+migrate.log
+usage-data-config.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# General ignores
+.DS_Store
+.idea/
+.vscode/
+EOF
