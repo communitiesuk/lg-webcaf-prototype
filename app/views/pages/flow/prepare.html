@@ -1,0 +1,59 @@
+{# app/views/pages/flow/prepare.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/1">Back</a>
+
+  {% if gatedNotice %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+          {{ gatedNotice.title }}
+        </h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">{{ gatedNotice.text }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.flow.prepare.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.prepare.intro }}</p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/stages/1">{{ labels.flow.prepare.contextLink }}</a>
+  </p>
+
+  <h2 class="govuk-heading-m">{{ labels.flow.prepare.checklistHeading }}</h2>
+
+  <form method="post" action="/prepare">
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.flow.prepare.checklistLegend }}
+        </legend>
+        <div class="govuk-checkboxes">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="prep-guidance" name="prepChecklist" type="checkbox" value="guidance" {% if defaults.guidanceRead %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="prep-guidance">
+              {{ labels.flow.prepare.checklist.guidance }}
+            </label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="prep-contributors" name="prepChecklist" type="checkbox" value="contributors" {% if defaults.contributorsConfirmed %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="prep-contributors">
+              {{ labels.flow.prepare.checklist.contributors }}
+            </label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="prep-caf" name="prepChecklist" type="checkbox" value="caf" {% if defaults.cafReviewed %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="prep-caf">
+              {{ labels.flow.prepare.checklist.caf }}
+            </label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.continue }}</button>
+  </form>
+{% endblock %}

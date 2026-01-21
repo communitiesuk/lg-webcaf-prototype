@@ -1,0 +1,330 @@
+{# app/views/pages/mhclg/engagement.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block content %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Council overview", href: "/mhclg/dashboard" },
+      { text: "Engagement queue" }
+    ]
+  }) }}
+
+  <h1 class="govuk-heading-l">Engagement queue</h1>
+  <p class="govuk-body">Track check-ins, council requests, and assurance blockers across councils.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Update saved</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">Engagement update added.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Check-ins and requests</h2>
+  {% if engagement.queue.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Status</th>
+          <th class="govuk-table__header" scope="col">Blockers</th>
+          <th class="govuk-table__header" scope="col">Last check-in</th>
+          <th class="govuk-table__header" scope="col">Next check-in</th>
+          <th class="govuk-table__header" scope="col">Source</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in engagement.queue %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ item.councilName }}</td>
+            <td class="govuk-table__cell">
+              {% if item.status == "Overdue" %}
+                <strong class="govuk-tag govuk-tag--red">Overdue</strong>
+              {% elif item.status == "Blocked" %}
+                <strong class="govuk-tag govuk-tag--red">Blocked</strong>
+              {% elif item.status == "Requested" %}
+                <strong class="govuk-tag govuk-tag--blue">Requested</strong>
+              {% elif item.status == "Due this week" %}
+                <strong class="govuk-tag govuk-tag--yellow">Due this week</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">{{ item.status }}</strong>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">{{ item.blockers }}</td>
+            <td class="govuk-table__cell">{{ item.lastCheckInDisplay or "—" }}</td>
+            <td class="govuk-table__cell">{{ item.nextCheckInDisplay or "—" }}</td>
+            <td class="govuk-table__cell">{{ item.source }}</td>
+          </tr>
+          {% if item.notes %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell" colspan="6">
+                <span class="govuk-hint">Notes: {{ item.notes }}</span>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No engagement activity logged yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Council requests</h2>
+  {% if engagement.requests.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Reason</th>
+          <th class="govuk-table__header" scope="col">Urgency</th>
+          <th class="govuk-table__header" scope="col">Preferred week</th>
+          <th class="govuk-table__header" scope="col">Requested</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for request in engagement.requests %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ request.councilName }}</td>
+            <td class="govuk-table__cell">{{ request.reason }}</td>
+            <td class="govuk-table__cell">{{ request.urgency }}</td>
+            <td class="govuk-table__cell">{{ request.preferredWeek }}</td>
+            <td class="govuk-table__cell">{{ request.requestedAt }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No council check-in requests logged yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Assurer blocker log</h2>
+  {% if engagement.blockers.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Category</th>
+          <th class="govuk-table__header" scope="col">Detail</th>
+          <th class="govuk-table__header" scope="col">Needs MHCLG</th>
+          <th class="govuk-table__header" scope="col">Raised</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for blocker in engagement.blockers %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ blocker.councilName }}</td>
+            <td class="govuk-table__cell">{{ blocker.category }}</td>
+            <td class="govuk-table__cell">{{ blocker.detail }}</td>
+            <td class="govuk-table__cell">
+              {% if blocker.needsMhclgHelp %}
+                <strong class="govuk-tag govuk-tag--red">Yes</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">No</strong>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">{{ blocker.raisedAt }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No assurer blockers logged yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Add engagement update</h2>
+  <form method="post" action="/mhclg/engagement">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementCouncil') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="engagementCouncil">Council</label>
+      {% if error and (error.items | selectattr('field','equalto','engagementCouncil') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','engagementCouncil') | list | first).text }}
+        </p>
+      {% endif %}
+      <select class="govuk-select" id="engagementCouncil" name="engagementCouncil">
+        <option value="">Select a council</option>
+        {% for council in councils %}
+          <option value="{{ council.name }}" {% if data.engagementCouncil == council.name %}selected{% endif %}>
+            {{ council.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementLastContact') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="engagementLastContact">Last contact date</label>
+      {% if error and (error.items | selectattr('field','equalto','engagementLastContact') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','engagementLastContact') | list | first).text }}
+        </p>
+      {% endif %}
+      <input class="govuk-input govuk-!-width-one-half" id="engagementLastContact" name="engagementLastContact" type="date" value="{{ data.engagementLastContact }}">
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementStage') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="engagementStage">Current stage</label>
+      {% if error and (error.items | selectattr('field','equalto','engagementStage') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','engagementStage') | list | first).text }}
+        </p>
+      {% endif %}
+      <select class="govuk-select" id="engagementStage" name="engagementStage">
+        <option value="">Select a stage</option>
+        {% for stageName in stages %}
+          <option value="{{ stageName }}" {% if data.engagementStage == stageName %}selected{% endif %}>{{ stageName }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementBlocker') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="engagementBlocker">Key blocker</label>
+      {% if error and (error.items | selectattr('field','equalto','engagementBlocker') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','engagementBlocker') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="engagementBlocker" name="engagementBlocker" rows="3">{{ data.engagementBlocker }}</textarea>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementNextAction') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="engagementNextAction">Next action</label>
+      {% if error and (error.items | selectattr('field','equalto','engagementNextAction') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','engagementNextAction') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="engagementNextAction" name="engagementNextAction" rows="3">{{ data.engagementNextAction }}</textarea>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementOwner') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend">Next action owner</legend>
+        {% if error and (error.items | selectattr('field','equalto','engagementOwner') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','engagementOwner') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="engagementOwner-council" name="engagementOwner" type="radio" value="Council" {% if data.engagementOwner == "Council" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="engagementOwner-council">Council</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="engagementOwner-mhclg" name="engagementOwner" type="radio" value="MHCLG" {% if data.engagementOwner == "MHCLG" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="engagementOwner-mhclg">MHCLG</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save update</button>
+  </form>
+
+  <h2 class="govuk-heading-m">Engagement insights</h2>
+  {% if engagement.insights.length %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for insight in engagement.insights %}
+        <li>
+          <strong>{{ insight.summary }}</strong><br>
+          <span class="govuk-hint">{{ insight.source }} · {{ insight.date }} · {{ insight.councils | join(", ") }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">No insights captured yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Engagement manager updates</h2>
+  <p class="govuk-body">Structured updates to keep contact history and next actions consistent.</p>
+  {% if engagement.updates.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Last contact</th>
+          <th class="govuk-table__header" scope="col">Current stage</th>
+          <th class="govuk-table__header" scope="col">Key blocker</th>
+          <th class="govuk-table__header" scope="col">Next action</th>
+          <th class="govuk-table__header" scope="col">Owner</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for update in engagement.updates %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ update.councilName }}</td>
+            <td class="govuk-table__cell">{{ update.lastContact }}</td>
+            <td class="govuk-table__cell">{{ update.currentStage }}</td>
+            <td class="govuk-table__cell">{{ update.keyBlocker }}</td>
+            <td class="govuk-table__cell">{{ update.nextAction }}</td>
+            <td class="govuk-table__cell">
+              {% if update.owner == "MHCLG" %}
+                <strong class="govuk-tag govuk-tag--blue">MHCLG</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">Council</strong>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No engagement updates logged yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Guidance given (informal)</h2>
+  {% if engagement.guidance.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Guidance note</th>
+          <th class="govuk-table__header" scope="col">Source</th>
+          <th class="govuk-table__header" scope="col">Date</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in engagement.guidance %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ item.councilName }}</td>
+            <td class="govuk-table__cell">
+              <strong class="govuk-tag govuk-tag--grey">Informal guidance</strong>
+              <div class="govuk-!-margin-top-1">{{ item.note }}</div>
+            </td>
+            <td class="govuk-table__cell">{{ item.source }}</td>
+            <td class="govuk-table__cell">{{ item.date }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No guidance notes logged yet.</p>
+  {% endif %}
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/mhclg/dashboard">Back to dashboard</a>
+  </div>
+{% endblock %}

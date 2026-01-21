@@ -1,0 +1,77 @@
+{# app/views/pages/assessments/pick-outcome.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/dashboard">Back to dashboard</a>
+
+  <h1 class="govuk-heading-l">{{ labels.outcome.pickTitle }}</h1>
+  <p class="govuk-body">{{ labels.outcome.pickIntro }}</p>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-half">
+      <div class="govuk-inset-text">
+        <h2 class="govuk-heading-m">{{ labels.outcome.pickSimpleTitle }}</h2>
+        {% if simple %}
+          <p class="govuk-body govuk-!-margin-bottom-1">
+            <strong>{{ simple.outcomeCode }}</strong> {{ simple.title }}
+          </p>
+          {% if simple.statusMeta %}
+            <p class="govuk-body govuk-!-margin-bottom-2">
+              <strong class="govuk-tag {{ simple.statusMeta.tagClass }}">{{ simple.statusMeta.label }}</strong>
+            </p>
+          {% endif %}
+          <dl class="govuk-summary-list govuk-!-margin-bottom-2">
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Owner</dt>
+              <dd class="govuk-summary-list__value">{{ simple.ownerName or "Not set" }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Collaborators</dt>
+              <dd class="govuk-summary-list__value">{{ simple.collaboratorCount }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Evidence refs</dt>
+              <dd class="govuk-summary-list__value">{{ simple.evidenceCount }}</dd>
+            </div>
+          </dl>
+          <a class="govuk-button" href="/assessments/current/outcomes/{{ simple.outcomeId }}">Test simple outcome</a>
+        {% else %}
+          <p class="govuk-body">Simple outcome not available.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="govuk-grid-column-one-half">
+      <div class="govuk-inset-text">
+        <h2 class="govuk-heading-m">{{ labels.outcome.pickHardTitle }}</h2>
+        {% if hard %}
+          <p class="govuk-body govuk-!-margin-bottom-1">
+            <strong>{{ hard.outcomeCode }}</strong> {{ hard.title }}
+          </p>
+          {% if hard.statusMeta %}
+            <p class="govuk-body govuk-!-margin-bottom-2">
+              <strong class="govuk-tag {{ hard.statusMeta.tagClass }}">{{ hard.statusMeta.label }}</strong>
+            </p>
+          {% endif %}
+          <dl class="govuk-summary-list govuk-!-margin-bottom-2">
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Owner</dt>
+              <dd class="govuk-summary-list__value">{{ hard.ownerName or "Not set" }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Collaborators</dt>
+              <dd class="govuk-summary-list__value">{{ hard.collaboratorCount }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Blocker set</dt>
+              <dd class="govuk-summary-list__value">{% if hard.blocker %}Yes{% else %}No{% endif %}</dd>
+            </div>
+          </dl>
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/outcomes/{{ hard.outcomeId }}">Test hard outcome</a>
+        {% else %}
+          <p class="govuk-body">Hard outcome not available.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

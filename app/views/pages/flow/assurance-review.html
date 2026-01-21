@@ -1,0 +1,48 @@
+{# app/views/pages/flow/assurance-review.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/evidence-library">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.assurance.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.assurance.intro }}</p>
+
+  <form method="post" action="/assurance-review">
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.flow.assurance.statusLabel }}
+        </legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          {% for option in labels.flow.assurance.statusOptions %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="assuranceStatus-{{ option.value }}" name="assuranceStatus" type="radio" value="{{ option.value }}" {% if assurance.status == option.value %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="assuranceStatus-{{ option.value }}">{{ option.text }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="assuranceFeedback">{{ labels.flow.assurance.feedbackLabel }}</label>
+      <textarea class="govuk-textarea" id="assuranceFeedback" name="assuranceFeedback" rows="5">{{ assurance.feedback }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="assuranceReviewedAt">{{ labels.flow.assurance.reviewedAt }}</label>
+      <input class="govuk-input" id="assuranceReviewedAt" name="assuranceReviewedAt" type="date" value="{{ assurance.reviewedAt }}">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.continue }}</button>
+  </form>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button" data-module="govuk-button" href="/improvement-plan">Continue to Stage 6: Improvement plan</a>
+    <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+
+  <p class="govuk-body govuk-!-margin-top-6">
+    <a class="govuk-link" href="/assurer/queue">{{ labels.assurer.queue.linkText }}</a>
+  </p>
+{% endblock %}

@@ -1,0 +1,48 @@
+{# app/views/pages/flow/self-assess-bc-system.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/self-assess/bc/select-system">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.systemHeading }}</h1>
+  <p class="govuk-body"><strong>{{ system.name }}</strong></p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/stages/2/scope/systems/add?returnTo=/self-assess/bc/select-system">
+      {{ labels.flow.selfAssessBC.addSystemLink }}
+    </a>
+  </p>
+
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Outcome</th>
+        <th class="govuk-table__header" scope="col">Title</th>
+        <th class="govuk-table__header" scope="col">Judgement</th>
+        <th class="govuk-table__header" scope="col">Evidence refs</th>
+        <th class="govuk-table__header" scope="col"></th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for row in rows %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ row.code }}</td>
+          <td class="govuk-table__cell">
+            {{ row.title }}
+            {% if row.description %}
+              <div class="govuk-hint govuk-!-margin-top-1">{{ row.description }}</div>
+            {% endif %}
+          </td>
+          <td class="govuk-table__cell">{{ row.judgement or "Not started" }}</td>
+          <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+          <td class="govuk-table__cell">
+            <a class="govuk-link" href="/self-assess/bc/{{ system.id }}/outcomes/{{ row.id }}">View</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+{% endblock %}

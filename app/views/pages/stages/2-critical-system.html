@@ -1,0 +1,48 @@
+{# app/views/pages/stages/2-critical-system.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-inset-text">
+    This page has been replaced by the scope pack. <a class="govuk-link" href="/stages/2/scope">Go to scope pack</a>.
+  </div>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#criticalSystemName">{{ error }}</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.stages.stage2.criticalSystemHeading }}</h1>
+
+  <form method="post" action="/stages/2-prepare-scope/critical-system">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="criticalSystemName">Critical system name</label>
+      {% if error %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span> {{ error }}
+        </p>
+      {% endif %}
+      <input class="govuk-input" id="criticalSystemName" name="criticalSystemName" type="text" value="{{ data.criticalSystemName or '' }}">
+      <div class="govuk-hint">
+        Keep it simple in alpha. You can add more detail later.
+      </div>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="architectureRef">Architecture reference (optional)</label>
+      <input class="govuk-input" id="architectureRef" name="architectureRef" type="text" value="{{ data.architectureRef or '' }}">
+      <div class="govuk-hint">
+        Link or reference ID only. Do not paste sensitive content into the prototype.
+      </div>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue to dashboard</button>
+  </form>
+{% endblock %}

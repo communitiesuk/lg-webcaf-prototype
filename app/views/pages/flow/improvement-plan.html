@@ -1,0 +1,60 @@
+{# app/views/pages/flow/improvement-plan.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.intro }}</p>
+
+  {% if actions.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Action</th>
+          <th class="govuk-table__header" scope="col">Owner</th>
+          <th class="govuk-table__header" scope="col">Due date</th>
+          <th class="govuk-table__header" scope="col">Expected evidence</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for action in actions %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ action.actionText }}</td>
+            <td class="govuk-table__cell">{{ action.owner }}</td>
+            <td class="govuk-table__cell">{{ action.dueDate }}</td>
+            <td class="govuk-table__cell">{{ action.expectedEvidence }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No actions added yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.flow.improvement.addHeading }}</h2>
+
+  <form method="post" action="/improvement-plan">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="actionText">Action</label>
+      <textarea class="govuk-textarea" id="actionText" name="actionText" rows="3"></textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="actionOwner">Owner</label>
+      <input class="govuk-input" id="actionOwner" name="actionOwner" type="text">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="actionDueDate">Due date</label>
+      <input class="govuk-input" id="actionDueDate" name="actionDueDate" type="date">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="actionEvidence">Expected evidence of change</label>
+      <textarea class="govuk-textarea" id="actionEvidence" name="actionEvidence" rows="3"></textarea>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.addAction }}</button>
+  </form>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button" data-module="govuk-button" href="/submit-progress">Continue to Stage 7: Submit progress</a>
+    <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+{% endblock %}

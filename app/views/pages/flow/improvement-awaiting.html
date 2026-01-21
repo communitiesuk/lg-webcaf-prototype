@@ -1,0 +1,14 @@
+{# app/views/pages/flow/improvement-awaiting.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.awaiting.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.awaiting.intro }}</p>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/dashboard">
+      {{ labels.flow.improvement.awaiting.linkText }}
+    </a>
+    <a class="govuk-link" href="/research-start">Change role</a>
+  </div>
+{% endblock %}

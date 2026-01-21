@@ -1,0 +1,45 @@
+{# app/views/pages/stages/scope-services-review.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.services.reviewTitle }}</h1>
+
+  {% if services.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Service</th>
+          <th class="govuk-table__header" scope="col">Owner</th>
+          <th class="govuk-table__header" scope="col">In scope</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for service in services %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <strong>{{ service.name }}</strong>
+              {% if service.description %}
+                <div class="govuk-hint govuk-!-margin-top-1">{{ service.description }}</div>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">{{ service.owner or "—" }}</td>
+            <td class="govuk-table__cell">{% if service.inScope %}Yes{% else %}No{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No essential services added yet.</p>
+  {% endif %}
+
+  <div class="govuk-button-group">
+    <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">
+      Add another service
+    </a>
+    <a class="govuk-button" href="/stages/2/scope/services/confirm">
+      {{ labels.stages.scope.services.continueButton }}
+    </a>
+  </div>
+{% endblock %}

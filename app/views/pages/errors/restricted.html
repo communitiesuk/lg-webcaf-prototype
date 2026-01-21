@@ -1,0 +1,10 @@
+{# app/views/pages/errors/restricted.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Access restricted</h1>
+  <p class="govuk-body">This area is not available for your current role.</p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/research-start">Change role</a>
+  </p>
+{% endblock %}

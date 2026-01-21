@@ -1,0 +1,92 @@
+{# app/views/pages/stages/1-understand-caf.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ labels.stages.stage1.heading }}</h1>
+
+      <p class="govuk-body govuk-!-font-size-19">{{ labels.stages.stage1.intro }}</p>
+      <p class="govuk-body">{{ labels.stages.stage1.programmeGoal }}</p>
+
+      <div class="govuk-inset-text">
+        {{ labels.stages.stage1.prototypeNote }}
+      </div>
+
+      <h2 class="govuk-heading-m">CAF structure</h2>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.structure.objectives.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.structure.objectives.text }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.structure.principles.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.structure.principles.text }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.structure.outcomes.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.structure.outcomes.text }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.structure.igps.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.structure.igps.text }}</dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m">Two assessment lenses</h2>
+      <div class="govuk-grid-row govuk-!-margin-bottom-4">
+        <div class="govuk-grid-column-one-half">
+          <div class="govuk-inset-text">
+            <h3 class="govuk-heading-s">{{ labels.stages.stage1.lens.ad.title }}</h3>
+            <p class="govuk-body">{{ labels.stages.stage1.lens.ad.text }}</p>
+          </div>
+        </div>
+        <div class="govuk-grid-column-one-half">
+          <div class="govuk-inset-text">
+            <h3 class="govuk-heading-s">{{ labels.stages.stage1.lens.bc.title }}</h3>
+            <p class="govuk-body">{{ labels.stages.stage1.lens.bc.text }}</p>
+          </div>
+        </div>
+      </div>
+
+      <details class="govuk-details" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">{{ labels.stages.stage1.profileDetails.heading }}</span>
+        </summary>
+        <div class="govuk-details__text">
+          <p class="govuk-body">{{ labels.stages.stage1.profileDetails.text }}</p>
+        </div>
+      </details>
+
+      <details class="govuk-details" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">{{ labels.stages.stage1.evidenceDetails.heading }}</span>
+        </summary>
+        <div class="govuk-details__text">
+          <p class="govuk-body">{{ labels.stages.stage1.evidenceDetails.text }}</p>
+        </div>
+      </details>
+
+      <form method="post" action="/stages/1">
+        <button class="govuk-button" data-module="govuk-button" type="submit">
+          {{ labels.stages.stage1.continue }}
+        </button>
+      </form>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="govuk-inset-text">
+        <h2 class="govuk-heading-m govuk-!-margin-top-0">At a glance</h2>
+        <h3 class="govuk-heading-s">{{ labels.stages.stage1.whoHeading }}</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for item in labels.stages.stage1.whoList %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <p class="govuk-body">
+          <strong>{{ labels.stages.stage1.timeHeading }}</strong> {{ labels.stages.stage1.timeText }}
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{# app/views/pages/stages/scope-systems-review.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.reviewTitle }}</h1>
+
+  {% if systems.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">System</th>
+          <th class="govuk-table__header" scope="col">Type</th>
+          <th class="govuk-table__header" scope="col">Owner/supplier</th>
+          <th class="govuk-table__header" scope="col">Diagram refs</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for system in systems %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <strong>{{ system.name }}</strong>
+              {% if system.boundaryNotes %}
+                <div class="govuk-hint govuk-!-margin-top-1">{{ system.boundaryNotes }}</div>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">{{ system.systemType or "—" }}</td>
+            <td class="govuk-table__cell">{{ system.ownerSupplier or "—" }}</td>
+            <td class="govuk-table__cell">
+              {% if system.diagramRefs and system.diagramRefs.length > 0 %}
+                {{ system.diagramRefs | join(", ") }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No critical systems added yet.</p>
+  {% endif %}
+
+  <div class="govuk-button-group">
+    <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/add">
+      Add another system
+    </a>
+    {% if systems.length > 0 %}
+      <a class="govuk-button" href="{{ nextMappingUrl }}">
+        {{ labels.stages.scope.systems.continueButton }}
+      </a>
+    {% endif %}
+  </div>
+{% endblock %}

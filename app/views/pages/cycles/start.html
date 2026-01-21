@@ -1,0 +1,141 @@
+{# app/views/pages/cycles/start.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/dashboard{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
+    {{ labels.cycles.start.cancel }}
+  </a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.cycles.start.heading }}</h1>
+  <p class="govuk-body">{{ labels.cycles.start.intro }}</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">
+      <strong>Current cycle:</strong> {{ assessment.cycle.name }} ({{ cycleStartedAt }})
+    </p>
+  </div>
+
+  <form method="post" action="/assessments/current/cycle/start{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="cycleName">{{ labels.cycles.fields.cycleName }}</label>
+      <div class="govuk-hint">{{ labels.cycles.hints.cycleName }}</div>
+      <input class="govuk-input" id="cycleName" name="cycleName" type="text" value="{{ defaults.cycleName }}">
+    </div>
+
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Carry forward</legend>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset" aria-describedby="carryOwners-hint">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s" id="carryOwners">{{ labels.cycles.fields.carryOwners }}</legend>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="carryOwners-yes" name="carryOwners" type="radio" value="yes" {% if defaults.carryOwners == "yes" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="carryOwners-yes">Yes</label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="carryOwners-no" name="carryOwners" type="radio" value="no" {% if defaults.carryOwners == "no" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="carryOwners-no">No</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s" id="carryCollaborators">{{ labels.cycles.fields.carryCollaborators }}</legend>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="carryCollaborators-yes" name="carryCollaborators" type="radio" value="yes" {% if defaults.carryCollaborators == "yes" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="carryCollaborators-yes">Yes</label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="carryCollaborators-no" name="carryCollaborators" type="radio" value="no" {% if defaults.carryCollaborators == "no" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="carryCollaborators-no">No</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </fieldset>
+
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Reset</legend>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s" id="resetStatuses">{{ labels.cycles.fields.resetStatuses }}</legend>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="resetStatuses-yes" name="resetStatuses" type="radio" value="yes" {% if defaults.resetStatuses == "yes" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="resetStatuses-yes">Yes</label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="resetStatuses-no" name="resetStatuses" type="radio" value="no" {% if defaults.resetStatuses == "no" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="resetStatuses-no">No</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s" id="clearDueDates">{{ labels.cycles.fields.clearDueDates }}</legend>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="clearDueDates-yes" name="clearDueDates" type="radio" value="yes" {% if defaults.clearDueDates == "yes" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="clearDueDates-yes">Yes</label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="clearDueDates-no" name="clearDueDates" type="radio" value="no" {% if defaults.clearDueDates == "no" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="clearDueDates-no">No</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </fieldset>
+
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Evidence references</legend>
+
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s" id="keepEvidence">{{ labels.cycles.fields.keepEvidence }}</legend>
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="keepEvidence-yes" name="keepEvidence" type="radio" value="yes" {% if defaults.keepEvidence == "yes" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="keepEvidence-yes">Yes</label>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="keepEvidence-no" name="keepEvidence" type="radio" value="no" {% if defaults.keepEvidence == "no" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="keepEvidence-no">No</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </fieldset>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">
+        {{ labels.cycles.start.continue }}
+      </button>
+      <a class="govuk-link" href="/assessments/current/dashboard{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
+        {{ labels.cycles.start.cancel }}
+      </a>
+    </div>
+  </form>
+{% endblock %}

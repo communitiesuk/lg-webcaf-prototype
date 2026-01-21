@@ -1,0 +1,139 @@
+{# app/views/pages/flow/submit-progress.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/review">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.submit.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.submit.intro }}</p>
+  <div class="govuk-inset-text">Prototype only: no submission is sent from this service.</div>
+
+  {% if saved %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Submission saved</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">Submission details have been recorded.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if readiness and not readiness.canSubmit %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-readiness" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-readiness">Submission checks</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">Complete these before submitting:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for reason in readiness.reasons %}
+            <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/submit-progress">
+    <h2 class="govuk-heading-m">{{ labels.flow.submit.recordHeading }}</h2>
+    <p class="govuk-body">{{ labels.flow.submit.recordIntro }}</p>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="informedAt">{{ labels.flow.submit.informedAt }}</label>
+      <input class="govuk-input" id="informedAt" name="informedAt" type="date" value="{{ submission.informedAt }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.flow.submit.methodLabel }}
+        </legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          {% for option in labels.flow.submit.methodOptions %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="submissionMethod-{{ option.value }}" name="submissionMethod" type="radio" value="{{ option.value }}" {% if submission.method == option.value %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="submissionMethod-{{ option.value }}">{{ option.text }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="submittedBy">{{ labels.flow.submit.submittedBy }}</label>
+      <input class="govuk-input" id="submittedBy" name="submittedBy" type="text" value="{{ submission.submittedBy }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="submittedAt">{{ labels.flow.submit.submittedAt }}</label>
+      <input class="govuk-input" id="submittedAt" name="submittedAt" type="date" value="{{ submission.submittedAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="submissionReference">{{ labels.flow.submit.reference }}</label>
+      <input class="govuk-input" id="submissionReference" name="submissionReference" type="text" value="{{ submission.reference }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="acknowledgedAt">{{ labels.flow.submit.acknowledgedAt }}</label>
+      <input class="govuk-input" id="acknowledgedAt" name="acknowledgedAt" type="date" value="{{ submission.acknowledgedAt }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="acknowledgedReference">{{ labels.flow.submit.acknowledgedReference }}</label>
+      <input class="govuk-input" id="acknowledgedReference" name="acknowledgedReference" type="text" value="{{ submission.acknowledgedReference }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="storedAt">{{ labels.flow.submit.storedAt }}</label>
+      <input class="govuk-input" id="storedAt" name="storedAt" type="date" value="{{ submission.storedAt }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="storageLocation">{{ labels.flow.submit.storageLocation }}</label>
+      <input class="govuk-input" id="storageLocation" name="storageLocation" type="text" value="{{ submission.storageLocation }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="reviewedAt">{{ labels.flow.submit.reviewedAt }}</label>
+      <input class="govuk-input" id="reviewedAt" name="reviewedAt" type="date" value="{{ submission.reviewedAt }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="reviewNotes">{{ labels.flow.submit.reviewNotes }}</label>
+      <textarea class="govuk-textarea" id="reviewNotes" name="reviewNotes" rows="3">{{ submission.reviewNotes }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="submissionNotes">{{ labels.flow.submit.notes }}</label>
+      <textarea class="govuk-textarea" id="submissionNotes" name="submissionNotes" rows="4">{{ submission.notes }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.flow.submit.assurerLabel }}
+        </legend>
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerSubmitted-yes" name="assurerSubmitted" type="radio" value="yes" {% if submission.assurerSubmitted %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerSubmitted-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerSubmitted-no" name="assurerSubmitted" type="radio" value="no" {% if submission.assurerSubmitted == false %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerSubmitted-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.saveSubmission }}</button>
+  </form>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    {% if readiness and readiness.canSubmit %}
+      <a class="govuk-button" data-module="govuk-button" href="/submit-complete">Finish submission</a>
+    {% else %}
+      <a class="govuk-button govuk-button--disabled" aria-disabled="true">Finish submission</a>
+    {% endif %}
+    <a class="govuk-link" href="/entry">Return to entry</a>
+  </div>
+{% endblock %}

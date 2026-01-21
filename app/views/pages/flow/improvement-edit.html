@@ -1,0 +1,91 @@
+{# app/views/pages/flow/improvement-edit.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurance-review">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.edit.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.edit.intro }}</p>
+  <p class="govuk-hint">{{ labels.flow.improvement.edit.roleHint }}</p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/edit">
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Action</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.priorityLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.ownerLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.dueDateLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.evidenceLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.cadenceLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.keepLabel }}</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for action in actions %}
+          <tr class="govuk-table__row" id="iip-action-{{ action.id }}">
+            <td class="govuk-table__cell">
+              <strong>{{ action.title }}</strong>
+              {% if action.gapMeta and action.gapMeta.systemName %}
+                <div class="govuk-hint govuk-!-margin-top-1">System: {{ action.gapMeta.systemName }}</div>
+              {% endif %}
+              {% if action.gapMeta and action.gapMeta.judgement %}
+                <div class="govuk-hint govuk-!-margin-top-1">Gap: {{ action.gapMeta.judgement }}</div>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              <select class="govuk-select" name="iipActions[{{ loop.index0 }}][priority]">
+                <option value="">Select</option>
+                <option value="high" {% if action.priority == "high" %}selected{% endif %}>High</option>
+                <option value="medium" {% if action.priority == "medium" %}selected{% endif %}>Medium</option>
+                <option value="low" {% if action.priority == "low" %}selected{% endif %}>Low</option>
+              </select>
+            </td>
+            <td class="govuk-table__cell">
+              <input class="govuk-input" name="iipActions[{{ loop.index0 }}][owner]" type="text" value="{{ action.owner }}">
+            </td>
+            <td class="govuk-table__cell">
+              <input class="govuk-input" name="iipActions[{{ loop.index0 }}][dueDate]" type="date" value="{{ action.dueDate }}">
+            </td>
+            <td class="govuk-table__cell">
+              <input class="govuk-input" name="iipActions[{{ loop.index0 }}][expectedEvidence]" type="text" value="{{ action.expectedEvidence }}">
+            </td>
+            <td class="govuk-table__cell">
+              <select class="govuk-select" name="iipActions[{{ loop.index0 }}][checkInCadence]">
+                <option value="">Select</option>
+                <option value="monthly" {% if action.checkInCadence == "monthly" %}selected{% endif %}>Monthly</option>
+                <option value="quarterly" {% if action.checkInCadence == "quarterly" %}selected{% endif %}>Quarterly</option>
+                <option value="fortnightly" {% if action.checkInCadence == "fortnightly" %}selected{% endif %}>Fortnightly</option>
+              </select>
+            </td>
+            <td class="govuk-table__cell">
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="iipActions-{{ loop.index0 }}-keep" name="iipActions[{{ loop.index0 }}][keep]" type="checkbox" value="yes" {% if action.keep != "no" %}checked{% endif %}>
+                  <label class="govuk-label govuk-checkboxes__label" for="iipActions-{{ loop.index0 }}-keep">Keep</label>
+                </div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Confirm actions</button>
+  </form>
+{% endblock %}

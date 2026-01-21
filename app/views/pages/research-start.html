@@ -1,0 +1,69 @@
+{# app/views/pages/research-start.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Research start</h1>
+  <p class="govuk-body">Choose a role before you begin. Switching mid‑journey is disabled to keep sessions consistent.</p>
+
+  <h2 class="govuk-heading-m">Choose a role</h2>
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#researchUserId-{{ users[0].id }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  <form method="post" action="/research-start">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+          Select who you are testing as
+        </legend>
+        {% if error %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ error.items[0].text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios">
+          {% for user in users %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="researchUserId-{{ user.id }}" name="researchUserId" type="radio" value="{{ user.id }}">
+              <label class="govuk-label govuk-radios__label" for="researchUserId-{{ user.id }}">
+                {{ user.name }}
+                {% if user.roleTitle %}
+                  <span class="govuk-hint">{{ user.roleTitle }}</span>
+                {% endif %}
+                {% if user.orgName %}
+                  <span class="govuk-hint">{{ user.orgName }}</span>
+                {% endif %}
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+    <button class="govuk-button" data-module="govuk-button" type="submit">Start journey</button>
+  </form>
+
+  <h2 class="govuk-heading-m">What to test</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    <li>Can the user understand the journey and choose where to start?</li>
+    <li>Can they complete a self-assessment outcome and add evidence references?</li>
+    <li>Can they generate a small improvement plan from gaps?</li>
+  </ul>
+
+  <p class="govuk-body">
+    <a class="govuk-link" href="/start">Go to public start page</a>
+  </p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/research-start">Reset session and choose a new role</a>
+  </p>
+{% endblock %}

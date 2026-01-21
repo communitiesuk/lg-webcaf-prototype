@@ -1,0 +1,168 @@
+{# app/views/pages/assurer/queue.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Assurer overview", href: "/assurer/overview" },
+      { text: "Assurer queue" }
+    ]
+  }) }}
+
+  <h1 class="govuk-heading-l">{{ labels.assurer.queue.heading }}</h1>
+  <p class="govuk-body">{{ labels.assurer.queue.intro }}</p>
+
+  {{ govukSummaryList({
+    rows: [
+      {
+        key: { text: "Assurance supplier" },
+        value: { text: assurerContext.supplierName or "Not set" }
+      },
+      {
+        key: { text: "Assigned councils" },
+        value: { text: (assurerContext.assignedCouncils | join(", ")) or "None assigned yet" }
+      },
+      {
+        key: { text: "Current council" },
+        value: { text: assurerContext.activeCouncilName or "Not set" }
+      }
+    ]
+  }) }}
+
+  {% if not assurerContext.isAssignedCouncil %}
+    <div class="govuk-notification-banner" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Not assigned</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">This council is not assigned to you. Select a council you are assigned to before reviewing outcomes.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <details class="govuk-details" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Filter queue</span>
+    </summary>
+    <div class="govuk-details__text">
+      <form method="get" action="/assurer/queue" class="govuk-form-group">
+        <label class="govuk-label" for="queue-view">View</label>
+        <select class="govuk-select" id="queue-view" name="view">
+          <option value="" {% if not view %}selected{% endif %}>All outcomes</option>
+          <option value="ready" {% if view == "ready" %}selected{% endif %}>Ready for review</option>
+          <option value="missing" {% if view == "missing" %}selected{% endif %}>Missing evidence</option>
+        </select>
+        <div class="govuk-button-group govuk-!-margin-top-2">
+          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Apply filter</button>
+          <a class="govuk-link" href="/assurer/queue">Clear filter</a>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  <h2 class="govuk-heading-m">{{ labels.assurer.queue.readyHeading }}</h2>
+  {% if readyForReview.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Status</th>
+          <th class="govuk-table__header" scope="col">Evidence refs</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in readyForReview %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.councilName or assurerContext.activeCouncilName or "—" }}</td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
+            </td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">
+              <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
+            </td>
+            <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No outcomes are ready for review.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.assurer.queue.missingHeading }}</h2>
+  {% if missingEvidence.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Status</th>
+          <th class="govuk-table__header" scope="col">Evidence refs</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in missingEvidence %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.councilName or assurerContext.activeCouncilName or "—" }}</td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
+            </td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">
+              <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
+              <strong class="govuk-tag govuk-tag--orange govuk-!-margin-left-1">Missing evidence</strong>
+            </td>
+            <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No outcomes are missing evidence references.</p>
+  {% endif %}
+
+  {% if view %}
+    <h2 class="govuk-heading-m">Filtered results</h2>
+    {% if filteredRows.length > 0 %}
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Council</th>
+            <th class="govuk-table__header" scope="col">Outcome</th>
+            <th class="govuk-table__header" scope="col">Title</th>
+            <th class="govuk-table__header" scope="col">Status</th>
+            <th class="govuk-table__header" scope="col">Evidence refs</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for row in filteredRows %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ row.councilName or assurerContext.activeCouncilName or "—" }}</td>
+              <td class="govuk-table__cell">
+                <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
+              </td>
+              <td class="govuk-table__cell">{{ row.title }}</td>
+              <td class="govuk-table__cell">
+                <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
+              </td>
+              <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="govuk-body">No outcomes match this filter.</p>
+    {% endif %}
+  {% endif %}
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button" data-module="govuk-button" href="/improvement-plan/generate">Generate improvement plan</a>
+    <a class="govuk-link" href="/assurer/overview">Back to overview</a>
+  </div>
+{% endblock %}

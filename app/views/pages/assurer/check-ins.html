@@ -1,0 +1,145 @@
+{# app/views/pages/assurer/check-ins.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block content %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Assurer overview", href: "/assurer/overview" },
+      { text: "Check-ins" }
+    ]
+  }) }}
+
+  <h1 class="govuk-heading-l">Check-ins and blockers</h1>
+  <p class="govuk-body">Log blockers from weekly catch-ups so MHCLG can see where intervention is needed.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Saved</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">Blocker added to the engagement log.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/assurer/check-ins">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInCouncil') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="checkInCouncil">Council</label>
+      {% if error and (error.items | selectattr('field','equalto','checkInCouncil') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','checkInCouncil') | list | first).text }}
+        </p>
+      {% endif %}
+      <select class="govuk-select" id="checkInCouncil" name="checkInCouncil">
+        <option value="">Select a council</option>
+        {% for council in assurerContext.assignedCouncils %}
+          <option value="{{ council }}" {% if data.checkInCouncil == council %}selected{% endif %}>{{ council }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInCategory') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="checkInCategory">Blocker category</label>
+      {% if error and (error.items | selectattr('field','equalto','checkInCategory') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','checkInCategory') | list | first).text }}
+        </p>
+      {% endif %}
+      <select class="govuk-select" id="checkInCategory" name="checkInCategory">
+        <option value="">Select a category</option>
+        <option value="Governance" {% if data.checkInCategory == "Governance" %}selected{% endif %}>Governance</option>
+        <option value="Evidence" {% if data.checkInCategory == "Evidence" %}selected{% endif %}>Evidence</option>
+        <option value="Resources" {% if data.checkInCategory == "Resources" %}selected{% endif %}>Resourcing</option>
+        <option value="Technical" {% if data.checkInCategory == "Technical" %}selected{% endif %}>Technical dependencies</option>
+      </select>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInDetail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="checkInDetail">Summary</label>
+      {% if error and (error.items | selectattr('field','equalto','checkInDetail') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','checkInDetail') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="checkInDetail" name="checkInDetail" rows="3">{{ data.checkInDetail }}</textarea>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInNeedsHelp') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend">Needs MHCLG intervention?</legend>
+        {% if error and (error.items | selectattr('field','equalto','checkInNeedsHelp') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','checkInNeedsHelp') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="checkInNeedsHelp-yes" name="checkInNeedsHelp" type="radio" value="yes" {% if data.checkInNeedsHelp == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="checkInNeedsHelp-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="checkInNeedsHelp-no" name="checkInNeedsHelp" type="radio" value="no" {% if data.checkInNeedsHelp == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="checkInNeedsHelp-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Add blocker</button>
+  </form>
+
+  <h2 class="govuk-heading-m govuk-!-margin-top-6">Recent blocker log</h2>
+  {% if engagement.blockers.length %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Council</th>
+          <th class="govuk-table__header" scope="col">Category</th>
+          <th class="govuk-table__header" scope="col">Detail</th>
+          <th class="govuk-table__header" scope="col">Needs MHCLG</th>
+          <th class="govuk-table__header" scope="col">Raised</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for blocker in engagement.blockers %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ blocker.councilName }}</td>
+            <td class="govuk-table__cell">{{ blocker.category }}</td>
+            <td class="govuk-table__cell">{{ blocker.detail }}</td>
+            <td class="govuk-table__cell">
+              {% if blocker.needsMhclgHelp %}
+                <strong class="govuk-tag govuk-tag--red">Yes</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">No</strong>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">{{ blocker.raisedAt }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No blockers logged yet.</p>
+  {% endif %}
+{% endblock %}

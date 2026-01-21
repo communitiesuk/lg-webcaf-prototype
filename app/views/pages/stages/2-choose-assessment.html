@@ -1,0 +1,57 @@
+{# app/views/pages/stages/2-choose-assessment.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-inset-text">
+    This page has been replaced by the scope pack. <a class="govuk-link" href="/stages/2/scope">Go to scope pack</a>.
+  </div>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#assessmentLens">{{ error }}</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.stages.stage2.chooseAssessmentHeading }}</h1>
+
+  <form method="post" action="/stages/2-prepare-scope/choose-assessment">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" aria-describedby="assessmentLens-hint {% if error %}assessmentLens-error{% endif %}">
+        <div class="govuk-hint" id="assessmentLens-hint">
+          Choose what you want to start now. You can start the other assessment later.
+        </div>
+
+        {% if error %}
+          <p id="assessmentLens-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span> {{ error }}
+          </p>
+        {% endif %}
+
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assessmentLens" name="assessmentLens" type="radio" value="AD">
+            <label class="govuk-label govuk-radios__label" for="assessmentLens">
+              Self-assess your organisation (Objectives A &amp; D)
+            </label>
+          </div>
+
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assessmentLens-2" name="assessmentLens" type="radio" value="BC">
+            <label class="govuk-label govuk-radios__label" for="assessmentLens-2">
+              Self-assess your critical systems (Objectives B &amp; C)
+            </label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+  </form>
+{% endblock %}

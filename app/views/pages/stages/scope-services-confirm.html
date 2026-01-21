@@ -1,0 +1,32 @@
+{# app/views/pages/stages/scope-services-confirm.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.services.confirmTitle }}</h1>
+  <p class="govuk-body">Check the list below. You can change entries by adding or removing services.</p>
+
+  {% if services.length > 0 %}
+    <dl class="govuk-summary-list">
+      {% for service in services %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ service.name }}</dt>
+          <dd class="govuk-summary-list__value">
+            {% if service.inScope %}In scope{% else %}Out of scope{% endif %}
+            {% if service.owner %}<div class="govuk-hint">Owner: {{ service.owner }}</div>{% endif %}
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="/stages/2/scope/services/add">Change</a>
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  {% else %}
+    <p class="govuk-body">No essential services have been added.</p>
+  {% endif %}
+
+  <form method="post" action="/stages/2/scope/services/confirm">
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+  </form>
+{% endblock %}

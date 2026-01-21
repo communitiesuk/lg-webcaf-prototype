@@ -1,0 +1,42 @@
+{# app/views/pages/stages/scope-priority-shortlist.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.shortlistTitle }}</h1>
+  <p class="govuk-body">Select the critical systems to assess in Objectives B and C.</p>
+
+  {% if eligible.length > 0 %}
+    <form method="post" action="/stages/2/scope/priority/shortlist">
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">High and medium priority systems</legend>
+          <div class="govuk-checkboxes">
+            {% for item in eligible %}
+              <div class="govuk-checkboxes__item">
+                <input
+                  class="govuk-checkboxes__input"
+                  id="shortlist-{{ item.system.id }}"
+                  name="shortlistSystemIds"
+                  type="checkbox"
+                  value="{{ item.system.id }}"
+                  {% if item.system.id in selected %}checked{% endif %}
+                >
+                <label class="govuk-label govuk-checkboxes__label" for="shortlist-{{ item.system.id }}">
+                  {{ item.system.name }} ({{ item.priority.level | capitalize }})
+                </label>
+                <div class="govuk-hint">{{ item.priority.rationale }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+    </form>
+  {% else %}
+    <p class="govuk-body">No high or medium priority systems yet.</p>
+    <a class="govuk-link" href="/stages/2/scope/systems/review">Review systems</a>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,59 @@
+{# app/views/pages/mhclg/reporting.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/mhclg/dashboard">Back</a>
+
+  <h1 class="govuk-heading-l">Reporting snapshot</h1>
+  <p class="govuk-body">Prototype reporting summary for MHCLG.</p>
+
+  <div class="govuk-grid-row app-dashboard-summary">
+    {% for item in reporting.summary %}
+      <div class="govuk-grid-column-one-quarter">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">{{ item.label }}</p>
+          <p class="app-dashboard-card__value">{{ item.value }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="govuk-heading-m">Objective-level outcomes</h2>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Objective</th>
+        <th class="govuk-table__header" scope="col">Complete</th>
+        <th class="govuk-table__header" scope="col">Partially achieved</th>
+        <th class="govuk-table__header" scope="col">Not achieved</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for row in reporting.objectives %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">
+            <strong>{{ row.objective }}</strong>
+            <div class="govuk-hint govuk-!-margin-top-1">{{ row.title }}</div>
+          </td>
+          <td class="govuk-table__cell">{{ row.complete }}</td>
+          <td class="govuk-table__cell">{{ row.partial }}</td>
+          <td class="govuk-table__cell">{{ row.notAchieved }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="govuk-heading-m">Completeness signals</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.completeness %}
+      <li><strong>{{ item.value }}</strong> — {{ item.label }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="govuk-heading-m">Data quality flags</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.quality %}
+      <li><strong>{{ item.value }}</strong> — {{ item.label }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

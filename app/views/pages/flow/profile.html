@@ -1,0 +1,135 @@
+{# app/views/pages/flow/profile.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/prepare">Back</a>
+
+  {% if gatedNotice %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+          {{ gatedNotice.title }}
+        </h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">{{ gatedNotice.text }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.flow.profile.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.profile.intro }}</p>
+  <div class="govuk-inset-text">
+    A CAF profile for local government is the only profile used here. It is a tailored, Official-Sensitive subset of CAF outcomes created by MHCLG and is the baseline for councils.
+  </div>
+  {% if selectedLens %}
+    <p class="govuk-body">
+      <a class="govuk-link" href="/stages/1/decision">{{ labels.flow.profile.switchLink }}</a>
+    </p>
+  {% endif %}
+
+  {% if selectedLens == "bc" %}
+    <h2 class="govuk-heading-m">Objectives B & C (critical systems)</h2>
+    <div class="govuk-inset-text">Selected for assessment</div>
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Target level</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in bcRows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.code }}</td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">{{ row.target }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% elif selectedLens == "ad" %}
+    <h2 class="govuk-heading-m">Objectives A & D (organisation)</h2>
+    <div class="govuk-inset-text">Selected for assessment</div>
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Target level</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in adRows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.code }}</td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">{{ row.target }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <h2 class="govuk-heading-m">Objectives A & D (organisation)</h2>
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Target level</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in adRows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.code }}</td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">{{ row.target }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2 class="govuk-heading-m">Objectives B & C (critical systems)</h2>
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">Title</th>
+          <th class="govuk-table__header" scope="col">Target level</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in bcRows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ row.code }}</td>
+            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">{{ row.target }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <form method="post" action="/profile">
+    <div class="govuk-form-group">
+      <div class="govuk-radios" data-module="govuk-radios">
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="profileReviewed-yes" name="profileReviewed" type="radio" value="yes" {% if profileReviewed %}checked{% endif %}>
+          <label class="govuk-label govuk-radios__label" for="profileReviewed-yes">
+            {{ labels.flow.profile.reviewedYes }}
+          </label>
+        </div>
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="profileReviewed-no" name="profileReviewed" type="radio" value="no" {% if profileReviewed == false %}checked{% endif %}>
+          <label class="govuk-label govuk-radios__label" for="profileReviewed-no">
+            {{ labels.flow.profile.reviewedNo }}
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.continue }}</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,24 @@
+{# app/views/pages/stages/2-who-involved.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-inset-text">
+    This page has been replaced by the scope pack. <a class="govuk-link" href="/stages/2/scope">Go to scope pack</a>.
+  </div>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.stage2.whoInvolvedHeading }}</h1>
+
+  <form method="post" action="/stages/2-prepare-scope/who-involved">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="assessmentLead">Assessment lead (name)</label>
+      <input class="govuk-input" id="assessmentLead" name="assessmentLead" type="text" value="{{ data.assessmentLead or '' }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="assurerOrg">Assurer organisation</label>
+      <input class="govuk-input" id="assurerOrg" name="assurerOrg" type="text" value="{{ data.assurerOrg or '' }}">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+  </form>
+{% endblock %}

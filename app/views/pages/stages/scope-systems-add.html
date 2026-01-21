@@ -1,0 +1,60 @@
+{# app/views/pages/stages/scope-systems-add.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.addTitle }}</h1>
+  <p class="govuk-body">Add each critical system and capture boundaries and references.</p>
+
+  <form method="post" action="/stages/2/scope/systems/add">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="systemName">System name</label>
+      {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
+        </p>
+      {% endif %}
+      <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="systemType">System type</label>
+      <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="ownerSupplier">Owner or supplier</label>
+      <input class="govuk-input" id="ownerSupplier" name="ownerSupplier" type="text" value="{{ data.ownerSupplier }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="boundaryNotes">Boundary notes</label>
+      <textarea class="govuk-textarea" id="boundaryNotes" name="boundaryNotes" rows="3">{{ data.boundaryNotes }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="diagramRefs">Architecture diagram references</label>
+      <div class="govuk-hint">Comma-separated IDs or links</div>
+      <input class="govuk-input" id="diagramRefs" name="diagramRefs" type="text" value="{{ data.diagramRefs }}">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.scope.systems.addButton }}</button>
+  </form>
+{% endblock %}

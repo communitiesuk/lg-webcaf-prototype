@@ -1,0 +1,219 @@
+{# app/views/pages/assurer/outcome.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block content %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Assurer overview", href: "/assurer/overview" },
+      { text: "Assurer queue", href: "/assurer/queue" },
+      { text: "Outcome review" }
+    ]
+  }) }}
+
+  <a class="govuk-back-link" href="/assurer/queue">Back to queue</a>
+
+  <h1 class="govuk-heading-l">{{ labels.assurer.outcome.headingPrefix }} {{ row.outcomeCode }}</h1>
+  <p class="govuk-body">{{ row.title }}</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Review saved</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">The assurer review has been recorded.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Owner</dt>
+      <dd class="govuk-summary-list__value">{{ ownerName or "Not set" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Collaborators</dt>
+      <dd class="govuk-summary-list__value">
+        {% if collaboratorNames.length > 0 %}
+          <ul class="govuk-list govuk-list--bullet">
+            {% for name in collaboratorNames %}
+              <li>{{ name }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          None
+        {% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Status</dt>
+      <dd class="govuk-summary-list__value">
+        {% if statusMeta %}
+          <strong class="govuk-tag {{ statusMeta.tagClass }}">{{ statusMeta.label }}</strong>
+        {% else %}
+          {{ row.status }}
+        {% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Due date</dt>
+      <dd class="govuk-summary-list__value">{{ row.dueDate or "—" }}</dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Self-assessment summary</h2>
+  {% if selfAssessSummary %}
+    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ labels.flow.selfAssessOutcome.judgement }}</dt>
+        <dd class="govuk-summary-list__value">{{ selfAssessSummary.judgement or "Not started" }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ labels.flow.selfAssessOutcome.rationale }}</dt>
+        <dd class="govuk-summary-list__value">{{ selfAssessSummary.rationale or "Not captured" }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ labels.flow.selfAssessOutcome.qualityReviewedAt }}</dt>
+        <dd class="govuk-summary-list__value">{{ selfAssessSummary.qualityReviewedAt or "Not set" }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ labels.flow.selfAssessOutcome.approverReviewedAt }}</dt>
+        <dd class="govuk-summary-list__value">{{ selfAssessSummary.approverReviewedAt or "Not set" }}</dd>
+      </div>
+    </dl>
+  {% else %}
+    <div class="govuk-inset-text">No self-assessment captured yet.</div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.assurer.outcome.evidenceHeading }}</h2>
+  {% if row.evidenceRefs and row.evidenceRefs.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Reference ID</th>
+          <th class="govuk-table__header" scope="col">Type</th>
+          <th class="govuk-table__header" scope="col">Link</th>
+          <th class="govuk-table__header" scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for ref in row.evidenceRefs %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ ref.refId }}</td>
+            <td class="govuk-table__cell">{{ ref.type }}</td>
+            <td class="govuk-table__cell">{{ ref.link }}</td>
+            <td class="govuk-table__cell">{{ ref.note }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Evidence missing</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">No evidence references provided.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.assurer.outcome.historyHeading }}</h2>
+  {% if history.length > 0 %}
+    <ol class="govuk-list govuk-list--number">
+      {% for h in history %}
+        <li class="govuk-!-margin-bottom-3">
+          <p class="govuk-body govuk-!-margin-bottom-1">
+            <strong>{{ h.by }}</strong>
+            <span class="govuk-hint">({{ h.displayAt }})</span>
+          </p>
+          <p class="govuk-body govuk-!-margin-bottom-1">{{ h.summary }}</p>
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            <strong class="govuk-tag govuk-tag--grey">{{ h.statusLabel }}</strong>
+            {% if h.displayDueDate %}<span class="govuk-hint">Due: {{ h.displayDueDate }}</span>{% endif %}
+          </p>
+          {% if h.blocker %}
+            <p class="govuk-body govuk-!-margin-top-1"><strong>Blocker:</strong> {{ h.blocker }}</p>
+          {% endif %}
+          {% if h.nextStep %}
+            <p class="govuk-body govuk-!-margin-top-1"><strong>Next step:</strong> {{ h.nextStep }}</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="govuk-inset-text">No changes recorded yet.</div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.assurer.outcome.reviewHeading }}</h2>
+  <div class="govuk-inset-text">
+    <p class="govuk-body"><strong>Consistency checklist</strong></p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>IGP response supports the judgement.</li>
+      <li>Evidence references are present and specific.</li>
+      <li>Rationale explains why the rating is appropriate.</li>
+      <li>Internal review and approver dates are captured.</li>
+    </ul>
+  </div>
+
+  <form method="post" action="">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerDecision') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.assurer.outcome.decisionLabel }}
+        </legend>
+        {% if error and (error.items | selectattr('field','equalto','assurerDecision') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','assurerDecision') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          {% for option in labels.assurer.outcome.decisionOptions %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="assurerDecision-{{ option.value }}" name="assurerDecision" type="radio" value="{{ option.value }}" {% if review.decision == option.value %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="assurerDecision-{{ option.value }}">{{ option.text }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="assurerRationale">{{ labels.assurer.outcome.rationaleLabel }}</label>
+      {% if error and (error.items | selectattr('field','equalto','assurerRationale') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','assurerRationale') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="assurerRationale" name="assurerRationale" rows="4">{{ review.rationale }}</textarea>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.assurer.outcome.saveReview }}</button>
+  </form>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button" data-module="govuk-button" href="/assurer/queue">Back to queue</a>
+    {% if nextReady %}
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/outcomes/{{ nextReady }}">Next ready outcome</a>
+    {% endif %}
+    <a class="govuk-link" href="/improvement-plan/generate">Generate IIP</a>
+  </div>
+{% endblock %}

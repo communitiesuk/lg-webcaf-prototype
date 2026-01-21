@@ -1,0 +1,32 @@
+{# app/views/pages/stages/scope-priority-confirm.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.confirmTitle }}</h1>
+  <p class="govuk-body">Check the shortlist before continuing.</p>
+
+  {% if shortlist.length > 0 %}
+    <dl class="govuk-summary-list">
+      {% for item in shortlist %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ item.system.name }}</dt>
+          <dd class="govuk-summary-list__value">
+            {{ item.priority.level | capitalize }}
+            <div class="govuk-hint">{{ item.priority.rationale }}</div>
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="/stages/2/scope/priority/{{ item.system.id }}">Change</a>
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  {% else %}
+    <p class="govuk-body">No systems selected.</p>
+  {% endif %}
+
+  <form method="post" action="/stages/2/scope/priority/confirm">
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue to dashboard</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,70 @@
+{# app/views/pages/flow/improvement-review.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/edit">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.review.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.review.intro }}</p>
+
+  <h2 class="govuk-heading-m">{{ labels.flow.improvement.tracking.heading }}</h2>
+  <p class="govuk-body">{{ labels.flow.improvement.tracking.intro }}</p>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Action</th>
+        <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.statusLabel }}</th>
+        <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.lastUpdate }}</th>
+        <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.evidence }}</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for action in actions %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ action.title }}</td>
+          <td class="govuk-table__cell">{{ action.status or "Not started" }}</td>
+          <td class="govuk-table__cell">
+            {% if action.lastUpdateAt %}
+              {{ action.lastUpdateAt }}{% if action.lastUpdateNote %} — {{ action.lastUpdateNote }}{% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="govuk-table__cell">{{ action.expectedEvidence }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Action</th>
+        <th class="govuk-table__header" scope="col">Priority</th>
+        <th class="govuk-table__header" scope="col">Owner</th>
+        <th class="govuk-table__header" scope="col">Due date</th>
+        <th class="govuk-table__header" scope="col">Expected evidence</th>
+        <th class="govuk-table__header" scope="col">Check-in cadence</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for action in actions %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ action.title }}</td>
+          <td class="govuk-table__cell">{{ action.priority }}</td>
+          <td class="govuk-table__cell">{{ action.owner }}</td>
+          <td class="govuk-table__cell">{{ action.dueDate }}</td>
+          <td class="govuk-table__cell">{{ action.expectedEvidence }}</td>
+          <td class="govuk-table__cell">{{ action.checkInCadence }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/improvement-plan/sign-off">
+      {{ labels.flow.improvement.review.signOffButton }}
+    </a>
+    <a class="govuk-link" href="/improvement-plan/edit">{{ labels.flow.improvement.review.editLink }}</a>
+  </div>
+{% endblock %}

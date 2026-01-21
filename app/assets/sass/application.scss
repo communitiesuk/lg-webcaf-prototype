@@ -4,3 +4,82 @@
 // 
 
 // Add extra styles here
+
+.app-progress {
+  margin-bottom: 8px;
+}
+
+.app-progress__summary {
+  margin-bottom: 0;
+}
+
+.app-progress__bar {
+  width: 100%;
+  height: 10px;
+  appearance: none;
+}
+
+.app-progress__bar::-webkit-progress-bar {
+  background-color: #f3f2f1;
+  border-radius: 6px;
+}
+
+.app-progress__bar::-webkit-progress-value {
+  background-color: #1d70b8;
+  border-radius: 6px;
+}
+
+.app-progress__bar::-moz-progress-bar {
+  background-color: #1d70b8;
+  border-radius: 6px;
+}
+
+.app-dashboard-summary {
+  margin-bottom: 20px;
+}
+
+.app-dashboard-card {
+  border: 1px solid #b1b4b6;
+  border-left: 6px solid #1d70b8;
+  padding: 16px;
+  background: #ffffff;
+  min-height: 140px;
+}
+
+.app-dashboard-card__label {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.app-dashboard-card__value {
+  margin: 0 0 4px;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.app-dashboard-card__meta {
+  margin: 0;
+  color: #505a5f;
+  font-size: 14px;
+}
+
+// Local Digital green header styling.
+.govuk-header {
+  background-color: #0b6e4f;
+  border-bottom: 10px solid #0b6e4f;
+}
+
+.govuk-header__container {
+  border-bottom: 0;
+}
+
+.govuk-header__link:link,
+.govuk-header__link:visited {
+  color: #ffffff;
+}
+
+.govuk-header__navigation {
+  margin-top: 8px;
+}

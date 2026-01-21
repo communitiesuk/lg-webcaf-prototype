@@ -5,12 +5,41 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
 
 {% extends "govuk-prototype-kit/layouts/govuk-branded.njk" %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block header %}
 
-    {{ govukHeader() }}
-    {{ govukServiceNavigation({
-        serviceName: serviceName
-    })}}
+    {{ govukHeader({
+        serviceName: serviceName,
+        serviceUrl: "/entry",
+        navigation: headerNavigation
+    }) }}
+    {% if showNavigation and not showJourney %}
+      {{ govukServiceNavigation({
+          serviceName: serviceName,
+          navigation: navigation
+      })}}
+    {% endif %}
 
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukPhaseBanner({
+    tag: {
+      text: "Prototype"
+    },
+    text: "This is a prototype service used for user research and internal testing."
+  }) }}
+
+  {% if showJourney and breadcrumbs.length > 0 %}
+    {{ govukBreadcrumbs({ items: breadcrumbs }) }}
+  {% endif %}
+
+  {% if showJourney and progress %}
+    <div class="app-progress" aria-label="Journey progress">
+      <p class="govuk-body app-progress__summary">
+        Step {{ progress.currentIndex + 1 }} of {{ progress.total }} — {{ progress.currentLabel }}
+      </p>
+    </div>
+  {% endif %}
 {% endblock %}

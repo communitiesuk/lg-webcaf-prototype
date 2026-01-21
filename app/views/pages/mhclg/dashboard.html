@@ -1,0 +1,209 @@
+{# app/views/pages/mhclg/dashboard.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">{{ labels.mhclg.heading }}</h1>
+  <p class="govuk-body">{{ labels.mhclg.intro }}</p>
+
+  {% set totalCouncils = councils | length %}
+  {% set submittedCount = (councils | selectattr('submissionStatus','equalto','Submitted') | list | length) %}
+  {% set inAssuranceCount = (councils | selectattr('stage','equalto','Assurance review') | list | length) %}
+  {% set inIipCount = (councils | selectattr('stage','equalto','Improvement plan') | list | length) %}
+
+  <div class="govuk-grid-row app-dashboard-summary">
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">Councils tracked</p>
+        <p class="app-dashboard-card__value">{{ totalCouncils }}</p>
+        <p class="app-dashboard-card__meta">Total in view</p>
+      </div>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">Submitted</p>
+        <p class="app-dashboard-card__value">{{ submittedCount }}</p>
+        <p class="app-dashboard-card__meta">Submission complete</p>
+      </div>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">In assurance/IIP</p>
+        <p class="app-dashboard-card__value">{{ inAssuranceCount + inIipCount }}</p>
+        <p class="app-dashboard-card__meta">Assurance or improvement plan</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Data quality snapshot</strong></p>
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      {% if qualitySnapshot %}
+        {% for item in qualitySnapshot %}
+          <li>{{ item.value }} {{ item.label }}</li>
+        {% endfor %}
+      {% else %}
+        <li>Data quality signals unavailable</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <details class="govuk-details" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Filter by stage</span>
+    </summary>
+    <div class="govuk-details__text">
+      <form method="get" action="/mhclg/dashboard" class="govuk-form-group">
+        <label class="govuk-label" for="stage-filter">Stage</label>
+        <select class="govuk-select" id="stage-filter" name="stage">
+          <option value="">All stages</option>
+          {% for stageName in stages %}
+            <option value="{{ stageName }}" {% if query.stage == stageName %}selected{% endif %}>{{ stageName }}</option>
+          {% endfor %}
+        </select>
+        <div class="govuk-button-group govuk-!-margin-top-2">
+          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Apply filter</button>
+          <a class="govuk-link" href="/mhclg/dashboard">Clear filter</a>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  {% if engagementSummary %}
+    <h2 class="govuk-heading-m">Engagement snapshot</h2>
+    <div class="govuk-grid-row app-dashboard-summary">
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">Check-ins due</p>
+          <p class="app-dashboard-card__value">{{ engagementSummary.dueThisWeek }}</p>
+          <p class="app-dashboard-card__meta">Due this week or overdue</p>
+        </div>
+      </div>
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">Council requests</p>
+          <p class="app-dashboard-card__value">{{ engagementSummary.openRequests }}</p>
+          <p class="app-dashboard-card__meta">Awaiting scheduling</p>
+        </div>
+      </div>
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">Blockers needing MHCLG</p>
+          <p class="app-dashboard-card__value">{{ engagementSummary.blockersNeedingHelp }}</p>
+          <p class="app-dashboard-card__meta">Flagged by assurers</p>
+        </div>
+      </div>
+    </div>
+    <p class="govuk-body">
+      <a class="govuk-link" href="/mhclg/engagement">View engagement queue</a>
+    </p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Progress snapshot</h2>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Council</th>
+        <th class="govuk-table__header" scope="col">Stage</th>
+        <th class="govuk-table__header" scope="col">Status</th>
+        <th class="govuk-table__header" scope="col">A &amp; D</th>
+        <th class="govuk-table__header" scope="col">B &amp; C</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for council in councils %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ council.name }}</td>
+          <td class="govuk-table__cell">{{ council.stage }}</td>
+          <td class="govuk-table__cell">
+            {% if council.status == "Active" %}
+              <strong class="govuk-tag govuk-tag--blue">Active</strong>
+            {% elif council.status == "In progress" %}
+              <strong class="govuk-tag govuk-tag--blue">In progress</strong>
+            {% elif council.status == "Ready for review" %}
+              <strong class="govuk-tag govuk-tag--purple">Ready for review</strong>
+            {% elif council.status == "Draft" %}
+              <strong class="govuk-tag govuk-tag--grey">Draft</strong>
+            {% elif council.status == "Submitted" %}
+              <strong class="govuk-tag govuk-tag--green">Submitted</strong>
+            {% else %}
+              {{ council.status }}
+            {% endif %}
+          </td>
+          <td class="govuk-table__cell">{{ council.adProgress }}</td>
+          <td class="govuk-table__cell">{{ council.bcProgress }}</td>
+        </tr>
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell" colspan="5">
+            <details class="govuk-details" data-module="govuk-details">
+              <summary class="govuk-details__summary">
+                <span class="govuk-details__summary-text">Assurance and submission details</span>
+              </summary>
+              <div class="govuk-details__text">
+                <dl class="govuk-summary-list">
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Assurance</dt>
+                    <dd class="govuk-summary-list__value">
+                      {% if council.assurance == "Approved" %}
+                        <strong class="govuk-tag govuk-tag--green">Approved</strong>
+                      {% elif council.assurance == "Ready for review" %}
+                        <strong class="govuk-tag govuk-tag--purple">Ready for review</strong>
+                      {% elif council.assurance == "Changes needed" %}
+                        <strong class="govuk-tag govuk-tag--red">Changes needed</strong>
+                      {% else %}
+                        {{ council.assurance }}
+                      {% endif %}
+                    </dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">IIP status</dt>
+                    <dd class="govuk-summary-list__value">
+                      {% if council.iipStatus == "Signed off" %}
+                        <strong class="govuk-tag govuk-tag--green">Signed off</strong>
+                      {% elif council.iipStatus == "Drafted" %}
+                        <strong class="govuk-tag govuk-tag--grey">Drafted</strong>
+                      {% else %}
+                        {{ council.iipStatus }}
+                      {% endif %}
+                    </dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Submission</dt>
+                    <dd class="govuk-summary-list__value">
+                      {% if council.submissionStatus == "Submitted" %}
+                        <strong class="govuk-tag govuk-tag--green">Submitted</strong>
+                      {% else %}
+                        {{ council.submissionStatus }}
+                      {% endif %}
+                    </dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Submission date</dt>
+                    <dd class="govuk-summary-list__value">{{ council.submissionAtDisplay or "—" }}</dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">IIP due</dt>
+                    <dd class="govuk-summary-list__value">{{ council.iipDueDisplay or "—" }}</dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Next milestone</dt>
+                    <dd class="govuk-summary-list__value">{{ council.nextMilestone }}</dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Last updated</dt>
+                    <dd class="govuk-summary-list__value">{{ council.updatedAtDisplay }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </details>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/mhclg/reporting">View reporting snapshot</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/mhclg/engagement">Engagement queue</a>
+    <a class="govuk-link" href="/research-start">Change role</a>
+  </div>
+{% endblock %}

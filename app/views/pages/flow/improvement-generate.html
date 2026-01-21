@@ -1,0 +1,74 @@
+{# app/views/pages/flow/improvement-generate.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.generate.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.generate.intro }}</p>
+  <p class="govuk-hint">{{ labels.flow.improvement.generate.roleHint }}</p>
+  <p class="govuk-hint">{{ labels.flow.improvement.generate.actionHint }}</p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#gapIds">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if showSizeWarning %}
+    <div class="govuk-inset-text">There are more than 10 gaps. Keep the plan small and focused.</div>
+  {% endif %}
+
+  {% if gaps.length == 0 %}
+    <p class="govuk-body">No gaps detected yet. Update self-assessment judgements to generate a plan.</p>
+  {% else %}
+    <form method="post" action="/improvement-plan/generate">
+      <table class="govuk-table">
+        <caption class="govuk-table__caption govuk-table__caption--m">{{ labels.flow.improvement.generate.tableHeading }}</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Outcome</th>
+            <th class="govuk-table__header" scope="col">Judgement</th>
+            <th class="govuk-table__header" scope="col">Suggested action</th>
+            <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.generate.keepLabel }}</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for gap in gaps %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ gap.outcomeCode }}</strong> {{ gap.outcomeTitle }}
+                {% if gap.systemName %}
+                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ gap.systemName }}</div>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{{ gap.judgement }}</td>
+              <td class="govuk-table__cell">{{ gap.title }}</td>
+              <td class="govuk-table__cell">
+                <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" id="gapIds-{{ loop.index0 }}" name="gapIds" type="checkbox" value="{{ gap.id }}" checked>
+                    <label class="govuk-label govuk-checkboxes__label" for="gapIds-{{ loop.index0 }}">
+                      Include
+                    </label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <button class="govuk-button" data-module="govuk-button" type="submit">Generate plan</button>
+    </form>
+  {% endif %}
+{% endblock %}

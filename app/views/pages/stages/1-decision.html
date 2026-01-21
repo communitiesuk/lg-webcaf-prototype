@@ -1,0 +1,56 @@
+{# app/views/pages/stages/1-decision.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/1">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.stages.stage1Decision.heading }}</h1>
+  <p class="govuk-body">{{ labels.stages.stage1Decision.intro }}</p>
+
+  <form method="post" action="/stages/1/decision">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.stages.stage1Decision.question }}
+        </legend>
+        {% if error %}
+          <p class="govuk-error-message" id="stage1NextStep">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ error.items[0].text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage1NextStep-stage3" name="stage1NextStep" type="radio" value="stage3">
+            <label class="govuk-label govuk-radios__label" for="stage1NextStep-stage3">
+              {{ labels.stages.stage1Decision.options.stage3 }}
+            </label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage1NextStep-stage4" name="stage1NextStep" type="radio" value="stage4">
+            <label class="govuk-label govuk-radios__label" for="stage1NextStep-stage4">
+              {{ labels.stages.stage1Decision.options.stage4 }}
+            </label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.stage1Decision.continue }}</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,48 @@
+{# app/views/pages/assurer/submission.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+
+{% block content %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Assurer overview", href: "/assurer/overview" },
+      { text: "Submission status" }
+    ]
+  }) }}
+
+  <h1 class="govuk-heading-l">Submission status</h1>
+  <p class="govuk-body">Read-only view of the council submission record.</p>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submitted by</dt>
+      <dd class="govuk-summary-list__value">{{ submission.submittedBy or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submission date</dt>
+      <dd class="govuk-summary-list__value">{{ submission.submittedAt or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Method</dt>
+      <dd class="govuk-summary-list__value">{{ submission.method or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Reference</dt>
+      <dd class="govuk-summary-list__value">{{ submission.reference or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assurer submitted</dt>
+      <dd class="govuk-summary-list__value">
+        {% if submission.assurerSubmitted %}Yes{% else %}No{% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Acknowledged</dt>
+      <dd class="govuk-summary-list__value">{{ submission.acknowledgedAt or "—" }}</dd>
+    </div>
+  </dl>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assurer/overview">Back to overview</a>
+  </div>
+{% endblock %}

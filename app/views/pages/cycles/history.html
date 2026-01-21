@@ -1,0 +1,51 @@
+{# app/views/pages/cycles/history.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/dashboard">{{ labels.cycles.history.backToDashboard }}</a>
+
+  <h1 class="govuk-heading-l">{{ labels.cycles.history.heading }}</h1>
+  <p class="govuk-body">{{ labels.cycles.history.intro }}</p>
+
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">Cycle</th>
+        <th scope="col" class="govuk-table__header">Started</th>
+        <th scope="col" class="govuk-table__header">Snapshot saved</th>
+        <th scope="col" class="govuk-table__header">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for r in rows %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">
+            <strong>{{ r.name }}</strong>
+            {% if assessment.cycle and assessment.cycle.id == r.id %}
+              <strong class="govuk-tag govuk-tag--blue govuk-!-margin-left-1">{{ labels.cycles.history.currentCycleTag }}</strong>
+            {% endif %}
+            <div class="govuk-hint govuk-!-margin-bottom-0">{{ r.id }}</div>
+          </td>
+
+          <td class="govuk-table__cell">{{ r.startedAtDisplay }}</td>
+
+          <td class="govuk-table__cell">
+            {% if r.hasSnapshot %}
+              {{ r.snapshotSavedAt }}
+            {% else %}
+              <span class="govuk-hint">{{ labels.cycles.history.noSnapshot }}</span>
+            {% endif %}
+          </td>
+
+          <td class="govuk-table__cell">
+            {% if r.hasSnapshot %}
+              <a class="govuk-link" href="/assessments/current/cycle/{{ r.id }}/dashboard">{{ labels.cycles.history.viewSnapshot }}</a>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,79 @@
+{# app/views/pages/entry/index.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">{{ labels.entry.heading }}</h1>
+
+      <p class="govuk-body">{{ labels.entry.intro }}</p>
+      {% if user %}
+        <p class="govuk-hint">Role: {{ user.role | capitalize }}</p>
+      {% endif %}
+
+      <h2 class="govuk-heading-m">What you can do next</h2>
+      <ul class="govuk-list govuk-list--bullet">
+        {% for item in labels.entry.nextSteps %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+
+      <p class="govuk-body">
+        <a class="govuk-link" href="/entry/start-new?returnTo=/stages/1">Need context? Start at Stage 1</a>
+      </p>
+
+      <div class="govuk-button-group">
+        <form method="post" action="/entry/start-new">
+          <button class="govuk-button" data-module="govuk-button" type="submit">
+            {{ labels.entry.actions.startNew }}
+          </button>
+        </form>
+
+      <form method="post" action="/entry/resume">
+        <button
+          class="govuk-button govuk-button--secondary"
+          data-module="govuk-button"
+          type="submit"
+          {% if not hasInProgress %}disabled aria-disabled="true"{% endif %}
+        >
+          {{ labels.entry.actions.resume }}
+        </button>
+      </form>
+
+      {% if hasInProgress %}
+        <form method="post" action="/entry/go-dashboard">
+          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">
+            {{ labels.entry.actions.dashboard }}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+      <p class="govuk-body">
+        <a class="govuk-link" href="/entry/start-new?returnTo=/stages/2/scope">{{ labels.entry.scopeLink }}</a>
+      </p>
+
+      {% if hasInProgress %}
+        <p class="govuk-hint">{{ labels.entry.resumeHint }}</p>
+      {% endif %}
+
+      {% if not hasInProgress %}
+        <p class="govuk-body">Start a new assessment to access the dashboard.</p>
+      {% endif %}
+    </div>
+    <div class="govuk-grid-column-one-third">
+      {% if user %}
+        <p class="govuk-body">Logged in as</p>
+        <p class="govuk-body govuk-!-margin-bottom-1">
+          <strong>{{ user.name }}</strong>
+        </p>
+        <p class="govuk-body govuk-!-margin-top-0">{{ user.orgName or "Council user" }}</p>
+        <ul class="govuk-list">
+          <li><a class="govuk-link" href="/organisation-details">Your organisation details</a></li>
+          <li><a class="govuk-link" href="/manage-users">Manage users</a></li>
+          <li><a class="govuk-link" href="/engagement/request">Request an MHCLG check-in</a></li>
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

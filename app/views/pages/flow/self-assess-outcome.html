@@ -1,0 +1,152 @@
+{# app/views/pages/flow/self-assess-outcome.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ context.backLink }}">Back</a>
+
+  <h1 class="govuk-heading-l">{{ context.heading }}</h1>
+  <p class="govuk-body">{{ context.subHeading }}</p>
+  {% if outcome.description %}
+    <p class="govuk-body govuk-hint">{{ outcome.description }}</p>
+  {% endif %}
+  {% if context.progressLink %}
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ context.progressLink }}">
+        {{ context.progressLinkText or labels.flow.selfAssessOutcome.progressLink }}
+      </a>
+    </p>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="">
+    <input type="hidden" name="action" value="">
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','igpResponse') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="igpResponse">{{ labels.flow.selfAssessOutcome.igpResponse }}</label>
+      <div class="govuk-hint">{{ labels.flow.selfAssessOutcome.igpHint }}</div>
+      {% if error and (error.items | selectattr('field','equalto','igpResponse') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','igpResponse') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="igpResponse" name="igpResponse" rows="5">{{ form.igpResponse }}</textarea>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          {{ labels.flow.selfAssessOutcome.judgement }}
+        </legend>
+        {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','judgement') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          {% for option in labels.flow.selfAssessOutcome.judgementOptions %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="judgement-{{ option.value }}" name="judgement" type="radio" value="{{ option.value }}" {% if form.judgement == option.value %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="judgement-{{ option.value }}">{{ option.text }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="rationale">{{ labels.flow.selfAssessOutcome.rationale }}</label>
+      {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','rationale') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="rationale" name="rationale" rows="4">{{ form.rationale }}</textarea>
+    </div>
+
+    <h2 class="govuk-heading-m">{{ labels.flow.selfAssessOutcome.evidenceHeading }}</h2>
+    <div class="govuk-hint">{{ labels.flow.selfAssessOutcome.evidenceHint }}</div>
+    {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
+      <p id="evidenceRefs" class="govuk-error-message">
+        <span class="govuk-visually-hidden">Error:</span>
+        {{ (error.items | selectattr('field','equalto','evidenceRefs') | list | first).text }}
+      </p>
+    {% endif %}
+
+    {% for ref in form.evidenceRefs %}
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Reference {{ loop.index }}</legend>
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-quarter">
+              <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-refId">Reference ID</label>
+              <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-refId" name="evidenceRefs[{{ loop.index0 }}][refId]" type="text" value="{{ ref.refId }}">
+            </div>
+            <div class="govuk-grid-column-one-quarter">
+              <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Type</label>
+              <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]" type="text" value="{{ ref.type }}">
+            </div>
+            <div class="govuk-grid-column-one-half">
+              <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Link (optional)</label>
+              <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
+            </div>
+          </div>
+
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-note">Note (optional)</label>
+            <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-note" name="evidenceRefs[{{ loop.index0 }}][note]" rows="2">{{ ref.note }}</textarea>
+          </div>
+
+          {% if form.evidenceRefs.length > 1 %}
+            <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="removeEvidence:{{ loop.index0 }}">
+              {{ labels.flow.actions.removeEvidence }}
+            </button>
+          {% endif %}
+        </fieldset>
+      </div>
+
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    {% endfor %}
+
+    <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="addEvidence">
+      {{ labels.flow.actions.addEvidence }}
+    </button>
+
+    <h2 class="govuk-heading-m">{{ labels.flow.selfAssessOutcome.reviewHeading }}</h2>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-half">
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="qualityReviewedAt">{{ labels.flow.selfAssessOutcome.qualityReviewedAt }}</label>
+          <input class="govuk-input" id="qualityReviewedAt" name="qualityReviewedAt" type="date" value="{{ form.qualityReviewedAt }}">
+        </div>
+      </div>
+      <div class="govuk-grid-column-one-half">
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="approverReviewedAt">{{ labels.flow.selfAssessOutcome.approverReviewedAt }}</label>
+          <input class="govuk-input" id="approverReviewedAt" name="approverReviewedAt" type="date" value="{{ form.approverReviewedAt }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.saveOutcome }}</button>
+      <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+    </div>
+  </form>
+{% endblock %}

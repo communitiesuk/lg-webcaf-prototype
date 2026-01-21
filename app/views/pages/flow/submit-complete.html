@@ -1,0 +1,17 @@
+{# app/views/pages/flow/submit-complete.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block content %}
+  {{ govukPanel({
+    titleText: labels.flow.submit.completeHeading,
+    text: labels.flow.submit.completeIntro
+  }) }}
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/dashboard">
+      {{ labels.flow.submit.completeReturn }}
+    </a>
+    <a class="govuk-link" href="/entry">{{ labels.flow.submit.completeStart }}</a>
+  </div>
+{% endblock %}

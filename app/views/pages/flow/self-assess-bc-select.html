@@ -1,0 +1,46 @@
+{# app/views/pages/flow/self-assess-bc-select.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.selectHeading }}</h1>
+  <p class="govuk-body">{{ labels.flow.selfAssessBC.selectIntro }}</p>
+
+  {% if outcomesPreview and outcomesPreview.length > 0 %}
+    <h2 class="govuk-heading-m">Contributing outcomes you will assess</h2>
+    <ul class="govuk-list govuk-list--bullet">
+      {% for outcome in outcomesPreview %}
+        <li>
+          <strong>{{ outcome.code }}</strong> — {{ outcome.title }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if shortlist.length > 0 %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for system in shortlist %}
+        <li>
+          <a class="govuk-link" href="/self-assess/bc/{{ system.id }}">{{ system.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">{{ labels.flow.selfAssessBC.noShortlist }}</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="/stages/2/scope/priority/shortlist">Go to priority shortlist</a>
+    </p>
+  {% endif %}
+
+  <p class="govuk-body govuk-!-margin-top-4">
+    <a class="govuk-link" href="/stages/2/scope/systems/add?returnTo=/self-assess/bc/select-system">
+      {{ labels.flow.selfAssessBC.addSystemLink }}
+    </a>
+  </p>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="/assurance-review">Continue to Stage 5: Assurance review</a>
+    <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+{% endblock %}

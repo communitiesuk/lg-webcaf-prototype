@@ -1,0 +1,148 @@
+{# app/views/pages/cycles/snapshot-dashboard.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/cycle/history">{{ labels.cycles.snapshot.backToHistory }}</a>
+
+  <h1 class="govuk-heading-l">{{ labels.cycles.snapshot.heading }}</h1>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-1">
+      <strong>{{ snapshot.cycle.name }}</strong> ({{ snapshot.cycle.id }})
+    </p>
+    <p class="govuk-body govuk-!-margin-bottom-1">Cycle started: {{ snapshotDisplay.startedAt }}</p>
+    <p class="govuk-body govuk-!-margin-bottom-0">Snapshot saved: {{ snapshotDisplay.savedAt }}</p>
+  </div>
+
+  <div class="govuk-warning-text">
+    <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+    <strong class="govuk-warning-text__text">
+      <span class="govuk-warning-text__assistive">Warning</span>
+      {{ labels.cycles.snapshot.readOnlyHint }}
+    </strong>
+  </div>
+
+  <p class="govuk-body">
+    <a class="govuk-link" href="/assessments/current/dashboard">{{ labels.cycles.snapshot.backToCurrent }}</a>
+  </p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/assessments/current/cycle/{{ cycleId }}/export.csv">Export CSV (snapshot)</a>
+  </p>
+
+  <h2 class="govuk-heading-m">Summary</h2>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-one-third">
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>Needs attention</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          {{ summaryAll.needsAttention }} (Overdue {{ summaryAll.overdue }}, Blocked {{ summaryAll.blocked }}, Ready for review {{ summaryAll.readyForReview }})
+        </p>
+      </div>
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>In progress</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ summaryAll.inProgress }}</p>
+      </div>
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>Complete</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ summaryAll.complete }}</p>
+      </div>
+    </div>
+  </div>
+
+  {% for objectiveCode, principles in grouped %}
+    <h3 class="govuk-heading-s">Objective {{ objectiveCode }}</h3>
+
+    {% for principleCode, rows in principles %}
+      <h4 class="govuk-heading-s govuk-!-margin-top-4">{{ principleCode }}</h4>
+
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Outcome</th>
+            <th scope="col" class="govuk-table__header">Owner</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+            <th scope="col" class="govuk-table__header">Attention</th>
+            <th scope="col" class="govuk-table__header">Due date</th>
+            <th scope="col" class="govuk-table__header">Next step</th>
+            <th scope="col" class="govuk-table__header">Last update</th>
+            <th scope="col" class="govuk-table__header">Evidence refs</th>
+          </tr>
+        </thead>
+
+        <tbody class="govuk-table__body">
+          {% for r in rows %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+              </td>
+
+              <td class="govuk-table__cell">
+                {% set ownerName = "Unassigned" %}
+                {% for u in users %}
+                  {% if u.id == r.ownerId %}{% set ownerName = u.name %}{% endif %}
+                {% endfor %}
+                {{ ownerName }}
+              </td>
+
+              <td class="govuk-table__cell">
+                <strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong>
+              </td>
+
+              <td class="govuk-table__cell">
+                {% if r.isOverdue %}
+                  <strong class="govuk-tag govuk-tag--orange">Overdue</strong>
+                {% endif %}
+                {% if r.isBlocked %}
+                  <strong class="govuk-tag govuk-tag--red govuk-!-margin-left-1">Blocked</strong>
+                {% endif %}
+                {% if r.isReadyForReview %}
+                  <strong class="govuk-tag govuk-tag--purple govuk-!-margin-left-1">Ready</strong>
+                {% endif %}
+                {% if r.isMissingEvidence %}
+                  <strong class="govuk-tag govuk-tag--orange govuk-!-margin-left-1">Missing evidence</strong>
+                {% endif %}
+                {% if not r.isOverdue and not r.isBlocked and not r.isReadyForReview and not r.isMissingEvidence %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="govuk-table__cell">
+                {{ r.dueDate or "—" }}
+              </td>
+
+              <td class="govuk-table__cell">
+                {% if r.nextStep %}
+                  {{ r.nextStep | truncate(60) }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="govuk-table__cell">
+                {% if r.lastUpdateAt %}
+                  <div class="govuk-body govuk-!-margin-bottom-0">{{ r.lastUpdateAt }}</div>
+                  {% if r.lastUpdateSummary %}
+                    <div class="govuk-hint govuk-!-margin-bottom-0">{{ r.lastUpdateSummary | truncate(50) }}</div>
+                  {% endif %}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="govuk-table__cell">
+                {% if r.evidenceCount > 0 %}{{ r.evidenceCount }}{% else %}0{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% endfor %}
+{% endblock %}

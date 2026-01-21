@@ -1,0 +1,51 @@
+// app/data/seed/mhclg-reporting.js
+// Simple aggregate reporting snapshot for MHCLG (prototype data).
+
+module.exports = {
+  summary: [
+    { label: "Total councils", value: 8 },
+    { label: "Active assessments", value: 6 },
+    { label: "Submitted", value: 1 },
+    { label: "Awaiting assurance", value: 2 },
+  ],
+  objectives: [
+    {
+      objective: "Objective A",
+      title: "Managing security risk",
+      complete: "45%",
+      partial: "35%",
+      notAchieved: "20%",
+    },
+    {
+      objective: "Objective B",
+      title: "Protecting against attack",
+      complete: "32%",
+      partial: "40%",
+      notAchieved: "28%",
+    },
+    {
+      objective: "Objective C",
+      title: "Detecting events",
+      complete: "38%",
+      partial: "34%",
+      notAchieved: "28%",
+    },
+    {
+      objective: "Objective D",
+      title: "Minimising impact",
+      complete: "41%",
+      partial: "37%",
+      notAchieved: "22%",
+    },
+  ],
+  completeness: [
+    { label: "Councils with all outcomes judged", value: 2 },
+    { label: "Councils missing evidence references", value: 5 },
+    { label: "Councils awaiting IIP sign-off", value: 3 },
+  ],
+  quality: [
+    { label: "Outcomes missing evidence refs", value: 14 },
+    { label: "Outcomes awaiting assurance", value: 9 },
+    { label: "Outcomes blocked", value: 6 },
+  ],
+};

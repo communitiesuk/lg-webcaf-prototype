@@ -1,0 +1,39 @@
+{# app/views/pages/flow/self-assess-bc.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.selfAssessBC.intro }}</p>
+
+  {% if systems.length > 0 %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for system in systems %}
+        <li>
+          <a class="govuk-link" href="/self-assess/bc/{{ system.id }}">{{ system.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">No critical systems added yet.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">{{ labels.flow.selfAssessBC.addHeading }}</h2>
+
+  <form method="post" action="/self-assess/bc">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="criticalSystemName">{{ labels.flow.selfAssessBC.nameLabel }}</label>
+      {% if error %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span> {{ error }}
+        </p>
+      {% endif %}
+      <input class="govuk-input" id="criticalSystemName" name="criticalSystemName" type="text">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.selfAssessBC.addButton }}</button>
+  </form>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+{% endblock %}

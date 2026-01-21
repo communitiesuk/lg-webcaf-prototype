@@ -1,0 +1,61 @@
+{# app/views/pages/stages/scope-mapping-review.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">{{ labels.stages.scope.mapping.reviewTitle }}</h1>
+
+  {% if systems.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">System</th>
+          <th class="govuk-table__header" scope="col">Mapped services</th>
+          <th class="govuk-table__header" scope="col"></th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for system in systems %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ system.name }}</td>
+            <td class="govuk-table__cell">
+              {% set mapping = (mappings | selectattr('systemId','equalto',system.id) | list | first) %}
+              {% if mapping and mapping.serviceIds.length > 0 %}
+                <ul class="govuk-list govuk-list--bullet">
+                  {% for id in mapping.serviceIds %}
+                    {% for service in services %}
+                      {% if service.id == id %}
+                        <li>{{ service.name }}</li>
+                      {% endif %}
+                    {% endfor %}
+                  {% endfor %}
+                </ul>
+              {% else %}
+                Not mapped
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="/stages/2/scope/mapping/{{ system.id }}">Change</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No systems available to map.</p>
+  {% endif %}
+
+  {% if systems.length > 0 %}
+    {% if nextMappingId %}
+      <div class="govuk-inset-text">Map every system before prioritisation.</div>
+      <a class="govuk-button" href="/stages/2/scope/mapping/{{ nextMappingId }}">
+        Continue mapping
+      </a>
+    {% else %}
+      <a class="govuk-button" href="{{ priorityUrl }}">
+        Continue to prioritisation
+      </a>
+    {% endif %}
+  {% endif %}
+{% endblock %}
