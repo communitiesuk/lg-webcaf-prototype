@@ -1,0 +1,37 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2/internal-sign-off">Back</a>
+  <h1 class="govuk-heading-l">Submit Stage 2 IIP to assurer</h1>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Stage 2 IIP submitted to assurer.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/submit-assurer">
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Confirm submission</legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage2SubmitAssurerConfirm" name="stage2SubmitAssurerConfirm" type="radio" value="yes">
+            <label class="govuk-label govuk-radios__label" for="stage2SubmitAssurerConfirm">Yes, submit to assurer</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <button class="govuk-button" type="submit">Submit to assurer</button>
+  </form>
+{% endblock %}

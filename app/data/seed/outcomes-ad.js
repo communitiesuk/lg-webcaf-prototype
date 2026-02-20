@@ -7,16 +7,21 @@ module.exports = {
     {
       code: "A",
       title: "Managing security risk",
+      description:
+        "Appropriate organisational structures, policies, processes and procedures in place to understand, assess and systematically manage security risks to network and information systems supporting essential functions.",
       principles: [
         {
           code: "A1",
           title: "Governance",
+          description:
+            "The organisation has appropriate management policies, processes and procedures in place to govern its approach to the security of network and information systems.",
           outcomes: [
             {
               id: "A1a",
               code: "A1.a",
-              title: "Board direction",
-              description: "Leaders set direction, priorities and accountability for cyber resilience.",
+              title: "Board Direction",
+              description:
+                "You have effective organisational security management led at board level and articulated clearly in corresponding policies.",
             },
             {
               id: "A1b",

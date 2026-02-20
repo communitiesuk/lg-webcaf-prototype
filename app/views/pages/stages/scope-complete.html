@@ -1,0 +1,24 @@
+{# app/views/pages/stages/scope-complete.html #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+{% endblock %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Scope pack complete</h1>
+  <p class="govuk-body">
+    You have completed scope setup for this assessment period.
+  </p>
+  <p class="govuk-body">
+    You can now continue your CAF journey.
+  </p>
+
+  <p class="govuk-body">
+    <a class="govuk-button" href="{{ continueHref }}">{{ continueText }}</a>
+  </p>
+
+  <p class="govuk-body">
+    <a class="govuk-link" href="/assessments/current/journey">Return to CAF journey</a>
+  </p>
+{% endblock %}

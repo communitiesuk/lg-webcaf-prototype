@@ -21,6 +21,7 @@
     </div>
   {% endif %}
   <form method="post" action="/research-start">
+    <input type="hidden" name="nextPath" value="{{ nextPath or '' }}">
     <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
@@ -53,17 +54,4 @@
     <button class="govuk-button" data-module="govuk-button" type="submit">Start journey</button>
   </form>
 
-  <h2 class="govuk-heading-m">What to test</h2>
-  <ul class="govuk-list govuk-list--bullet">
-    <li>Can the user understand the journey and choose where to start?</li>
-    <li>Can they complete a self-assessment outcome and add evidence references?</li>
-    <li>Can they generate a small improvement plan from gaps?</li>
-  </ul>
-
-  <p class="govuk-body">
-    <a class="govuk-link" href="/start">Go to public start page</a>
-  </p>
-  <p class="govuk-body">
-    <a class="govuk-link" href="/research-start">Reset session and choose a new role</a>
-  </p>
 {% endblock %}

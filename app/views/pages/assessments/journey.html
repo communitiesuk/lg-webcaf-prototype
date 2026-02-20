@@ -1,0 +1,26 @@
+{# app/views/pages/assessments/journey.html #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">CAF journey</h1>
+  <p class="govuk-body">Use this task list to move through the full CAF process.</p>
+
+  {% if nextAction %}
+    <div class="govuk-inset-text">
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Next recommended action</h2>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        <a class="govuk-link govuk-link--no-visited-state" href="{{ nextAction.href }}">
+          Continue to {{ nextAction.text | lower }}
+        </a>
+      </p>
+    </div>
+  {% endif %}
+
+  {% for section in journeySections %}
+    <h2 class="govuk-heading-m">{{ section.heading }}</h2>
+    {{ govukTaskList({
+      items: section.items
+    }) }}
+  {% endfor %}
+{% endblock %}

@@ -7,16 +7,21 @@ module.exports = {
     {
       code: "B",
       title: "Protecting against cyber attack",
+      description:
+        "Proportionate security measures are in place to protect network and information systems supporting essential functions from cyber attack.",
       principles: [
         {
           code: "B1",
           title: "Service protection policies, processes and procedures",
+          description:
+            "The organisation defines, implements, communicates and enforces appropriate policies, processes and procedures that direct its overall approach to securing systems and data that support the operation of essential functions.",
           outcomes: [
             {
               id: "B1a",
               code: "B1.a",
-              title: "Policy/process/procedure development",
-              description: "Policies, processes and procedures are defined for protection.",
+              title: "Policy, Process and Procedure Development",
+              description:
+                "You have developed and continue to improve a set of cyber security and resilience policies, processes and procedures that manage and mitigate the risk of adverse impact on your essential function(s).",
             },
             {
               id: "B1b",

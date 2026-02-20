@@ -16,13 +16,22 @@
         <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.statusLabel }}</th>
         <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.lastUpdate }}</th>
         <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.evidence }}</th>
+        <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.tracking.evidenceRef }}</th>
       </tr>
     </thead>
     <tbody class="govuk-table__body">
       {% for action in actions %}
         <tr class="govuk-table__row">
           <td class="govuk-table__cell">{{ action.title }}</td>
-          <td class="govuk-table__cell">{{ action.status or "Not started" }}</td>
+          <td class="govuk-table__cell">
+            {% if action.status == "in_progress" %}
+              In progress
+            {% elif action.status == "complete" %}
+              Complete
+            {% else %}
+              Planned
+            {% endif %}
+          </td>
           <td class="govuk-table__cell">
             {% if action.lastUpdateAt %}
               {{ action.lastUpdateAt }}{% if action.lastUpdateNote %} — {{ action.lastUpdateNote }}{% endif %}
@@ -31,6 +40,7 @@
             {% endif %}
           </td>
           <td class="govuk-table__cell">{{ action.expectedEvidence }}</td>
+          <td class="govuk-table__cell">{{ action.evidenceRef or "—" }}</td>
         </tr>
       {% endfor %}
     </tbody>

@@ -1,0 +1,46 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2/review">Back</a>
+  <h1 class="govuk-heading-l">IIP Stage 2 internal sign-off</h1>
+  <p class="govuk-body">CAF lead confirms internal quality assurer and internal approver sign-off.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Internal sign-off saved.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/internal-sign-off">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2QualityAssurerName">Internal quality assurer name</label>
+      <input class="govuk-input" id="stage2QualityAssurerName" name="stage2QualityAssurerName" type="text" value="{{ approvals.qualityAssurerName }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2QualityAssurerDate">Internal quality assurer date</label>
+      <input class="govuk-input govuk-input--width-10" id="stage2QualityAssurerDate" name="stage2QualityAssurerDate" type="date" value="{{ approvals.qualityAssurerDate }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2ApproverName">Internal approver name</label>
+      <input class="govuk-input" id="stage2ApproverName" name="stage2ApproverName" type="text" value="{{ approvals.approverName }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2ApproverDate">Internal approver date</label>
+      <input class="govuk-input govuk-input--width-10" id="stage2ApproverDate" name="stage2ApproverDate" type="date" value="{{ approvals.approverDate }}">
+    </div>
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit">Save sign-off</button>
+      <a class="govuk-link" href="/improvement-plan/stage-2/submit-assurer">Submit to assurer</a>
+    </div>
+  </form>
+{% endblock %}

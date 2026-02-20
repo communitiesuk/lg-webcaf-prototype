@@ -48,13 +48,13 @@
 
   {% if systems.length > 0 %}
     {% if nextMappingId %}
-      <div class="govuk-inset-text">Map every system before prioritisation.</div>
+      <div class="govuk-inset-text">Map every system before continuing.</div>
       <a class="govuk-button" href="/stages/2/scope/mapping/{{ nextMappingId }}">
         Continue mapping
       </a>
     {% else %}
-      <a class="govuk-button" href="{{ priorityUrl }}">
-        Continue to prioritisation
+      <a class="govuk-button" href="{{ nextUrl }}">
+        Continue to scope summary
       </a>
     {% endif %}
   {% endif %}

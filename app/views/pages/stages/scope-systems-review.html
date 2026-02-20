@@ -13,6 +13,7 @@
           <th class="govuk-table__header" scope="col">System</th>
           <th class="govuk-table__header" scope="col">Type</th>
           <th class="govuk-table__header" scope="col">Owner/supplier</th>
+          <th class="govuk-table__header" scope="col">In scope</th>
           <th class="govuk-table__header" scope="col">Diagram refs</th>
         </tr>
       </thead>
@@ -27,6 +28,7 @@
             </td>
             <td class="govuk-table__cell">{{ system.systemType or "—" }}</td>
             <td class="govuk-table__cell">{{ system.ownerSupplier or "—" }}</td>
+            <td class="govuk-table__cell">{{ "Yes" if system.inScope else "No" }}</td>
             <td class="govuk-table__cell">
               {% if system.diagramRefs and system.diagramRefs.length > 0 %}
                 {{ system.diagramRefs | join(", ") }}
@@ -47,8 +49,8 @@
       Add another system
     </a>
     {% if systems.length > 0 %}
-      <a class="govuk-button" href="{{ nextMappingUrl }}">
-        {{ labels.stages.scope.systems.continueButton }}
+      <a class="govuk-button" href="{{ nextAction.href }}">
+        {{ nextAction.text }}
       </a>
     {% endif %}
   </div>

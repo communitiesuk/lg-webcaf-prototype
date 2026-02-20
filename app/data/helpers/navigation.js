@@ -40,30 +40,15 @@ function buildNavigation(currentPath, role) {
   }
 
   const items = [
+    { id: "journey", text: "CAF journey", href: "/assessments/current/journey", match: ["/assessments/current/journey"] },
     { id: "prepare", text: "Prepare", href: "/prepare", match: ["/prepare"] },
-    { id: "profile", text: "Profile", href: "/profile", match: ["/profile"] },
+    { id: "scope", text: "Set your scope", href: "/stages/2/scope", match: ["/stages/2/scope"] },
     {
       id: "tracker",
       text: "Progress tracker",
       href: "/assessments/current/dashboard",
       match: ["/assessments/current"],
     },
-    {
-      id: "self-ad",
-      text: "Self-assess (A&D)",
-      href: "/self-assess/ad",
-      match: ["/self-assess/ad"],
-    },
-    {
-      id: "self-bc",
-      text: "Self-assess (B&C)",
-      href: "/self-assess/bc",
-      match: ["/self-assess/bc"],
-    },
-    { id: "evidence", text: "Evidence pack", href: "/evidence-library", match: ["/evidence-library"] },
-    { id: "assure", text: "Assurance", href: "/assurance-review", match: ["/assurance-review"] },
-    { id: "improve", text: "Improvement plan", href: "/improvement-plan", match: ["/improvement-plan"] },
-    { id: "submit", text: "Submit", href: "/submit-progress", match: ["/submit-progress"] },
   ];
 
   return items.map((item) => ({

@@ -101,6 +101,7 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
   const isComplete = row.status === "complete";
   const isBlocked = row.status === "blocked";
   const isReadyForReview = row.status === "ready_for_review";
+  const isFeedbackReceived = row.status === "feedback_received";
   const isOverdue = Boolean(due && due < todayMidnight && !isComplete);
 
   const currentUserId = opts.currentUserId || null;
@@ -110,7 +111,7 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
 
   const isMine = Boolean(isOwner || isCollaborator);
 
-  const isNeedsAttention = Boolean(isOverdue || isBlocked || isReadyForReview);
+  const isNeedsAttention = Boolean(isOverdue || isBlocked || isReadyForReview || isFeedbackReceived);
 
   const statusMeta =
     statusesDef.options.find((s) => s.value === row.status) || statusesDef.options[0];

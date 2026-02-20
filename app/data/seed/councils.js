@@ -15,6 +15,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-11-08",
     nextMilestone: "Complete A&D outcomes",
+    scopeStatus: "In progress",
+    scopeBlocker: "",
     updatedAt: "2024-10-04",
   },
   {
@@ -30,6 +32,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-11-20",
     nextMilestone: "Start scope pack",
+    scopeStatus: "Stalled",
+    scopeBlocker: "Awaiting architecture diagram",
     updatedAt: "2024-10-01",
   },
   {
@@ -45,6 +49,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-10-22",
     nextMilestone: "Resolve assurance feedback",
+    scopeStatus: "Complete",
+    scopeBlocker: "",
     updatedAt: "2024-09-27",
   },
   {
@@ -60,6 +66,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-10-18",
     nextMilestone: "Assurer sign-off",
+    scopeStatus: "Complete",
+    scopeBlocker: "",
     updatedAt: "2024-09-25",
   },
   {
@@ -75,6 +83,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-12-02",
     nextMilestone: "Confirm priority shortlist",
+    scopeStatus: "Stalled",
+    scopeBlocker: "Needs SLT decision",
     updatedAt: "2024-09-22",
   },
   {
@@ -90,6 +100,8 @@ module.exports = [
     submissionAt: "2024-09-12",
     iipDue: "2024-08-30",
     nextMilestone: "Await MHCLG review",
+    scopeStatus: "Complete",
+    scopeBlocker: "",
     updatedAt: "2024-09-20",
   },
   {
@@ -105,6 +117,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-11-01",
     nextMilestone: "Complete B&C outcomes",
+    scopeStatus: "In progress",
+    scopeBlocker: "",
     updatedAt: "2024-09-18",
   },
   {
@@ -120,6 +134,8 @@ module.exports = [
     submissionAt: "",
     iipDue: "2024-10-28",
     nextMilestone: "Complete evidence pack",
+    scopeStatus: "In progress",
+    scopeBlocker: "",
     updatedAt: "2024-09-15",
   },
 ];

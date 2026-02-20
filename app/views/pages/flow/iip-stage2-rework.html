@@ -1,0 +1,34 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
+  <h1 class="govuk-heading-l">IIP rework</h1>
+  <p class="govuk-body">Assurer requested rework. Update your rows offline if needed, then record what changed.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Rework recorded. Complete internal sign-off again before re-submitting.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/rework">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2ReworkNotes">Rework summary</label>
+      <textarea class="govuk-textarea" id="stage2ReworkNotes" name="stage2ReworkNotes" rows="5">{{ assessment.improvementPlan.stage2.rework.notes }}</textarea>
+    </div>
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit">Record rework</button>
+      <a class="govuk-link" href="/improvement-plan/stage-2/internal-sign-off">Go to internal sign-off</a>
+    </div>
+  </form>
+{% endblock %}

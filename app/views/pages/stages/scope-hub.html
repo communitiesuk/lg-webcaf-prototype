@@ -1,5 +1,7 @@
 {# app/views/pages/stages/scope-hub.html #}
 {% extends "layouts/main.html" %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
   {% if gatedNotice %}
@@ -15,70 +17,142 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">{{ labels.stages.scope.hub.title }}</h1>
+  {% set contextComplete = assessment.scope.context and assessment.scope.context.completed %}
+  {% set rolesComplete = assessment.scope.rolesConfirmed %}
+  {% set strategyComplete = contextComplete and rolesComplete %}
+  {% set servicesComplete = assessment.scope.servicesConfirmed %}
+  {% set systemsComplete = summary.systemsCount >= 3 and summary.inScopeSystemsCount >= 3 and summary.mappedCount == summary.systemsCount %}
+  {% set servicesMethodologyDone = assessment.scope.essentialMethodology and assessment.scope.essentialMethodology.completed %}
+  {% set systemsMethodologyDone = assessment.scope.criticalMethodology and assessment.scope.criticalMethodology.completed %}
+  {% set strategyTaskHref = "/stages/2/scope/context" if not contextComplete else ("/stages/2/scope/roles" if not rolesComplete else "/stages/2/scope/context") %}
+  {% set servicesTaskHref = "/stages/2/scope/services/add" if servicesMethodologyDone else "/stages/2/scope/services/methodology" %}
+  {% set systemsTaskHref = "/stages/2/scope/systems/add" if systemsMethodologyDone else "/stages/2/scope/systems/methodology" %}
+  {% set servicesLocked = not (contextComplete and rolesComplete) %}
+  {% set systemsLocked = not (contextComplete and rolesComplete and servicesComplete) %}
+  {% set shareLocked = not systemsComplete %}
+  {% set rolesInProgress = assessment.scope.rolesLead or assessment.scope.rolesSme or assessment.scope.rolesTech or assessment.scope.rolesApprover %}
+  {% set strategyInProgress = contextComplete or rolesInProgress %}
+  {% set systemsInProgress = summary.systemsCount > 0 or summary.mappedCount > 0 or summary.inScopeSystemsCount > 0 %}
+  {% set scopeTasksCompleted = (1 if strategyComplete else 0) + (1 if servicesComplete else 0) + (1 if systemsComplete else 0) + (1 if summary.isComplete else 0) %}
+  {% set scopeTasksTotal = 4 %}
+
+  <h1 class="govuk-heading-l">Set your scope</h1>
   <p class="govuk-body">{{ labels.stages.scope.hub.intro }}</p>
 
-  <div class="govuk-grid-row app-dashboard-summary">
-    <div class="govuk-grid-column-one-half">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Essential services register</p>
-        <p class="app-dashboard-card__value">{{ summary.servicesCount }}</p>
-        <p class="app-dashboard-card__meta">
-          {{ summary.inScopeCount }} in scope
-        </p>
-        <p class="govuk-body">
-          <a class="govuk-link" href="/stages/2/scope/services/add">Add or review services</a>
-        </p>
-      </div>
-    </div>
-    <div class="govuk-grid-column-one-half">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Critical systems register</p>
-        <p class="app-dashboard-card__value">{{ summary.systemsCount }}</p>
-        <p class="app-dashboard-card__meta">
-          {{ summary.mappedCount }} mapped to services
-        </p>
-        <p class="govuk-body">
-          <a class="govuk-link" href="/stages/2/scope/systems/add">Add or review systems</a>
-        </p>
-      </div>
-    </div>
-  </div>
+  {{ govukSummaryList({
+    rows: [
+      {
+        key: { text: "Essential services in scope" },
+        value: { text: summary.inScopeCount + " (of " + summary.servicesCount + " listed)" }
+      },
+      {
+        key: { text: "Critical systems in scope" },
+        value: { text: summary.inScopeSystemsCount + " (of " + summary.systemsCount + " listed)" }
+      },
+      {
+        key: { text: "Critical systems mapped" },
+        value: { text: summary.mappedCount + " (of " + summary.systemsCount + " listed)" }
+      },
+      {
+        key: { text: "Scope tasks complete" },
+        value: { text: scopeTasksCompleted + " of " + scopeTasksTotal }
+      },
+      {
+        key: { text: "Scope pack ready" },
+        value: { text: "Yes" if summary.isComplete else "No" }
+      }
+    ]
+  }) }}
 
-  <div class="govuk-grid-row app-dashboard-summary">
-    <div class="govuk-grid-column-one-half">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Mapping coverage</p>
-        <p class="app-dashboard-card__value">{{ summary.mappedCount }}</p>
-        <p class="app-dashboard-card__meta">
-          of {{ summary.systemsCount }} systems mapped
-        </p>
-        <p class="govuk-body">
-          <a class="govuk-link" href="{{ summary.mappingNextUrl }}">Continue mapping</a>
-        </p>
-      </div>
+  {% if summary.isComplete %}
+    <div class="govuk-inset-text">
+      Scope pack is complete.
+      <a class="govuk-link" href="/stages/2/scope/complete">View completion page</a>.
     </div>
-    <div class="govuk-grid-column-one-half">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Priority shortlist</p>
-        <p class="app-dashboard-card__value">{{ summary.shortlistCount }}</p>
-        <p class="app-dashboard-card__meta">
-          {{ summary.priorityCount }} systems prioritised
-        </p>
-        <p class="govuk-body">
-          <a class="govuk-link" href="/stages/2/scope/priority/shortlist">Review shortlist</a>
-        </p>
-      </div>
+  {% else %}
+    <div class="govuk-inset-text">
+      <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Next scope action</h2>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        <a class="govuk-link govuk-link--no-visited-state" href="{{ summary.nextStepUrl }}">Continue to {{ summary.nextStepLabel | lower }}</a>
+      </p>
     </div>
-  </div>
+  {% endif %}
 
-  <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="{{ summary.nextStepUrl }}">
-      {% if summary.isComplete %}
-        {{ labels.stages.scope.hub.completeContinue }}
-      {% else %}
-        {{ labels.stages.scope.hub.continue }}
-      {% endif %}
-    </a>
-  </div>
+  {{ govukTaskList({
+    items: [
+      {
+        title: {
+          text: "Review and confirm organisational strategic context"
+        },
+        href: strategyTaskHref,
+        hint: {
+          text: "Done when organisational context and CAF team roles are confirmed."
+        },
+        status: {
+          tag: {
+            text: "Completed" if strategyComplete else ("In progress" if strategyInProgress else "Ready to start"),
+            classes: "govuk-tag--green" if strategyComplete else "govuk-tag--blue"
+          }
+        }
+      },
+      {
+        title: {
+          text: "Identify essential services"
+        },
+        href: servicesTaskHref if not servicesLocked else "",
+        hint: {
+          text: "Done when essential services are added and confirmed in scope."
+        },
+        status: {
+          tag: {
+            text: "Completed" if servicesComplete else ("Cannot start yet" if servicesLocked else ("In progress" if summary.servicesCount > 0 else "Ready to start")),
+            classes: "govuk-tag--green" if servicesComplete else ("govuk-tag--grey" if servicesLocked else "govuk-tag--blue")
+          }
+        }
+      },
+      {
+        title: {
+          text: "Identify and prioritise 3 critical systems for assessment"
+        },
+        href: systemsTaskHref if not systemsLocked else "",
+        hint: {
+          text: "Done when at least 3 critical systems are added, mapped and marked in scope."
+        },
+        status: {
+          tag: {
+            text: "Completed" if systemsComplete else ("Cannot start yet" if systemsLocked else ("In progress" if systemsInProgress else "Ready to start")),
+            classes: "govuk-tag--green" if systemsComplete else ("govuk-tag--grey" if systemsLocked else "govuk-tag--blue")
+          }
+        }
+      },
+      {
+        title: {
+          text: "Share with assurers for feedback"
+        },
+        href: "/stages/2/scope/priority/confirm" if not shareLocked else "",
+        hint: {
+          text: "Done when CAF lead confirms internal sign-off and submits the scope pack."
+        },
+        status: {
+          tag: {
+            text: "Completed" if summary.isComplete else ("Cannot start yet" if shareLocked else "Ready to start"),
+            classes: "govuk-tag--green" if summary.isComplete else ("govuk-tag--grey" if shareLocked else "govuk-tag--blue")
+          }
+        }
+      }
+    ]
+  }) }}
+
+  <details class="govuk-details" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Shared resources</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-body-s govuk-!-margin-bottom-0">
+        <li><a class="govuk-link" href="#">CAF evidence register template</a></li>
+        <li><a class="govuk-link" href="#">Critical systems mapping worksheet</a></li>
+        <li><a class="govuk-link" href="#">Peer review checklist</a></li>
+      </ul>
+    </div>
+  </details>
 {% endblock %}

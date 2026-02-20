@@ -43,6 +43,13 @@
     </tbody>
   </table>
 
+  <h2 class="govuk-heading-m">Top gaps to address</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.gaps %}
+      <li><strong>{{ item.label }}</strong> — {{ item.value }}</li>
+    {% endfor %}
+  </ul>
+
   <h2 class="govuk-heading-m">Completeness signals</h2>
   <ul class="govuk-list govuk-list--bullet">
     {% for item in reporting.completeness %}
@@ -54,6 +61,34 @@
   <ul class="govuk-list govuk-list--bullet">
     {% for item in reporting.quality %}
       <li><strong>{{ item.value }}</strong> — {{ item.label }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="govuk-heading-m">Common sector challenges</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.trends %}
+      <li><strong>{{ item.value }}</strong> — {{ item.label }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="govuk-heading-m">MHCLG actions</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.interventions %}
+      <li><strong>{{ item.value }}</strong> — {{ item.label }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="govuk-heading-m">Best practice shared</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.bestPractice %}
+      <li><strong>{{ item.label }}</strong> — {{ item.value }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="govuk-heading-m">Emerging risks</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in reporting.emergingRisks %}
+      <li><strong>{{ item.label }}</strong> — {{ item.value }}</li>
     {% endfor %}
   </ul>
 {% endblock %}

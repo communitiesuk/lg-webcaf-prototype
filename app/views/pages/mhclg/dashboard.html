@@ -34,19 +34,6 @@
     </div>
   </div>
 
-  <div class="govuk-inset-text">
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Data quality snapshot</strong></p>
-    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-      {% if qualitySnapshot %}
-        {% for item in qualitySnapshot %}
-          <li>{{ item.value }} {{ item.label }}</li>
-        {% endfor %}
-      {% else %}
-        <li>Data quality signals unavailable</li>
-      {% endif %}
-    </ul>
-  </div>
-
   <details class="govuk-details" data-module="govuk-details">
     <summary class="govuk-details__summary">
       <span class="govuk-details__summary-text">Filter by stage</span>
@@ -96,6 +83,15 @@
     <p class="govuk-body">
       <a class="govuk-link" href="/mhclg/engagement">View engagement queue</a>
     </p>
+    {% if engagementSummary.commonIssues and engagementSummary.commonIssues.length > 0 %}
+      <h3 class="govuk-heading-s">Common issues (top 3)</h3>
+      <ul class="govuk-list govuk-list--bullet">
+        {% for item in engagementSummary.commonIssues %}
+          <li>{{ item.label }} ({{ item.count }})</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
   {% endif %}
 
   <h2 class="govuk-heading-m">Progress snapshot</h2>
@@ -187,6 +183,19 @@
                   <div class="govuk-summary-list__row">
                     <dt class="govuk-summary-list__key">Next milestone</dt>
                     <dd class="govuk-summary-list__value">{{ council.nextMilestone }}</dd>
+                  </div>
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">Scope pack status</dt>
+                    <dd class="govuk-summary-list__value">
+                      {% if council.scopeStatus %}
+                        <strong class="govuk-tag govuk-tag--grey">{{ council.scopeStatus }}</strong>
+                        {% if council.scopeBlocker %}
+                          <div class="govuk-hint">Blocker: {{ council.scopeBlocker }}</div>
+                        {% endif %}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </dd>
                   </div>
                   <div class="govuk-summary-list__row">
                     <dt class="govuk-summary-list__key">Last updated</dt>

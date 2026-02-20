@@ -1,0 +1,45 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
+  <h1 class="govuk-heading-l">Submit Stage 2 IIP to MHCLG</h1>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Stage 2 IIP submitted to MHCLG.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/submit-mhclg">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2MhclgReference">Submission reference</label>
+      <input class="govuk-input" id="stage2MhclgReference" name="stage2MhclgReference" type="text">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2MhclgNotes">Notes (optional)</label>
+      <textarea class="govuk-textarea" id="stage2MhclgNotes" name="stage2MhclgNotes" rows="4"></textarea>
+    </div>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Confirm submission</legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage2SubmitMhclgConfirm" name="stage2SubmitMhclgConfirm" type="radio" value="yes">
+            <label class="govuk-label govuk-radios__label" for="stage2SubmitMhclgConfirm">Yes, submit to MHCLG</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <button class="govuk-button" type="submit">Submit to MHCLG</button>
+  </form>
+{% endblock %}

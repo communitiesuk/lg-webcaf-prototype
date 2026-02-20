@@ -101,6 +101,43 @@
       <textarea class="govuk-textarea" id="priorityRationale" name="priorityRationale" rows="4">{{ data.rationale }}</textarea>
     </div>
 
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityConfidence') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" id="priorityConfidence">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Confidence in this selection</legend>
+        {% if error and (error.items | selectattr('field','equalto','priorityConfidence') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','priorityConfidence') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="priorityConfidence-high" name="priorityConfidence" type="radio" value="high" {% if data.confidence == "high" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="priorityConfidence-high">High</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="priorityConfidence-medium" name="priorityConfidence" type="radio" value="medium" {% if data.confidence == "medium" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="priorityConfidence-medium">Medium</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="priorityConfidence-low" name="priorityConfidence" type="radio" value="low" {% if data.confidence == "low" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="priorityConfidence-low">Low</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityConfidenceRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="priorityConfidenceRationale">Why this level of confidence?</label>
+      {% if error and (error.items | selectattr('field','equalto','priorityConfidenceRationale') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','priorityConfidenceRationale') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="priorityConfidenceRationale" name="priorityConfidenceRationale" rows="3">{{ data.confidenceRationale }}</textarea>
+    </div>
+
     <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
   </form>
 {% endblock %}

@@ -40,6 +40,14 @@
       <dt class="govuk-summary-list__key">Acknowledged</dt>
       <dd class="govuk-summary-list__value">{{ submission.acknowledgedAt or "—" }}</dd>
     </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Scope pack snapshot included</dt>
+      <dd class="govuk-summary-list__value">{% if submission.scopePackIncluded == false %}No{% else %}Yes{% endif %}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Scope pack snapshot timestamp</dt>
+      <dd class="govuk-summary-list__value">{{ submission.scopePackSnapshotAt or "—" }}</dd>
+    </div>
   </dl>
 
   <div class="govuk-button-group">

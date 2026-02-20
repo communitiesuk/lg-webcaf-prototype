@@ -2,7 +2,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/1">Back</a>
+  <a class="govuk-back-link" href="/start">Back</a>
 
   {% if gatedNotice %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
@@ -19,41 +19,93 @@
 
   <h1 class="govuk-heading-l">{{ labels.flow.prepare.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.prepare.intro }}</p>
-  <p class="govuk-body">
-    <a class="govuk-link" href="/stages/1">{{ labels.flow.prepare.contextLink }}</a>
-  </p>
 
-  <h2 class="govuk-heading-m">{{ labels.flow.prepare.checklistHeading }}</h2>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h2 class="govuk-heading-m">{{ labels.flow.prepare.checklistHeading }}</h2>
 
-  <form method="post" action="/prepare">
-    <div class="govuk-form-group">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-          {{ labels.flow.prepare.checklistLegend }}
-        </legend>
-        <div class="govuk-checkboxes">
-          <div class="govuk-checkboxes__item">
-            <input class="govuk-checkboxes__input" id="prep-guidance" name="prepChecklist" type="checkbox" value="guidance" {% if defaults.guidanceRead %}checked{% endif %}>
-            <label class="govuk-label govuk-checkboxes__label" for="prep-guidance">
-              {{ labels.flow.prepare.checklist.guidance }}
-            </label>
+      <form method="post" action="/prepare">
+        {% if error %}
+          <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <div role="alert">
+              <h2 class="govuk-error-summary__title">There is a problem</h2>
+              <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                  {% for item in error.items %}
+                    <li><a href="#prepChecklist">{{ item.text }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
           </div>
-          <div class="govuk-checkboxes__item">
-            <input class="govuk-checkboxes__input" id="prep-contributors" name="prepChecklist" type="checkbox" value="contributors" {% if defaults.contributorsConfirmed %}checked{% endif %}>
-            <label class="govuk-label govuk-checkboxes__label" for="prep-contributors">
-              {{ labels.flow.prepare.checklist.contributors }}
-            </label>
-          </div>
-          <div class="govuk-checkboxes__item">
-            <input class="govuk-checkboxes__input" id="prep-caf" name="prepChecklist" type="checkbox" value="caf" {% if defaults.cafReviewed %}checked{% endif %}>
-            <label class="govuk-label govuk-checkboxes__label" for="prep-caf">
-              {{ labels.flow.prepare.checklist.caf }}
-            </label>
-          </div>
+        {% endif %}
+
+        <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+              {{ labels.flow.prepare.checklistLegend }}
+            </legend>
+            {% if error %}
+              <p class="govuk-error-message" id="prepChecklist">
+                <span class="govuk-visually-hidden">Error:</span> {{ error.items[0].text }}
+              </p>
+            {% endif %}
+            <div class="govuk-checkboxes">
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-awareness" name="prepChecklist" type="checkbox" value="awareness" {% if defaults.awareness %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-awareness">
+                  {{ labels.flow.prepare.checklist.awareness }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-signoff" name="prepChecklist" type="checkbox" value="signoff" {% if defaults.signoff %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-signoff">
+                  {{ labels.flow.prepare.checklist.signoff }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-support" name="prepChecklist" type="checkbox" value="support" {% if defaults.support %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-support">
+                  {{ labels.flow.prepare.checklist.support }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-understanding" name="prepChecklist" type="checkbox" value="understanding" {% if defaults.understanding %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-understanding">
+                  {{ labels.flow.prepare.checklist.understanding }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-governance" name="prepChecklist" type="checkbox" value="governance" {% if defaults.governance %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-governance">
+                  {{ labels.flow.prepare.checklist.governance }}
+                </label>
+              </div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="prep-assurers" name="prepChecklist" type="checkbox" value="assurers" {% if defaults.assurers %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="prep-assurers">
+                  {{ labels.flow.prepare.checklist.assurers }}
+                </label>
+              </div>
+            </div>
+          </fieldset>
         </div>
-      </fieldset>
-    </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.continue }}</button>
-  </form>
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.continue }}</button>
+      </form>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Related guidance</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-body-s govuk-!-margin-bottom-0">
+        <li><a class="govuk-link" href="#">Understand the CAF</a></li>
+        <li><a class="govuk-link" href="#">How to prepare</a></li>
+        <li><a class="govuk-link" href="#">Roles and responsibilities</a></li>
+        <li><a class="govuk-link" href="#">Set your scope</a></li>
+        <li><a class="govuk-link" href="#">Identify your essential services</a></li>
+        <li><a class="govuk-link" href="#">Identify your critical systems</a></li>
+        <li><a class="govuk-link" href="#">Prioritise your critical systems</a></li>
+        <li><a class="govuk-link" href="#">CAF scoping workbook</a></li>
+      </ul>
+    </div>
+  </div>
 {% endblock %}

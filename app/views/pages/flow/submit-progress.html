@@ -7,6 +7,12 @@
   <h1 class="govuk-heading-l">{{ labels.flow.submit.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.submit.intro }}</p>
   <div class="govuk-inset-text">Prototype only: no submission is sent from this service.</div>
+  <div class="govuk-inset-text">
+    Formal submission should include the latest scope pack snapshot.
+    {% if submission.scopePackSnapshotAt %}
+      Last updated: {{ submission.scopePackSnapshotAt | replace("T", " ") | replace("Z", "") }}.
+    {% endif %}
+  </div>
 
   {% if saved %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
@@ -120,6 +126,22 @@
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="assurerSubmitted-no" name="assurerSubmitted" type="radio" value="no" {% if submission.assurerSubmitted == false %}checked{% endif %}>
             <label class="govuk-label govuk-radios__label" for="assurerSubmitted-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Include latest scope pack snapshot in formal submission?</legend>
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="scopePackIncluded-yes" name="scopePackIncluded" type="radio" value="yes" {% if submission.scopePackIncluded != false %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="scopePackIncluded-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="scopePackIncluded-no" name="scopePackIncluded" type="radio" value="no" {% if submission.scopePackIncluded == false %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="scopePackIncluded-no">No</label>
           </div>
         </div>
       </fieldset>

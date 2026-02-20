@@ -1,0 +1,124 @@
+{# app/views/pages/stages/scope-services-methodology.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">Identify essential services</h1>
+  <p class="govuk-body">
+    Explain the method you used to decide which services are essential to your mission and objectives.
+  </p>
+
+  <form method="post" action="/stages/2/scope/services/methodology">
+    {% if error %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <h2 class="govuk-error-summary__title">There is a problem</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for item in error.items %}
+                <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','essentialMethodologyConfirmed') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Do you already have a defined methodology for mapping essential services?</legend>
+        {% if error and (error.items | selectattr('field','equalto','essentialMethodologyConfirmed') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','essentialMethodologyConfirmed') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="essentialMethodologyConfirmed-yes" name="essentialMethodologyConfirmed" type="radio" value="yes" {% if assessment.scope.essentialMethodology.confirmed %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="essentialMethodologyConfirmed-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="essentialMethodologyConfirmed-no" name="essentialMethodologyConfirmed" type="radio" value="no" {% if assessment.scope.essentialMethodology.completed and assessment.scope.essentialMethodology.confirmed == false %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="essentialMethodologyConfirmed-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','essentialMethodologyNotes') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="essentialMethodologyNotes">Summary of the methodology followed</label>
+      {% if error and (error.items | selectattr('field','equalto','essentialMethodologyNotes') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','essentialMethodologyNotes') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="essentialMethodologyNotes" name="essentialMethodologyNotes" rows="4">{{ assessment.scope.essentialMethodology.notes or '' }}</textarea>
+    </div>
+
+    <h2 class="govuk-heading-m">Review dates</h2>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Date reviewed</legend>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="essentialMethodologyQaName">CAF quality assurer name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="essentialMethodologyQaName" name="essentialMethodologyQaName" type="text" value="{{ assessment.scope.essentialMethodology.qaReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="essentialMethodologyQaReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyQaDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="essentialMethodologyQaDay" name="essentialMethodologyQaDay" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.qaReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyQaMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="essentialMethodologyQaMonth" name="essentialMethodologyQaMonth" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.qaReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyQaYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="essentialMethodologyQaYear" name="essentialMethodologyQaYear" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.qaReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="essentialMethodologyApproverName">CAF approver name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="essentialMethodologyApproverName" name="essentialMethodologyApproverName" type="text" value="{{ assessment.scope.essentialMethodology.approverReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="essentialMethodologyApproverReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyApproverDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="essentialMethodologyApproverDay" name="essentialMethodologyApproverDay" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.approverReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyApproverMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="essentialMethodologyApproverMonth" name="essentialMethodologyApproverMonth" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.approverReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="essentialMethodologyApproverYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="essentialMethodologyApproverYear" name="essentialMethodologyApproverYear" type="text" inputmode="numeric" value="{{ assessment.scope.essentialMethodology.approverReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+  </form>
+{% endblock %}

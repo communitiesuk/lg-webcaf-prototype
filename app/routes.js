@@ -6,8 +6,38 @@ const router = govukPrototypeKit.requests.setupRouter();
 const { buildNavigation } = require("./data/helpers/navigation");
 const { buildBreadcrumbs, buildProgress } = require("./data/helpers/journey");
 const users = require("./data/seed/users");
-const outcomesAD = require("./data/seed/outcomes-ad");
+const { CAF_DEFAULT_VERSION, getOutcomesForVersion } = require("./data/helpers/caf-version");
 const { buildInitialProgressTracker } = require("./data/helpers/progress");
+
+// Defensive guard for prototype stability:
+// if a route accidentally tries to send a second response,
+// skip it instead of crashing the process.
+router.use((req, res, next) => {
+  const originals = {
+    render: res.render.bind(res),
+    redirect: res.redirect.bind(res),
+    send: res.send.bind(res),
+    json: res.json.bind(res),
+  };
+
+  function guard(name, fn) {
+    return function guardedResponse(...args) {
+      if (res.headersSent) {
+        console.warn(
+          `[response-guard] prevented duplicate ${name}: ${req.method} ${req.originalUrl}`
+        );
+        return res;
+      }
+      return fn(...args);
+    };
+  }
+
+  res.render = guard("render", originals.render);
+  res.redirect = guard("redirect", originals.redirect);
+  res.send = guard("send", originals.send);
+  res.json = guard("json", originals.json);
+  next();
+});
 
 // Debug helpers
 router.get("/debug/plain", (req, res) => {
@@ -20,6 +50,7 @@ router.get("/health", (req, res) => res.status(200).send("ok"));
 
 router.use((req, res, next) => {
   const signedIn = Boolean(req.session && req.session.data && req.session.data.signedIn);
+  res.locals.currentPath = req.path;
   const role =
     req.session && req.session.data && req.session.data.user ? req.session.data.user.role : "";
   const currentUser = signedIn ? req.session.data.user : null;
@@ -46,6 +77,22 @@ router.use((req, res, next) => {
   res.locals.showJourney = signedIn && role !== "mhclg" && role !== "assurer" && !hideNav;
   res.locals.breadcrumbs = res.locals.showJourney ? buildBreadcrumbs(req.path) : [];
   res.locals.progress = res.locals.showJourney ? buildProgress(req.path) : null;
+  const journeyReturnPrefixes = [
+    "/prepare",
+    "/stages",
+    "/assessments",
+    "/self-assess",
+    "/evidence-library",
+    "/assurance-review",
+    "/improvement-plan",
+    "/submit-progress",
+    "/submit-complete",
+    "/profile",
+  ];
+  res.locals.showJourneyTaskListLink =
+    res.locals.showJourney &&
+    req.path !== "/assessments/current/journey" &&
+    journeyReturnPrefixes.some((prefix) => req.path === prefix || req.path.startsWith(prefix + "/"));
 
   if (signedIn && role) {
     const isStatic =
@@ -68,6 +115,7 @@ router.use((req, res, next) => {
       "/improvement-plan",
       "/submit-progress",
       "/submit-complete",
+      "/engagement",
     ];
     const isCouncilArea = councilPrefixes.some(
       (prefix) => req.path === prefix || req.path.startsWith(prefix + "/")
@@ -119,20 +167,34 @@ router.get("/", (req, res) => res.redirect("/research-start"));
 
 router.get("/research-start", (req, res) => {
   if (!req.session) req.session = {};
-  req.session.data = {};
+  if (!req.session.data) req.session.data = {};
+  const shouldReset = (req.query.reset || "").toString() === "1";
+  if (shouldReset) {
+    req.session.data = {};
+  }
+  const nextPath = sanitiseLocalPath((req.query.next || "").toString());
   res.render("pages/research-start", {
     pageTitle: "Research start",
     users,
+    nextPath,
   });
 });
 
 router.get("/sign-out", (req, res) => {
-  res.redirect("/start");
+  if (req.session && typeof req.session.destroy === "function") {
+    return req.session.destroy(() => res.redirect("/research-start?reset=1"));
+  }
+  return res.redirect("/research-start?reset=1");
 });
 
-router.get("/guidance", (req, res) => res.redirect("/research-start"));
-router.get("/my-account", (req, res) => res.redirect("/research-start"));
-router.get("/logout", (req, res) => res.redirect("/research-start"));
+router.get("/guidance", (req, res) => res.redirect(getSignedInLanding(req)));
+router.get("/my-account", (req, res) => res.redirect(getSignedInLanding(req)));
+router.get("/logout", (req, res) => {
+  if (req.session && typeof req.session.destroy === "function") {
+    return req.session.destroy(() => res.redirect("/research-start?reset=1"));
+  }
+  return res.redirect("/research-start?reset=1");
+});
 router.get("/organisation-details", (req, res) => res.redirect("/entry"));
 router.get("/manage-users", (req, res) => res.redirect("/entry"));
 
@@ -141,36 +203,40 @@ router.post("/research-start", (req, res) => {
     req.session = { data: {} };
   }
   const selectedId = (req.session.data.researchUserId || "").toString();
+  const nextPath = sanitiseLocalPath((req.session.data.nextPath || "").toString());
   const selected = users.find((user) => user.id === selectedId);
   if (!selected) {
     return res.render("pages/research-start", {
       pageTitle: "Research start",
       users,
+      nextPath,
       error: {
         items: [{ field: "researchUserId", text: "Select a role to start the journey." }],
       },
     });
   }
-  if (selected) {
-    req.session.data.user = selected;
-    req.session.data.signedIn = true;
-  }
-  delete req.session.data.researchUserId;
+  req.session.data = {
+    user: selected,
+    signedIn: true,
+  };
 
   if (selected && selected.role === "mhclg") return res.redirect("/mhclg/dashboard");
   if (selected && selected.role === "assurer") {
     seedAssurerAssessment(req.session.data, selected);
     return res.redirect("/assurer/queue");
   }
-  return res.redirect("/start");
+  if (nextPath) return res.redirect(nextPath);
+  return res.redirect("/entry/start-new?returnTo=/prepare");
 });
 
 function seedAssurerAssessment(sessionData, user) {
   if (!sessionData) return;
   if (sessionData.assessment && sessionData.assessment.id) return;
 
+  const { ad } = getOutcomesForVersion(sessionData.assessment || CAF_DEFAULT_VERSION);
   const assessment = {
     id: "current",
+    cafVersion: CAF_DEFAULT_VERSION,
     stage: {
       understandCAFComplete: true,
       prepareScopeComplete: true,
@@ -196,7 +262,7 @@ function seedAssurerAssessment(sessionData, user) {
     submission: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    progressTracker: buildInitialProgressTracker({ outcomesTree: outcomesAD, users }),
+    progressTracker: buildInitialProgressTracker({ outcomesTree: ad, users }),
   };
 
   const ready = assessment.progressTracker["A1a"];
@@ -269,6 +335,22 @@ function seedAssurerAssessment(sessionData, user) {
   }
 
   sessionData.assessment = assessment;
+}
+
+function getSignedInLanding(req) {
+  const user = req && req.session && req.session.data ? req.session.data.user : null;
+  if (!user || !req.session.data.signedIn) return "/research-start";
+  if (user.role === "mhclg") return "/mhclg/dashboard";
+  if (user.role === "assurer") return "/assurer/queue";
+  return "/entry";
+}
+
+function sanitiseLocalPath(input) {
+  const path = (input || "").toString().trim();
+  if (!path) return "";
+  if (!path.startsWith("/") || path.startsWith("//")) return "";
+  if (path.startsWith("/research-start")) return "";
+  return path;
 }
 
 module.exports = router;

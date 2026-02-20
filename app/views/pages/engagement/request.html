@@ -3,6 +3,14 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block content %}
+  {% set topics = data.checkInTopic %}
+  {% if topics is string %}
+    {% set topics = [topics] %}
+  {% endif %}
+  {% if not topics %}
+    {% set topics = [] %}
+  {% endif %}
+
   {{ govukBreadcrumbs({
     items: [
       { text: "Entry", href: "/entry" },
@@ -11,7 +19,12 @@
   }) }}
 
   <h1 class="govuk-heading-l">Request a check-in</h1>
-  <p class="govuk-body">Use this when you need MHCLG support or guidance on a blocker.</p>
+  <p class="govuk-body">Use this after you have consulted your internal CAF team and still need support.</p>
+  {% if fromScope %}
+    <div class="govuk-inset-text">
+      You are requesting an optional check-in after completing the scope pack.
+    </div>
+  {% endif %}
 
   {% if saved %}
     <div class="govuk-notification-banner" data-module="govuk-notification-banner">
@@ -49,6 +62,38 @@
         </p>
       {% endif %}
       <textarea class="govuk-textarea" id="checkInReason" name="checkInReason" rows="4">{{ data.checkInReason }}</textarea>
+      <div class="govuk-hint">Include what you have tried internally so far.</div>
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInInternalSteps') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="checkInInternalSteps">What have you tried internally?</label>
+      {% if error and (error.items | selectattr('field','equalto','checkInInternalSteps') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','checkInInternalSteps') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="checkInInternalSteps" name="checkInInternalSteps" rows="3">{{ data.checkInInternalSteps }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend">What is this about? (optional)</legend>
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="checkInTopic-critical" name="checkInTopic" type="checkbox" value="critical-systems" {% if "critical-systems" in topics %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="checkInTopic-critical">Critical systems selection</label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="checkInTopic-evidence" name="checkInTopic" type="checkbox" value="evidence" {% if "evidence" in topics %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="checkInTopic-evidence">Evidence referencing</label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="checkInTopic-assurance" name="checkInTopic" type="checkbox" value="assurance" {% if "assurance" in topics %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="checkInTopic-assurance">Assurance review</label>
+          </div>
+        </div>
+      </fieldset>
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInUrgency') | list | length) > 0 %}govuk-form-group--error{% endif %}">

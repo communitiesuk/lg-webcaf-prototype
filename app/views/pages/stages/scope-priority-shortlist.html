@@ -6,12 +6,36 @@
 
   <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.shortlistTitle }}</h1>
   <p class="govuk-body">Select the critical systems to assess in Objectives B and C.</p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
+    <span class="govuk-hint govuk-!-margin-top-1">Adding a system means updating mapping and priority before confirming the scope pack.</span>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#shortlistSystemIds">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
   {% if eligible.length > 0 %}
     <form method="post" action="/stages/2/scope/priority/shortlist">
-      <div class="govuk-form-group">
-        <fieldset class="govuk-fieldset">
+      <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="{% if error %}shortlistSystemIds-error{% endif %}" id="shortlistSystemIds">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">High and medium priority systems</legend>
+          {% if error %}
+            <p class="govuk-error-message" id="shortlistSystemIds-error">
+              <span class="govuk-visually-hidden">Error:</span> {{ error.items[0].text }}
+            </p>
+          {% endif %}
           <div class="govuk-checkboxes">
             {% for item in eligible %}
               <div class="govuk-checkboxes__item">

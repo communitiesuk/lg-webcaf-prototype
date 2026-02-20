@@ -1,0 +1,91 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+  <h1 class="govuk-heading-l">Record of Audit</h1>
+  <p class="govuk-body">Record assurer ratings and IGP assessments for each contributing outcome.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assurer/workshops">Objective workshops</a>
+    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
+    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li>{{ item.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Record of Audit saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/assurer/record-of-audit">
+    {% for row in outcomeRows %}
+      {% set key = row.outcomeId | replace(":", "_") %}
+      {% set existingOutcome = (existing.outcomes | selectattr("outcomeId","equalto",row.outcomeId) | list | first) %}
+      <h2 class="govuk-heading-m">{{ row.outcomeCode }} {{ row.title }}</h2>
+      {% if row.systemName %}
+        <p class="govuk-hint">System: {{ row.systemName }}</p>
+      {% endif %}
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="auditRating-{{ key }}">Assurer rating</label>
+        <select class="govuk-select" id="auditRating-{{ key }}" name="auditRating-{{ key }}">
+          <option value="">Select rating</option>
+          <option value="achieved" {% if existingOutcome and existingOutcome.assurerRating == "achieved" %}selected{% endif %}>Achieved</option>
+          <option value="partial" {% if existingOutcome and existingOutcome.assurerRating == "partial" %}selected{% endif %}>Partially achieved</option>
+          <option value="not_achieved" {% if existingOutcome and existingOutcome.assurerRating == "not_achieved" %}selected{% endif %}>Not achieved</option>
+        </select>
+      </div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="auditJustification-{{ key }}">Assurer justification</label>
+        <textarea class="govuk-textarea" id="auditJustification-{{ key }}" name="auditJustification-{{ key }}" rows="3">{{ existingOutcome.justification if existingOutcome else "" }}</textarea>
+      </div>
+
+      {% for igp in ["IGP-1","IGP-2","IGP-3"] %}
+        {% set igpKey = (row.outcomeId ~ "__" ~ igp) | replace(":", "_") %}
+        {% set existingIgp = (existing.igps | selectattr("outcomeId","equalto",row.outcomeId) | selectattr("igpId","equalto",igp) | list | first) %}
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="auditIgpAssessment-{{ igpKey }}">{{ igp }} assessment</label>
+              <select class="govuk-select" id="auditIgpAssessment-{{ igpKey }}" name="auditIgpAssessment-{{ igpKey }}">
+                <option value="">Select</option>
+                <option value="met" {% if existingIgp and existingIgp.assessment == "met" %}selected{% endif %}>Met</option>
+                <option value="not_met" {% if existingIgp and existingIgp.assessment == "not_met" %}selected{% endif %}>Not met</option>
+              </select>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="auditIgpNote-{{ igpKey }}">{{ igp }} note</label>
+              <input class="govuk-input" id="auditIgpNote-{{ igpKey }}" name="auditIgpNote-{{ igpKey }}" type="text" value="{{ existingIgp.note if existingIgp else '' }}">
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    {% endfor %}
+
+    <div class="govuk-button-group">
+      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="auditAction" value="save">Save draft</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit" name="auditAction" value="submit">Submit audit record</button>
+    </div>
+  </form>
+{% endblock %}

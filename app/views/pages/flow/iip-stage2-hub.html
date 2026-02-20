@@ -1,0 +1,33 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+  <h1 class="govuk-heading-l">IIP Stage 2</h1>
+  <p class="govuk-body">Complete implementation planning, approvals and submission for Stage 2.</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-1">
+      <strong>Status:</strong> {{ statusLabel }}
+    </p>
+    {% if summary.expectedByDisplay %}
+      <p class="govuk-body govuk-!-margin-bottom-0">Offline drafting target date: {{ summary.expectedByDisplay }}</p>
+    {% endif %}
+  </div>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Rows in plan</dt>
+      <dd class="govuk-summary-list__value">{{ summary.rowCount }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Completed rows</dt>
+      <dd class="govuk-summary-list__value">{{ summary.completeCount }}</dd>
+    </div>
+  </dl>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="{{ summary.nextActionHref }}">Continue</a>
+    <a class="govuk-link" href="/improvement-plan/stage-2/review">Review rows</a>
+    <a class="govuk-link" href="/improvement-plan/stage-2/setup">Set owners and deadlines</a>
+  </div>
+{% endblock %}

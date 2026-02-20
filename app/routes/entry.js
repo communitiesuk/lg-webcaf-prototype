@@ -2,7 +2,7 @@
 // ENTRY route with "show me the error" rendering, so you stop guessing
 
 const labels = require("../data/content/labels");
-const outcomesAD = require("../data/seed/outcomes-ad");
+const { CAF_DEFAULT_VERSION, getOutcomesForVersion } = require("../data/helpers/caf-version");
 const users = require("../data/seed/users");
 const { buildInitialProgressTracker } = require("../data/helpers/progress");
 const { requireSignedIn } = require("../data/helpers/session");
@@ -65,9 +65,6 @@ module.exports = function (router) {
     if (!a.prepare || !a.prepare.guidanceRead) {
       return res.redirect("/prepare");
     }
-    if (!a.profile || !a.profile.reviewed) {
-      return res.redirect("/profile");
-    }
     if (!a.stage || !a.stage.prepareScopeComplete) {
       return res.redirect("/stages/2/scope");
     }
@@ -76,7 +73,8 @@ module.exports = function (router) {
       req.session.data.user && req.session.data.user.id ? req.session.data.user.id : null;
 
     if (!a.progressTracker || Object.keys(a.progressTracker).length === 0) {
-      a.progressTracker = buildInitialProgressTracker({ outcomesTree: outcomesAD, users });
+      const { ad } = getOutcomesForVersion(a);
+      a.progressTracker = buildInitialProgressTracker({ outcomesTree: ad, users });
       a.updatedAt = new Date().toISOString();
     }
 
@@ -110,6 +108,7 @@ module.exports = function (router) {
     if (!req.session.data.assessment || !req.session.data.assessment.id) {
       req.session.data.assessment = {
         id: "current",
+        cafVersion: CAF_DEFAULT_VERSION,
         stage: {
           understandCAFComplete: true,
           prepareScopeComplete: true,
@@ -184,6 +183,10 @@ function seedPrototypeData(assessment, currentUser) {
 
   const ownerId = currentUser && currentUser.id ? currentUser.id : "u-1";
   const now = new Date();
+
+  if (!assessment.cafVersion) {
+    assessment.cafVersion = CAF_DEFAULT_VERSION;
+  }
 
   if (!assessment.councilName && currentUser && currentUser.orgName) {
     assessment.councilName = currentUser.orgName;
@@ -263,8 +266,9 @@ function seedPrototypeData(assessment, currentUser) {
   }
 
   if (!assessment.progressTracker || Object.keys(assessment.progressTracker).length === 0) {
+    const { ad } = getOutcomesForVersion(assessment);
     assessment.progressTracker = buildInitialProgressTracker({
-      outcomesTree: outcomesAD,
+      outcomesTree: ad,
       users,
     });
   }
@@ -413,6 +417,7 @@ function seedPrototypeData(assessment, currentUser) {
         owner: "CAF lead",
         dueDate: toISODate(addDays(now, 45)),
         expectedEvidence: "Board pack with quarterly cyber risk update",
+        evidenceRef: "EVID-BOARD-01",
         checkInCadence: "monthly",
         confirmed: true,
         status: "in_progress",
@@ -434,9 +439,10 @@ function seedPrototypeData(assessment, currentUser) {
         owner: "Security operations lead",
         dueDate: toISODate(addDays(now, 60)),
         expectedEvidence: "Monitoring coverage report including integrations",
+        evidenceRef: "",
         checkInCadence: "quarterly",
         confirmed: true,
-        status: "not_started",
+        status: "planned",
         lastUpdateAt: "",
         lastUpdateNote: "",
         gapMeta: {
@@ -455,6 +461,7 @@ function seedPrototypeData(assessment, currentUser) {
         owner: "Business continuity lead",
         dueDate: toISODate(addDays(now, 90)),
         expectedEvidence: "Exercise report and lessons learned log",
+        evidenceRef: "EVID-IR-04",
         checkInCadence: "monthly",
         confirmed: true,
         status: "in_progress",
@@ -501,6 +508,7 @@ function seedPrototypeData(assessment, currentUser) {
 function startNewAssessment(req) {
   req.session.data.assessment = {
     id: "current",
+    cafVersion: CAF_DEFAULT_VERSION,
     stage: {
       understandCAFComplete: false,
       prepareScopeComplete: false,
@@ -515,6 +523,7 @@ function startNewAssessment(req) {
       priority: [],
       priorityShortlist: [],
       servicesConfirmed: false,
+      assurerReviewed: false,
     },
     lens: null,
     criticalSystem: null,

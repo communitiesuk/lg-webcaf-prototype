@@ -1,0 +1,174 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
+  <h1 class="govuk-heading-l">Assurance report</h1>
+  <p class="govuk-body">Review the Record of Audit and Stage 1 assurer report, then submit council amendments within the window.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assessments/current/evidence-requests">View evidence requests</a>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li>
+                <a href="#{% if item.field == 'assuranceAmendments' %}assuranceAmendmentsNotes{% else %}{{ item.field }}{% endif %}">{{ item.text }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Amendments submitted.</p>
+      </div>
+    </div>
+  {% endif %}
+  {% if workshopSaved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Workshop date response saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Record of Audit</dt>
+      <dd class="govuk-summary-list__value">
+        {% if record.submittedAt %}
+          <strong class="govuk-tag govuk-tag--green">Submitted</strong>
+        {% else %}
+          <strong class="govuk-tag govuk-tag--grey">Not submitted</strong>
+        {% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Stage 1 report</dt>
+      <dd class="govuk-summary-list__value">
+        {% if stage1.finalisedAt %}
+          <strong class="govuk-tag govuk-tag--green">Finalised</strong>
+        {% elseif stage1.draftSharedAt %}
+          <strong class="govuk-tag govuk-tag--blue">Draft shared</strong>
+        {% else %}
+          <strong class="govuk-tag govuk-tag--grey">Not shared</strong>
+        {% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Council amendment deadline</dt>
+      <dd class="govuk-summary-list__value">
+        {% if windowState.dueAtDisplay %}{{ windowState.dueAtDisplay }}{% else %}Not set{% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Upcoming workshops and submission dates</h2>
+  <dl class="govuk-summary-list govuk-!-margin-bottom-4">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Objective clarification workshop date</dt>
+      <dd class="govuk-summary-list__value">
+        {{ submissionWindow.workshopDateDisplay or "Not set" }}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submission deadline (5 working days before workshop)</dt>
+      <dd class="govuk-summary-list__value">
+        {{ submissionWindow.submitByDateDisplay or "Not set" }}
+      </dd>
+    </div>
+  </dl>
+
+  <form method="post" action="/assessments/current/assurance-report/workshops" class="govuk-!-margin-bottom-6">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+          Are these upcoming dates correct for your council?
+        </legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="workshopDatesDecision" name="workshopDatesDecision" type="radio" value="confirm" {% if workshopResponse.decision == "confirm" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="workshopDatesDecision">Yes, confirm dates</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="workshopDatesDecision-2" name="workshopDatesDecision" type="radio" value="deny" {% if workshopResponse.decision == "deny" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="workshopDatesDecision-2">No, request date changes</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="workshopDatesNotes">Notes (optional if confirmed)</label>
+      <textarea class="govuk-textarea" id="workshopDatesNotes" name="workshopDatesNotes" rows="3">{{ workshopResponse.notes or "" }}</textarea>
+    </div>
+    <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Save workshop response</button>
+  </form>
+
+  {% if stage1.items and stage1.items.length > 0 %}
+    <h2 class="govuk-heading-m">Stage 1 report items</h2>
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header">Outcome</th>
+          <th class="govuk-table__header">Risk level</th>
+          <th class="govuk-table__header">Recommendation</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in stage1.items %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ item.outcomeId }}</td>
+            <td class="govuk-table__cell">{{ item.riskLevel | replace("_"," ") | capitalize or "Not set" }}</td>
+            <td class="govuk-table__cell">{{ item.recommendation or "Not set" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Council amendments</h2>
+  {% if not windowState.canAmend %}
+    <div class="govuk-inset-text">
+      {% if windowState.status == "submitted" %}
+        Amendments have already been submitted.
+      {% else %}
+        The amendment window is closed.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/assessments/current/assurance-report/amendments">
+    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="assuranceAmendmentsNotes">Amendment notes</label>
+      <div class="govuk-hint">Add requested changes or clarifications for the assurer.</div>
+      <textarea
+        class="govuk-textarea"
+        id="assuranceAmendmentsNotes"
+        name="assuranceAmendmentsNotes"
+        rows="5"
+      >{{ stage1.councilAmendments.notes or "" }}</textarea>
+    </div>
+    <button
+      class="govuk-button"
+      data-module="govuk-button"
+      type="submit"
+      {% if not windowState.canAmend %}disabled aria-disabled="true"{% endif %}
+    >
+      Submit amendments
+    </button>
+  </form>
+{% endblock %}

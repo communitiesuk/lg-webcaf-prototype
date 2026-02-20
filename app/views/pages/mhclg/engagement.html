@@ -47,6 +47,7 @@
           <th class="govuk-table__header" scope="col">Council</th>
           <th class="govuk-table__header" scope="col">Status</th>
           <th class="govuk-table__header" scope="col">Blockers</th>
+          <th class="govuk-table__header" scope="col">Scope pack</th>
           <th class="govuk-table__header" scope="col">Last check-in</th>
           <th class="govuk-table__header" scope="col">Next check-in</th>
           <th class="govuk-table__header" scope="col">Source</th>
@@ -70,13 +71,23 @@
               {% endif %}
             </td>
             <td class="govuk-table__cell">{{ item.blockers }}</td>
+            <td class="govuk-table__cell">
+              {% if item.scopeStatus %}
+                <strong class="govuk-tag govuk-tag--grey">{{ item.scopeStatus }}</strong>
+                {% if item.scopeBlocker %}
+                  <div class="govuk-hint">Blocker: {{ item.scopeBlocker }}</div>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
             <td class="govuk-table__cell">{{ item.lastCheckInDisplay or "—" }}</td>
             <td class="govuk-table__cell">{{ item.nextCheckInDisplay or "—" }}</td>
             <td class="govuk-table__cell">{{ item.source }}</td>
           </tr>
           {% if item.notes %}
             <tr class="govuk-table__row">
-              <td class="govuk-table__cell" colspan="6">
+              <td class="govuk-table__cell" colspan="7">
                 <span class="govuk-hint">Notes: {{ item.notes }}</span>
               </td>
             </tr>
@@ -219,6 +230,26 @@
       <textarea class="govuk-textarea" id="engagementNextAction" name="engagementNextAction" rows="3">{{ data.engagementNextAction }}</textarea>
     </div>
 
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="engagementActionTaken">Action taken (optional)</label>
+      <textarea class="govuk-textarea" id="engagementActionTaken" name="engagementActionTaken" rows="2">{{ data.engagementActionTaken }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="engagementPeerLearning">Peer learning or shared practice (optional)</label>
+      <textarea class="govuk-textarea" id="engagementPeerLearning" name="engagementPeerLearning" rows="2">{{ data.engagementPeerLearning }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="engagementSupportOutcome">Support outcome (optional)</label>
+      <select class="govuk-select" id="engagementSupportOutcome" name="engagementSupportOutcome">
+        <option value="" {% if not data.engagementSupportOutcome %}selected{% endif %}>Select outcome</option>
+        <option value="Ongoing" {% if data.engagementSupportOutcome == "Ongoing" %}selected{% endif %}>Ongoing</option>
+        <option value="Resolved" {% if data.engagementSupportOutcome == "Resolved" %}selected{% endif %}>Resolved</option>
+        <option value="Escalated" {% if data.engagementSupportOutcome == "Escalated" %}selected{% endif %}>Escalated</option>
+      </select>
+    </div>
+
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','engagementOwner') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
         <legend class="govuk-fieldset__legend">Next action owner</legend>
@@ -270,6 +301,9 @@
           <th class="govuk-table__header" scope="col">Key blocker</th>
           <th class="govuk-table__header" scope="col">Next action</th>
           <th class="govuk-table__header" scope="col">Owner</th>
+          <th class="govuk-table__header" scope="col">Action taken</th>
+          <th class="govuk-table__header" scope="col">Peer learning</th>
+          <th class="govuk-table__header" scope="col">Support outcome</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
@@ -287,6 +321,9 @@
                 <strong class="govuk-tag govuk-tag--grey">Council</strong>
               {% endif %}
             </td>
+            <td class="govuk-table__cell">{{ update.actionTaken or "—" }}</td>
+            <td class="govuk-table__cell">{{ update.peerLearning or "—" }}</td>
+            <td class="govuk-table__cell">{{ update.supportOutcome or "—" }}</td>
           </tr>
         {% endfor %}
       </tbody>

@@ -1,0 +1,110 @@
+{# app/views/pages/stages/scope-context.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+
+  <h1 class="govuk-heading-l">Set your organisational context</h1>
+  <p class="govuk-body">Capture the strategic context that will shape your CAF scope and assurance review.</p>
+
+  <form method="post" action="/stages/2/scope/context">
+    <h2 class="govuk-heading-m">Strategic context</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextMission">What is your mission?</label>
+      <div class="govuk-hint">Summarise your council mission in 2 to 3 sentences.</div>
+      <textarea class="govuk-textarea" id="scopeContextMission" name="scopeContextMission" rows="3">{{ assessment.scope.context.mission or '' }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextObjectives">What are your objectives?</label>
+      <textarea class="govuk-textarea" id="scopeContextObjectives" name="scopeContextObjectives" rows="3">{{ assessment.scope.context.objectives or '' }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextPriorities">What are your priorities?</label>
+      <textarea class="govuk-textarea" id="scopeContextPriorities" name="scopeContextPriorities" rows="3">{{ assessment.scope.context.priorities or '' }}</textarea>
+    </div>
+    <h2 class="govuk-heading-m">Organisation background</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextSetup">How are you currently set up to deliver your mission, objectives and strategy?</label>
+      <textarea class="govuk-textarea" id="scopeContextSetup" name="scopeContextSetup" rows="3">{{ assessment.scope.context.setup or '' }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextOperate">How does your organisation operate?</label>
+      <div class="govuk-hint">For example: 24/7 services, online delivery, or offline services.</div>
+      <textarea class="govuk-textarea" id="scopeContextOperate" name="scopeContextOperate" rows="3">{{ assessment.scope.context.operate or '' }}</textarea>
+    </div>
+    <h2 class="govuk-heading-m">Current threat landscape</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextThreat">Summarise your organisation's current threat landscape</label>
+      <div class="govuk-hint">Include who may target you, why, and what could go wrong.</div>
+      <textarea class="govuk-textarea" id="scopeContextThreat" name="scopeContextThreat" rows="4">{{ assessment.scope.context.threat or '' }}</textarea>
+    </div>
+    <h2 class="govuk-heading-m">Your cyber risk appetite</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="scopeContextAppetite">Summarise your organisation's cyber risk appetite</label>
+      <div class="govuk-hint">Include where it is defined and what level of appetite it is.</div>
+      <textarea class="govuk-textarea" id="scopeContextAppetite" name="scopeContextAppetite" rows="3">{{ assessment.scope.context.appetite or '' }}</textarea>
+    </div>
+    <h2 class="govuk-heading-m">Review and sign-off dates</h2>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Dates reviewed</legend>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="scopeContextQaName">CAF quality assurer name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="scopeContextQaName" name="scopeContextQaName" type="text" value="{{ assessment.scope.context.qaReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="scopeContextQaReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextQaDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="scopeContextQaDay" name="scopeContextQaDay" type="text" inputmode="numeric" value="{{ assessment.scope.context.qaReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextQaMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="scopeContextQaMonth" name="scopeContextQaMonth" type="text" inputmode="numeric" value="{{ assessment.scope.context.qaReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextQaYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="scopeContextQaYear" name="scopeContextQaYear" type="text" inputmode="numeric" value="{{ assessment.scope.context.qaReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="scopeContextApproverName">CAF approver name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="scopeContextApproverName" name="scopeContextApproverName" type="text" value="{{ assessment.scope.context.approverReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="scopeContextApproverReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextApproverDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="scopeContextApproverDay" name="scopeContextApproverDay" type="text" inputmode="numeric" value="{{ assessment.scope.context.approverReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextApproverMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="scopeContextApproverMonth" name="scopeContextApproverMonth" type="text" inputmode="numeric" value="{{ assessment.scope.context.approverReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="scopeContextApproverYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="scopeContextApproverYear" name="scopeContextApproverYear" type="text" inputmode="numeric" value="{{ assessment.scope.context.approverReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+  </form>
+{% endblock %}

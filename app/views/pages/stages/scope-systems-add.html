@@ -55,6 +55,28 @@
       <input class="govuk-input" id="diagramRefs" name="diagramRefs" type="text" value="{{ data.diagramRefs }}">
     </div>
 
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend">Is this system in scope for this assessment period?</legend>
+        {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','systemInScope') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="systemInScope-yes" name="systemInScope" type="radio" value="yes" {% if data.inScope == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="systemInScope-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="systemInScope-no" name="systemInScope" type="radio" value="no" {% if data.inScope == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="systemInScope-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
     <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.scope.systems.addButton }}</button>
   </form>
 {% endblock %}

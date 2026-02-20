@@ -27,6 +27,30 @@
       {
         key: { text: "Current council" },
         value: { text: assurerContext.activeCouncilName or "Not set" }
+      },
+      {
+        key: { text: "Record of Audit" },
+        value: { text: assuranceSnapshot.recordOfAuditStatus }
+      },
+      {
+        key: { text: "Stage 1 report" },
+        value: { text: assuranceSnapshot.reportStage1Status }
+      },
+      {
+        key: { text: "Council amendments" },
+        value: { text: assuranceSnapshot.amendmentsStatus }
+      },
+      {
+        key: { text: "IIP Stage 2 submitted" },
+        value: { text: assuranceSnapshot.iipStage2Submitted }
+      },
+      {
+        key: { text: "IIP Stage 2 session" },
+        value: { text: assuranceSnapshot.iipStage2SessionStatus }
+      },
+      {
+        key: { text: "IIP Stage 2 rework" },
+        value: { text: assuranceSnapshot.iipStage2Rework }
       }
     ]
   }) }}
@@ -69,9 +93,16 @@
         <tr class="govuk-table__row">
           <th class="govuk-table__header" scope="col">Council</th>
           <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">System</th>
           <th class="govuk-table__header" scope="col">Title</th>
           <th class="govuk-table__header" scope="col">Status</th>
           <th class="govuk-table__header" scope="col">Evidence refs</th>
+          <th class="govuk-table__header" scope="col">Record of Audit</th>
+          <th class="govuk-table__header" scope="col">Stage 1 report</th>
+          <th class="govuk-table__header" scope="col">Council amendments</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 submitted</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 session</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 rework</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
@@ -81,11 +112,18 @@
             <td class="govuk-table__cell">
               <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
             </td>
+            <td class="govuk-table__cell">{{ row.systemName or "—" }}</td>
             <td class="govuk-table__cell">{{ row.title }}</td>
             <td class="govuk-table__cell">
               <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
             </td>
             <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.recordOfAuditStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.reportStage1Status }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.amendmentsStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Submitted }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2SessionStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Rework }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -101,9 +139,16 @@
         <tr class="govuk-table__row">
           <th class="govuk-table__header" scope="col">Council</th>
           <th class="govuk-table__header" scope="col">Outcome</th>
+          <th class="govuk-table__header" scope="col">System</th>
           <th class="govuk-table__header" scope="col">Title</th>
           <th class="govuk-table__header" scope="col">Status</th>
           <th class="govuk-table__header" scope="col">Evidence refs</th>
+          <th class="govuk-table__header" scope="col">Record of Audit</th>
+          <th class="govuk-table__header" scope="col">Stage 1 report</th>
+          <th class="govuk-table__header" scope="col">Council amendments</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 submitted</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 session</th>
+          <th class="govuk-table__header" scope="col">IIP Stage 2 rework</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
@@ -113,12 +158,19 @@
             <td class="govuk-table__cell">
               <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
             </td>
+            <td class="govuk-table__cell">{{ row.systemName or "—" }}</td>
             <td class="govuk-table__cell">{{ row.title }}</td>
             <td class="govuk-table__cell">
               <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
               <strong class="govuk-tag govuk-tag--orange govuk-!-margin-left-1">Missing evidence</strong>
             </td>
             <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.recordOfAuditStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.reportStage1Status }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.amendmentsStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Submitted }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2SessionStatus }}</td>
+            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Rework }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -135,9 +187,16 @@
           <tr class="govuk-table__row">
             <th class="govuk-table__header" scope="col">Council</th>
             <th class="govuk-table__header" scope="col">Outcome</th>
+            <th class="govuk-table__header" scope="col">System</th>
             <th class="govuk-table__header" scope="col">Title</th>
             <th class="govuk-table__header" scope="col">Status</th>
             <th class="govuk-table__header" scope="col">Evidence refs</th>
+            <th class="govuk-table__header" scope="col">Record of Audit</th>
+            <th class="govuk-table__header" scope="col">Stage 1 report</th>
+            <th class="govuk-table__header" scope="col">Council amendments</th>
+            <th class="govuk-table__header" scope="col">IIP Stage 2 submitted</th>
+            <th class="govuk-table__header" scope="col">IIP Stage 2 session</th>
+            <th class="govuk-table__header" scope="col">IIP Stage 2 rework</th>
           </tr>
         </thead>
         <tbody class="govuk-table__body">
@@ -147,11 +206,18 @@
               <td class="govuk-table__cell">
                 <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
               </td>
+              <td class="govuk-table__cell">{{ row.systemName or "—" }}</td>
               <td class="govuk-table__cell">{{ row.title }}</td>
               <td class="govuk-table__cell">
                 <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
               </td>
               <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.recordOfAuditStatus }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.reportStage1Status }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.amendmentsStatus }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Submitted }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2SessionStatus }}</td>
+              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Rework }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -162,7 +228,9 @@
   {% endif %}
 
   <div class="govuk-button-group govuk-!-margin-top-6">
-    <a class="govuk-button" data-module="govuk-button" href="/improvement-plan/generate">Generate improvement plan</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/record-of-audit">Open Record of Audit</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/report-stage-1">Open Stage 1 report</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/iip-stage-2">Open IIP Stage 2</a>
     <a class="govuk-link" href="/assurer/overview">Back to overview</a>
   </div>
 {% endblock %}

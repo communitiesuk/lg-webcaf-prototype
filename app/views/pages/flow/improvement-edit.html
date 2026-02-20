@@ -31,7 +31,9 @@
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.priorityLabel }}</th>
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.ownerLabel }}</th>
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.dueDateLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.progressLabel }}</th>
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.evidenceLabel }}</th>
+          <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.evidenceRefLabel }}</th>
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.cadenceLabel }}</th>
           <th class="govuk-table__header" scope="col">{{ labels.flow.improvement.edit.keepLabel }}</th>
         </tr>
@@ -63,7 +65,17 @@
               <input class="govuk-input" name="iipActions[{{ loop.index0 }}][dueDate]" type="date" value="{{ action.dueDate }}">
             </td>
             <td class="govuk-table__cell">
+              <select class="govuk-select" name="iipActions[{{ loop.index0 }}][status]">
+                <option value="planned" {% if action.status == "planned" %}selected{% endif %}>Planned</option>
+                <option value="in_progress" {% if action.status == "in_progress" %}selected{% endif %}>In progress</option>
+                <option value="complete" {% if action.status == "complete" %}selected{% endif %}>Complete</option>
+              </select>
+            </td>
+            <td class="govuk-table__cell">
               <input class="govuk-input" name="iipActions[{{ loop.index0 }}][expectedEvidence]" type="text" value="{{ action.expectedEvidence }}">
+            </td>
+            <td class="govuk-table__cell">
+              <input class="govuk-input" name="iipActions[{{ loop.index0 }}][evidenceRef]" type="text" value="{{ action.evidenceRef }}">
             </td>
             <td class="govuk-table__cell">
               <select class="govuk-select" name="iipActions[{{ loop.index0 }}][checkInCadence]">

@@ -8,17 +8,32 @@ function ensureCycleExists(assessment) {
 
   if (!assessment.cycles) assessment.cycles = [];
   if (!assessment.cycleSnapshots) assessment.cycleSnapshots = {};
+  const now = new Date().toISOString();
+  const fallbackStartedAt = assessment.createdAt || now;
 
   if (!assessment.cycle) {
-    const now = new Date().toISOString();
     const initialId = "cycle-1";
 
     assessment.cycle = {
       id: initialId,
       name: "Cycle 1",
-      startedAt: assessment.createdAt || now,
+      startedAt: fallbackStartedAt,
     };
 
+    assessment.cycles.push({
+      id: assessment.cycle.id,
+      name: assessment.cycle.name,
+      startedAt: assessment.cycle.startedAt,
+    });
+    return;
+  }
+
+  if (!assessment.cycle.id) assessment.cycle.id = "cycle-1";
+  if (!assessment.cycle.name) assessment.cycle.name = "Cycle 1";
+  if (!assessment.cycle.startedAt) assessment.cycle.startedAt = fallbackStartedAt;
+
+  const hasCurrentInHistory = assessment.cycles.some((c) => c && c.id === assessment.cycle.id);
+  if (!hasCurrentInHistory) {
     assessment.cycles.push({
       id: assessment.cycle.id,
       name: assessment.cycle.name,

@@ -4,6 +4,15 @@
 // 
 
 // Add extra styles here
+/* Monochrome research theme: de-emphasise brand colour so users focus on flow/content. */
+:root {
+  --app-mono-900: #0b0c0c;
+  --app-mono-700: #3d4247;
+  --app-mono-600: #505a5f;
+  --app-mono-500: #6f777b;
+  --app-mono-300: #b1b4b6;
+  --app-mono-100: #f3f2f1;
+}
 
 .app-progress {
   margin-bottom: 8px;
@@ -25,12 +34,12 @@
 }
 
 .app-progress__bar::-webkit-progress-value {
-  background-color: #1d70b8;
+  background-color: var(--app-mono-600);
   border-radius: 6px;
 }
 
 .app-progress__bar::-moz-progress-bar {
-  background-color: #1d70b8;
+  background-color: var(--app-mono-600);
   border-radius: 6px;
 }
 
@@ -40,7 +49,7 @@
 
 .app-dashboard-card {
   border: 1px solid #b1b4b6;
-  border-left: 6px solid #1d70b8;
+  border-left: 6px solid var(--app-mono-600);
   padding: 16px;
   background: #ffffff;
   min-height: 140px;
@@ -65,14 +74,55 @@
   font-size: 14px;
 }
 
+/* Scope hub cards: keep equal heights per row to avoid uneven vertical gaps. */
+.app-scope-cards-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.app-scope-cards-row > [class*="govuk-grid-column"] {
+  display: flex;
+}
+
+.app-scope-cards-row .app-dashboard-card {
+  width: 100%;
+}
+
+@media (max-width: 40.0525em) {
+  .app-scope-cards-row {
+    display: block;
+  }
+
+  .app-scope-cards-row > [class*="govuk-grid-column"] {
+    display: block;
+  }
+}
+
 // Local Digital green header styling.
 .govuk-header {
-  background-color: #0b6e4f;
-  border-bottom: 10px solid #0b6e4f;
+  background-color: var(--app-mono-700);
+  border-bottom: 10px solid var(--app-mono-700);
+}
+
+.govuk-template--rebranded .govuk-header {
+  background: var(--app-mono-700);
+  border-bottom-color: var(--app-mono-700);
 }
 
 .govuk-header__container {
   border-bottom: 0;
+}
+
+.govuk-header__container--full-width {
+  border-color: var(--app-mono-700);
+}
+
+.govuk-template--rebranded .govuk-header__container {
+  border-bottom: 0;
+}
+
+.govuk-template--rebranded .govuk-header__link--homepage:not(:focus) {
+  background-color: var(--app-mono-700);
 }
 
 .govuk-header__link:link,
@@ -82,4 +132,83 @@
 
 .govuk-header__navigation {
   margin-top: 8px;
+}
+
+/* Service navigation bar (under the crown header) should also be monochrome. */
+.govuk-service-navigation {
+  border-bottom: 1px solid var(--app-mono-300);
+  background-color: var(--app-mono-100);
+}
+
+.govuk-service-navigation__container {
+  border-bottom: 0;
+}
+
+.govuk-template--rebranded .govuk-service-navigation {
+  border-bottom-color: var(--app-mono-300);
+  background-color: var(--app-mono-100);
+}
+
+.govuk-service-navigation__link:link,
+.govuk-service-navigation__link:visited {
+  color: var(--app-mono-700);
+}
+
+.govuk-template--rebranded .govuk-service-navigation__link:link,
+.govuk-template--rebranded .govuk-service-navigation__link:visited {
+  color: var(--app-mono-700);
+}
+
+.govuk-service-navigation__link:hover,
+.govuk-service-navigation__link:active {
+  color: var(--app-mono-900);
+}
+
+.govuk-service-navigation__item--active {
+  border-bottom-color: var(--app-mono-700);
+}
+
+.govuk-service-navigation__service-name {
+  color: var(--app-mono-900);
+}
+
+/* Keep links recognisable but neutral. */
+.govuk-link:link,
+.govuk-link:visited {
+  color: var(--app-mono-700);
+}
+
+.govuk-link:hover,
+.govuk-link:active {
+  color: var(--app-mono-900);
+}
+
+/* Neutralise status chips/tags across journeys and dashboards. */
+.govuk-tag,
+.govuk-tag--blue,
+.govuk-tag--green,
+.govuk-tag--orange,
+.govuk-tag--red,
+.govuk-tag--pink,
+.govuk-tag--purple,
+.govuk-tag--turquoise,
+.govuk-tag--yellow,
+.govuk-tag--grey {
+  background: var(--app-mono-100);
+  color: var(--app-mono-700);
+  border: 1px solid var(--app-mono-300);
+}
+
+/* Tone down primary CTA colour while retaining contrast. */
+.govuk-button {
+  background-color: var(--app-mono-700);
+  box-shadow: 0 2px 0 #242729;
+}
+
+.govuk-button:hover {
+  background-color: var(--app-mono-600);
+}
+
+.govuk-button:focus {
+  color: var(--app-mono-900);
 }

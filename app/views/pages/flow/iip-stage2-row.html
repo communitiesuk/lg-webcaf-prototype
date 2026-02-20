@@ -1,0 +1,86 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2/review">Back</a>
+  <h1 class="govuk-heading-l">Complete IIP row: {{ row.outcomeCode }}</h1>
+  <p class="govuk-body">{{ row.outcomeTitle }}</p>
+  {% if row.systemName %}<p class="govuk-hint">System: {{ row.systemName }}</p>{% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Row saved.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}<li><a href="#{{ item.field }}">{{ item.text }}</a></li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/rows/{{ row.id }}">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="ownershipRolesResponsible">Ownership / Roles responsible</label>
+      <textarea class="govuk-textarea" id="ownershipRolesResponsible" name="ownershipRolesResponsible" rows="3">{{ row.ownershipRolesResponsible }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="cost">Cost</label>
+      <input class="govuk-input" id="cost" name="cost" type="text" value="{{ row.cost }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="effort">Effort</label>
+      <select class="govuk-select" id="effort" name="effort">
+        <option value="">Select</option>
+        <option value="high" {% if row.effort == "high" %}selected{% endif %}>High</option>
+        <option value="medium" {% if row.effort == "medium" %}selected{% endif %}>Medium</option>
+        <option value="low" {% if row.effort == "low" %}selected{% endif %}>Low</option>
+      </select>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="complexity">Complexity</label>
+      <select class="govuk-select" id="complexity" name="complexity">
+        <option value="">Select</option>
+        <option value="high" {% if row.complexity == "high" %}selected{% endif %}>High</option>
+        <option value="medium" {% if row.complexity == "medium" %}selected{% endif %}>Medium</option>
+        <option value="low" {% if row.complexity == "low" %}selected{% endif %}>Low</option>
+      </select>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="implementationJustification">Implementation justification</label>
+      <textarea class="govuk-textarea" id="implementationJustification" name="implementationJustification" rows="4">{{ row.implementationJustification }}</textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="implementationPriority">Implementation priority</label>
+      <select class="govuk-select" id="implementationPriority" name="implementationPriority">
+        <option value="">Select</option>
+        <option value="high" {% if row.implementationPriority == "high" %}selected{% endif %}>High</option>
+        <option value="medium" {% if row.implementationPriority == "medium" %}selected{% endif %}>Medium</option>
+        <option value="low" {% if row.implementationPriority == "low" %}selected{% endif %}>Low</option>
+        <option value="no_action" {% if row.implementationPriority == "no_action" %}selected{% endif %}>No action</option>
+      </select>
+    </div>
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third"><div class="govuk-form-group"><label class="govuk-label" for="quarter1">Quarter 1 (MM/YY)</label><input class="govuk-input govuk-input--width-5" id="quarter1" name="quarter1" type="text" value="{{ row.quarter1 }}"></div></div>
+      <div class="govuk-grid-column-one-third"><div class="govuk-form-group"><label class="govuk-label" for="quarter2">Quarter 2 (MM/YY)</label><input class="govuk-input govuk-input--width-5" id="quarter2" name="quarter2" type="text" value="{{ row.quarter2 }}"></div></div>
+      <div class="govuk-grid-column-one-third"><div class="govuk-form-group"><label class="govuk-label" for="quarter3">Quarter 3 (MM/YY)</label><input class="govuk-input govuk-input--width-5" id="quarter3" name="quarter3" type="text" value="{{ row.quarter3 }}"></div></div>
+    </div>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-one-third"><div class="govuk-form-group"><label class="govuk-label" for="quarter4">Quarter 4 (MM/YY)</label><input class="govuk-input govuk-input--width-5" id="quarter4" name="quarter4" type="text" value="{{ row.quarter4 }}"></div></div>
+      <div class="govuk-grid-column-one-third"><div class="govuk-form-group"><label class="govuk-label" for="nextYearStarts">Next year starts (MM/YY)</label><input class="govuk-input govuk-input--width-5" id="nextYearStarts" name="nextYearStarts" type="text" value="{{ row.nextYearStarts }}"></div></div>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit">Save row</button>
+      <a class="govuk-link" href="/improvement-plan/stage-2/review">Back to review</a>
+    </div>
+  </form>
+{% endblock %}

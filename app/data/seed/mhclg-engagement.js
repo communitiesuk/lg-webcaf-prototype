@@ -11,6 +11,8 @@ module.exports = {
       nextCheckIn: "2024-10-10",
       blockers: 1,
       notes: "Evidence backlog on D1 outcomes.",
+      scopeStatus: "In progress",
+      scopeBlocker: "",
     },
     {
       councilName: "Gloucestershire County Council",
@@ -20,6 +22,8 @@ module.exports = {
       nextCheckIn: "2024-10-09",
       blockers: 0,
       notes: "Preparing scope pack mapping.",
+      scopeStatus: "Stalled",
+      scopeBlocker: "Awaiting architecture diagram",
     },
     {
       councilName: "London Borough of Islington",
@@ -29,6 +33,8 @@ module.exports = {
       nextCheckIn: "2024-10-04",
       blockers: 3,
       notes: "Awaiting SLT sign-off on B&C scope.",
+      scopeStatus: "Stalled",
+      scopeBlocker: "Needs SLT decision",
     },
     {
       councilName: "Kent County Council",
@@ -38,6 +44,8 @@ module.exports = {
       nextCheckIn: "2024-10-02",
       blockers: 2,
       notes: "Assurer feedback outstanding.",
+      scopeStatus: "Complete",
+      scopeBlocker: "",
     },
     {
       councilName: "Norfolk County Council",
@@ -47,6 +55,8 @@ module.exports = {
       nextCheckIn: "2024-10-11",
       blockers: 0,
       notes: "Needs help defining priority shortlist.",
+      scopeStatus: "Stalled",
+      scopeBlocker: "Need MHCLG guidance",
     },
   ],
   requests: [
@@ -112,6 +122,9 @@ module.exports = {
       keyBlocker: "Evidence backlog on D1 outcomes.",
       nextAction: "Council to confirm evidence references for D1 outcomes.",
       owner: "Council",
+      actionTaken: "Sent evidence referencing checklist.",
+      peerLearning: "Shared example evidence register with CAF lead network.",
+      supportOutcome: "Ongoing",
     },
     {
       councilName: "London Borough of Islington",
@@ -120,6 +133,9 @@ module.exports = {
       keyBlocker: "Awaiting SLT sign-off on B&C scope.",
       nextAction: "MHCLG to align assurer and council on scope decision.",
       owner: "MHCLG",
+      actionTaken: "Escalated to monthly assurance forum.",
+      peerLearning: "Added to cross-council assurance clinic session.",
+      supportOutcome: "Escalated",
     },
     {
       councilName: "Norfolk County Council",
@@ -128,6 +144,9 @@ module.exports = {
       keyBlocker: "Needs guidance on prioritising critical systems.",
       nextAction: "Council to submit shortlist rationale for review.",
       owner: "Council",
+      actionTaken: "Shared prioritisation decision aid.",
+      peerLearning: "Invited to peer session on critical systems mapping.",
+      supportOutcome: "Resolved",
     },
   ],
 };

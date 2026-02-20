@@ -1,0 +1,41 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
+  <h1 class="govuk-heading-l">Review IIP Stage 2</h1>
+  <p class="govuk-body">Complete each row before internal sign-off.</p>
+
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header">Outcome</th>
+        <th class="govuk-table__header">Owner</th>
+        <th class="govuk-table__header">Due date</th>
+        <th class="govuk-table__header">Status</th>
+        <th class="govuk-table__header">Action</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for row in rows %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell"><strong>{{ row.outcomeCode }}</strong> {{ row.outcomeTitle }}</td>
+          <td class="govuk-table__cell">{{ row.ownerNameSnapshot or "Not set" }}</td>
+          <td class="govuk-table__cell">{{ row.ownerDueDate or "Not set" }}</td>
+          <td class="govuk-table__cell">
+            {% if row.ownerId and row.ownerDueDate and row.ownershipRolesResponsible and row.cost and row.effort and row.complexity and row.implementationJustification and row.implementationPriority and row.quarter1 and row.quarter2 and row.quarter3 and row.quarter4 and row.nextYearStarts %}
+              <strong class="govuk-tag govuk-tag--green">Complete</strong>
+            {% else %}
+              <strong class="govuk-tag govuk-tag--grey">Incomplete</strong>
+            {% endif %}
+          </td>
+          <td class="govuk-table__cell"><a class="govuk-link" href="/improvement-plan/stage-2/rows/{{ row.id }}">Edit row</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button {% if not allComplete %}govuk-button--secondary{% endif %}" href="/improvement-plan/stage-2/internal-sign-off">Continue to internal sign-off</a>
+    <a class="govuk-link" href="/improvement-plan/stage-2/setup">Set owners and deadlines</a>
+  </div>
+{% endblock %}

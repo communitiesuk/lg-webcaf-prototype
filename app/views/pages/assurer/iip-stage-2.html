@@ -1,0 +1,77 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+  <h1 class="govuk-heading-l">IIP Stage 2 queue</h1>
+  <p class="govuk-body">Review submitted Stage 2 IIP, schedule the session, and record outcome.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">IIP Stage 2 updated.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Status</dt><dd class="govuk-summary-list__value">{{ statusLabel }}</dd></div>
+    <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Submitted by council</dt><dd class="govuk-summary-list__value">{{ stage2.assurerReview.submittedAt or "Not yet" }}</dd></div>
+    <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Session scheduled</dt><dd class="govuk-summary-list__value">{{ stage2.assurerReview.sessionScheduledAt or "Not yet" }}</dd></div>
+    <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Session completed</dt><dd class="govuk-summary-list__value">{{ stage2.assurerReview.sessionCompletedAt or "Not yet" }}</dd></div>
+    <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Outcome</dt><dd class="govuk-summary-list__value">{{ stage2.assurerReview.outcome or "Not set" }}</dd></div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Schedule IIP session</h2>
+  <form method="post" action="/assurer/iip-stage-2/current/schedule-session">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2SessionScheduledAt">Session date</label>
+      <input class="govuk-input govuk-input--width-10" id="stage2SessionScheduledAt" name="stage2SessionScheduledAt" type="date" value="{{ stage2.assurerReview.sessionScheduledAt }}">
+    </div>
+    <button class="govuk-button govuk-button--secondary" type="submit">Save session date</button>
+  </form>
+
+  <h2 class="govuk-heading-m">Complete IIP session</h2>
+  <form method="post" action="/assurer/iip-stage-2/current/complete-session">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2SessionCompletedAt">Completed date</label>
+      <input class="govuk-input govuk-input--width-10" id="stage2SessionCompletedAt" name="stage2SessionCompletedAt" type="date" value="{{ stage2.assurerReview.sessionCompletedAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2SessionNotes">Session notes</label>
+      <textarea class="govuk-textarea" id="stage2SessionNotes" name="stage2SessionNotes" rows="4">{{ stage2.assurerReview.sessionNotes }}</textarea>
+    </div>
+    <button class="govuk-button govuk-button--secondary" type="submit">Save session completion</button>
+  </form>
+
+  <h2 class="govuk-heading-m">Set assurer outcome</h2>
+  <form method="post" action="/assurer/iip-stage-2/current/outcome">
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Outcome decision</legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage2AssurerOutcome-accepted" name="stage2AssurerOutcome" type="radio" value="accepted" {% if stage2.assurerReview.outcome == "accepted" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="stage2AssurerOutcome-accepted">Accepted</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="stage2AssurerOutcome-rework" name="stage2AssurerOutcome" type="radio" value="rework_required" {% if stage2.assurerReview.outcome == "rework_required" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="stage2AssurerOutcome-rework">Rework required</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="stage2AssurerFeedback">Feedback</label>
+      <textarea class="govuk-textarea" id="stage2AssurerFeedback" name="stage2AssurerFeedback" rows="4">{{ stage2.assurerReview.feedback }}</textarea>
+    </div>
+    <button class="govuk-button" type="submit">Save outcome</button>
+  </form>
+{% endblock %}

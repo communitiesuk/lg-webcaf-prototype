@@ -18,47 +18,37 @@
         {% endfor %}
       </ul>
 
-      <p class="govuk-body">
-        <a class="govuk-link" href="/entry/start-new?returnTo=/stages/1">Need context? Start at Stage 1</a>
-      </p>
-
       <div class="govuk-button-group">
-        <form method="post" action="/entry/start-new">
+        <form method="post" action="/entry/start-new?returnTo=/prepare">
           <button class="govuk-button" data-module="govuk-button" type="submit">
             {{ labels.entry.actions.startNew }}
           </button>
         </form>
 
-      <form method="post" action="/entry/resume">
-        <button
-          class="govuk-button govuk-button--secondary"
-          data-module="govuk-button"
-          type="submit"
-          {% if not hasInProgress %}disabled aria-disabled="true"{% endif %}
-        >
-          {{ labels.entry.actions.resume }}
-        </button>
-      </form>
-
-      {% if hasInProgress %}
-        <form method="post" action="/entry/go-dashboard">
-          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">
-            {{ labels.entry.actions.dashboard }}
+        <form method="post" action="/entry/resume">
+          <button
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            type="submit"
+            {% if not hasInProgress %}disabled aria-disabled="true"{% endif %}
+          >
+            {{ labels.entry.actions.resume }}
           </button>
         </form>
-      {% endif %}
-    </div>
-
-      <p class="govuk-body">
-        <a class="govuk-link" href="/entry/start-new?returnTo=/stages/2/scope">{{ labels.entry.scopeLink }}</a>
-      </p>
+      </div>
 
       {% if hasInProgress %}
         <p class="govuk-hint">{{ labels.entry.resumeHint }}</p>
       {% endif %}
 
       {% if not hasInProgress %}
-        <p class="govuk-body">Start a new assessment to access the dashboard.</p>
+        <p class="govuk-body">Begin the scope pack to access the dashboard later.</p>
+      {% endif %}
+
+      {% if hasInProgress %}
+        <p class="govuk-body">
+          <a class="govuk-link" href="/assessments/current/journey">Go to CAF journey</a>
+        </p>
       {% endif %}
     </div>
     <div class="govuk-grid-column-one-third">

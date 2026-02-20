@@ -1,0 +1,94 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
+  <h1 class="govuk-heading-l">Evidence requests</h1>
+  <p class="govuk-body">Respond to assurer evidence clarification requests and track what has been addressed.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assessments/current/assurance-report">Back to assurance report</a>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li>{{ item.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Response sent to assurer.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Open requests ({{ open.length }})</h2>
+  {% if open.length > 0 %}
+    {% for item in open %}
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1">
+          <strong>{{ item.outcomeId }}</strong>{% if item.igpId %} ({{ item.igpId }}){% endif %}
+        </p>
+        <p class="govuk-body govuk-!-margin-bottom-1">{{ item.requestText }}</p>
+        {% if item.dueAt %}
+          <p class="govuk-body govuk-!-margin-bottom-3">Due by: {{ item.dueAt }}</p>
+        {% endif %}
+        <form method="post" action="/assessments/current/evidence-requests/{{ item.id }}/respond">
+          <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="evidenceResponseText-{{ item.id }}">Clarification response</label>
+            <textarea class="govuk-textarea" id="evidenceResponseText-{{ item.id }}" name="evidenceResponseText" rows="4"></textarea>
+          </div>
+          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">
+            Mark as addressed
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="govuk-body">No open evidence requests.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Addressed requests ({{ addressed.length }})</h2>
+  {% if addressed.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header">Outcome</th>
+          <th class="govuk-table__header">Request</th>
+          <th class="govuk-table__header">Response</th>
+          <th class="govuk-table__header">Status</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for item in addressed %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ item.outcomeId }}</td>
+            <td class="govuk-table__cell">{{ item.requestText }}</td>
+            <td class="govuk-table__cell">{{ item.councilResponse or "-" }}</td>
+            <td class="govuk-table__cell">
+              {% if item.status == "closed" %}
+                <strong class="govuk-tag govuk-tag--green">Closed</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">{{ item.status | capitalize }}</strong>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No addressed requests yet.</p>
+  {% endif %}
+{% endblock %}

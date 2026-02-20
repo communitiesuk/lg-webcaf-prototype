@@ -1,0 +1,58 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+  <h1 class="govuk-heading-l">Objective clarification workshops</h1>
+  <p class="govuk-body">Record workshop scheduling and completion for A and D and B and C.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assurer/record-of-audit">Open Record of Audit</a>
+    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
+    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
+  </p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Workshop details saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/assurer/workshops">
+    <h2 class="govuk-heading-m">A and D workshop</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="adWorkshopScheduledAt">Scheduled date</label>
+      <input class="govuk-input govuk-input--width-10" id="adWorkshopScheduledAt" name="adWorkshopScheduledAt" type="date" value="{{ assurance.objectives.adWorkshop.scheduledAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="adWorkshopCompletedAt">Completed date</label>
+      <input class="govuk-input govuk-input--width-10" id="adWorkshopCompletedAt" name="adWorkshopCompletedAt" type="date" value="{{ assurance.objectives.adWorkshop.completedAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="adWorkshopNotes">Notes</label>
+      <textarea class="govuk-textarea" id="adWorkshopNotes" name="adWorkshopNotes" rows="3">{{ assurance.objectives.adWorkshop.notes }}</textarea>
+    </div>
+
+    <h2 class="govuk-heading-m">B and C workshop</h2>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="bcWorkshopScheduledAt">Scheduled date</label>
+      <input class="govuk-input govuk-input--width-10" id="bcWorkshopScheduledAt" name="bcWorkshopScheduledAt" type="date" value="{{ assurance.objectives.bcWorkshop.scheduledAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="bcWorkshopCompletedAt">Completed date</label>
+      <input class="govuk-input govuk-input--width-10" id="bcWorkshopCompletedAt" name="bcWorkshopCompletedAt" type="date" value="{{ assurance.objectives.bcWorkshop.completedAt }}">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="bcWorkshopNotes">Notes</label>
+      <textarea class="govuk-textarea" id="bcWorkshopNotes" name="bcWorkshopNotes" rows="3">{{ assurance.objectives.bcWorkshop.notes }}</textarea>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Save workshop details</button>
+      <a class="govuk-link" href="/assurer/overview">Back to assurer overview</a>
+    </div>
+  </form>
+{% endblock %}

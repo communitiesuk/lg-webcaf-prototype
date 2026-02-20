@@ -1,0 +1,95 @@
+{# app/views/pages/stages/scope-priority-describe.html #}
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope/priority/shortlist">Back</a>
+
+  <h1 class="govuk-heading-l">Identify your priority critical systems</h1>
+  <p class="govuk-body">
+    Describe the priority critical systems you will assess. Complete the details for up to 3 systems.
+  </p>
+
+  <form method="post" action="/stages/2/scope/priority/describe">
+    {% for system in systems %}
+      <h2 class="govuk-heading-m">Describe {{ system.name }}</h2>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="priorityFunction-{{ system.id }}">What essential service and function does this support?</label>
+        <textarea class="govuk-textarea" id="priorityFunction-{{ system.id }}" name="priorityFunction_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].functionSummary or '' }}</textarea>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="prioritySupport-{{ system.id }}">What does the system do?</label>
+        <textarea class="govuk-textarea" id="prioritySupport-{{ system.id }}" name="prioritySupport_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].supportSummary or '' }}</textarea>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="priorityScope-{{ system.id }}">Why do you consider it in scope for CAF?</label>
+        <textarea class="govuk-textarea" id="priorityScope-{{ system.id }}" name="priorityScope_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].scopeRationale or '' }}</textarea>
+      </div>
+    {% endfor %}
+
+    <h2 class="govuk-heading-m">Review dates</h2>
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Date reviewed</legend>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="priorityDescribeQaName">CAF quality assurer name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="priorityDescribeQaName" name="priorityDescribeQaName" type="text" value="{{ assessment.scope.priorityDetailsReview.qaReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="priorityDescribeQaReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeQaDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="priorityDescribeQaDay" name="priorityDescribeQaDay" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.qaReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeQaMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="priorityDescribeQaMonth" name="priorityDescribeQaMonth" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.qaReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeQaYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="priorityDescribeQaYear" name="priorityDescribeQaYear" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.qaReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="priorityDescribeApproverName">CAF approver name</label>
+              <input class="govuk-input govuk-!-width-two-thirds" id="priorityDescribeApproverName" name="priorityDescribeApproverName" type="text" value="{{ assessment.scope.priorityDetailsReview.approverReviewedBy or '' }}">
+            </div>
+            <div class="govuk-date-input" id="priorityDescribeApproverReviewed">
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeApproverDay">Day</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="priorityDescribeApproverDay" name="priorityDescribeApproverDay" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.approverReviewed.day or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeApproverMonth">Month</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="priorityDescribeApproverMonth" name="priorityDescribeApproverMonth" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.approverReviewed.month or '' }}">
+                </div>
+              </div>
+              <div class="govuk-date-input__item">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-date-input__label" for="priorityDescribeApproverYear">Year</label>
+                  <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="priorityDescribeApproverYear" name="priorityDescribeApproverYear" type="text" inputmode="numeric" value="{{ assessment.scope.priorityDetailsReview.approverReviewed.year or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+  </form>
+{% endblock %}

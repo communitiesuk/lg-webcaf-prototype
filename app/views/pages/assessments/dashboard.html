@@ -6,13 +6,12 @@
   {% if currentUser %}
     <p class="govuk-hint">Role: {{ currentUser.role | capitalize }}</p>
   {% endif %}
-  <p class="govuk-body">{{ labels.dashboard.hint }}</p>
-  <p class="govuk-hint">{{ labels.dashboard.resumeHint }} {{ labels.dashboard.evidenceHint }}</p>
-  <div class="govuk-inset-text">
-    {{ labels.dashboard.lensNotice }}
-  </div>
 
   <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
+  <p class="govuk-body govuk-!-margin-bottom-2">
+    Viewing: <strong>Current cycle</strong>.
+    <a class="govuk-link govuk-!-margin-left-1" href="/assessments/current/cycle/history">View previous cycles</a>
+  </p>
   <div class="govuk-inset-text">
     <p class="govuk-body govuk-!-margin-bottom-1">
       <strong>{{ assessment.cycle.name }}</strong>
@@ -22,17 +21,56 @@
     </p>
   </div>
 
+  <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Cycle actions</h3>
   <div class="govuk-button-group">
     <a class="govuk-button govuk-button--secondary" href="/assessments/current/cycle/start?{{ buildQueryString(query) }}">
       {{ labels.dashboard.startNewCycle }}
-    </a>
-    <a class="govuk-link" href="/assessments/current/cycle/history">
-      {{ labels.dashboard.cycleHistory }}
     </a>
     <a class="govuk-link" href="/assessments/current/export.csv">
       Export CSV (current cycle)
     </a>
   </div>
+
+  {% if notifications and notifications.length %}
+    <h2 class="govuk-heading-m">Feedback and review updates</h2>
+    <div class="govuk-notification-banner" role="region" aria-labelledby="feedback-notifications-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="feedback-notifications-title">Updates</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-3">
+          {% for n in notifications %}
+            <li>
+              {% if n.href %}
+                <a class="govuk-link" href="{{ n.href }}?{{ buildQueryString(query) }}">{{ n.text }}</a>
+              {% else %}
+                {{ n.text }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          Use your booked check-in call to review shared outcomes and clarify feedback.
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if assuranceSummary and assuranceSummary.openEvidenceRequests > 0 %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="evidence-notifications-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="evidence-notifications-title">Evidence requests</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">
+          You have {{ assuranceSummary.openEvidenceRequests }} open evidence clarification requests.
+        </p>
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          <a class="govuk-link" href="/assessments/current/evidence-requests">Review and respond</a>
+        </p>
+      </div>
+    </div>
+  {% endif %}
 
   {% if query.view != "all" or query.objective or query.principle or query.status or query.owner or query.overdueOnly == "1" %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
@@ -79,16 +117,40 @@
       </div>
     </div>
   </div>
-
-  <div class="govuk-inset-text">
-    <p class="govuk-body govuk-!-margin-bottom-1">
-      <strong>Next best action:</strong> {{ summaryAll.needsAttention }} outcomes need attention.
-    </p>
-    <p class="govuk-body govuk-!-margin-bottom-0">
-      <a class="govuk-link" href="/assessments/current/dashboard?view=attention">View attention list</a>
-      or
-      <a class="govuk-link" href="/assessments/current/summary">view resilience summary</a>.
-    </p>
+  <div class="govuk-grid-row app-dashboard-summary">
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">Assurance report</p>
+        <p class="app-dashboard-card__value">{{ assuranceSummary.reportStatus }}</p>
+        <p class="app-dashboard-card__meta">
+          Record of Audit: {{ assuranceSummary.recordStatus }}
+        </p>
+        <p class="govuk-!-margin-bottom-0">
+          <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
+        </p>
+      </div>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">IIP Stage 2</p>
+        <p class="app-dashboard-card__value">{{ iipStage2Summary.statusLabel }}</p>
+        <p class="app-dashboard-card__meta">
+          {% if iipStage2Summary.expectedByDisplay %}Offline drafting target: {{ iipStage2Summary.expectedByDisplay }}{% else %}No target date yet{% endif %}
+        </p>
+        <p class="govuk-!-margin-bottom-0">
+          <a class="govuk-link" href="{{ iipStage2Summary.nextActionHref }}">Open IIP Stage 2</a>
+        </p>
+      </div>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">Evidence requests</p>
+        <p class="app-dashboard-card__value">{{ assuranceSummary.openEvidenceRequests }}</p>
+        <p class="govuk-!-margin-bottom-0">
+          <a class="govuk-link" href="/assessments/current/evidence-requests">Open requests</a>
+        </p>
+      </div>
+    </div>
   </div>
 
   <h2 class="govuk-heading-m">{{ labels.dashboard.viewsHeading }}</h2>
@@ -113,10 +175,10 @@
       All
     </a>
     <a class="govuk-button {% if query.lens != 'ad' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'ad', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      A & D
+      Organisational assessment (A and D)
     </a>
     <a class="govuk-button {% if query.lens != 'bc' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'bc', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      B & C
+      Critical systems assessment (B and C)
     </a>
   </div>
 
@@ -228,15 +290,8 @@
       <table class="govuk-table">
         <thead class="govuk-table__head">
           <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Outcome</th>
-            <th scope="col" class="govuk-table__header">Owner</th>
-            <th scope="col" class="govuk-table__header">Involvement</th>
-            <th scope="col" class="govuk-table__header">Status</th>
-            <th scope="col" class="govuk-table__header">Attention</th>
-            <th scope="col" class="govuk-table__header">Due date</th>
-            <th scope="col" class="govuk-table__header">Next step</th>
-            <th scope="col" class="govuk-table__header">Last update</th>
-            <th scope="col" class="govuk-table__header">Evidence refs</th>
+            <th scope="col" class="govuk-table__header" style="width: 65%;">Outcome</th>
+            <th scope="col" class="govuk-table__header" style="width: 35%;">Status</th>
           </tr>
         </thead>
 
@@ -253,80 +308,13 @@
                 {% if r.description %}
                   <div class="govuk-hint govuk-!-margin-top-1">{{ r.description }}</div>
                 {% endif %}
-                <div class="govuk-body govuk-!-margin-top-1">
-                  <a class="govuk-link" href="{{ r.selfAssessUrl }}">
-                    {% if r.lens == "bc" %}View system outcome{% else %}Self-assess outcome{% endif %}
-                  </a>
+                <div class="govuk-hint govuk-!-margin-top-1">
+                  Owner: {{ r.ownerName or "Unassigned" }}{% if r.collaboratorCount and r.collaboratorCount > 0 %}, Collaborators: {{ r.collaboratorCount }}{% endif %}
                 </div>
               </td>
 
               <td class="govuk-table__cell">
-                {% set ownerName = "Unassigned" %}
-                {% for u in users %}
-                  {% if u.id == r.ownerId %}{% set ownerName = u.name %}{% endif %}
-                {% endfor %}
-                {{ ownerName }}
-              </td>
-
-              <td class="govuk-table__cell">
-                {% if r.lens == "bc" %}
-                  <strong class="govuk-tag govuk-tag--grey">System</strong>
-                {% elif r.isOwner %}
-                  <strong class="govuk-tag govuk-tag--blue">Owner</strong>
-                {% elif r.isCollaborator %}
-                  <strong class="govuk-tag govuk-tag--grey">Collaborator</strong>
-                {% else %}
-                  —
-                {% endif %}
-              </td>
-
-              <td class="govuk-table__cell">
                 <strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong>
-              </td>
-
-              <td class="govuk-table__cell">
-                {% if r.isOverdue %}
-                  <strong class="govuk-tag govuk-tag--orange">Overdue</strong>
-                {% endif %}
-                {% if r.isBlocked %}
-                  <strong class="govuk-tag govuk-tag--red govuk-!-margin-left-1">Blocked</strong>
-                {% endif %}
-                {% if r.isReadyForReview %}
-                  <strong class="govuk-tag govuk-tag--purple govuk-!-margin-left-1">Ready</strong>
-                {% endif %}
-                {% if r.isMissingEvidence %}
-                  <strong class="govuk-tag govuk-tag--orange govuk-!-margin-left-1">Missing evidence</strong>
-                {% endif %}
-                {% if not r.isOverdue and not r.isBlocked and not r.isReadyForReview and not r.isMissingEvidence %}
-                  —
-                {% endif %}
-              </td>
-
-              <td class="govuk-table__cell">
-                {{ r.dueDateDisplay or "—" }}
-              </td>
-
-              <td class="govuk-table__cell">
-                {% if r.nextStep %}
-                  {{ r.nextStep | truncate(60) }}
-                {% else %}
-                  —
-                {% endif %}
-              </td>
-
-              <td class="govuk-table__cell">
-                {% if r.lastUpdateAt %}
-                  <div class="govuk-body govuk-!-margin-bottom-0">{{ r.lastUpdateAt }}</div>
-                  {% if r.lastUpdateSummary %}
-                    <div class="govuk-hint govuk-!-margin-bottom-0">{{ r.lastUpdateSummary | truncate(50) }}</div>
-                  {% endif %}
-                {% else %}
-                  —
-                {% endif %}
-              </td>
-
-              <td class="govuk-table__cell">
-                {% if r.evidenceCount > 0 %}{{ r.evidenceCount }}{% else %}0{% endif %}
               </td>
             </tr>
           {% endfor %}

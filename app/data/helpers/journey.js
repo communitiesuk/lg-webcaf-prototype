@@ -2,6 +2,36 @@
 // Build progress steps and breadcrumbs for the assessment journey.
 
 function buildProgress(currentPath) {
+  if (currentPath.startsWith("/stages/2/scope")) {
+    const steps = [
+      { id: "context", text: "Set organisational context", href: "/stages/2/scope/context", match: ["/stages/2/scope/context"] },
+      { id: "roles", text: "CAF team and roles", href: "/stages/2/scope/roles", match: ["/stages/2/scope/roles"] },
+      { id: "services", text: "Essential services", href: "/stages/2/scope/services/add", match: ["/stages/2/scope/services"] },
+      { id: "systems", text: "Critical systems", href: "/stages/2/scope/systems/add", match: ["/stages/2/scope/systems"] },
+      { id: "mapping", text: "Map systems", href: "/stages/2/scope/mapping/review", match: ["/stages/2/scope/mapping"] },
+      { id: "priority", text: "Prioritise systems", href: "/stages/2/scope/priority/shortlist", match: ["/stages/2/scope/priority"] },
+    ];
+
+    const currentIndex = steps.findIndex((step) =>
+      step.match.some((prefix) => currentPath === prefix || currentPath.startsWith(prefix + "/"))
+    );
+
+    if (currentIndex === -1) return null;
+
+    const decorated = steps.map((step, index) => ({
+      text: step.text,
+      href: step.href,
+      status: index < currentIndex ? "complete" : index === currentIndex ? "current" : "upcoming",
+    }));
+
+    return {
+      steps: decorated,
+      currentIndex,
+      total: steps.length,
+      currentLabel: steps[currentIndex] ? steps[currentIndex].text : "",
+    };
+  }
+
   const steps = [
     { id: "understand", text: "Stage 1: Understand CAF", href: "/stages/1", match: ["/stages/1"] },
     {
@@ -63,7 +93,11 @@ function buildProgress(currentPath) {
 }
 
 function buildBreadcrumbs(currentPath) {
-  const crumbs = [{ text: "Home", href: "/entry" }];
+  if (currentPath === "/assessments/current/journey") {
+    return [{ text: "CAF journey" }];
+  }
+
+  const crumbs = [{ text: "CAF journey", href: "/assessments/current/journey" }];
 
   if (currentPath.startsWith("/stages/1")) {
     crumbs.push({ text: "Understand CAF" });
@@ -81,25 +115,33 @@ function buildBreadcrumbs(currentPath) {
   }
 
   if (currentPath.startsWith("/stages/2/scope")) {
-    crumbs.push({ text: "Scope pack", href: "/stages/2/scope" });
+    crumbs.push({ text: "Set your scope", href: "/stages/2/scope" });
 
     if (currentPath === "/stages/2/scope") return crumbs;
-    if (currentPath.includes("/services")) {
+    if (currentPath.includes("/context")) {
+      crumbs.push({ text: "Organisational context" });
+    } else if (currentPath.includes("/roles")) {
+      crumbs.push({ text: "CAF team and roles" });
+    } else if (currentPath.includes("/services")) {
       crumbs.push({ text: "Essential services" });
     } else if (currentPath.includes("/systems")) {
       crumbs.push({ text: "Critical systems" });
     } else if (currentPath.includes("/mapping")) {
       crumbs.push({ text: "Mapping" });
     } else if (currentPath.includes("/priority")) {
-      crumbs.push({ text: "Prioritisation" });
+      crumbs.push({ text: "Prioritise systems" });
     } else {
-      crumbs.push({ text: "Scope pack" });
+      crumbs.push({ text: "Set your scope" });
     }
     return crumbs;
   }
 
   if (currentPath.startsWith("/assessments/current")) {
-    crumbs.push({ text: "Progress tracker" });
+    if (currentPath === "/assessments/current/dashboard") {
+      crumbs.push({ text: "Progress tracker" });
+    } else {
+      crumbs.push({ text: "Progress tracker", href: "/assessments/current/dashboard" });
+    }
     return crumbs;
   }
 

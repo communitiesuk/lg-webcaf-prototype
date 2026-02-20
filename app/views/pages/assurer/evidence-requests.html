@@ -1,0 +1,107 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+  <h1 class="govuk-heading-l">Evidence clarification requests</h1>
+  <p class="govuk-body">Request missing evidence from councils and track responses.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assurer/record-of-audit">Open Record of Audit</a>
+    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
+    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li>{{ item.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Evidence request updated.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Create request</h2>
+  <form method="post" action="/assurer/evidence-requests">
+    <input type="hidden" name="evidenceRequestAction" value="add">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="evidenceRequestObjective">Objective</label>
+      <select class="govuk-select" id="evidenceRequestObjective" name="evidenceRequestObjective">
+        <option value="">Select</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="evidenceRequestOutcomeId">Contributing outcome</label>
+      <select class="govuk-select" id="evidenceRequestOutcomeId" name="evidenceRequestOutcomeId">
+        <option value="">Select</option>
+        {% for row in outcomeRows %}
+          <option value="{{ row.outcomeId }}">{{ row.outcomeCode }} {{ row.title }}{% if row.systemName %} ({{ row.systemName }}){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="evidenceRequestIgpId">IGP reference (optional)</label>
+      <input class="govuk-input govuk-input--width-10" id="evidenceRequestIgpId" name="evidenceRequestIgpId" type="text">
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="evidenceRequestText">What clarification or evidence is missing?</label>
+      <textarea class="govuk-textarea" id="evidenceRequestText" name="evidenceRequestText" rows="4"></textarea>
+    </div>
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="evidenceRequestDueAt">Due date (optional)</label>
+      <input class="govuk-input govuk-input--width-10" id="evidenceRequestDueAt" name="evidenceRequestDueAt" type="date">
+    </div>
+    <button class="govuk-button" data-module="govuk-button" type="submit">Add request</button>
+  </form>
+
+  <h2 class="govuk-heading-m">Open requests ({{ openRequests.length }})</h2>
+  {% if openRequests.length > 0 %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header">Outcome</th>
+          <th class="govuk-table__header">Request</th>
+          <th class="govuk-table__header">Status</th>
+          <th class="govuk-table__header">Action</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for reqItem in openRequests %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">{{ reqItem.outcomeId }}{% if reqItem.igpId %} ({{ reqItem.igpId }}){% endif %}</td>
+            <td class="govuk-table__cell">{{ reqItem.requestText }}</td>
+            <td class="govuk-table__cell"><strong class="govuk-tag govuk-tag--orange">Open</strong></td>
+            <td class="govuk-table__cell">
+              <form method="post" action="/assurer/evidence-requests">
+                <input type="hidden" name="evidenceRequestAction" value="close">
+                <input type="hidden" name="evidenceRequestId" value="{{ reqItem.id }}">
+                <button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" type="submit">Close</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="govuk-body">No open evidence requests.</p>
+  {% endif %}
+{% endblock %}

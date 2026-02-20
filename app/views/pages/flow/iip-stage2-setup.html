@@ -1,0 +1,65 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
+  <h1 class="govuk-heading-l">Set owners and deadlines</h1>
+  <p class="govuk-body">CAF lead assigns an owner and due date for each contributing outcome row.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Assignments saved.</p></div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="/improvement-plan/stage-2/setup">
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header">Outcome</th>
+          <th class="govuk-table__header">Owner</th>
+          <th class="govuk-table__header">Due date</th>
+          <th class="govuk-table__header">Action</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in rows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <strong>{{ row.outcomeCode }}</strong> {{ row.outcomeTitle }}
+              {% if row.systemName %}<div class="govuk-hint">System: {{ row.systemName }}</div>{% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              <select class="govuk-select" name="stage2Rows[{{ loop.index0 }}][ownerId]">
+                <option value="">Select owner</option>
+                {% for c in contributors %}
+                  <option value="{{ c.id }}" {% if row.ownerId == c.id %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td class="govuk-table__cell">
+              <input class="govuk-input govuk-input--width-10" name="stage2Rows[{{ loop.index0 }}][ownerDueDate]" type="date" value="{{ row.ownerDueDate }}">
+            </td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="/improvement-plan/stage-2/rows/{{ row.id }}">Complete row</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button class="govuk-button" type="submit">Save assignments</button>
+  </form>
+{% endblock %}

@@ -15,6 +15,9 @@
 
   <h1 class="govuk-heading-l">{{ labels.assurer.outcome.headingPrefix }} {{ row.outcomeCode }}</h1>
   <p class="govuk-body">{{ row.title }}</p>
+  {% if row.systemName %}
+    <p class="govuk-hint">System: {{ row.systemName }}</p>
+  {% endif %}
 
   {% if saved %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
@@ -214,6 +217,6 @@
     {% if nextReady %}
       <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/outcomes/{{ nextReady }}">Next ready outcome</a>
     {% endif %}
-    <a class="govuk-link" href="/improvement-plan/generate">Generate IIP</a>
+    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
   </div>
 {% endblock %}

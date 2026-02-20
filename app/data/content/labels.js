@@ -10,17 +10,16 @@ module.exports = {
     intro:
       "Plan, run and submit your CAF self-assessment with clear ownership, evidence references and assurance.",
     actions: {
-      startNew: "Start new assessment",
-      resume: "Resume in-progress work",
-      dashboard: "Go to dashboard",
+      startNew: "Start CAF journey",
+      resume: "Continue in-progress work",
     },
     scopeLink: "Go to scope pack",
     resumeHint:
       "Resume takes you to the most recently updated outcome assigned to you. If none, it opens your dashboard view.",
     nextSteps: [
-      "Build your scope pack (essential services, critical systems and mappings)",
-      "Track progress outcome-by-outcome with owners, status and evidence references",
-      "Complete self-assessments and capture assurance feedback",
+      "Complete the scope pack (essential services, critical systems and mapping)",
+      "Confirm the scope pack with CAF lead internal sign-off and share it with your assurer",
+      "Start self-assessment once the scope pack is complete",
     ],
     optionalLinks: {
       previousSubmissions: "View previous submissions (optional)",
@@ -31,7 +30,7 @@ module.exports = {
     pageTitle: "Start",
     heading: "Start a CAF self-assessment",
     intro:
-      "Use this service to plan, run and submit your CAF self-assessment for local government.",
+      "Use this service to plan, run and submit your CAF self-assessment for local government. Preparation happens offline before you build the scope pack.",
     startButton: "Start now",
     beforeYouStart: [
       "Agree who owns the assessment and who needs to contribute",
@@ -158,9 +157,27 @@ module.exports = {
       hub: {
         title: "Scope pack",
         intro:
-          "Build the registers, map systems to services, then agree the priority shortlist for B and C.",
-        continue: "Continue Stage 2: Scope pack",
-        completeContinue: "Continue to Stage 3: Self-assess organisation",
+          "Build the registers, map systems to services, confirm at least 3 in-scope critical systems, then complete the scope pack.",
+        continue: "Continue scope pack",
+        completeContinue: "Scope pack complete",
+        statusHeading: "Scope pack status",
+        statusHint: "Use this to record if the scope pack is stalled and why.",
+        statusOptions: {
+          onTrack: "On track",
+          stalled: "Stalled",
+        },
+        blockerLabel: "What is blocking progress?",
+        blockerHint: "Keep this short so engagement managers can act quickly.",
+        blockerNotesLabel: "Notes (optional)",
+        rolesHeading: "Who is involved in the CAF work",
+        rolesHint: "Name the people or teams who will help complete the assessment.",
+        rolesLeadLabel: "CAF lead or assessment owner",
+        rolesSmeLabel: "Subject matter experts (governance, risk, legal, procurement)",
+        rolesTechLabel: "System and technical owners",
+        rolesApproverLabel: "Approver or senior sign-off",
+        rolesConfirmLabel: "I have confirmed the team who will complete the CAF work",
+        leadConfirmLabel: "CAF lead has reviewed and signed off the scope pack internally",
+        assurerReviewLabel: "I have shared the scope pack with the assurer for review",
       },
       services: {
         addTitle: "Essential services register",
@@ -198,6 +215,12 @@ module.exports = {
         mappingRequired: "Select at least one essential service",
         priorityLevel: "Select a priority level",
         priorityRationale: "Enter a short rationale for the priority",
+        scopePackStatus: "Select the scope pack status",
+        scopeBlockerReason: "Select a blocker reason",
+        scopeRolesConfirm: "Confirm the team who will complete the CAF work",
+        scopeLeadConfirm: "Confirm the CAF lead has signed off the scope pack internally",
+        scopeAssurerReview: "Confirm the scope pack has been shared with the assurer for review",
+        shortlistMinimum: "Add and prioritise at least 3 critical systems before continuing",
       },
     },
   },
@@ -242,15 +265,20 @@ module.exports = {
     },
     prepare: {
       pageTitle: "Prepare and get set up",
-      heading: "Prepare and get set up",
-      intro: "Confirm you have completed the key preparation steps before you continue.",
-      contextLink: "Need context? Review Stage 1 guidance.",
+      heading: "Prepare for the CAF",
+      intro: "Confirm you have completed the preparation steps before you continue.",
       checklistHeading: "Preparation checklist",
       checklistLegend: "Confirm you have completed the preparation steps",
       checklist: {
-        guidance: "I have read the How to prepare for your self-assessment guidance",
-        contributors: "I have confirmed who needs to be involved (owners, SMEs, approvers)",
-        caf: "I have reviewed the CAF outcomes and IGPs for my organisation",
+        awareness: "I am aware of the CAF and why we are completing it",
+        signoff: "I have internal sign-off to complete the CAF",
+        support: "I know how to access support if we need it",
+        understanding: "I understand what the CAF involves",
+        governance: "I have set up the CAF team and governance",
+        assurers: "I have met or contacted our assurer",
+      },
+      errors: {
+        required: "Confirm you have completed all preparation steps",
       },
     },
     profile: {
@@ -292,11 +320,10 @@ module.exports = {
       igpHint: "Summarise the IGP responses for this outcome. Keep it factual.",
       judgement: "Overall judgement",
       judgementOptions: [
-        { value: "Achieved", text: "Achieved" },
-        { value: "Partially achieved", text: "Partially achieved" },
-        { value: "Not achieved", text: "Not achieved" },
+        { value: "Achieved", text: "Met" },
+        { value: "Not achieved", text: "Not met" },
       ],
-      rationale: "Rationale",
+      rationale: "Reasons for judgement",
       evidenceHeading: "Evidence references",
       evidenceHint:
         "Add reference IDs or links only. If you have working references in the progress tracker, copy them here for the judgement record.",
@@ -341,9 +368,10 @@ module.exports = {
       tracking: {
         heading: "Action tracking",
         intro: "Track delivery status, check-ins, and evidence of change for each action.",
-        statusLabel: "Status",
+        statusLabel: "Progress status",
         lastUpdate: "Last update",
         evidence: "Expected evidence",
+        evidenceRef: "Evidence of change",
       },
       generate: {
         pageTitle: "Generate improvement plan from gaps",
@@ -375,6 +403,8 @@ module.exports = {
         ownerLabel: "Owner",
         dueDateLabel: "Due date",
         evidenceLabel: "Expected evidence of change",
+        progressLabel: "Progress status",
+        evidenceRefLabel: "Evidence of change reference",
         cadenceLabel: "Check-in cadence",
         keepLabel: "Keep",
         errors: {
@@ -537,7 +567,7 @@ module.exports = {
       collaborators: "Additional collaborators",
       status: "Progress status",
       dueDate: "Due date",
-      updateText: "Notes / updates",
+      updateText: "Use this box to record notes or decisions",
       blocker: "Blocker or dependency",
       nextStep: "Next step",
       evidenceRefId: "Reference ID",

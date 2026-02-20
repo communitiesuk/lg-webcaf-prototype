@@ -1,0 +1,98 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer/queue">Back</a>
+  <h1 class="govuk-heading-l">IIP Stage 1: Assurer report</h1>
+  <p class="govuk-body">Record recommendations, risk levels and control types for each contributing outcome.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assurer/record-of-audit">Open Record of Audit</a>
+    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
+    <a class="govuk-link" href="/assurer/evidence-requests">Evidence requests</a>
+  </p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li>{{ item.text }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Stage 1 report updated.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if existing.draftSharedAt %}
+    <div class="govuk-inset-text">
+      Draft shared with council. Amendments due by: <strong>{{ windowInfo.dueAtDisplay or "Not set" }}</strong>.
+      {% if existing.councilAmendments and existing.councilAmendments.status == "submitted" %}
+        <br>Council amendments received.
+      {% elseif windowInfo.expired %}
+        <br>Amendment window expired.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/assurer/report-stage-1">
+    {% for row in outcomeRows %}
+      {% set key = row.outcomeId | replace(":", "_") %}
+      {% set existingItem = (existing.items | selectattr("outcomeId","equalto",row.outcomeId) | list | first) %}
+      <h2 class="govuk-heading-m">{{ row.outcomeCode }} {{ row.title }}</h2>
+      {% if row.systemName %}
+        <p class="govuk-hint">System: {{ row.systemName }}</p>
+      {% endif %}
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="stage1Recommendation-{{ key }}">Assurer recommendation</label>
+        <textarea class="govuk-textarea" id="stage1Recommendation-{{ key }}" name="stage1Recommendation-{{ key }}" rows="3">{{ existingItem.recommendation if existingItem else "" }}</textarea>
+      </div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="stage1RiskLevel-{{ key }}">Risk level</label>
+        <select class="govuk-select" id="stage1RiskLevel-{{ key }}" name="stage1RiskLevel-{{ key }}">
+          <option value="">Select risk level</option>
+          <option value="high" {% if existingItem and existingItem.riskLevel == "high" %}selected{% endif %}>High</option>
+          <option value="medium" {% if existingItem and existingItem.riskLevel == "medium" %}selected{% endif %}>Medium</option>
+          <option value="low" {% if existingItem and existingItem.riskLevel == "low" %}selected{% endif %}>Low</option>
+          <option value="no_action" {% if existingItem and existingItem.riskLevel == "no_action" %}selected{% endif %}>No action</option>
+        </select>
+      </div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="stage1RiskDescription-{{ key }}">Risk description</label>
+        <textarea class="govuk-textarea" id="stage1RiskDescription-{{ key }}" name="stage1RiskDescription-{{ key }}" rows="3">{{ existingItem.riskDescription if existingItem else "" }}</textarea>
+      </div>
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Control types</legend>
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            {% for ct in ["people","process","technology"] %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="stage1ControlTypes-{{ key }}-{{ ct }}" name="stage1ControlTypes-{{ key }}" type="checkbox" value="{{ ct }}" {% if existingItem and existingItem.controlTypes and (ct in existingItem.controlTypes) %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="stage1ControlTypes-{{ key }}-{{ ct }}">{{ ct | capitalize }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    {% endfor %}
+
+    <div class="govuk-button-group">
+      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="stage1Action" value="save">Save draft</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit" name="stage1Action" value="share">Share draft with council</button>
+      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="stage1Action" value="finalise">Finalise Stage 1 report</button>
+    </div>
+  </form>
+{% endblock %}

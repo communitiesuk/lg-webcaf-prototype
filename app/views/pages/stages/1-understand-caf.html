@@ -9,9 +9,23 @@
       <p class="govuk-body govuk-!-font-size-19">{{ labels.stages.stage1.intro }}</p>
       <p class="govuk-body">{{ labels.stages.stage1.programmeGoal }}</p>
 
-      <div class="govuk-inset-text">
-        {{ labels.stages.stage1.prototypeNote }}
-      </div>
+      <h2 class="govuk-heading-m">At a glance</h2>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.whoHeading }}</dt>
+          <dd class="govuk-summary-list__value">
+            <ul class="govuk-list govuk-list--bullet">
+              {% for item in labels.stages.stage1.whoList %}
+                <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.timeHeading }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.timeText }}</dd>
+        </div>
+      </dl>
 
       <h2 class="govuk-heading-m">CAF structure</h2>
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
@@ -34,20 +48,16 @@
       </dl>
 
       <h2 class="govuk-heading-m">Two assessment lenses</h2>
-      <div class="govuk-grid-row govuk-!-margin-bottom-4">
-        <div class="govuk-grid-column-one-half">
-          <div class="govuk-inset-text">
-            <h3 class="govuk-heading-s">{{ labels.stages.stage1.lens.ad.title }}</h3>
-            <p class="govuk-body">{{ labels.stages.stage1.lens.ad.text }}</p>
-          </div>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.lens.ad.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.lens.ad.text }}</dd>
         </div>
-        <div class="govuk-grid-column-one-half">
-          <div class="govuk-inset-text">
-            <h3 class="govuk-heading-s">{{ labels.stages.stage1.lens.bc.title }}</h3>
-            <p class="govuk-body">{{ labels.stages.stage1.lens.bc.text }}</p>
-          </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ labels.stages.stage1.lens.bc.title }}</dt>
+          <dd class="govuk-summary-list__value">{{ labels.stages.stage1.lens.bc.text }}</dd>
         </div>
-      </div>
+      </dl>
 
       <details class="govuk-details" data-module="govuk-details">
         <summary class="govuk-details__summary">
@@ -74,19 +84,13 @@
       </form>
     </div>
     <div class="govuk-grid-column-one-third">
-      <div class="govuk-inset-text">
-        <h2 class="govuk-heading-m govuk-!-margin-top-0">At a glance</h2>
-        <h3 class="govuk-heading-s">{{ labels.stages.stage1.whoHeading }}</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          {% for item in labels.stages.stage1.whoList %}
-            <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-
-        <p class="govuk-body">
-          <strong>{{ labels.stages.stage1.timeHeading }}</strong> {{ labels.stages.stage1.timeText }}
-        </p>
-      </div>
+      <h2 class="govuk-heading-m govuk-!-margin-top-0">Guidance to help you understand the CAF for local government</h2>
+      <ul class="govuk-list govuk-body-s">
+        <li><a class="govuk-link" href="#">About the CAF for local government</a></li>
+        <li><a class="govuk-link" href="#">Overview of the CAF for local government</a></li>
+        <li><a class="govuk-link" href="#">Objectives, principles and contributing outcomes of the CAF</a></li>
+        <li><a class="govuk-link" href="#">How the CAF relates to other cyber standards</a></li>
+      </ul>
     </div>
   </div>
 {% endblock %}

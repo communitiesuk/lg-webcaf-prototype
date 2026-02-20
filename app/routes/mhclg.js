@@ -114,6 +114,9 @@ module.exports = function (router) {
     const keyBlocker = (req.session.data.engagementBlocker || "").toString().trim();
     const nextAction = (req.session.data.engagementNextAction || "").toString().trim();
     const owner = (req.session.data.engagementOwner || "").toString();
+    const actionTaken = (req.session.data.engagementActionTaken || "").toString().trim();
+    const peerLearning = (req.session.data.engagementPeerLearning || "").toString().trim();
+    const supportOutcome = (req.session.data.engagementSupportOutcome || "").toString();
 
     const errors = [];
     if (!councilName) errors.push({ field: "engagementCouncil", text: "Select a council." });
@@ -152,6 +155,9 @@ module.exports = function (router) {
       keyBlocker,
       nextAction,
       owner,
+      actionTaken,
+      peerLearning,
+      supportOutcome,
     });
 
     delete req.session.data.engagementCouncil;
@@ -160,6 +166,9 @@ module.exports = function (router) {
     delete req.session.data.engagementBlocker;
     delete req.session.data.engagementNextAction;
     delete req.session.data.engagementOwner;
+    delete req.session.data.engagementActionTaken;
+    delete req.session.data.engagementPeerLearning;
+    delete req.session.data.engagementSupportOutcome;
 
     return res.redirect("/mhclg/engagement?saved=1");
   });
@@ -196,10 +205,32 @@ function buildEngagementSummary(req) {
   const requests = engagement.requests || [];
   const blockers = engagement.blockers || [];
 
+  const commonIssues = buildCommonIssues(queue, blockers);
+
   return {
     dueThisWeek: queue.filter((row) => row.status === "Due this week" || row.status === "Overdue").length,
     requested: queue.filter((row) => row.status === "Requested").length,
     blockersNeedingHelp: blockers.filter((row) => row.needsMhclgHelp).length,
     openRequests: requests.length,
+    commonIssues,
   };
+}
+
+function buildCommonIssues(queue, blockers) {
+  const counts = {};
+
+  (queue || []).forEach((row) => {
+    if (!row.scopeBlocker) return;
+    counts[row.scopeBlocker] = (counts[row.scopeBlocker] || 0) + 1;
+  });
+
+  (blockers || []).forEach((row) => {
+    const key = row.category ? `Assurer: ${row.category}` : "Assurer: Other";
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  return Object.entries(counts)
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
 }
