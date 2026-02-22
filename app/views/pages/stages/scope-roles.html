@@ -24,12 +24,6 @@
     {% endif %}
 
     <div class="govuk-form-group">
-      <label class="govuk-label" for="scopeLead">{{ labels.stages.scope.hub.rolesLeadLabel }}</label>
-      <div class="govuk-hint">For example: CAF lead, service owner, or programme manager.</div>
-      <input class="govuk-input" id="scopeLead" name="scopeLead" type="text" value="{{ assessment.scope.rolesLead or '' }}">
-    </div>
-
-    <div class="govuk-form-group">
       <label class="govuk-label" for="scopeSme">{{ labels.stages.scope.hub.rolesSmeLabel }}</label>
       <div class="govuk-hint">List the teams you will consult before asking MHCLG or assurers.</div>
       <input class="govuk-input" id="scopeSme" name="scopeSme" type="text" value="{{ assessment.scope.rolesSme or '' }}">

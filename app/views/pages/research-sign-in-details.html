@@ -1,0 +1,22 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/research-start">Back</a>
+
+  <h1 class="govuk-heading-l">Sign in</h1>
+  <p class="govuk-body">Enter your details to continue as {{ selected.name }}.</p>
+
+  <form method="post" action="/research-start/sign-in-details">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="signInName">Name</label>
+      <input class="govuk-input govuk-!-width-two-thirds" id="signInName" name="signInName" type="text" value="{{ defaults.name }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="signInEmail">Email</label>
+      <input class="govuk-input govuk-!-width-two-thirds" id="signInEmail" name="signInEmail" type="email" value="{{ defaults.email }}">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+  </form>
+{% endblock %}

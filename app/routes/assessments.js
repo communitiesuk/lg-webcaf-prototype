@@ -2851,11 +2851,12 @@ function countBCJudgedForSystems(assessment, systemIds) {
 
 function journeyItem(title, summary, options) {
   const locked = Boolean(options && options.locked);
+  const lockHint = (options && options.lockedHint) || "Complete the previous step first.";
   const hint = locked
-    ? (options && options.lockedHint) || "Complete the previous step first."
+    ? `${summary.hint} ${lockHint}`.trim()
     : summary.hint;
-  const statusText = locked ? "Cannot start yet" : summary.statusText;
-  const statusClass = locked ? "govuk-tag--grey" : summary.statusClass;
+  const statusText = summary.statusText;
+  const statusClass = summary.statusClass;
   const href = locked ? "" : summary.href;
 
   return {

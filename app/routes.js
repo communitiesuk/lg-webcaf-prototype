@@ -215,6 +215,14 @@ router.post("/research-start", (req, res) => {
       },
     });
   }
+  if (selected && selected.id === "u-1") {
+    req.session.data = {
+      pendingUserId: selected.id,
+      pendingNextPath: nextPath,
+    };
+    return res.redirect("/research-start/sign-in-details");
+  }
+
   req.session.data = {
     user: selected,
     signedIn: true,
@@ -226,6 +234,51 @@ router.post("/research-start", (req, res) => {
     return res.redirect("/assurer/queue");
   }
   if (nextPath) return res.redirect(nextPath);
+  return res.redirect("/entry/start-new?returnTo=/prepare");
+});
+
+router.get("/research-start/sign-in-details", (req, res) => {
+  if (!req.session || !req.session.data) {
+    req.session = { data: {} };
+  }
+  const pendingUserId = (req.session.data.pendingUserId || "").toString();
+  const selected = users.find((user) => user.id === pendingUserId);
+  if (!selected) return res.redirect("/research-start");
+
+  const defaults = {
+    name: (req.session.data.signInName || selected.name || "").toString(),
+    email: (req.session.data.signInEmail || selected.email || "").toString(),
+  };
+
+  return res.render("pages/research-sign-in-details", {
+    pageTitle: "Sign in",
+    selected,
+    defaults,
+  });
+});
+
+router.post("/research-start/sign-in-details", (req, res) => {
+  if (!req.session || !req.session.data) {
+    req.session = { data: {} };
+  }
+  const pendingUserId = (req.session.data.pendingUserId || "").toString();
+  const pendingNextPath = sanitiseLocalPath((req.session.data.pendingNextPath || "").toString());
+  const selected = users.find((user) => user.id === pendingUserId);
+  if (!selected) return res.redirect("/research-start");
+
+  const enteredName = (req.session.data.signInName || "").toString().trim();
+  const enteredEmail = (req.session.data.signInEmail || "").toString().trim();
+
+  req.session.data = {
+    user: {
+      ...selected,
+      name: enteredName || selected.name,
+      email: enteredEmail,
+    },
+    signedIn: true,
+  };
+
+  if (pendingNextPath) return res.redirect(pendingNextPath);
   return res.redirect("/entry/start-new?returnTo=/prepare");
 });
 

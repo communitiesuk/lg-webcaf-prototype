@@ -180,20 +180,21 @@ module.exports = function (router) {
 
     ensureScope(assessment);
 
-    const rolesLead = (req.session.data.scopeLead || "").toString().trim();
     const rolesSme = (req.session.data.scopeSme || "").toString().trim();
     const rolesTech = (req.session.data.scopeTech || "").toString().trim();
     const rolesApprover = (req.session.data.scopeApprover || "").toString().trim();
     const rolesConfirm = (req.session.data.scopeRolesConfirm || "").toString();
+    const currentUser = req.session.data.user || null;
 
     const errors = [];
     if (!rolesConfirm) errors.push({ field: "scopeRolesConfirm", text: labels.stages.scope.errors.scopeRolesConfirm });
 
-    assessment.scope.rolesLead = rolesLead;
+    assessment.scope.rolesLead = currentUser && currentUser.name ? currentUser.name : "";
     assessment.scope.rolesSme = rolesSme;
     assessment.scope.rolesTech = rolesTech;
     assessment.scope.rolesApprover = rolesApprover;
     assessment.scope.rolesConfirmed = rolesConfirm === "yes";
+    syncContributorsFromScopeRoles(assessment, currentUser);
     assessment.updatedAt = new Date().toISOString();
 
     if (errors.length > 0) {
@@ -1447,6 +1448,58 @@ function buildScopeSummary(assessment) {
     readiness,
     updatedAtDisplay,
   };
+}
+
+function syncContributorsFromScopeRoles(assessment, currentUser) {
+  if (!assessment) return;
+  if (!Array.isArray(assessment.selfAssessContributors)) {
+    assessment.selfAssessContributors = [];
+  }
+
+  const contributors = assessment.selfAssessContributors;
+  if (currentUser && currentUser.id) {
+    const hasLead = contributors.some((person) => person.id === currentUser.id);
+    if (!hasLead) {
+      contributors.unshift({
+        id: currentUser.id,
+        name: currentUser.name || "Council lead",
+        email: currentUser.email || "",
+        role: "council",
+      });
+    }
+  }
+
+  const names = []
+    .concat(extractNames(assessment.scope.rolesSme))
+    .concat(extractNames(assessment.scope.rolesTech))
+    .concat(extractNames(assessment.scope.rolesApprover));
+
+  names.forEach((name) => {
+    const exists = contributors.some(
+      (person) => String(person.name || "").trim().toLowerCase() === name.toLowerCase()
+    );
+    if (exists) return;
+    contributors.push({
+      id: `scope-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      email: "",
+      role: "council",
+    });
+  });
+}
+
+function extractNames(value) {
+  const text = String(value || "").trim();
+  if (!text) return [];
+  return Array.from(
+    new Set(
+      text
+        .split(/\r?\n|,|;/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => item.replace(/\s+/g, " "))
+    )
+  );
 }
 
 function buildScopeReadiness(scope, stats) {
