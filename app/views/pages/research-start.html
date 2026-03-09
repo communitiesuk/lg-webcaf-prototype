@@ -2,7 +2,10 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <a class="govuk-back-link" href="/research-rounds">Back</a>
+
   <h1 class="govuk-heading-l">Research start</h1>
+  <p class="govuk-caption-m">{{ researchRoundLabel or "Round 1" }}</p>
   <p class="govuk-body">Choose a role before you begin.</p>
 
   <h2 class="govuk-heading-m">Choose a role</h2>
@@ -22,6 +25,7 @@
   {% endif %}
   <form method="post" action="/research-start">
     <input type="hidden" name="nextPath" value="{{ nextPath or '' }}">
+    <input type="hidden" name="researchRound" value="{{ researchRound or 'round-1' }}">
     <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">

@@ -1,9 +1,10 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/research-start">Back</a>
+  <a class="govuk-back-link" href="/research-start?round={{ researchRound or 'round-1' }}">Back</a>
 
   <h1 class="govuk-heading-l">Sign in</h1>
+  <p class="govuk-caption-m">{{ researchRoundLabel or "Round 1" }}</p>
   <p class="govuk-body">Enter your details to continue as {{ selected.name }}.</p>
 
   <form method="post" action="/research-start/sign-in-details">

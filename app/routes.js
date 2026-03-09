@@ -55,6 +55,10 @@ router.use((req, res, next) => {
     req.session && req.session.data && req.session.data.user ? req.session.data.user.role : "";
   const currentUser = signedIn ? req.session.data.user : null;
   res.locals.currentUser = currentUser;
+  const researchRound =
+    req.session && req.session.data ? normaliseResearchRound(req.session.data.researchRound) : "round-1";
+  res.locals.researchRound = researchRound;
+  res.locals.researchRoundLabel = researchRound === "round-2" ? "Round 2" : "Round 1";
   if (signedIn && !currentUser) {
     req.session.data.signedIn = false;
   }
@@ -100,7 +104,7 @@ router.use((req, res, next) => {
       req.path.startsWith("/public") ||
       req.path.startsWith("/govuk");
     const isSafe =
-      ["/research-start", "/start", "/guidance", "/my-account", "/logout"].some(
+      ["/research-rounds", "/research-start", "/start", "/guidance", "/my-account", "/logout"].some(
         (path) => req.path === path || req.path.startsWith(path + "/")
       );
     const councilPrefixes = [
@@ -150,6 +154,7 @@ router.use((req, res, next) => {
 
 // Journey modules
 require("./routes/debug")(router);
+require("./routes/research-rounds")(router);
 require("./routes/start")(router);
 require("./routes/sign-in")(router);
 require("./routes/entry")(router);
@@ -163,7 +168,7 @@ require("./routes/cycles")(router);
 require("./routes/export")(router);
 
 // Root redirect
-router.get("/", (req, res) => res.redirect("/research-start"));
+router.get("/", (req, res) => res.redirect("/research-rounds"));
 
 router.get("/research-start", (req, res) => {
   if (!req.session) req.session = {};
@@ -172,11 +177,15 @@ router.get("/research-start", (req, res) => {
   if (shouldReset) {
     req.session.data = {};
   }
+  const researchRound = normaliseResearchRound(req.query.round || req.session.data.researchRound);
+  req.session.data.researchRound = researchRound;
   const nextPath = sanitiseLocalPath((req.query.next || "").toString());
   res.render("pages/research-start", {
     pageTitle: "Research start",
     users,
     nextPath,
+    researchRound,
+    researchRoundLabel: researchRound === "round-2" ? "Round 2" : "Round 1",
   });
 });
 
@@ -204,12 +213,15 @@ router.post("/research-start", (req, res) => {
   }
   const selectedId = (req.session.data.researchUserId || "").toString();
   const nextPath = sanitiseLocalPath((req.session.data.nextPath || "").toString());
+  const researchRound = normaliseResearchRound(req.session.data.researchRound);
   const selected = users.find((user) => user.id === selectedId);
   if (!selected) {
     return res.render("pages/research-start", {
       pageTitle: "Research start",
       users,
       nextPath,
+      researchRound,
+      researchRoundLabel: researchRound === "round-2" ? "Round 2" : "Round 1",
       error: {
         items: [{ field: "researchUserId", text: "Select a role to start the journey." }],
       },
@@ -219,6 +231,8 @@ router.post("/research-start", (req, res) => {
     req.session.data = {
       pendingUserId: selected.id,
       pendingNextPath: nextPath,
+      pendingResearchRound: researchRound,
+      researchRound,
     };
     return res.redirect("/research-start/sign-in-details");
   }
@@ -226,6 +240,7 @@ router.post("/research-start", (req, res) => {
   req.session.data = {
     user: selected,
     signedIn: true,
+    researchRound,
   };
 
   if (selected && selected.role === "mhclg") return res.redirect("/mhclg/dashboard");
@@ -244,6 +259,7 @@ router.get("/research-start/sign-in-details", (req, res) => {
   const pendingUserId = (req.session.data.pendingUserId || "").toString();
   const selected = users.find((user) => user.id === pendingUserId);
   if (!selected) return res.redirect("/research-start");
+  const researchRound = normaliseResearchRound(req.session.data.pendingResearchRound);
 
   const defaults = {
     name: (req.session.data.signInName || selected.name || "").toString(),
@@ -254,6 +270,8 @@ router.get("/research-start/sign-in-details", (req, res) => {
     pageTitle: "Sign in",
     selected,
     defaults,
+    researchRound,
+    researchRoundLabel: researchRound === "round-2" ? "Round 2" : "Round 1",
   });
 });
 
@@ -263,6 +281,7 @@ router.post("/research-start/sign-in-details", (req, res) => {
   }
   const pendingUserId = (req.session.data.pendingUserId || "").toString();
   const pendingNextPath = sanitiseLocalPath((req.session.data.pendingNextPath || "").toString());
+  const pendingResearchRound = normaliseResearchRound(req.session.data.pendingResearchRound);
   const selected = users.find((user) => user.id === pendingUserId);
   if (!selected) return res.redirect("/research-start");
 
@@ -276,6 +295,7 @@ router.post("/research-start/sign-in-details", (req, res) => {
       email: enteredEmail,
     },
     signedIn: true,
+    researchRound: pendingResearchRound,
   };
 
   if (pendingNextPath) return res.redirect(pendingNextPath);
@@ -404,6 +424,10 @@ function sanitiseLocalPath(input) {
   if (!path.startsWith("/") || path.startsWith("//")) return "";
   if (path.startsWith("/research-start")) return "";
   return path;
+}
+
+function normaliseResearchRound(input) {
+  return input === "round-2" ? "round-2" : "round-1";
 }
 
 module.exports = router;
