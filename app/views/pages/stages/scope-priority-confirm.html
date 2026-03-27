@@ -4,8 +4,14 @@
 {% block content %}
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
-  <h1 class="govuk-heading-l">Complete scope pack</h1>
-  <p class="govuk-body">Check the critical systems marked in scope, then confirm internal sign-off and assurance scheduling details.</p>
+  <h1 class="govuk-heading-l">{{ "Complete scope register" if researchRound == "round-2" else "Complete scope pack" }}</h1>
+  <p class="govuk-body">
+    {% if researchRound == "round-2" %}
+      Check the critical systems marked in scope, then confirm the register is ready to use for yearly planning and assessment.
+    {% else %}
+      Check the critical systems marked in scope, then confirm internal sign-off and assurance scheduling details.
+    {% endif %}
+  </p>
   <p class="govuk-body">
     <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
   </p>
@@ -65,6 +71,6 @@
       </div>
     </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">Complete scope pack</button>
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Complete scope register" if researchRound == "round-2" else "Complete scope pack" }}</button>
   </form>
 {% endblock %}

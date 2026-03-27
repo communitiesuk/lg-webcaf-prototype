@@ -1,48 +1,78 @@
-{# app/views/pages/flow/self-assess-bc-system.html #}
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/self-assess/bc/select-system">Back</a>
+  <a class="govuk-back-link" href="{% if roundTwo %}/assessments/current/self-assessment/bc{% else %}/self-assess/bc/select-system{% endif %}">Back</a>
 
-  <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.systemHeading }}</h1>
-  <p class="govuk-body"><strong>{{ system.name }}</strong></p>
-  <p class="govuk-body">
-    <a class="govuk-link" href="/stages/2/scope/systems/add?returnTo=/self-assess/bc/select-system">
-      {{ labels.flow.selfAssessBC.addSystemLink }}
-    </a>
-  </p>
+  {% if roundTwo %}
+    <span class="govuk-caption-l">B and C self-assessment</span>
+  {% endif %}
+  <h1 class="govuk-heading-l">{{ system.name }}</h1>
 
-  <table class="govuk-table">
-    <thead class="govuk-table__head">
-      <tr class="govuk-table__row">
-        <th class="govuk-table__header" scope="col">Outcome</th>
-        <th class="govuk-table__header" scope="col">Title</th>
-        <th class="govuk-table__header" scope="col">Judgement</th>
-        <th class="govuk-table__header" scope="col">Evidence refs</th>
-        <th class="govuk-table__header" scope="col"></th>
-      </tr>
-    </thead>
-    <tbody class="govuk-table__body">
-      {% for row in rows %}
-        <tr class="govuk-table__row">
-          <td class="govuk-table__cell">{{ row.code }}</td>
-          <td class="govuk-table__cell">
-            {{ row.title }}
-            {% if row.description %}
-              <div class="govuk-hint govuk-!-margin-top-1">{{ row.description }}</div>
-            {% endif %}
-          </td>
-          <td class="govuk-table__cell">{{ row.judgement or "Not started" }}</td>
-          <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
-          <td class="govuk-table__cell">
-            <a class="govuk-link" href="/self-assess/bc/{{ system.id }}/outcomes/{{ row.id }}">View</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Review the contributing outcome for this selected critical system.</p>
 
-  <div class="govuk-button-group">
-    <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+      {% if rows.length > 0 %}
+        <h2 class="govuk-heading-m">Current B and C outcome</h2>
+        <table class="govuk-table govuk-!-margin-bottom-6">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Outcome</th>
+              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for row in rows %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ row.code }}</strong> {{ row.title }}
+                </td>
+                <td class="govuk-table__cell">{{ row.status }}</td>
+                <td class="govuk-table__cell">
+                  <a class="govuk-link" href="/self-assess/bc/{{ system.id }}/outcomes/{{ row.id }}">
+                    {{ "Review outcome" if row.judgement else "Start outcome" }}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      <div class="govuk-button-group">
+        {% if primaryOutcome %}
+          <a class="govuk-button" href="/self-assess/bc/{{ system.id }}/outcomes/{{ primaryOutcome.id }}">
+            Open current outcome
+          </a>
+        {% endif %}
+        {% if roundTwo %}
+          <a class="govuk-link" href="/assessments/current/self-assessment/bc">Return to selected systems</a>
+        {% else %}
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if roundTwo %}
+      <div class="govuk-grid-column-one-third">
+        <aside class="app-outcome-page__sidebar-card">
+          <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">System context</h2>
+          {% if mappedServices and mappedServices.length > 0 %}
+            <p class="govuk-body">Supports: <strong>{{ mappedServices | join(", ") }}</strong></p>
+          {% endif %}
+          <p class="govuk-body">Architecture link: <strong>{{ "Added" if refsCount > 0 else "Not added yet" }}</strong></p>
+          <p class="govuk-body govuk-!-margin-bottom-0">Priority: <strong>{{ priorityLevel | capitalize if priorityLevel else "Not set" }}</strong></p>
+        </aside>
+
+        <aside class="app-outcome-page__sidebar-card">
+          <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current progress</h2>
+          <p class="govuk-body">Status: <strong>{{ pageStatus }}</strong></p>
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            {{ rows | selectattr("judgement") | list | length }} of {{ rows.length }} B and C outcomes judged.
+          </p>
+        </aside>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}

@@ -33,6 +33,49 @@
   border-radius: 6px;
 }
 
+.app-milestone-summary {
+  border: 1px solid #b1b4b6;
+  border-top: 4px solid #1d70b8;
+  padding: 18px;
+  background: #ffffff;
+}
+
+.app-milestone-summary__summary {
+  margin-bottom: 12px;
+}
+
+.app-milestone-summary__list {
+  margin: 0;
+}
+
+.app-milestone-summary__item {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.app-milestone-summary__item:last-child {
+  margin-bottom: 0;
+}
+
+.app-milestone-summary__item--current {
+  background: #f8fbff;
+  border-left: 4px solid #1d70b8;
+  padding: 8px 10px;
+}
+
+.app-milestone-summary__label {
+  display: inline-block;
+}
+
+.app-milestone-summary__next {
+  border-top: 1px solid #d8dde0;
+  margin-top: 14px;
+  padding-top: 12px;
+  margin-bottom: 0;
+}
+
 .app-dashboard-summary {
   margin-bottom: 20px;
 }
@@ -64,6 +107,28 @@
   font-size: 14px;
 }
 
+.app-dashboard-filter-panel {
+  border: 1px solid #b1b4b6;
+  border-top: 4px solid #1d70b8;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  padding: 18px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 0 rgba(11, 12, 12, 0.06);
+}
+
+.app-dashboard-filter-panel__header {
+  margin-bottom: 8px;
+}
+
+.app-dashboard-filter-panel__title {
+  margin-bottom: 6px;
+}
+
+.app-dashboard-filter-panel__hint {
+  color: #505a5f;
+  margin-bottom: 0;
+}
+
 /* Scope hub cards: keep equal heights per row to avoid uneven vertical gaps. */
 .app-scope-cards-row {
   display: flex;
@@ -85,5 +150,252 @@
 
   .app-scope-cards-row > [class*="govuk-grid-column"] {
     display: block;
+  }
+}
+
+.app-link-button {
+  background: none;
+  border: 0;
+  color: #1d70b8;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  line-height: 1.25;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.app-link-button:hover {
+  color: #003078;
+}
+
+.app-link-button:focus {
+  background: #ffdd00;
+  box-shadow: 0 -2px #ffdd00, 0 4px #0b0c0c;
+  color: #0b0c0c;
+  outline: 3px solid transparent;
+  text-decoration: none;
+}
+
+.app-register-actions {
+  min-width: 9rem;
+}
+
+.app-register-actions form {
+  margin: 0;
+}
+
+.app-register-actions .govuk-link,
+.app-register-actions .app-link-button {
+  display: block;
+  margin-top: 4px;
+}
+
+.app-register-actions > :first-child {
+  margin-top: 0;
+}
+
+.govuk-button-group > .govuk-button-group__item {
+  align-self: center;
+}
+
+.govuk-button-group__item .govuk-button {
+  margin-bottom: 0;
+}
+
+.app-outcome-page .govuk-grid-column-one-third > * {
+  margin-bottom: 20px;
+}
+
+.app-outcome-page .govuk-grid-column-one-third > *:last-child {
+  margin-bottom: 0;
+}
+
+.app-outcome-page__sidebar-card {
+  border: 1px solid #b1b4b6;
+  border-top: 4px solid #1d70b8;
+  padding: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(11, 12, 12, 0.06);
+}
+
+.app-outcome-page__sidebar-card .govuk-body:last-child,
+.app-outcome-page__sidebar-card p:last-child {
+  margin-bottom: 0;
+}
+
+.app-outcome-page__sidebar-card-title {
+  margin-bottom: 10px;
+}
+
+.app-roles-sidebar {
+  position: sticky;
+  top: 20px;
+}
+
+.app-roles-sidebar__intro {
+  color: #505a5f;
+  margin-bottom: 14px;
+}
+
+.app-roles-sidebar__summary .govuk-summary-list__row {
+  border-bottom: 1px solid #d8dde0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.app-roles-sidebar__summary .govuk-summary-list__row:first-child {
+  padding-top: 0;
+}
+
+.app-roles-sidebar__summary .govuk-summary-list__key {
+  width: 42%;
+  font-size: 16px;
+}
+
+.app-roles-sidebar__summary .govuk-summary-list__value {
+  font-size: 16px;
+}
+
+.app-igp-item {
+  border: 1px solid #d8dde0;
+  padding: 16px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+
+.app-igp-item--standard {
+  border-left: 4px solid #1d70b8;
+  background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+}
+
+.app-igp-item__meta {
+  color: #505a5f;
+  margin-bottom: 8px;
+}
+
+.app-igp-group {
+  margin-bottom: 24px;
+}
+
+.app-igp-group:last-child {
+  margin-bottom: 0;
+}
+
+.app-igp-group__heading {
+  margin-bottom: 6px;
+}
+
+.app-igp-group__hint {
+  margin-bottom: 12px;
+}
+
+.app-igp-group--negative .app-igp-item {
+  border-left: 4px solid #d4351c;
+}
+
+.app-igp-group--positive .app-igp-item {
+  border-left: 4px solid #00703c;
+}
+
+.app-igp-item .govuk-fieldset__legend {
+  margin-bottom: 10px;
+}
+
+.app-igp-item .govuk-radios {
+  margin-top: 8px;
+}
+
+@media (min-width: 48.0625em) {
+  .app-igp-item .govuk-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+  }
+
+  .app-igp-item .govuk-radios__item {
+    margin-bottom: 0;
+  }
+}
+
+.app-outcome-page__judgement {
+  border-top: 4px solid #1d70b8;
+  padding-top: 12px;
+}
+
+.app-outcome-page__judgement .govuk-radios__item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.app-outcome-page__hint-panel {
+  border-radius: 2px;
+}
+
+.app-outcome-page__hint-panel.govuk-inset-text {
+  border-left-width: 6px;
+  background: #f8fbff;
+}
+
+.app-outcome-page__hint-panel--warning {
+  border: 1px solid #f3f2f1;
+  border-top: 4px solid #d4351c;
+  background: #fff7f7;
+  padding: 16px;
+  border-radius: 2px;
+}
+
+.app-outcome-page__hint-title {
+  margin-bottom: 8px;
+}
+
+.app-outcome-page__support-note {
+  color: #505a5f;
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+.app-rounds-grid > [class*="govuk-grid-column"] {
+  display: flex;
+}
+
+.app-round-card {
+  width: 100%;
+  border: 1px solid #b1b4b6;
+  padding: 24px;
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(11, 12, 12, 0.06);
+}
+
+.app-round-card--baseline {
+  border-top: 6px solid #505a5f;
+}
+
+.app-round-card--current {
+  border-top: 6px solid #1d70b8;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.app-round-card__label {
+  color: #505a5f;
+  margin-bottom: 8px;
+}
+
+.app-round-card__list {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 40.0525em) {
+  .app-rounds-grid > [class*="govuk-grid-column"] {
+    display: block;
+  }
+
+  .app-round-card {
+    margin-bottom: 20px;
   }
 }

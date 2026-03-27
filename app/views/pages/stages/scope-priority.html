@@ -2,7 +2,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+  <a class="govuk-back-link" href="{{ '/stages/2/scope/systems/review' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -19,13 +19,19 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.title }}</h1>
-  <p class="govuk-body"><strong>{{ system.name }}</strong></p>
+  {% if researchRound == "round-2" %}
+    <span class="govuk-caption-l">Critical systems register</span>
+    <h1 class="govuk-heading-l">{{ system.name }}</h1>
+    <p class="govuk-body">Set a priority for this critical system. This helps with planning which systems are most likely to be selected for B and C in a given year.</p>
+  {% else %}
+    <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.title }}</h1>
+    <p class="govuk-body"><strong>{{ system.name }}</strong></p>
+  {% endif %}
 
   <div class="govuk-inset-text">
     <p class="govuk-body"><strong>Decision aid</strong></p>
     <ul class="govuk-list govuk-list--bullet">
-      <li>Pick the systems that support essential services with no easy workaround.</li>
+      <li>{% if researchRound == "round-2" %}Identify the systems most likely to be selected for yearly B and C assessment.{% else %}Pick the systems that support essential services with no easy workaround.{% endif %}</li>
       <li>If you are unsure, choose “Not sure yet” and explain why in the rationale.</li>
       <li>Use the criteria below as prompts, not a scoring tool.</li>
     </ul>
@@ -34,7 +40,7 @@
   <form method="post" action="/stages/2/scope/priority/{{ system.id }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset" id="priorityLevel">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Priority level</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Priority level</legend>
         {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -64,7 +70,7 @@
 
     <div class="govuk-form-group">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Priority criteria (optional)</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Priority criteria (optional)</legend>
         <div class="govuk-checkboxes" data-module="govuk-checkboxes">
           <div class="govuk-checkboxes__item">
             <input class="govuk-checkboxes__input" id="criteria-statutory" name="priorityCriteria" type="checkbox" value="statutory" {% if "statutory" in data.criteria %}checked{% endif %}>
@@ -103,7 +109,7 @@
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityConfidence') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset" id="priorityConfidence">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Confidence in this selection</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Confidence in this selection</legend>
         {% if error and (error.items | selectattr('field','equalto','priorityConfidence') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -138,6 +144,11 @@
       <textarea class="govuk-textarea" id="priorityConfidenceRationale" name="priorityConfidenceRationale" rows="3">{{ data.confidenceRationale }}</textarea>
     </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and return to critical systems" if researchRound == "round-2" else "Save and continue" }}</button>
+      {% if researchRound == "round-2" %}
+        <a class="govuk-link" href="/stages/2/scope/systems/review">Cancel and return to critical systems</a>
+      {% endif %}
+    </div>
   </form>
 {% endblock %}

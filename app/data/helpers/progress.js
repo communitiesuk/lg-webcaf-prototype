@@ -156,6 +156,8 @@ function normaliseQuery(query) {
     status: (query.status || "").toString(),
     owner: (query.owner || "").toString(),
     lens: (query.lens || "all").toString(),
+    workStatus: (query.workStatus || "all").toString(),
+    assigned: (query.assigned || "anyone").toString(),
 
     // view controls
     view: (query.view || "all").toString(), // all | my | attention
@@ -174,6 +176,22 @@ function applyDashboardFilters(rows, query, opts = {}) {
     if (query.principle && r.principle !== query.principle) return false;
     if (query.status && r.status !== query.status) return false;
     if (query.owner && r.ownerId !== query.owner) return false;
+    if (query.assigned === "me") {
+      if (!currentUserId) return false;
+      if (!r.isMine) return false;
+    }
+
+    if (query.workStatus && query.workStatus !== "all") {
+      if (query.workStatus === "needs_attention") {
+        if (!r.isNeedsAttention) return false;
+      } else if (query.workStatus === "completed") {
+        if (r.status !== "complete") return false;
+      } else if (query.workStatus === "in_progress") {
+        if (r.status !== "in_progress") return false;
+      } else if (query.workStatus === "not_started") {
+        if (r.status !== "not_started") return false;
+      }
+    }
 
     // View: my work (owner or collaborator)
     if (query.view === "my") {
@@ -224,7 +242,7 @@ function formatTimestampShort(value) {
 function buildQueryString(query) {
   const params = new URLSearchParams();
 
-  const allowedKeys = ["objective", "principle", "status", "owner", "view", "overdueOnly", "lens"];
+  const allowedKeys = ["objective", "principle", "status", "owner", "view", "overdueOnly", "lens", "workStatus", "assigned"];
 
   for (const key of allowedKeys) {
     if (query[key]) params.set(key, query[key]);

@@ -1,0 +1,80 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">Review your CAF scope</h1>
+  <p class="govuk-body">Before setting up this year’s assessment, check whether your CAF scope has changed.</p>
+  <p class="govuk-body">You only need to update scope if your council context, essential services or critical systems have changed.</p>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Organisation strategic context</dt>
+      <dd class="govuk-summary-list__value">{{ scopeSummary.contextStatus }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Essential services</dt>
+      <dd class="govuk-summary-list__value">{{ scopeSummary.essentialServicesCount }} in register</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Critical systems</dt>
+      <dd class="govuk-summary-list__value">{{ scopeSummary.criticalSystemsCount }} in register</dd>
+    </div>
+  </dl>
+
+  <form method="post" action="/assessments/current/review-scope">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" id="scopeChanged">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Has your CAF scope changed since it was last reviewed?</legend>
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="scopeChanged-no" name="scopeChanged" type="radio" value="no" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="scopeChanged-no">No, my CAF scope is up to date</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="scopeChanged-yes" name="scopeChanged" type="radio" value="yes" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="scopeChanged-yes">Yes, I need to make changes</label>
+          </div>
+          <div class="govuk-radios__conditional {% if form.scopeChanged != 'yes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-scopeChanged">
+            <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+              <fieldset class="govuk-fieldset" id="scopeUpdateArea">
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which part of your CAF scope do you need to update?</legend>
+                <div class="govuk-radios">
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="scopeUpdateArea-context" name="scopeUpdateArea" type="radio" value="context" {% if form.scopeUpdateArea == "context" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-context">Organisation strategic context</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="scopeUpdateArea-services" name="scopeUpdateArea" type="radio" value="services" {% if form.scopeUpdateArea == "services" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-services">Essential services</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="scopeUpdateArea-systems" name="scopeUpdateArea" type="radio" value="systems" {% if form.scopeUpdateArea == "systems" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-systems">Critical systems</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+  </form>
+{% endblock %}

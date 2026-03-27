@@ -2,34 +2,58 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <h1 class="govuk-heading-l">{{ labels.dashboard.heading }}</h1>
-  {% if currentUser %}
+  {% if researchRound == "round-2" %}
+    <a href="/assessments/current/journey" class="govuk-back-link">Return to task list</a>
+    <span class="govuk-caption-l">Self-assessment</span>
+    <h1 class="govuk-heading-l">Assessment dashboard</h1>
+    <p class="govuk-body">Review your contributing outcomes and continue the assessment work for this year.</p>
+  {% else %}
+    <h1 class="govuk-heading-l">{{ labels.dashboard.heading }}</h1>
+  {% endif %}
+  {% if currentUser and researchRound != "round-2" %}
     <p class="govuk-hint">Role: {{ currentUser.role | capitalize }}</p>
   {% endif %}
 
-  <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
-  <p class="govuk-body govuk-!-margin-bottom-2">
-    Viewing: <strong>Current cycle</strong>.
-    <a class="govuk-link govuk-!-margin-left-1" href="/assessments/current/cycle/history">View previous cycles</a>
-  </p>
-  <div class="govuk-inset-text">
-    <p class="govuk-body govuk-!-margin-bottom-1">
-      <strong>{{ assessment.cycle.name }}</strong>
+  {% if researchRound != "round-2" %}
+    <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
+    <p class="govuk-body govuk-!-margin-bottom-2">
+      Viewing: <strong>Current cycle</strong>.
+      <a class="govuk-link govuk-!-margin-left-1" href="/assessments/current/cycle/history">View previous cycles</a>
     </p>
-    <p class="govuk-body govuk-!-margin-bottom-0">
-      Started: {{ cycleStartedAt }}
-    </p>
-  </div>
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1">
+        <strong>{{ assessment.cycle.name }}</strong>
+      </p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        Started: {{ cycleStartedAt }}
+      </p>
+    </div>
 
-  <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Cycle actions</h3>
-  <div class="govuk-button-group">
-    <a class="govuk-button govuk-button--secondary" href="/assessments/current/cycle/start?{{ buildQueryString(query) }}">
-      {{ labels.dashboard.startNewCycle }}
-    </a>
-    <a class="govuk-link" href="/assessments/current/export.csv">
-      Export CSV (current cycle)
-    </a>
-  </div>
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Cycle actions</h3>
+    <div class="govuk-button-group">
+      <a class="govuk-button govuk-button--secondary" href="/assessments/current/cycle/start?{{ buildQueryString(query) }}">
+        {{ labels.dashboard.startNewCycle }}
+      </a>
+      <a class="govuk-link" href="/assessments/current/export.csv">
+        Export CSV (current cycle)
+      </a>
+    </div>
+  {% endif %}
+
+  {% if researchRound == "round-2" and dashboardFrameworkChange and dashboardFrameworkChange.changed %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body"><strong>CAF has changed from version {{ dashboardFrameworkChange.assessmentVersion }} to {{ dashboardFrameworkChange.currentVersion }}.</strong></p>
+      <p class="govuk-body">{{ dashboardFrameworkChange.updatedCount }} updated outcome{% if dashboardFrameworkChange.updatedCount != 1 %}s{% endif %} need review across A and D and B and C.</p>
+      {% if dashboardFrameworkChange.newOutcomes and dashboardFrameworkChange.newOutcomes.length > 0 %}
+        <p class="govuk-body govuk-!-margin-bottom-1">New outcomes in the current version:</p>
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          {% for outcome in dashboardFrameworkChange.newOutcomes %}
+            <li><strong>{{ outcome.code }}</strong> {{ outcome.title }}{% if outcome.lens %} ({{ outcome.lens }}){% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endif %}
 
   {% if notifications and notifications.length %}
     <h2 class="govuk-heading-m">Feedback and review updates</h2>
@@ -56,7 +80,7 @@
     </div>
   {% endif %}
 
-  {% if assuranceSummary and assuranceSummary.openEvidenceRequests > 0 %}
+  {% if researchRound != "round-2" and assuranceSummary and assuranceSummary.openEvidenceRequests > 0 %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="evidence-notifications-title" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__header">
         <h2 class="govuk-notification-banner__title" id="evidence-notifications-title">Evidence requests</h2>
@@ -72,7 +96,12 @@
     </div>
   {% endif %}
 
-  {% if query.view != "all" or query.objective or query.principle or query.status or query.owner or query.overdueOnly == "1" %}
+  {% if researchRound == "round-2" %}
+    {% set filtersApplied = query.lens != "all" or query.workStatus != "all" or query.assigned != "anyone" %}
+  {% else %}
+    {% set filtersApplied = query.view != "all" or query.objective or query.principle or query.status or query.owner or query.overdueOnly == "1" %}
+  {% endif %}
+  {% if filtersApplied %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__header">
         <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Viewing a filtered list</h2>
@@ -117,157 +146,279 @@
       </div>
     </div>
   </div>
-  <div class="govuk-grid-row app-dashboard-summary">
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Assurance report</p>
-        <p class="app-dashboard-card__value">{{ assuranceSummary.reportStatus }}</p>
-        <p class="app-dashboard-card__meta">
-          Record of Audit: {{ assuranceSummary.recordStatus }}
-        </p>
-        <p class="govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
-        </p>
-      </div>
-    </div>
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">IIP Stage 2</p>
-        <p class="app-dashboard-card__value">{{ iipStage2Summary.statusLabel }}</p>
-        <p class="app-dashboard-card__meta">
-          {% if iipStage2Summary.expectedByDisplay %}Offline drafting target: {{ iipStage2Summary.expectedByDisplay }}{% else %}No target date yet{% endif %}
-        </p>
-        <p class="govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="{{ iipStage2Summary.nextActionHref }}">Open IIP Stage 2</a>
-        </p>
-      </div>
-    </div>
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Evidence requests</p>
-        <p class="app-dashboard-card__value">{{ assuranceSummary.openEvidenceRequests }}</p>
-        <p class="govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/evidence-requests">Open requests</a>
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <h2 class="govuk-heading-m">{{ labels.dashboard.viewsHeading }}</h2>
-
-  <div class="govuk-button-group">
-    <a class="govuk-button {% if query.view != 'all' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'all', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      {{ labels.dashboard.views.all }}
-    </a>
-
-    <a class="govuk-button {% if query.view != 'my' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'my', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      {{ labels.dashboard.views.my }}
-    </a>
-
-    <a class="govuk-button {% if query.view != 'attention' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'attention', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      {{ labels.dashboard.views.attention }}
-    </a>
-  </div>
-
-  <h2 class="govuk-heading-m">Assessment lens</h2>
-  <div class="govuk-button-group">
-    <a class="govuk-button {% if query.lens != 'all' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'all', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      All
-    </a>
-    <a class="govuk-button {% if query.lens != 'ad' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'ad', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      Organisational assessment (A and D)
-    </a>
-    <a class="govuk-button {% if query.lens != 'bc' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'bc', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-      Critical systems assessment (B and C)
-    </a>
-  </div>
-
-  <details class="govuk-details" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">{{ labels.dashboard.filterHeading }}</span>
-    </summary>
-    <div class="govuk-details__text">
-
-  <form method="get" action="/assessments/current/dashboard">
-    <input type="hidden" name="view" value="{{ query.view }}">
-    <input type="hidden" name="lens" value="{{ query.lens }}">
-
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-one-quarter">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="objective">Objective</label>
-          <select class="govuk-select" id="objective" name="objective">
-            <option value="" {% if not query.objective %}selected{% endif %}>All</option>
-            <option value="A" {% if query.objective == "A" %}selected{% endif %}>A</option>
-            <option value="B" {% if query.objective == "B" %}selected{% endif %}>B</option>
-            <option value="C" {% if query.objective == "C" %}selected{% endif %}>C</option>
-            <option value="D" {% if query.objective == "D" %}selected{% endif %}>D</option>
-          </select>
+  {% if researchRound != "round-2" %}
+    <div class="govuk-grid-row app-dashboard-summary">
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">Assurance report</p>
+          <p class="app-dashboard-card__value">{{ assuranceSummary.reportStatus }}</p>
+          <p class="app-dashboard-card__meta">
+            Record of Audit: {{ assuranceSummary.recordStatus }}
+          </p>
+          <p class="govuk-!-margin-bottom-0">
+            <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
+          </p>
         </div>
       </div>
-
-      <div class="govuk-grid-column-one-quarter">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="principle">Principle</label>
-          <select class="govuk-select" id="principle" name="principle">
-            <option value="" {% if not query.principle %}selected{% endif %}>All</option>
-            <option value="A1" {% if query.principle == "A1" %}selected{% endif %}>A1</option>
-            <option value="A2" {% if query.principle == "A2" %}selected{% endif %}>A2</option>
-            <option value="A3" {% if query.principle == "A3" %}selected{% endif %}>A3</option>
-            <option value="A4" {% if query.principle == "A4" %}selected{% endif %}>A4</option>
-            <option value="B1" {% if query.principle == "B1" %}selected{% endif %}>B1</option>
-            <option value="C1" {% if query.principle == "C1" %}selected{% endif %}>C1</option>
-            <option value="D1" {% if query.principle == "D1" %}selected{% endif %}>D1</option>
-            <option value="D2" {% if query.principle == "D2" %}selected{% endif %}>D2</option>
-          </select>
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">IIP Stage 2</p>
+          <p class="app-dashboard-card__value">{{ iipStage2Summary.statusLabel }}</p>
+          <p class="app-dashboard-card__meta">
+            {% if iipStage2Summary.expectedByDisplay %}Offline drafting target: {{ iipStage2Summary.expectedByDisplay }}{% else %}No target date yet{% endif %}
+          </p>
+          <p class="govuk-!-margin-bottom-0">
+            <a class="govuk-link" href="{{ iipStage2Summary.nextActionHref }}">Open IIP Stage 2</a>
+          </p>
         </div>
       </div>
-
-      <div class="govuk-grid-column-one-quarter">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="status">Status</label>
-          <select class="govuk-select" id="status" name="status">
-            <option value="" {% if not query.status %}selected{% endif %}>All</option>
-            {% for s in statuses.options %}
-              <option value="{{ s.value }}" {% if query.status == s.value %}selected{% endif %}>{{ s.label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-
-      <div class="govuk-grid-column-one-quarter">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="owner">Owner</label>
-          <select class="govuk-select" id="owner" name="owner">
-            <option value="" {% if not query.owner %}selected{% endif %}>All</option>
-            {% for u in users %}
-              {% if u.role != "assurer" %}
-                <option value="{{ u.id }}" {% if query.owner == u.id %}selected{% endif %}>{{ u.name }}</option>
-              {% endif %}
-            {% endfor %}
-          </select>
+      <div class="govuk-grid-column-one-third">
+        <div class="app-dashboard-card">
+          <p class="app-dashboard-card__label">Evidence requests</p>
+          <p class="app-dashboard-card__value">{{ assuranceSummary.openEvidenceRequests }}</p>
+          <p class="govuk-!-margin-bottom-0">
+            <a class="govuk-link" href="/assessments/current/evidence-requests">Open requests</a>
+          </p>
         </div>
       </div>
     </div>
+  {% endif %}
 
-    <div class="govuk-form-group">
-      <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="overdueOnly" name="overdueOnly" type="checkbox" value="1" {% if query.overdueOnly == "1" %}checked{% endif %}>
-          <label class="govuk-label govuk-checkboxes__label" for="overdueOnly">
-            {{ labels.dashboard.overdueOnly }}
-          </label>
-        </div>
+  {% if researchRound == "round-2" %}
+    {% if roundTwoWorkQueues and roundTwoWorkQueues.inProgress.length > 0 %}
+      <h2 class="govuk-heading-m">In progress</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Assessment item</th>
+            <th scope="col" class="govuk-table__header">Area</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+            <th scope="col" class="govuk-table__header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for r in roundTwoWorkQueues.inProgress %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                {% if r.frameworkFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                {% endif %}
+                {% if r.systemName %}
+                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
+              <td class="govuk-table__cell"><strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong></td>
+              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review outcome</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if roundTwoWorkQueues and roundTwoWorkQueues.needsAttention.length > 0 %}
+      <h2 class="govuk-heading-m">Needs attention</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Assessment item</th>
+            <th scope="col" class="govuk-table__header">Issue</th>
+            <th scope="col" class="govuk-table__header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for r in roundTwoWorkQueues.needsAttention %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                {% if r.frameworkFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                {% endif %}
+                {% if r.systemName %}
+                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">
+                {% if r.isBlocked %}
+                  Blocked
+                {% elif r.isMissingEvidence %}
+                  Missing evidence
+                {% else %}
+                  Needs review
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review outcome</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% endif %}
+
+  {% if researchRound == "round-2" %}
+    <section class="app-dashboard-filter-panel" aria-labelledby="dashboard-filter-heading">
+      <div class="app-dashboard-filter-panel__header">
+        <h2 class="govuk-heading-m app-dashboard-filter-panel__title" id="dashboard-filter-heading">Filter assessment work</h2>
+        <p class="govuk-body app-dashboard-filter-panel__hint">Use filters to narrow the outcomes shown below.</p>
       </div>
-    </div>
+      <form method="get" action="/assessments/current/dashboard">
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="lens">Assessment area</label>
+              <select class="govuk-select" id="lens" name="lens">
+                <option value="all" {% if query.lens == "all" %}selected{% endif %}>All</option>
+                <option value="ad" {% if query.lens == "ad" %}selected{% endif %}>A and D</option>
+                <option value="bc" {% if query.lens == "bc" %}selected{% endif %}>B and C</option>
+              </select>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="workStatus">Work status</label>
+              <select class="govuk-select" id="workStatus" name="workStatus">
+                <option value="all" {% if query.workStatus == "all" %}selected{% endif %}>All</option>
+                <option value="in_progress" {% if query.workStatus == "in_progress" %}selected{% endif %}>In progress</option>
+                <option value="needs_attention" {% if query.workStatus == "needs_attention" %}selected{% endif %}>Needs attention</option>
+                <option value="completed" {% if query.workStatus == "completed" %}selected{% endif %}>Completed</option>
+                <option value="not_started" {% if query.workStatus == "not_started" %}selected{% endif %}>Not started</option>
+              </select>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-third">
+            <div class="govuk-form-group">
+              <label class="govuk-label" for="assigned">Assigned to</label>
+              <select class="govuk-select" id="assigned" name="assigned">
+                <option value="anyone" {% if query.assigned == "anyone" %}selected{% endif %}>Anyone</option>
+                <option value="me" {% if query.assigned == "me" %}selected{% endif %}>Me</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="govuk-button-group govuk-!-margin-bottom-0">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
+          <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
+        </div>
+      </form>
+    </section>
+  {% else %}
+    <h2 class="govuk-heading-m">{{ labels.dashboard.viewsHeading }}</h2>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
-      <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
+      <a class="govuk-button {% if query.view != 'all' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'all', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        {{ labels.dashboard.views.all }}
+      </a>
+
+      <a class="govuk-button {% if query.view != 'my' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'my', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        {{ labels.dashboard.views.my }}
+      </a>
+
+      <a class="govuk-button {% if query.view != 'attention' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ view: 'attention', lens: query.lens, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        {{ labels.dashboard.views.attention }}
+      </a>
     </div>
-  </form>
+
+    <h2 class="govuk-heading-m">Assessment lens</h2>
+    <div class="govuk-button-group">
+      <a class="govuk-button {% if query.lens != 'all' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'all', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        All
+      </a>
+      <a class="govuk-button {% if query.lens != 'ad' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'ad', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        Organisational assessment (A and D)
+      </a>
+      <a class="govuk-button {% if query.lens != 'bc' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'bc', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
+        Critical systems assessment (B and C)
+      </a>
     </div>
-  </details>
+
+    <details class="govuk-details" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">{{ labels.dashboard.filterHeading }}</span>
+      </summary>
+      <div class="govuk-details__text">
+
+    <form method="get" action="/assessments/current/dashboard">
+      <input type="hidden" name="view" value="{{ query.view }}">
+      <input type="hidden" name="lens" value="{{ query.lens }}">
+
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-quarter">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="objective">Objective</label>
+            <select class="govuk-select" id="objective" name="objective">
+              <option value="" {% if not query.objective %}selected{% endif %}>All</option>
+              <option value="A" {% if query.objective == "A" %}selected{% endif %}>A</option>
+              <option value="B" {% if query.objective == "B" %}selected{% endif %}>B</option>
+              <option value="C" {% if query.objective == "C" %}selected{% endif %}>C</option>
+              <option value="D" {% if query.objective == "D" %}selected{% endif %}>D</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="govuk-grid-column-one-quarter">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="principle">Principle</label>
+            <select class="govuk-select" id="principle" name="principle">
+              <option value="" {% if not query.principle %}selected{% endif %}>All</option>
+              <option value="A1" {% if query.principle == "A1" %}selected{% endif %}>A1</option>
+              <option value="A2" {% if query.principle == "A2" %}selected{% endif %}>A2</option>
+              <option value="A3" {% if query.principle == "A3" %}selected{% endif %}>A3</option>
+              <option value="A4" {% if query.principle == "A4" %}selected{% endif %}>A4</option>
+              <option value="B1" {% if query.principle == "B1" %}selected{% endif %}>B1</option>
+              <option value="C1" {% if query.principle == "C1" %}selected{% endif %}>C1</option>
+              <option value="D1" {% if query.principle == "D1" %}selected{% endif %}>D1</option>
+              <option value="D2" {% if query.principle == "D2" %}selected{% endif %}>D2</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="govuk-grid-column-one-quarter">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="status">Status</label>
+            <select class="govuk-select" id="status" name="status">
+              <option value="" {% if not query.status %}selected{% endif %}>All</option>
+              {% for s in statuses.options %}
+                <option value="{{ s.value }}" {% if query.status == s.value %}selected{% endif %}>{{ s.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="govuk-grid-column-one-quarter">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="owner">Owner</label>
+            <select class="govuk-select" id="owner" name="owner">
+              <option value="" {% if not query.owner %}selected{% endif %}>All</option>
+              {% for u in users %}
+                {% if u.role != "assurer" %}
+                  <option value="{{ u.id }}" {% if query.owner == u.id %}selected{% endif %}>{{ u.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="govuk-form-group">
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="overdueOnly" name="overdueOnly" type="checkbox" value="1" {% if query.overdueOnly == "1" %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="overdueOnly">
+              {{ labels.dashboard.overdueOnly }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="govuk-button-group">
+        <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
+        <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
+      </div>
+    </form>
+      </div>
+    </details>
+  {% endif %}
 
   <h2 class="govuk-heading-m">{{ labels.dashboard.resultsHeading }}</h2>
 
@@ -302,6 +453,9 @@
                 <a class="govuk-link" href="{{ r.linkUrl }}?{{ buildQueryString(query) }}">
                   <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
                 </a>
+                {% if r.frameworkFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                {% endif %}
                 {% if r.systemName %}
                   <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
                 {% endif %}

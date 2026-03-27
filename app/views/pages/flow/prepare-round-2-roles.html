@@ -1,0 +1,138 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">Onboarding</span>
+  <h1 class="govuk-heading-l">Set up key roles</h1>
+  <p class="govuk-body">Add the people responsible for leading and approving the CAF work.</p>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if rolesAudit.history and rolesAudit.history.length > 0 %}
+        <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">View role change history</span>
+          </summary>
+          <div class="govuk-details__text">
+            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+              {% for entry in rolesAudit.history | reverse %}
+                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </details>
+      {% endif %}
+
+      <form method="post" action="/prepare/roles">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="onboardingLead">CAF lead</label>
+          {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','onboardingLead') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="onboardingLead" name="onboardingLead" type="text" value="{{ defaults.onboardingLead }}">
+        </div>
+
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','onboardingApprover') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="onboardingApprover">Approver</label>
+          {% if error and (error.items | selectattr('field','equalto','onboardingApprover') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','onboardingApprover') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="onboardingApprover" name="onboardingApprover" type="text" value="{{ defaults.onboardingApprover }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="onboardingContributors">Additional contributors (optional)</label>
+          <div class="govuk-hint">Enter the names of any other people who will contribute to the CAF work, separated by commas.</div>
+          <textarea class="govuk-textarea" id="onboardingContributors" name="onboardingContributors" rows="4">{{ defaults.onboardingContributors }}</textarea>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <aside class="app-outcome-page__sidebar-card app-roles-sidebar">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current roles</h2>
+        <p class="govuk-body-s app-roles-sidebar__intro">This summary updates as you add or change the key roles.</p>
+        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 app-roles-sidebar__summary">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">CAF lead</dt>
+            <dd class="govuk-summary-list__value" id="currentOnboardingLead">{{ defaults.onboardingLead or "Not added yet" }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Approver</dt>
+            <dd class="govuk-summary-list__value" id="currentOnboardingApprover">{{ defaults.onboardingApprover or "Not added yet" }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Additional contributors</dt>
+            <dd class="govuk-summary-list__value" id="currentOnboardingContributors">{{ defaults.onboardingContributors or "None added" }}</dd>
+          </div>
+          {% if rolesAudit.updatedAt %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Last updated</dt>
+              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Updated by</dt>
+              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedBy }}</dd>
+            </div>
+          {% endif %}
+        </dl>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var leadInput = document.getElementById("onboardingLead");
+      var approverInput = document.getElementById("onboardingApprover");
+      var contributorsInput = document.getElementById("onboardingContributors");
+      var leadOutput = document.getElementById("currentOnboardingLead");
+      var approverOutput = document.getElementById("currentOnboardingApprover");
+      var contributorsOutput = document.getElementById("currentOnboardingContributors");
+
+      function setValue(output, value, emptyText) {
+        if (!output) return;
+        output.textContent = value && value.trim() ? value.trim() : emptyText;
+      }
+
+      function updateSummary() {
+        setValue(leadOutput, leadInput && leadInput.value, "Not added yet");
+        setValue(approverOutput, approverInput && approverInput.value, "Not added yet");
+        setValue(contributorsOutput, contributorsInput && contributorsInput.value, "None added");
+      }
+
+      [leadInput, approverInput, contributorsInput].forEach(function (input) {
+        if (input) input.addEventListener("input", updateSummary);
+      });
+
+      updateSummary();
+    })();
+  </script>
+{% endblock %}

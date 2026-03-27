@@ -8,6 +8,7 @@ const { buildBreadcrumbs, buildProgress } = require("./data/helpers/journey");
 const users = require("./data/seed/users");
 const { CAF_DEFAULT_VERSION, getOutcomesForVersion } = require("./data/helpers/caf-version");
 const { buildInitialProgressTracker } = require("./data/helpers/progress");
+const { getSavedAssessment, saveAssessment } = require("./data/helpers/round-two-account-store");
 
 // Defensive guard for prototype stability:
 // if a route accidentally tries to send a second response,
@@ -39,6 +40,19 @@ router.use((req, res, next) => {
   next();
 });
 
+router.use((req, res, next) => {
+  res.on("finish", () => {
+    const sessionData = req.session && req.session.data ? req.session.data : null;
+    if (!sessionData || sessionData.researchRound !== "round-2") return;
+    const email = sessionData.user && sessionData.user.email ? sessionData.user.email : "";
+    if (!email) return;
+    if (sessionData.assessment && sessionData.assessment.id) {
+      saveAssessment(email, sessionData.assessment);
+    }
+  });
+  next();
+});
+
 // Debug helpers
 router.get("/debug/plain", (req, res) => {
   res
@@ -67,36 +81,21 @@ router.use((req, res, next) => {
   }
   res.locals.showUserSwitcher = false;
 
-  const landing =
-    role === "mhclg" ? "/mhclg/dashboard" : role === "assurer" ? "/assurer/queue" : "/entry";
-  res.locals.headerNavigation = [
-    { text: "Guidance", href: "/guidance" },
-    { text: "My account", href: "/my-account" },
-    { text: "Logout", href: "/logout" },
-  ];
+  res.locals.headerNavigation = buildHeaderNavigation({
+    signedIn,
+    role,
+    researchRound,
+  });
 
   const hideNav = req.path === "/entry";
   res.locals.showNavigation = signedIn && !hideNav;
   res.locals.navigation = signedIn && !hideNav ? buildNavigation(req.path, role) : [];
   res.locals.showJourney = signedIn && role !== "mhclg" && role !== "assurer" && !hideNav;
-  res.locals.breadcrumbs = res.locals.showJourney ? buildBreadcrumbs(req.path) : [];
+  res.locals.breadcrumbs = res.locals.showJourney
+    ? buildBreadcrumbs(req.path, { researchRound, role })
+    : [];
   res.locals.progress = res.locals.showJourney ? buildProgress(req.path) : null;
-  const journeyReturnPrefixes = [
-    "/prepare",
-    "/stages",
-    "/assessments",
-    "/self-assess",
-    "/evidence-library",
-    "/assurance-review",
-    "/improvement-plan",
-    "/submit-progress",
-    "/submit-complete",
-    "/profile",
-  ];
-  res.locals.showJourneyTaskListLink =
-    res.locals.showJourney &&
-    req.path !== "/assessments/current/journey" &&
-    journeyReturnPrefixes.some((prefix) => req.path === prefix || req.path.startsWith(prefix + "/"));
+  res.locals.showJourneyTaskListLink = false;
 
   if (signedIn && role) {
     const isStatic =
@@ -170,6 +169,130 @@ require("./routes/export")(router);
 // Root redirect
 router.get("/", (req, res) => res.redirect("/research-rounds"));
 
+router.get("/round-2/start", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  res.render("pages/round-2/start", {
+    pageTitle: "Start Round 2",
+  });
+});
+
+router.post("/round-2/start", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  return res.redirect("/round-2/sign-in");
+});
+
+router.get("/round-2/access", (req, res) => {
+  return res.redirect("/round-2/sign-in");
+});
+
+router.get("/round-2/sign-in", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  res.render("pages/round-2/auth", {
+    pageTitle: "Sign in",
+    mode: "sign-in",
+    heading: "Sign in",
+    submitText: "Sign in",
+    secondaryHref: "/round-2/register",
+    secondaryText: "Register for the service",
+    defaults: {
+      name: (req.session.data.round2AuthName || "").toString(),
+      email: (req.session.data.round2AuthEmail || "").toString(),
+    },
+    error: null,
+  });
+});
+
+router.post("/round-2/sign-in", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  const name = (req.session.data.round2AuthName || "").toString().trim();
+  const email = (req.session.data.round2AuthEmail || "").toString().trim();
+  const errors = [];
+  if (!name) errors.push({ field: "round2AuthName", text: "Enter your name." });
+  if (!email) errors.push({ field: "round2AuthEmail", text: "Enter your email address." });
+
+  if (errors.length > 0) {
+    return res.render("pages/round-2/auth", {
+      pageTitle: "Sign in",
+      mode: "sign-in",
+      heading: "Sign in",
+      submitText: "Sign in",
+      secondaryHref: "/round-2/register",
+      secondaryText: "Register for the service",
+      defaults: { name, email },
+      error: { items: errors },
+    });
+  }
+
+  signInRoundTwoCouncil(req, {
+    name,
+    email,
+    authMode: "sign-in",
+  });
+  delete req.session.data.round2AuthName;
+  delete req.session.data.round2AuthEmail;
+  return res.redirect("/entry");
+});
+
+router.get("/round-2/register", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  res.render("pages/round-2/auth", {
+    pageTitle: "Register",
+    mode: "register",
+    heading: "Register for the service",
+    submitText: "Register and continue",
+    secondaryHref: "/round-2/sign-in",
+    secondaryText: "Sign in instead",
+    defaults: {
+      name: (req.session.data.round2AuthName || "").toString(),
+      email: (req.session.data.round2AuthEmail || "").toString(),
+    },
+    error: null,
+  });
+});
+
+router.post("/round-2/register", (req, res) => {
+  if (!req.session) req.session = {};
+  if (!req.session.data) req.session.data = {};
+  req.session.data.researchRound = "round-2";
+  const name = (req.session.data.round2AuthName || "").toString().trim();
+  const email = (req.session.data.round2AuthEmail || "").toString().trim();
+  const errors = [];
+  if (!name) errors.push({ field: "round2AuthName", text: "Enter your name." });
+  if (!email) errors.push({ field: "round2AuthEmail", text: "Enter your email address." });
+
+  if (errors.length > 0) {
+    return res.render("pages/round-2/auth", {
+      pageTitle: "Register",
+      mode: "register",
+      heading: "Register for the service",
+      submitText: "Register and continue",
+      secondaryHref: "/round-2/sign-in",
+      secondaryText: "Sign in instead",
+      defaults: { name, email },
+      error: { items: errors },
+    });
+  }
+
+  signInRoundTwoCouncil(req, {
+    name,
+    email,
+    authMode: "register",
+  });
+  delete req.session.data.round2AuthName;
+  delete req.session.data.round2AuthEmail;
+  return res.redirect("/entry");
+});
+
 router.get("/research-start", (req, res) => {
   if (!req.session) req.session = {};
   if (!req.session.data) req.session.data = {};
@@ -179,6 +302,9 @@ router.get("/research-start", (req, res) => {
   }
   const researchRound = normaliseResearchRound(req.query.round || req.session.data.researchRound);
   req.session.data.researchRound = researchRound;
+  if (researchRound === "round-2") {
+    return res.redirect("/round-2/sign-in");
+  }
   const nextPath = sanitiseLocalPath((req.query.next || "").toString());
   res.render("pages/research-start", {
     pageTitle: "Research start",
@@ -190,19 +316,21 @@ router.get("/research-start", (req, res) => {
 });
 
 router.get("/sign-out", (req, res) => {
+  const redirectPath = getSignOutRedirect(req);
   if (req.session && typeof req.session.destroy === "function") {
-    return req.session.destroy(() => res.redirect("/research-start?reset=1"));
+    return req.session.destroy(() => res.redirect(redirectPath));
   }
-  return res.redirect("/research-start?reset=1");
+  return res.redirect(redirectPath);
 });
 
 router.get("/guidance", (req, res) => res.redirect(getSignedInLanding(req)));
 router.get("/my-account", (req, res) => res.redirect(getSignedInLanding(req)));
 router.get("/logout", (req, res) => {
+  const redirectPath = getSignOutRedirect(req);
   if (req.session && typeof req.session.destroy === "function") {
-    return req.session.destroy(() => res.redirect("/research-start?reset=1"));
+    return req.session.destroy(() => res.redirect(redirectPath));
   }
-  return res.redirect("/research-start?reset=1");
+  return res.redirect(redirectPath);
 });
 router.get("/organisation-details", (req, res) => res.redirect("/entry"));
 router.get("/manage-users", (req, res) => res.redirect("/entry"));
@@ -214,6 +342,9 @@ router.post("/research-start", (req, res) => {
   const selectedId = (req.session.data.researchUserId || "").toString();
   const nextPath = sanitiseLocalPath((req.session.data.nextPath || "").toString());
   const researchRound = normaliseResearchRound(req.session.data.researchRound);
+  if (researchRound === "round-2") {
+    return res.redirect("/round-2/sign-in");
+  }
   const selected = users.find((user) => user.id === selectedId);
   if (!selected) {
     return res.render("pages/research-start", {
@@ -260,6 +391,9 @@ router.get("/research-start/sign-in-details", (req, res) => {
   const selected = users.find((user) => user.id === pendingUserId);
   if (!selected) return res.redirect("/research-start");
   const researchRound = normaliseResearchRound(req.session.data.pendingResearchRound);
+  if (researchRound === "round-2") {
+    return res.redirect("/round-2/sign-in");
+  }
 
   const defaults = {
     name: (req.session.data.signInName || selected.name || "").toString(),
@@ -282,6 +416,9 @@ router.post("/research-start/sign-in-details", (req, res) => {
   const pendingUserId = (req.session.data.pendingUserId || "").toString();
   const pendingNextPath = sanitiseLocalPath((req.session.data.pendingNextPath || "").toString());
   const pendingResearchRound = normaliseResearchRound(req.session.data.pendingResearchRound);
+  if (pendingResearchRound === "round-2") {
+    return res.redirect("/round-2/sign-in");
+  }
   const selected = users.find((user) => user.id === pendingUserId);
   if (!selected) return res.redirect("/research-start");
 
@@ -408,6 +545,60 @@ function seedAssurerAssessment(sessionData, user) {
   }
 
   sessionData.assessment = assessment;
+}
+
+function signInRoundTwoCouncil(req, { name, email, authMode }) {
+  const defaultCouncilUser = users.find((user) => user.id === "u-1") || users[0];
+  const savedAssessment = getSavedAssessment(email);
+  req.session.data = {
+    user: {
+      ...defaultCouncilUser,
+      name: name || defaultCouncilUser.name,
+      email,
+    },
+    signedIn: true,
+    researchRound: "round-2",
+    round2AuthMode: authMode,
+  };
+  if (savedAssessment) {
+    req.session.data.assessment = savedAssessment;
+  }
+}
+
+function buildHeaderNavigation({ signedIn, role, researchRound }) {
+  if (!signedIn) return [];
+
+  if (role === "mhclg") {
+    return [
+      { text: "Dashboard", href: "/mhclg/dashboard" },
+      { text: "Sign out", href: "/logout" },
+    ];
+  }
+
+  if (role === "assurer") {
+    return [
+      { text: "Queue", href: "/assurer/queue" },
+      { text: "Sign out", href: "/logout" },
+    ];
+  }
+
+  if (researchRound === "round-2") {
+    return [
+      { text: "My account", href: "/entry" },
+      { text: "Sign out", href: "/logout" },
+    ];
+  }
+
+  return [
+    { text: "My account", href: "/entry" },
+    { text: "Sign out", href: "/logout" },
+  ];
+}
+
+function getSignOutRedirect(req) {
+  const researchRound =
+    req.session && req.session.data ? normaliseResearchRound(req.session.data.researchRound) : "round-1";
+  return researchRound === "round-2" ? "/research-rounds" : "/research-start?reset=1";
 }
 
 function getSignedInLanding(req) {

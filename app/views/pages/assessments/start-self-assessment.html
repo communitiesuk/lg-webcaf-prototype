@@ -19,7 +19,13 @@
   {% endif %}
 
   <h1 class="govuk-heading-l">Readiness checks</h1>
-  <p class="govuk-body">Confirm these checks before starting A and D and B and C assessment work.</p>
+  <p class="govuk-body">
+    {% if researchRound == "round-2" %}
+      Confirm these checks after annual setup and before starting A and D and B and C assessment work.
+    {% else %}
+      Confirm these checks before starting A and D and B and C assessment work.
+    {% endif %}
+  </p>
 
   <form method="post" action="/assessments/current/start-self-assessment">
     <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">

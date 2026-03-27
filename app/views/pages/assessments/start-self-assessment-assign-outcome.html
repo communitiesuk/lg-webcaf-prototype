@@ -18,61 +18,81 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">Assign people: {{ row.outcomeCode }}</h1>
-  <p class="govuk-body">{{ row.title }}</p>
-  {% if row.systemName %}
-    <p class="govuk-hint">System: {{ row.systemName }}</p>
-  {% endif %}
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">Assign people to {{ row.outcomeCode }}</h1>
 
-  <form method="post" action="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="ownerId">Assigned owner</label>
-      {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','ownerId') | list | first).text }}
-        </p>
-      {% endif %}
-      <select class="govuk-select" id="ownerId" name="ownerId">
-        <option value="">Select owner</option>
-        {% for u in councilUsers %}
-          <option value="{{ u.id }}" {% if row.ownerId == u.id %}selected{% endif %}>{{ u.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Choose who will own this contributing outcome and who else should collaborate on it.</p>
 
-    <div class="govuk-form-group">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Collaborators</legend>
-        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-          {% for u in councilUsers %}
-            <div class="govuk-checkboxes__item">
-              <input
-                class="govuk-checkboxes__input"
-                id="collaboratorIds-{{ u.id }}"
-                name="collaboratorIds"
-                type="checkbox"
-                value="{{ u.id }}"
-                {% if row.collaboratorIds and (u.id in row.collaboratorIds) %}checked{% endif %}
-              >
-              <label class="govuk-label govuk-checkboxes__label" for="collaboratorIds-{{ u.id }}">
-                {{ u.name }}
-              </label>
-            </div>
-          {% endfor %}
+      <form method="post" action="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="ownerId">Assigned owner</label>
+          {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','ownerId') | list | first).text }}
+            </p>
+          {% endif %}
+          <select class="govuk-select" id="ownerId" name="ownerId">
+            <option value="">Select owner</option>
+            {% for u in councilUsers %}
+              <option value="{{ u.id }}" {% if row.ownerId == u.id %}selected{% endif %}>{{ u.name }}</option>
+            {% endfor %}
+          </select>
         </div>
-      </fieldset>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Collaborators</legend>
+            <div class="govuk-hint">Select any other people who should contribute to this outcome.</div>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              {% for u in councilUsers %}
+                <div class="govuk-checkboxes__item">
+                  <input
+                    class="govuk-checkboxes__input"
+                    id="collaboratorIds-{{ u.id }}"
+                    name="collaboratorIds"
+                    type="checkbox"
+                    value="{{ u.id }}"
+                    {% if row.collaboratorIds and (u.id in row.collaboratorIds) %}checked{% endif %}
+                  >
+                  <label class="govuk-label govuk-checkboxes__label" for="collaboratorIds-{{ u.id }}">
+                    {{ u.name }}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="additionalCollaborators">Additional collaborators (optional)</label>
+          <div class="govuk-hint">Add names or emails separated by commas or new lines.</div>
+          <textarea class="govuk-textarea" id="additionalCollaborators" name="additionalCollaborators" rows="3">{{ row.additionalCollaborators or "" }}</textarea>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and return</button>
+          <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments">Cancel</a>
+        </div>
+      </form>
     </div>
 
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="additionalCollaborators">Additional collaborators (optional)</label>
-      <div class="govuk-hint">Add names or emails separated by commas or new lines.</div>
-      <textarea class="govuk-textarea" id="additionalCollaborators" name="additionalCollaborators" rows="3">{{ row.additionalCollaborators or "" }}</textarea>
-    </div>
+    <div class="govuk-grid-column-one-third">
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Outcome context</h2>
+        <p class="govuk-body"><strong>{{ row.outcomeCode }}</strong> {{ row.title }}</p>
+        {% if row.systemName %}
+          <p class="govuk-body govuk-!-margin-bottom-0">System: <strong>{{ row.systemName }}</strong></p>
+        {% endif %}
+      </aside>
 
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Save and return</button>
-      <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments">Cancel</a>
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Assignment guidance</h2>
+        <p class="govuk-body">Assign one owner for this outcome.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">Add collaborators if other people will help prepare evidence or contribute to the judgement.</p>
+      </aside>
     </div>
-  </form>
+  </div>
 {% endblock %}

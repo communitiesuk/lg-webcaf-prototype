@@ -5,10 +5,22 @@
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.shortlistTitle }}</h1>
-  <p class="govuk-body">Select the critical systems to assess in Objectives B and C.</p>
+  <p class="govuk-body">
+    {% if researchRound == "round-2" %}
+      Identify the systems that are most likely to be selected during annual setup for Objectives B and C.
+    {% else %}
+      Select the critical systems to assess in Objectives B and C.
+    {% endif %}
+  </p>
   <p class="govuk-body">
     <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
-    <span class="govuk-hint govuk-!-margin-top-1">Adding a system means updating mapping and priority before confirming the scope pack.</span>
+    <span class="govuk-hint govuk-!-margin-top-1">
+      {% if researchRound == "round-2" %}
+        Adding a system means updating mapping and priority before confirming the scope register.
+      {% else %}
+        Adding a system means updating mapping and priority before confirming the scope pack.
+      {% endif %}
+    </span>
   </p>
 
   {% if error %}
@@ -60,7 +72,15 @@
       <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
     </form>
   {% else %}
-    <p class="govuk-body">No high or medium priority systems yet.</p>
-    <a class="govuk-link" href="/stages/2/scope/systems/review">Review systems</a>
+    {% if researchRound == "round-2" %}
+      <p class="govuk-body">No likely yearly systems recorded yet. You can review systems or continue to complete the scope register.</p>
+      <div class="govuk-button-group">
+        <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/review">Review systems</a>
+        <a class="govuk-button" href="/stages/2/scope/priority/confirm">Continue</a>
+      </div>
+    {% else %}
+      <p class="govuk-body">No high or medium priority systems yet.</p>
+      <a class="govuk-link" href="/stages/2/scope/systems/review">Review systems</a>
+    {% endif %}
   {% endif %}
 {% endblock %}

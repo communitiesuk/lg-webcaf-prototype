@@ -13,6 +13,6 @@ module.exports = function (router) {
   });
 
   router.get("/research-rounds/round-2", (req, res) => {
-    return res.redirect("/research-start?round=round-2&next=%2Fentry%2Fstart-new%3FreturnTo%3D%2Fprepare");
+    return res.redirect("/round-2/start");
   });
 };

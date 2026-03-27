@@ -1,20 +1,35 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <h1 class="govuk-heading-l">User research rounds</h1>
-  <p class="govuk-body">Choose which prototype journey you want to test.</p>
+  <span class="govuk-caption-l">Research setup</span>
+  <h1 class="govuk-heading-l">Choose a research round</h1>
+  <p class="govuk-body govuk-!-margin-bottom-6">Select which prototype journey you want to use for testing.</p>
 
-  <div class="govuk-grid-row">
+  <div class="govuk-grid-row app-rounds-grid">
     <div class="govuk-grid-column-one-half">
-      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Round 1 baseline</h2>
-      <p class="govuk-body">Use the first-round journey exactly as it was used in initial research.</p>
-      <a class="govuk-link" href="/research-rounds/round-1">Open Round 1</a>
+      <section class="app-round-card app-round-card--baseline">
+        <p class="govuk-caption-m app-round-card__label">Round 1</p>
+        <h2 class="govuk-heading-m">Baseline journey</h2>
+        <p class="govuk-body">Use the original prototype journey from the first round of research.</p>
+        <ul class="govuk-list govuk-list--bullet app-round-card__list">
+          <li>Original flow and content</li>
+          <li>Useful as a comparison point</li>
+        </ul>
+        <a class="govuk-button govuk-button--secondary" href="/research-rounds/round-1">Open Round 1</a>
+      </section>
     </div>
 
     <div class="govuk-grid-column-one-half">
-      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Round 2 iteration</h2>
-      <p class="govuk-body">Use this for updated journey changes for second-round research.</p>
-      <a class="govuk-link" href="/research-rounds/round-2">Open Round 2</a>
+      <section class="app-round-card app-round-card--current">
+        <p class="govuk-caption-m app-round-card__label">Round 2</p>
+        <h2 class="govuk-heading-m">Current iteration</h2>
+        <p class="govuk-body">Use the updated journey with the latest changes for second-round research.</p>
+        <ul class="govuk-list govuk-list--bullet app-round-card__list">
+          <li>Latest Round 2 flow</li>
+          <li>For active testing and iteration</li>
+        </ul>
+        <a class="govuk-button" href="/research-rounds/round-2">Open Round 2</a>
+      </section>
     </div>
   </div>
 {% endblock %}

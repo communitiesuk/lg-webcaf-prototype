@@ -2,13 +2,22 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/research-rounds">Back</a>
+  <a class="govuk-back-link" href="{{ '/round-2/access' if researchRound == 'round-2' else '/research-rounds' }}">Back</a>
 
-  <h1 class="govuk-heading-l">Research start</h1>
+  <h1 class="govuk-heading-l">{{ "Choose a prototype user profile" if researchRound == "round-2" else "Research start" }}</h1>
   <p class="govuk-caption-m">{{ researchRoundLabel or "Round 1" }}</p>
-  <p class="govuk-body">Choose a role before you begin.</p>
+  <p class="govuk-body">
+    {% if researchRound == "round-2" %}
+      Choose a prototype user profile to continue through the Round 2 onboarding journey.
+    {% else %}
+      Choose a role before you begin.
+    {% endif %}
+  </p>
 
-  <h2 class="govuk-heading-m">Choose a role</h2>
+  <h2 class="govuk-heading-m">{{ "Prototype role selection" if researchRound == "round-2" else "Choose a role" }}</h2>
+  {% if researchRound == "round-2" %}
+    <p class="govuk-hint">This step is only used for research so you can enter the prototype as a specific council, assurer, or MHCLG user.</p>
+  {% endif %}
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
       <div role="alert">

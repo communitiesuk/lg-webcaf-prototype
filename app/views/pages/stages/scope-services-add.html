@@ -2,7 +2,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -19,10 +19,29 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">{{ labels.stages.scope.services.addTitle }}</h1>
-  <p class="govuk-body">Add each essential service and confirm if it is in scope.</p>
+  {% if researchRound == "round-2" %}
+    <span class="govuk-caption-l">Essential services register</span>
+    <h1 class="govuk-heading-l">{{ "Change an essential service" if isEdit else "Add an essential service" }}</h1>
+    <p class="govuk-body">
+      {% if isEdit %}
+        Update the essential service details for your CAF scope register.
+      {% else %}
+        Add a service your council needs to keep running. You can review and update this register over time.
+      {% endif %}
+    </p>
+    <p class="govuk-hint">Essential services are the services your council needs to keep running.</p>
+  {% else %}
+    <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+    <p class="govuk-body">
+      {% if isEdit %}
+        Update the essential service details for your CAF scope register.
+      {% else %}
+        Add an essential service to your CAF scope register.
+      {% endif %}
+    </p>
+  {% endif %}
 
-  <form method="post" action="/stages/2/scope/services/add">
+  <form method="post" action="{{ formAction or '/stages/2/scope/services/add' }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="serviceName">Service name</label>
       {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}
@@ -35,37 +54,20 @@
     </div>
 
     <div class="govuk-form-group">
-      <label class="govuk-label" for="serviceDescription">Short description</label>
+      <label class="govuk-label" for="serviceDescription">What does this service do?</label>
+      <div class="govuk-hint">For example, who it supports or what it enables the council to deliver.</div>
       <textarea class="govuk-textarea" id="serviceDescription" name="serviceDescription" rows="3">{{ data.description }}</textarea>
     </div>
 
     <div class="govuk-form-group">
-      <label class="govuk-label" for="serviceOwner">Owner</label>
+      <label class="govuk-label" for="serviceOwner">Who owns this service?</label>
+      <div class="govuk-hint">Enter a role, team or service owner.</div>
       <input class="govuk-input" id="serviceOwner" name="serviceOwner" type="text" value="{{ data.owner }}">
     </div>
 
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceInScope') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Is this service in scope?</legend>
-        {% if error and (error.items | selectattr('field','equalto','serviceInScope') | list | length) > 0 %}
-          <p class="govuk-error-message">
-            <span class="govuk-visually-hidden">Error:</span>
-            {{ (error.items | selectattr('field','equalto','serviceInScope') | list | first).text }}
-          </p>
-        {% endif %}
-        <div class="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="serviceInScope-yes" name="serviceInScope" type="radio" value="yes" {% if data.inScope == "yes" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="serviceInScope-yes">Yes</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="serviceInScope-no" name="serviceInScope" type="radio" value="no" {% if data.inScope == "no" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="serviceInScope-no">No</label>
-          </div>
-        </div>
-      </fieldset>
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or labels.stages.scope.services.addButton }}</button>
+      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to essential services</a>
     </div>
-
-    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.scope.services.addButton }}</button>
   </form>
 {% endblock %}

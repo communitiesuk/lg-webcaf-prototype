@@ -1,0 +1,18 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/stages/2/scope/services/review">Back</a>
+
+  <h1 class="govuk-heading-l">Remove essential service</h1>
+  <p class="govuk-body">Are you sure you want to remove <strong>{{ service.name }}</strong> from the essential services register?</p>
+  <p class="govuk-body">This will also remove any mappings from critical systems to this service.</p>
+
+  <div class="govuk-button-group">
+    <form method="post" action="/stages/2/scope/services/{{ service.id }}/remove/confirm" class="govuk-button-group__item">
+      <button class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" data-module="govuk-button" type="submit">
+        Remove service
+      </button>
+    </form>
+    <a class="govuk-link" href="/stages/2/scope/services/review">Cancel</a>
+  </div>
+{% endblock %}

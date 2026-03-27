@@ -3,10 +3,47 @@
 {% from "govuk/components/task-list/macro.njk" import govukTaskList %}
 
 {% block content %}
-  <h1 class="govuk-heading-l">CAF journey</h1>
-  <p class="govuk-body">Use this task list to move through the full CAF process.</p>
+  {% if researchRound == "round-2" %}
+    <span class="govuk-caption-l">Self-assessment</span>
+    <h1 class="govuk-heading-l">Complete your WebCAF self-assessment</h1>
+    <div class="app-milestone-summary govuk-!-margin-bottom-6" aria-label="Assessment milestones">
+      <p class="govuk-body app-milestone-summary__summary">
+        {{ roundTwoProgress.completed }} of {{ roundTwoProgress.total }} yearly milestones completed
+      </p>
+      <ul class="govuk-list app-milestone-summary__list">
+        {% for milestone in roundTwoProgress.milestones %}
+          {% set milestoneTagClass = 'govuk-tag--grey' %}
+          {% set milestoneTagText = 'Not yet' %}
+          {% if milestone.state == 'completed' %}
+            {% set milestoneTagClass = 'govuk-tag--green' %}
+            {% set milestoneTagText = 'Completed' %}
+          {% elif milestone.state == 'current' %}
+            {% set milestoneTagClass = 'govuk-tag--blue' %}
+            {% set milestoneTagText = 'Current' %}
+          {% endif %}
+          <li class="app-milestone-summary__item app-milestone-summary__item--{{ milestone.state }}">
+            <strong class="govuk-tag {{ milestoneTagClass }}">
+              {{ milestoneTagText }}
+            </strong>
+            <span class="app-milestone-summary__label">{{ milestone.label }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if roundTwoProgress.nextMilestoneLabel %}
+        <p class="govuk-body app-milestone-summary__next">
+          <strong>Next:</strong> {{ roundTwoProgress.nextMilestoneLabel }}
+        </p>
+      {% endif %}
+    </div>
+    <div class="govuk-inset-text">
+      You started this self-assessment on <strong>{{ assessmentStartedAtDisplay }}</strong>. You need to complete it by <strong>{{ assessmentDueAtDisplay }}</strong>.
+    </div>
+  {% else %}
+    <h1 class="govuk-heading-l">CAF journey</h1>
+    <p class="govuk-body">Use this task list to move through the full CAF process.</p>
+  {% endif %}
 
-  {% if nextAction %}
+  {% if nextAction and researchRound != "round-2" %}
     <div class="govuk-inset-text">
       <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Next recommended action</h2>
       <p class="govuk-body govuk-!-margin-bottom-0">

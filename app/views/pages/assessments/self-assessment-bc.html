@@ -1,0 +1,137 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">Complete B and C self-assessment</h1>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Assess the selected critical systems for this assessment year.</p>
+
+      {% if frameworkChange and frameworkChange.changed %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body"><strong>CAF has changed from version {{ frameworkChange.assessmentVersion }} to {{ frameworkChange.currentVersion }}.</strong></p>
+          <p class="govuk-body">{{ frameworkChange.summaryText | capitalize }} affect B and C.</p>
+          {% if frameworkChange.newOutcomes and frameworkChange.newOutcomes.length > 0 %}
+            <p class="govuk-body govuk-!-margin-bottom-1">New outcomes in the current version:</p>
+            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+              {% for outcome in frameworkChange.newOutcomes %}
+                <li><strong>{{ outcome.code }}</strong> {{ outcome.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if systems.length > 0 %}
+        <h2 class="govuk-heading-m">Selected systems for this year</h2>
+        <table class="govuk-table govuk-!-margin-bottom-6">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">System</th>
+              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for system in systems %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ system.name }}</strong>
+                  {% if system.mappedServices and system.mappedServices.length > 0 %}
+                    <div class="govuk-hint govuk-!-margin-top-1">Supports: {{ system.mappedServices | join(", ") }}</div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ system.status }}</td>
+                <td class="govuk-table__cell">
+                  <a class="govuk-link" href="/self-assess/bc/{{ system.id }}">
+                    {{ "Review system" if system.judged > 0 else "Start system" }}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="govuk-inset-text">
+          No systems have been selected for this year’s B and C assessment yet.
+        </div>
+      {% endif %}
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="{{ primaryActionHref }}">{{ primaryActionText }}</a>
+        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+      </div>
+
+      {% if readyToComplete or reviewState.completed %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        {% if error %}
+          <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <div role="alert">
+              <h2 class="govuk-error-summary__title">There is a problem</h2>
+              <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                  {% for item in error.items %}
+                    <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <h2 class="govuk-heading-m">Complete B and C</h2>
+        <p class="govuk-body">Use this step when the selected-system B and C work is ready, even if A and D was completed earlier.</p>
+        {% if reviewState.completed %}
+          <p class="govuk-body govuk-hint">Marked complete {{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}.</p>
+        {% endif %}
+        <form method="post" action="/assessments/current/self-assessment/bc">
+          <div id="completeBcAssessment" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeBcAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is B and C complete?</legend>
+              <div class="govuk-radios">
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="completeBcAssessment-yes" name="completeBcAssessment" type="radio" value="yes">
+                  <label class="govuk-label govuk-radios__label" for="completeBcAssessment-yes">Yes, B and C is complete</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="completeBcAssessment-no" name="completeBcAssessment" type="radio" value="no">
+                  <label class="govuk-label govuk-radios__label" for="completeBcAssessment-no">No, I need to make changes</label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Complete B and C</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current progress</h2>
+        <p class="govuk-body">Status: <strong>{{ bcPageStatus }}</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ systems.length }} selected systems this year.</p>
+      </aside>
+
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Assessment support</h2>
+        <p class="govuk-body">Architecture mapping is completed offline. Record a link to the secure location, such as a SharePoint folder or document, against each critical system.</p>
+        {% if assuranceWindow %}
+          <p class="govuk-body">Planned assurer support window: <strong>{{ assuranceWindow }}</strong>.</p>
+        {% endif %}
+        {% if hasCheckInPlanned %}
+          <p class="govuk-body">An early assurer check-in is planned.</p>
+        {% endif %}
+        {% if checkInNotes %}
+          <p class="govuk-body govuk-!-margin-bottom-0">{{ checkInNotes }}</p>
+        {% endif %}
+      </aside>
+
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Need to update systems?</h2>
+        <p class="govuk-body govuk-!-margin-bottom-0"><a class="govuk-link" href="/stages/2/scope/systems/review">Update critical systems register</a></p>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

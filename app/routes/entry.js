@@ -12,12 +12,21 @@ module.exports = function (router) {
     if (!requireSignedIn(req, res)) return;
 
     const assessment = req.session.data.assessment || null;
+    const researchRound =
+      req.session && req.session.data && req.session.data.researchRound === "round-2"
+        ? "round-2"
+        : "round-1";
+    const roundTwo = researchRound === "round-2";
+    const hasInProgress = roundTwo
+      ? Boolean(assessment && assessment.id && assessment.startedFromEntry)
+      : Boolean(assessment && assessment.id);
 
     const viewModel = {
-      pageTitle: labels.entry.pageTitle,
+      pageTitle: roundTwo ? "My account" : labels.entry.pageTitle,
       labels,
       user: req.session.data.user,
-      hasInProgress: Boolean(assessment && assessment.id),
+      hasInProgress,
+      roundTwo,
     };
 
     res.render("pages/entry/index", viewModel, (err, html) => {
@@ -57,6 +66,34 @@ module.exports = function (router) {
     }
 
     const a = req.session.data.assessment;
+    const roundTwo =
+      req.session &&
+      req.session.data &&
+      req.session.data.researchRound === "round-2";
+
+    if (roundTwo) {
+      if (!a.prepare || !a.prepare.onboardingUnderstandingComplete) {
+        return res.redirect("/prepare");
+      }
+
+      if (!a.prepare || !a.prepare.onboardingRolesComplete) {
+        return res.redirect("/prepare/roles");
+      }
+
+      if (!a.stage || !a.stage.prepareScopeComplete) {
+        return res.redirect("/assessments/current/journey");
+      }
+
+      if (!a.scopeReview || !a.scopeReview.completed) {
+        return res.redirect("/assessments/current/review-scope");
+      }
+
+      if (!a.annualSetup || !a.annualSetup.completed) {
+        return res.redirect("/assessments/current/annual-setup");
+      }
+
+      return res.redirect("/assessments/current/dashboard?view=my");
+    }
 
     if (!a.stage || !a.stage.understandCAFComplete) {
       return res.redirect("/stages/1");
@@ -89,6 +126,10 @@ module.exports = function (router) {
 
     const inProgress = assigned.filter((row) => row.status !== "complete");
     const pool = inProgress.length > 0 ? inProgress : assigned;
+
+    if (req.session.data.researchRound === "round-2") {
+      return res.redirect("/assessments/current/journey");
+    }
 
     if (pool.length > 0) {
       pool.sort((aRow, bRow) => {
@@ -163,7 +204,9 @@ module.exports = function (router) {
       };
     }
 
-    seedPrototypeData(req.session.data.assessment, req.session.data.user);
+    seedPrototypeData(req.session.data.assessment, req.session.data.user, {
+      roundTwo: req.session && req.session.data && req.session.data.researchRound === "round-2",
+    });
 
     return res.redirect("/assessments/current/dashboard");
   });
@@ -178,8 +221,9 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-function seedPrototypeData(assessment, currentUser) {
+function seedPrototypeData(assessment, currentUser, options = {}) {
   if (!assessment) return;
+  const roundTwo = Boolean(options.roundTwo);
 
   const ownerId = currentUser && currentUser.id ? currentUser.id : "u-1";
   const now = new Date();
@@ -193,7 +237,7 @@ function seedPrototypeData(assessment, currentUser) {
   }
 
   assessment.scope = assessment.scope || {};
-  if (!Array.isArray(assessment.scope.essentialServices) || assessment.scope.essentialServices.length === 0) {
+  if (!roundTwo && (!Array.isArray(assessment.scope.essentialServices) || assessment.scope.essentialServices.length === 0)) {
     assessment.scope.essentialServices = [
       {
         id: "svc-1",
@@ -212,7 +256,7 @@ function seedPrototypeData(assessment, currentUser) {
     ];
   }
 
-  if (!Array.isArray(assessment.scope.criticalSystems) || assessment.scope.criticalSystems.length === 0) {
+  if (!roundTwo && (!Array.isArray(assessment.scope.criticalSystems) || assessment.scope.criticalSystems.length === 0)) {
     assessment.scope.criticalSystems = [
       {
         id: "sys-1",
@@ -233,14 +277,14 @@ function seedPrototypeData(assessment, currentUser) {
     ];
   }
 
-  if (!Array.isArray(assessment.scope.mappings) || assessment.scope.mappings.length === 0) {
+  if (!roundTwo && (!Array.isArray(assessment.scope.mappings) || assessment.scope.mappings.length === 0)) {
     assessment.scope.mappings = [
       { systemId: "sys-1", serviceIds: ["svc-1"] },
       { systemId: "sys-2", serviceIds: ["svc-1", "svc-2"] },
     ];
   }
 
-  if (!Array.isArray(assessment.scope.priority) || assessment.scope.priority.length === 0) {
+  if (!roundTwo && (!Array.isArray(assessment.scope.priority) || assessment.scope.priority.length === 0)) {
     assessment.scope.priority = [
       {
         systemId: "sys-1",
@@ -257,11 +301,11 @@ function seedPrototypeData(assessment, currentUser) {
     ];
   }
 
-  if (!Array.isArray(assessment.scope.priorityShortlist) || assessment.scope.priorityShortlist.length === 0) {
+  if (!roundTwo && (!Array.isArray(assessment.scope.priorityShortlist) || assessment.scope.priorityShortlist.length === 0)) {
     assessment.scope.priorityShortlist = ["sys-1"];
   }
 
-  if (typeof assessment.scope.servicesConfirmed !== "boolean") {
+  if (!roundTwo && typeof assessment.scope.servicesConfirmed !== "boolean") {
     assessment.scope.servicesConfirmed = true;
   }
 
@@ -506,9 +550,12 @@ function seedPrototypeData(assessment, currentUser) {
 }
 
 function startNewAssessment(req) {
+  const nowIso = new Date().toISOString();
   req.session.data.assessment = {
     id: "current",
+    startedFromEntry: true,
     cafVersion: CAF_DEFAULT_VERSION,
+    hasPreviousAdAssessment: false,
     stage: {
       understandCAFComplete: false,
       prepareScopeComplete: false,
@@ -565,8 +612,9 @@ function startNewAssessment(req) {
       reviewedAt: "",
       reviewNotes: "",
     },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: nowIso,
+    dueAt: endOfFinancialYear(nowIso),
+    updatedAt: nowIso,
     progressTracker: {},
   };
 
@@ -577,6 +625,13 @@ function addDays(date, days) {
   const dt = new Date(date);
   dt.setDate(dt.getDate() + days);
   return dt;
+}
+
+function endOfFinancialYear(value) {
+  const dt = new Date(value);
+  const year = dt.getFullYear() + 1;
+  const end = new Date(year, 3, 5, 23, 59, 0, 0);
+  return end.toISOString();
 }
 
 function toISODate(dateObj) {

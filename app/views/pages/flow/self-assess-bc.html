@@ -14,7 +14,13 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body">No critical systems added yet.</p>
+    <p class="govuk-body">
+      {% if researchRound == "round-2" %}
+        No critical systems have been selected for this year yet.
+      {% else %}
+        No critical systems added yet.
+      {% endif %}
+    </p>
   {% endif %}
 
   <h2 class="govuk-heading-m">{{ labels.flow.selfAssessBC.addHeading }}</h2>

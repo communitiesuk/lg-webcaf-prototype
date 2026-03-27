@@ -21,7 +21,10 @@ const {
 
 const { formatDateForInput } = require("../data/helpers/progress");
 
-const PROTOTYPE_OUTCOME_LIMIT = 1;
+const PROTOTYPE_OUTCOME_LIMITS = {
+  AD: 2,
+  BC: 1,
+};
 
 module.exports = function (router) {
   const protectedPrefixes = [
@@ -70,6 +73,23 @@ module.exports = function (router) {
 
     ensureFlowData(assessment);
     const gatedNotice = getStage1GateNotice(req, labels);
+    const roundTwo = isRoundTwoRequest(req);
+
+    if (roundTwo) {
+      const defaults = {
+        understandService: Boolean(assessment.prepare.understandService),
+        hasStakeholderSupport: Boolean(assessment.prepare.hasStakeholderSupport),
+      };
+
+      return res.render("pages/flow/prepare-round-2", {
+        pageTitle: "Prepare for CAF",
+        labels,
+        assessment,
+        defaults,
+        error: null,
+        gatedNotice,
+      });
+    }
 
     res.render("pages/flow/prepare", {
       pageTitle: labels.flow.prepare.pageTitle,
@@ -86,6 +106,42 @@ module.exports = function (router) {
     if (!assessment) return;
 
     ensureFlowData(assessment);
+    const roundTwo = isRoundTwoRequest(req);
+
+    if (roundTwo) {
+      const understand = coerceArray(req.session.data.onboardingChecks);
+      const understandingComplete =
+        understand.includes("understandService") &&
+        understand.includes("hasStakeholderSupport");
+
+      assessment.prepare = {
+        ...assessment.prepare,
+        understandService: understand.includes("understandService"),
+        hasStakeholderSupport: understand.includes("hasStakeholderSupport"),
+        onboardingUnderstandingComplete: understandingComplete,
+        cafReviewed: understand.includes("understandService"),
+        guidanceRead: Boolean(assessment.prepare.onboardingRolesComplete),
+      };
+
+      assessment.updatedAt = new Date().toISOString();
+
+      if (!understandingComplete) {
+        return res.render("pages/flow/prepare-round-2", {
+          pageTitle: "Prepare for CAF",
+          labels,
+          assessment,
+          defaults: {
+            understandService: assessment.prepare.understandService,
+            hasStakeholderSupport: assessment.prepare.hasStakeholderSupport,
+          },
+          error: { items: [{ field: "onboardingChecks", text: "Confirm the preparation statements before continuing." }] },
+          gatedNotice: null,
+        });
+      }
+
+      delete req.session.data.onboardingChecks;
+      return res.redirect("/prepare/roles");
+    }
 
     const checklist = coerceArray(req.session.data.prepChecklist);
     const requiredItems = ["awareness", "signoff", "support", "understanding", "governance", "assurers"];
@@ -114,6 +170,108 @@ module.exports = function (router) {
     }
 
     delete req.session.data.prepChecklist;
+
+    return res.redirect("/assessments/current/journey");
+  });
+
+  router.get("/prepare/roles", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/prepare");
+    }
+
+    const currentUser = req.session.data.user || null;
+    const defaults = {
+      onboardingLead: (assessment.prepare.onboardingLead || (currentUser && currentUser.name) || "").toString(),
+      onboardingApprover: (assessment.prepare.onboardingApprover || "").toString(),
+      onboardingContributors: (assessment.prepare.onboardingContributors || "").toString(),
+    };
+
+    return res.render("pages/flow/prepare-round-2-roles", {
+      pageTitle: "Set up key roles",
+      labels,
+      assessment,
+      defaults,
+      rolesAudit: buildRolesAudit(
+        assessment.prepare.onboardingRolesMeta,
+        assessment.prepare.onboardingRolesHistory
+      ),
+      error: null,
+    });
+  });
+
+  router.post("/prepare/roles", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/prepare");
+    }
+
+    const currentUser = req.session.data.user || null;
+    const onboardingLead = (req.session.data.onboardingLead || "").toString().trim();
+    const onboardingApprover = (req.session.data.onboardingApprover || "").toString().trim();
+    const onboardingContributors = (req.session.data.onboardingContributors || "").toString().trim();
+    const errors = [];
+    if (!onboardingLead) {
+      errors.push({ field: "onboardingLead", text: "Enter the CAF lead." });
+    }
+    if (!onboardingApprover) {
+      errors.push({ field: "onboardingApprover", text: "Enter the approver." });
+    }
+
+    assessment.prepare = {
+      ...assessment.prepare,
+      onboardingLead,
+      onboardingApprover,
+      onboardingContributors,
+      onboardingRolesComplete: Boolean(onboardingLead && onboardingApprover),
+      contributorsConfirmed: Boolean(onboardingContributors),
+      guidanceRead: Boolean(
+        assessment.prepare.onboardingUnderstandingComplete &&
+        onboardingLead &&
+        onboardingApprover
+      ),
+    };
+    applyRoleAudit(assessment.prepare, "onboardingRoles", currentUser, {
+      lead: onboardingLead,
+      approver: onboardingApprover,
+      contributors: onboardingContributors,
+    });
+
+    if (!assessment.scope) assessment.scope = {};
+    assessment.scope.rolesLead = onboardingLead || ((currentUser && currentUser.name) || "");
+    assessment.scope.rolesApprover = onboardingApprover;
+    if (!assessment.scope.rolesTech) {
+      assessment.scope.rolesTech = onboardingContributors;
+    }
+    assessment.updatedAt = new Date().toISOString();
+
+    if (errors.length > 0) {
+      return res.render("pages/flow/prepare-round-2-roles", {
+        pageTitle: "Set up key roles",
+        labels,
+        assessment,
+        defaults: {
+          onboardingLead,
+          onboardingApprover,
+          onboardingContributors,
+        },
+        rolesAudit: buildRolesAudit(
+          assessment.prepare.onboardingRolesMeta,
+          assessment.prepare.onboardingRolesHistory
+        ),
+        error: { items: errors },
+      });
+    }
+
+    delete req.session.data.onboardingLead;
+    delete req.session.data.onboardingApprover;
+    delete req.session.data.onboardingContributors;
 
     return res.redirect("/assessments/current/journey");
   });
@@ -165,6 +323,9 @@ module.exports = function (router) {
     if (redirectIfScopeNotReady(req, res, assessment, "/self-assess/ad")) return;
     assessment.lens = "ad";
     assessment.updatedAt = new Date().toISOString();
+    if (isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/self-assessment/ad");
+    }
     return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
   });
 
@@ -186,22 +347,34 @@ module.exports = function (router) {
     const saved = assessment.selfAssess.ad[outcome.id] || {};
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
+    const roundTwo = isRoundTwoRequest(req);
+    const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
+    const context = roundTwo
+      ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+      : {
+          backLink: `/assessments/current/outcomes/${outcome.id}`,
+          heading: buildOutcomeOverviewTitle(outcome),
+          subHeading: "",
+          lens: "ad",
+          progressLink: `/assessments/current/outcomes/${outcome.id}`,
+          progressLinkText: "Return to outcome overview",
+        };
+
     res.render("pages/flow/self-assess-outcome", {
-      pageTitle: buildOutcomeOverviewTitle(outcome),
+      pageTitle: roundTwo ? buildOutcomeWorkspaceTitle(outcome) : buildOutcomeOverviewTitle(outcome),
       labels,
       assessment,
-      context: {
-        backLink: `/assessments/current/outcomes/${outcome.id}`,
-        heading: buildOutcomeOverviewTitle(outcome),
-        subHeading: "",
-        lens: "ad",
-        progressLink: `/assessments/current/outcomes/${outcome.id}`,
-        progressLinkText: "Return to outcome overview",
-      },
+      context,
       outcome,
       form: {
+        targetLevel: getOutcomeTargetLevel(outcome),
         igpResponse: saved.igpResponse || "",
+        igpAssessments: buildIgpAssessmentForm(saved.igpAssessments, outcome),
+        igpJudgementHint: buildIgpJudgementHint(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
+        igpSynthesis: buildIgpSynthesis(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
         judgement: saved.judgement || "",
+        judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+        mismatchReason: saved.mismatchReason || "",
         rationale: saved.rationale || "",
         qualityReviewedAt: formatDateForInput(saved.qualityReviewedAt),
         approverReviewedAt: formatDateForInput(saved.approverReviewedAt),
@@ -229,10 +402,18 @@ module.exports = function (router) {
     if (!outcome) return renderNotFound(res);
 
     const action = (req.session.data.action || "").toString();
+    const roundTwo = isRoundTwoRequest(req);
+    const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
 
     const existingAd = assessment.selfAssess.ad[outcome.id] || {};
     const igpResponse = (req.session.data.igpResponse || existingAd.igpResponse || "").toString().trim();
+    const igpAssessments = normaliseIgpAssessments(
+      req.session.data.igpAssessments,
+      existingAd.igpAssessments,
+      outcome
+    );
     const judgement = (req.session.data.judgement || "").toString();
+    const mismatchReason = (req.session.data.mismatchReason || existingAd.mismatchReason || "").toString().trim();
     const rationale = (req.session.data.rationale || "").toString().trim();
     const qualityReviewedAt = (req.session.data.qualityReviewedAt || "").toString().trim();
     const approverReviewedAt = (req.session.data.approverReviewedAt || "").toString().trim();
@@ -247,16 +428,23 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${outcome.id}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-          progressLink: `/assessments/current/outcomes/${outcome.id}`,
-          progressLinkText: "Return to outcome overview",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${outcome.id}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+              progressLink: `/assessments/current/outcomes/${outcome.id}`,
+              progressLinkText: "Return to outcome overview",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -277,16 +465,23 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${outcome.id}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-          progressLink: `/assessments/current/outcomes/${outcome.id}`,
-          progressLinkText: "Return to outcome overview",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${outcome.id}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+              progressLink: `/assessments/current/outcomes/${outcome.id}`,
+              progressLinkText: "Return to outcome overview",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -297,7 +492,7 @@ module.exports = function (router) {
 
     const existingStatus = (existingAd.status || "").toString();
 
-    if (action === "shareForReview") {
+    if (!roundTwo && action === "shareForReview") {
       const shareErrors = validateSelfAssess({
         igpResponse,
         judgement,
@@ -320,6 +515,7 @@ module.exports = function (router) {
           },
           form: {
             igpResponse,
+            igpAssessments,
             judgement,
             rationale,
             qualityReviewedAt,
@@ -346,6 +542,7 @@ module.exports = function (router) {
       const nextAd = {
         ...existingAd,
         igpResponse,
+        igpAssessments,
         judgement,
         rationale,
         qualityReviewedAt,
@@ -371,8 +568,10 @@ module.exports = function (router) {
     }
 
     const errors = validateSelfAssess({
-      igpResponse,
+      igpAssessments,
       judgement,
+      mismatchReason,
+      mismatch: roundTwo ? isJudgementMismatch(judgement, buildIgpJudgementHint(igpAssessments)) : false,
       rationale,
       labels,
     });
@@ -383,16 +582,23 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${outcome.id}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-          progressLink: `/assessments/current/outcomes/${outcome.id}`,
-          progressLinkText: "Return to outcome overview",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${outcome.id}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+              progressLink: `/assessments/current/outcomes/${outcome.id}`,
+              progressLinkText: "Return to outcome overview",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -416,7 +622,9 @@ module.exports = function (router) {
     assessment.selfAssess.ad[outcome.id] = {
       ...existingAd,
       igpResponse,
+      igpAssessments,
       judgement,
+      mismatchReason,
       rationale,
       qualityReviewedAt,
       approverReviewedAt,
@@ -434,7 +642,18 @@ module.exports = function (router) {
     }
     assessment.updatedAt = nowIso;
 
-    clearOutcomeForm(req);
+    if (roundTwo) {
+      invalidateRoundTwoSectionCompletion(assessment, "ad");
+      clearOutcomeForm(req);
+      if (action === "saveReturn") {
+        return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
+      }
+      const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
+      if (nextOutcomeId) {
+        return res.redirect(`/self-assess/ad/${encodeURIComponent(nextOutcomeId)}`);
+      }
+      return res.redirect("/assessments/current/self-assessment/ad");
+    }
 
     return res.redirect(`/assessments/current/outcomes/${outcome.id}`);
   });
@@ -451,6 +670,9 @@ module.exports = function (router) {
     if (redirectIfScopeNotReady(req, res, assessment, "/self-assess/bc/select-system")) return;
     assessment.lens = "bc";
     assessment.updatedAt = new Date().toISOString();
+    if (isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/self-assessment/bc");
+    }
     return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
   });
 
@@ -464,17 +686,71 @@ module.exports = function (router) {
     assessment.updatedAt = new Date().toISOString();
 
     const scope = assessment.scope || {};
-    const shortlist = Array.isArray(scope.priorityShortlist) ? scope.priorityShortlist : [];
     const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
+    const annualSetup = assessment.annualSetup || {};
+    const selectedSystemIds = Array.isArray(annualSetup.systemIds) ? annualSetup.systemIds : [];
+    const shortlist = Array.isArray(scope.priorityShortlist) ? scope.priorityShortlist : [];
+    const allowedSystemIds = isRoundTwoRequest(req) && selectedSystemIds.length > 0 ? selectedSystemIds : shortlist;
 
-    if (!shortlist.includes(req.params.systemId)) {
-      return res.redirect("/self-assess/bc/select-system");
+    if (allowedSystemIds.length > 0 && !allowedSystemIds.includes(req.params.systemId)) {
+      return res.redirect(isRoundTwoRequest(req) ? "/assessments/current/self-assessment/bc" : "/self-assess/bc/select-system");
     }
 
     const system = systems.find((s) => s.id === req.params.systemId);
     if (!system) return renderNotFound(res);
 
-    return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+    }
+
+    if (!annualSetup.completed) {
+      return res.redirect("/assessments/current/journey");
+    }
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const rows = flattenOutcomes(bc).map((outcome) => {
+      const saved = getBCOutcome(assessment, system.id, outcome.id);
+      const evidenceCount = Array.isArray(saved.evidenceRefs)
+        ? saved.evidenceRefs.filter(hasAnyEvidenceValue).length
+        : 0;
+      return {
+        id: outcome.id,
+        code: outcome.code,
+        title: outcome.title,
+        description: outcome.description || "",
+        judgement: saved.judgement || "",
+        evidenceCount,
+        status: saved.judgement ? "In progress" : "Not started",
+      };
+    });
+
+    const mapping = getScopeMapping(scope, system.id);
+    const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
+      .map((serviceId) => findScopeService(scope, serviceId))
+      .filter(Boolean)
+      .map((service) => service.name);
+    const priority = getScopePriority(scope, system.id);
+    const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
+    const pageStatus = rows.length > 0 && rows.every((row) => row.judgement)
+      ? "Complete"
+      : rows.some((row) => row.judgement)
+        ? "In progress"
+        : "Not started";
+    const primaryOutcome = rows[0] || null;
+
+    return res.render("pages/flow/self-assess-bc-system", {
+      pageTitle: `Complete B and C self-assessment: ${system.name}`,
+      labels,
+      assessment,
+      system,
+      rows,
+      mappedServices,
+      priorityLevel: priority && priority.level ? priority.level : "",
+      refsCount,
+      pageStatus,
+      primaryOutcome,
+      roundTwo: true,
+    });
   });
 
   router.get("/self-assess/bc/:systemId/outcomes/:outcomeId", (req, res) => {
@@ -509,22 +785,34 @@ module.exports = function (router) {
     const saved = getBCOutcome(assessment, system.id, outcome.id);
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
+    const roundTwo = isRoundTwoRequest(req);
+    const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
+    const context = roundTwo
+      ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+      : {
+          backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
+          heading: buildOutcomeOverviewTitle(outcome),
+          subHeading: "",
+          lens: "bc",
+          progressLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
+          progressLinkText: "Return to outcome overview",
+        };
+
     res.render("pages/flow/self-assess-outcome", {
-      pageTitle: buildOutcomeOverviewTitle(outcome),
+      pageTitle: roundTwo ? buildOutcomeWorkspaceTitle(outcome) : buildOutcomeOverviewTitle(outcome),
       labels,
       assessment,
-      context: {
-        backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
-        heading: buildOutcomeOverviewTitle(outcome),
-        subHeading: "",
-        lens: "bc",
-        progressLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
-        progressLinkText: "Return to outcome overview",
-      },
+      context,
       outcome,
       form: {
+        targetLevel: getOutcomeTargetLevel(outcome),
         igpResponse: saved.igpResponse || "",
+        igpAssessments: buildIgpAssessmentForm(saved.igpAssessments, outcome),
+        igpJudgementHint: buildIgpJudgementHint(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
+        igpSynthesis: buildIgpSynthesis(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
         judgement: saved.judgement || "",
+        judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+        mismatchReason: saved.mismatchReason || "",
         rationale: saved.rationale || "",
         qualityReviewedAt: formatDateForInput(saved.qualityReviewedAt),
         approverReviewedAt: formatDateForInput(saved.approverReviewedAt),
@@ -558,10 +846,18 @@ module.exports = function (router) {
     if (!outcome) return renderNotFound(res);
 
     const action = (req.session.data.action || "").toString();
+    const roundTwo = isRoundTwoRequest(req);
+    const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
 
     const existingBc = getBCOutcome(assessment, system.id, outcome.id);
     const igpResponse = (req.session.data.igpResponse || existingBc.igpResponse || "").toString().trim();
+    const igpAssessments = normaliseIgpAssessments(
+      req.session.data.igpAssessments,
+      existingBc.igpAssessments,
+      outcome
+    );
     const judgement = (req.session.data.judgement || "").toString();
+    const mismatchReason = (req.session.data.mismatchReason || existingBc.mismatchReason || "").toString().trim();
     const rationale = (req.session.data.rationale || "").toString().trim();
     const qualityReviewedAt = (req.session.data.qualityReviewedAt || "").toString().trim();
     const approverReviewedAt = (req.session.data.approverReviewedAt || "").toString().trim();
@@ -576,14 +872,21 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -604,14 +907,21 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -622,7 +932,7 @@ module.exports = function (router) {
 
     const existingStatus = (existingBc.status || "").toString();
 
-    if (action === "shareForReview") {
+    if (!roundTwo && action === "shareForReview") {
       const shareErrors = validateSelfAssess({
         igpResponse,
         judgement,
@@ -645,6 +955,7 @@ module.exports = function (router) {
           },
           form: {
             igpResponse,
+            igpAssessments,
             judgement,
             rationale,
             qualityReviewedAt,
@@ -671,6 +982,7 @@ module.exports = function (router) {
       setBCOutcome(assessment, system.id, outcome.id, {
         ...existingBc,
         igpResponse,
+        igpAssessments,
         judgement,
         rationale,
         qualityReviewedAt,
@@ -688,8 +1000,10 @@ module.exports = function (router) {
     }
 
     const errors = validateSelfAssess({
-      igpResponse,
+      igpAssessments,
       judgement,
+      mismatchReason,
+      mismatch: roundTwo ? isJudgementMismatch(judgement, buildIgpJudgementHint(igpAssessments)) : false,
       rationale,
       labels,
     });
@@ -700,14 +1014,21 @@ module.exports = function (router) {
         labels,
         assessment,
         outcome,
-        context: {
-          backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
-          heading: buildOutcomeOverviewTitle(outcome),
-          subHeading: "",
-        },
+        context: roundTwo
+          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          : {
+              backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
+              heading: buildOutcomeOverviewTitle(outcome),
+              subHeading: "",
+            },
         form: {
+          targetLevel: getOutcomeTargetLevel(outcome),
           igpResponse,
+          igpAssessments,
+          igpSynthesis: buildIgpSynthesis(igpAssessments),
           judgement,
+          judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
+          mismatchReason,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -730,7 +1051,9 @@ module.exports = function (router) {
     setBCOutcome(assessment, system.id, outcome.id, {
       ...existingBc,
       igpResponse,
+      igpAssessments,
       judgement,
+      mismatchReason,
       rationale,
       qualityReviewedAt,
       approverReviewedAt,
@@ -740,7 +1063,20 @@ module.exports = function (router) {
     });
     assessment.updatedAt = nowIso;
 
-    clearOutcomeForm(req);
+    if (roundTwo) {
+      invalidateRoundTwoSectionCompletion(assessment, "bc");
+      clearOutcomeForm(req);
+      if (action === "saveReturn") {
+        return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+      }
+      const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
+      if (nextOutcomeId) {
+        return res.redirect(
+          `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(nextOutcomeId)}`
+        );
+      }
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}`);
+    }
 
     return res.redirect(
       `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`
@@ -1614,6 +1950,14 @@ function ensureFlowData(assessment) {
       guidanceRead: false,
       contributorsConfirmed: false,
       cafReviewed: false,
+      understandCaf: false,
+      understandService: false,
+      hasStakeholderSupport: false,
+      onboardingUnderstandingComplete: false,
+      onboardingRolesComplete: false,
+      onboardingLead: "",
+      onboardingApprover: "",
+      onboardingContributors: "",
     };
   }
 
@@ -1653,6 +1997,15 @@ function ensureFlowData(assessment) {
       scopePackSnapshotAt: "",
     };
   }
+}
+
+function isRoundTwoRequest(req) {
+  return Boolean(
+    req &&
+      req.session &&
+      req.session.data &&
+      req.session.data.researchRound === "round-2"
+  );
 }
 
 function buildSubmissionReadiness(assessment) {
@@ -1762,12 +2115,24 @@ function flattenOutcomes(outcomesTree) {
   return flat;
 }
 
+function getPrototypeOutcomeLimit(outcomesTree) {
+  const lens = outcomesTree && outcomesTree.lens ? String(outcomesTree.lens).toUpperCase() : "";
+  return PROTOTYPE_OUTCOME_LIMITS[lens] || 1;
+}
+
 function getPrototypeOutcomeRows(outcomesTree) {
-  return flattenOutcomes(outcomesTree).slice(0, PROTOTYPE_OUTCOME_LIMIT);
+  return flattenOutcomes(outcomesTree).slice(0, getPrototypeOutcomeLimit(outcomesTree));
 }
 
 function getPrototypeOutcomeIds(outcomesTree) {
   return getPrototypeOutcomeRows(outcomesTree).map((outcome) => outcome.id);
+}
+
+function getNextPrototypeOutcomeId(outcomesTree, currentOutcomeId) {
+  const ids = getPrototypeOutcomeIds(outcomesTree);
+  const currentIndex = ids.indexOf(currentOutcomeId);
+  if (currentIndex === -1) return null;
+  return ids[currentIndex + 1] || null;
 }
 
 function findOutcome(outcomesTree, outcomeId) {
@@ -1786,6 +2151,328 @@ function renderNotFound(res) {
 function buildOutcomeOverviewTitle(outcome) {
   if (!outcome) return "Overview";
   return `Overview: '${outcome.code} ${outcome.title}'`;
+}
+
+function buildOutcomeWorkspaceTitle(outcome) {
+  if (!outcome) return "Contributing outcome";
+  return `${outcome.code} ${outcome.title}`;
+}
+
+function buildRoundTwoOutcomeContext({ lens, outcome, system, nextOutcomeId }) {
+  const bc = lens === "bc";
+  return {
+    roundTwo: true,
+    caption: bc ? "B and C self-assessment" : "A and D self-assessment",
+    backLink: bc ? `/self-assess/bc/${encodeURIComponent(system.id)}` : "/assessments/current/self-assessment/ad",
+    heading: buildOutcomeWorkspaceTitle(outcome),
+    intro: outcome && outcome.description ? outcome.description : "",
+    systemName: bc && system ? system.name : "",
+    returnHref: bc
+      ? "/assessments/current/dashboard?lens=bc&view=all"
+      : "/assessments/current/dashboard?lens=ad&view=all",
+    returnText: "Save and return to dashboard",
+    primaryActionText: nextOutcomeId ? "Save and continue" : "Save and return",
+  };
+}
+
+function getRoundTwoJudgementOptions() {
+  return [
+    { value: "Achieved", text: "Achieved" },
+    { value: "Partially achieved", text: "Partially achieved" },
+    { value: "Not achieved", text: "Not achieved" },
+  ];
+}
+
+function getOutcomeTargetLevel(outcome) {
+  if (!outcome) return "Achieved";
+  return profileTargets[outcome.id] || "Achieved";
+}
+
+function getPrototypeIgpStatements(outcome) {
+  const byOutcome = {
+    A1a: [
+      {
+        group: "notAchieved",
+        groupLabel: "Not achieved",
+        statement:
+          "The security of network and information systems related to the operation of essential function(s) is not discussed or reported on regularly at board-level.",
+      },
+      {
+        group: "notAchieved",
+        groupLabel: "Not achieved",
+        statement:
+          "Board-level discussions on the security of network and information systems are based on partial or out-of-date information, without the benefit of expert guidance.",
+      },
+      {
+        group: "notAchieved",
+        groupLabel: "Not achieved",
+        statement:
+          "The security of network and information systems supporting your essential function(s) are not driven effectively by the direction set at board-level.",
+      },
+      {
+        group: "notAchieved",
+        groupLabel: "Not achieved",
+        statement:
+          "Senior management or other pockets of the organisation consider themselves exempt from some policies or expect special accommodations to be made.",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "Your organisation's approach and policy relating to the security of network and information systems supporting the operation of essential function(s) are owned and managed at board-level. These are communicated, in a meaningful way, to risk management decision-makers across the organisation.",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "Regular board-level discussions on the security of network and information systems supporting the operation of your essential function(s) take place, based on timely and accurate information and informed by expert guidance.",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "There is a board-level individual who has overall accountability for the security of network and information systems and drives regular discussion at board-level.",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "Direction set at board-level is translated into effective organisational practices that direct and control the security of the network and information systems supporting your essential functions(s).",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "The board has the information and understanding needed in order to effectively discuss how the security and resilience of network and information systems contributes to the delivery of essential function(s) and what the potential impact from compromise of those systems would be.",
+      },
+      {
+        group: "achieved",
+        groupLabel: "Achieved",
+        statement:
+          "Security is recognised as an important enabler for the resilience of your essential function(s) and considered in all relevant discussions.",
+      },
+    ],
+    B1a: [
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Security policies and procedures exist for this critical system.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Those policies and procedures are kept up to date.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement:
+          "People supporting this system understand how the policies apply in practice.",
+      },
+    ],
+    C1b: [
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Monitoring is in place to detect security events affecting this system.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Alerts are reviewed and acted on in a timely way.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement:
+          "Coverage includes the most important integrations and access points.",
+      },
+    ],
+  };
+
+  if (outcome && byOutcome[outcome.id]) return byOutcome[outcome.id];
+
+  const code = outcome && outcome.code ? String(outcome.code).charAt(0) : "";
+  if (code === "A" || code === "D") {
+    return [
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Roles, policies or plans are defined and understood.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "This outcome is applied consistently across the council.",
+      },
+      {
+        group: "standard",
+        groupLabel: "Indicators of good practice",
+        statement: "Weaknesses are reviewed and acted on over time.",
+      },
+    ];
+  }
+
+  return [
+    {
+      group: "standard",
+      groupLabel: "Indicators of good practice",
+      statement: "Controls are in place for this critical system.",
+    },
+    {
+      group: "standard",
+      groupLabel: "Indicators of good practice",
+      statement: "Those controls are used consistently in practice.",
+    },
+    {
+      group: "standard",
+      groupLabel: "Indicators of good practice",
+      statement: "Gaps are identified and addressed when they are found.",
+    },
+  ];
+}
+
+function buildIgpAssessmentForm(saved, outcome) {
+  const existing = Array.isArray(saved) ? saved : [];
+  return getPrototypeIgpStatements(outcome).map((statement, idx) => {
+    const prior = existing[idx] || {};
+    return {
+      id: `igp-${idx + 1}`,
+      statement: statement.statement,
+      group: statement.group || "standard",
+      groupLabel: statement.groupLabel || "Indicators of good practice",
+      selected: Boolean(prior.selected),
+      response: (prior.response || "").toString(),
+    };
+  });
+}
+
+function hasCompletedIgpResponse(item) {
+  return Boolean(item && item.response && item.response.toString().trim());
+}
+
+function normaliseIgpAssessments(raw, existing, outcome) {
+  const base = buildIgpAssessmentForm(existing, outcome);
+  const incomingByIndex = {};
+
+  if (Array.isArray(raw)) {
+    raw.forEach((value, idx) => {
+      incomingByIndex[idx] = value;
+    });
+  } else if (raw && typeof raw === "object") {
+    Object.keys(raw).forEach((key) => {
+      incomingByIndex[Number(key)] = raw[key];
+    });
+  }
+
+  return base.map((item, idx) => {
+    const incoming = incomingByIndex[idx] || {};
+    return {
+    id: item.id,
+    statement: item.statement,
+    group: item.group,
+    groupLabel: item.groupLabel,
+    selected: Boolean(incoming.selected || item.selected),
+    response: ((incoming && incoming.response) || item.response || "").toString(),
+  };
+  });
+}
+
+function buildIgpJudgementHint(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  if (!items.length) return null;
+
+  const usesCriteriaSelection = items.some(
+    (item) => item.group === "achieved" || item.group === "notAchieved"
+  );
+
+  const answeredItems = items.filter(hasCompletedIgpResponse);
+  const hasResponses = answeredItems.length > 0;
+  if (!hasResponses) return null;
+
+  if (usesCriteriaSelection) {
+    const achieved = items.filter((item) => item.group === "achieved");
+    const notAchieved = items.filter((item) => item.group === "notAchieved");
+
+    const achievedAllYes =
+      achieved.length > 0 &&
+      achieved.every((item) => item.response === "Yes");
+    const achievedHasGap = achieved.some((item) => item.response === "No");
+    const negativeTriggered = notAchieved.some((item) => item.response === "Yes");
+
+    if (achievedAllYes && !negativeTriggered) {
+      return {
+        state: "met",
+        title: "This pattern suggests the outcome may be met.",
+        text: "All achieved statements are in place and none of the not achieved statements appear to apply. You should still use your judgement and supporting evidence.",
+      };
+    }
+
+    if (achievedHasGap || negativeTriggered) {
+      return {
+        state: "not-met",
+        title: "This pattern suggests the outcome may not be met.",
+        text: "One or more achieved statements are not in place, or one or more not achieved statements still appears to apply. Review the evidence before finalising your judgement.",
+      };
+    }
+
+    return {
+      state: "mixed",
+      title: "The picture is mixed.",
+      text: "Some statements are marked as not applicable or use an alternative control. Use your rationale to explain the current position and why you selected the overall judgement.",
+    };
+  }
+
+  const anyNo = items.some((item) => item.response === "No");
+  const anyAlternative = items.some(
+    (item) => item.response === "Alternative control in place"
+  );
+  const anyNotApplicable = items.some((item) => item.response === "Not applicable");
+  const allYes = items.length > 0 && items.every((item) => item.response === "Yes");
+
+  if (allYes) {
+    return {
+      state: "met",
+      title: "This pattern suggests the outcome may be met.",
+      text: "All statements are relevant and in place. You should still use your judgement and supporting evidence.",
+    };
+  }
+
+  if (anyNo) {
+    return {
+      state: "not-met",
+      title: "This pattern suggests the outcome may not be met.",
+      text: "One or more statements are not in place. Review the evidence before finalising your judgement.",
+    };
+  }
+
+  return {
+    state: "mixed",
+    title: "The picture is mixed.",
+    text: anyAlternative || anyNotApplicable
+      ? "Some statements use alternative controls or are marked not applicable. Use your rationale to explain the current position and why you selected the overall judgement."
+      : "The statements do not give a simple result. Use your rationale to explain the current position and why you selected the overall judgement.",
+  };
+}
+
+function buildIgpSynthesis(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  return {
+    strengths: items.filter((item) => item.response === "Yes").length,
+    partials: items.filter((item) => item.response === "Alternative control in place").length,
+    criticalGaps: items.filter((item) => item.response === "No").length,
+  };
+}
+
+function isJudgementMismatch(judgement, igpJudgementHint) {
+  if (!judgement || !igpJudgementHint) return false;
+  if (igpJudgementHint.state === "met") {
+    return judgement !== "Achieved";
+  }
+  if (igpJudgementHint.state === "not-met") {
+    return judgement === "Achieved";
+  }
+  return false;
 }
 
 function isAssurer(req) {
@@ -2247,6 +2934,13 @@ function redirectIfScopeNotReady(req, res, assessment, target) {
     req.session.data.stage1Gate = true;
     return res.redirect("/prepare");
   }
+  if (isRoundTwoRequest(req)) {
+    if (!assessment.annualSetup || !assessment.annualSetup.completed) {
+      req.session.data.selfAssessReturnTo = target;
+      return res.redirect("/assessments/current/journey");
+    }
+    return false;
+  }
   if (!assessment.selfAssessStart || !assessment.selfAssessStart.completed) {
     req.session.data.selfAssessReturnTo = target;
     return res.redirect("/assessments/current/start-self-assessment");
@@ -2269,7 +2963,35 @@ function clearOutcomeForm(req) {
   delete req.session.data.evidenceRefs;
 }
 
+function invalidateRoundTwoSectionCompletion(assessment, lens) {
+  if (!assessment || !assessment.selfAssess) return;
+  if (lens === "ad") {
+    assessment.selfAssess.adReview = {
+      completed: false,
+      completedAt: "",
+      completedBy: "",
+    };
+  }
+  if (lens === "bc") {
+    assessment.selfAssess.bcReview = {
+      completed: false,
+      completedAt: "",
+      completedBy: "",
+    };
+  }
+  if (assessment.selfAssessmentReview) {
+    assessment.selfAssessmentReview = {
+      completed: false,
+      completedAt: "",
+      completedBy: "",
+    };
+  }
+}
+
 function renderSelfAssessOutcome(res, { labels, assessment, outcome, context, form, error }) {
+  if (context && context.roundTwo && form && Array.isArray(form.igpAssessments)) {
+    form.igpJudgementHint = buildIgpJudgementHint(form.igpAssessments);
+  }
   return res.render("pages/flow/self-assess-outcome", {
     pageTitle: context.heading,
     labels,
@@ -2286,10 +3008,17 @@ function hasAnyEvidenceValue(ref) {
   return Boolean(ref.refId || ref.type || ref.link || ref.note);
 }
 
-function validateSelfAssess({ judgement, rationale, labels }) {
+function validateSelfAssess({ igpAssessments, judgement, mismatchReason, mismatch, rationale, labels }) {
   const errors = [];
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  if (items.length > 0 && items.some((item) => !hasCompletedIgpResponse(item))) {
+    errors.push({ field: "igpAssessments", text: "Complete the IGP responses before saving this outcome." });
+  }
   if (!judgement) {
     errors.push({ field: "judgement", text: labels.flow.selfAssessOutcome.errors.judgementRequired });
+  }
+  if (mismatch && !mismatchReason) {
+    errors.push({ field: "mismatchReason", text: "Explain why your judgement differs from the evidence." });
   }
   if (!rationale) {
     errors.push({ field: "rationale", text: labels.flow.selfAssessOutcome.errors.rationaleRequired });
@@ -2319,6 +3048,21 @@ function setBCOutcome(assessment, systemId, outcomeId, data) {
     assessment.selfAssess.bc[systemId] = { outcomes: {} };
   }
   assessment.selfAssess.bc[systemId].outcomes[outcomeId] = data;
+}
+
+function getScopeMapping(scope, systemId) {
+  if (!scope || !Array.isArray(scope.mappings)) return null;
+  return scope.mappings.find((mapping) => mapping && mapping.systemId === systemId) || null;
+}
+
+function getScopePriority(scope, systemId) {
+  if (!scope || !Array.isArray(scope.priority)) return null;
+  return scope.priority.find((priority) => priority && priority.systemId === systemId) || null;
+}
+
+function findScopeService(scope, serviceId) {
+  if (!scope || !Array.isArray(scope.essentialServices)) return null;
+  return scope.essentialServices.find((service) => service && service.id === serviceId) || null;
 }
 
 function collectEvidenceReferences(assessment) {
@@ -2373,4 +3117,42 @@ function collectEvidenceReferences(assessment) {
   }
 
   return rows;
+}
+
+function applyRoleAudit(container, keyPrefix, currentUser, values) {
+  const metaKey = `${keyPrefix}Meta`;
+  const historyKey = `${keyPrefix}History`;
+  const updatedAt = new Date().toISOString();
+  const updatedBy = getAuditActor(currentUser);
+  const history = Array.isArray(container[historyKey]) ? container[historyKey] : [];
+  const nextEntry = {
+    updatedAt,
+    updatedBy,
+    ...values,
+  };
+  const previous = history[history.length - 1];
+  const unchanged =
+    previous &&
+    previous.lead === nextEntry.lead &&
+    previous.approver === nextEntry.approver &&
+    previous.contributors === nextEntry.contributors;
+
+  container[metaKey] = { updatedAt, updatedBy };
+  container[historyKey] = unchanged ? history : history.concat(nextEntry);
+}
+
+function buildRolesAudit(meta, history) {
+  return {
+    updatedAt: meta && meta.updatedAt ? meta.updatedAt : "",
+    updatedBy: meta && meta.updatedBy ? meta.updatedBy : "",
+    history: Array.isArray(history) ? history : [],
+  };
+}
+
+function getAuditActor(user) {
+  if (!user) return "Unknown user";
+  const name = (user.name || "").toString().trim();
+  const email = (user.email || "").toString().trim();
+  if (name && email) return `${name} (${email})`;
+  return name || email || "Unknown user";
 }

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Self-assessment summary</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 32px;
+        color: #0b0c0c;
+        line-height: 1.5;
+      }
+      h1, h2 {
+        margin-bottom: 12px;
+      }
+      dl {
+        margin: 0 0 24px 0;
+      }
+      dt {
+        font-weight: bold;
+        margin-top: 12px;
+      }
+      dd {
+        margin-left: 0;
+      }
+      ul {
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebCAF self-assessment summary</h1>
+    <p>Generated for {{ assessment.councilName or "Council" }}.</p>
+
+    <h2>Assessment summary</h2>
+    <dl>
+      <dt>A and D outcomes judged</dt>
+      <dd>{{ completion.adJudged }} of {{ completion.adTotal }}</dd>
+
+      <dt>B and C outcomes judged</dt>
+      <dd>{{ completion.bcJudged }} of {{ completion.bcTotal }}</dd>
+
+      <dt>Selected systems this year</dt>
+      <dd>
+        {% if selectedSystems.length > 0 %}
+          <ul>
+            {% for system in selectedSystems %}
+              <li>{{ system.name }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          None selected
+        {% endif %}
+      </dd>
+
+      {% if reviewState.completed %}
+        <dt>Marked complete</dt>
+        <dd>{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}</dd>
+      {% endif %}
+    </dl>
+  </body>
+  </html>

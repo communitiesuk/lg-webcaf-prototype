@@ -2,7 +2,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -19,10 +19,31 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.addTitle }}</h1>
-  <p class="govuk-body">Add each critical system and capture boundaries and references.</p>
+  {% if researchRound == "round-2" %}
+    <span class="govuk-caption-l">Critical systems register</span>
+    <h1 class="govuk-heading-l">{{ "Change a critical system" if isEdit else "Add a critical system" }}</h1>
+    <p class="govuk-body">
+      {% if isEdit %}
+        Update the critical system details for your CAF scope register.
+      {% else %}
+        Add a system that supports one or more essential services. You can map and prioritise it after adding it to the register.
+      {% endif %}
+    </p>
+    <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
+  {% else %}
+    <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+    <p class="govuk-body">
+      {% if isEdit %}
+        Update the critical system details for your CAF scope register.
+      {% elif researchRound == "round-2" %}
+        Add a critical system to your CAF scope register.
+      {% else %}
+        Add each critical system and capture boundaries and references.
+      {% endif %}
+    </p>
+  {% endif %}
 
-  <form method="post" action="/stages/2/scope/systems/add">
+  <form method="post" action="{{ formAction or '/stages/2/scope/systems/add' }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="systemName">System name</label>
       {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}
@@ -36,6 +57,7 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="systemType">System type</label>
+      <div class="govuk-hint">For example, line-of-business application, shared platform or supplier-managed service.</div>
       <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
     </div>
 
@@ -46,18 +68,19 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="boundaryNotes">Boundary notes</label>
+      <div class="govuk-hint">Summarise what is included in this system and any important boundaries.</div>
       <textarea class="govuk-textarea" id="boundaryNotes" name="boundaryNotes" rows="3">{{ data.boundaryNotes }}</textarea>
     </div>
 
     <div class="govuk-form-group">
-      <label class="govuk-label" for="diagramRefs">Architecture diagram references</label>
-      <div class="govuk-hint">Comma-separated IDs or links</div>
+      <label class="govuk-label" for="diagramRefs">Architecture link or storage reference</label>
+      <div class="govuk-hint">For example, a link to a secure SharePoint folder or document, or another internal storage reference. Do not paste sensitive content into the service.</div>
       <input class="govuk-input" id="diagramRefs" name="diagramRefs" type="text" value="{{ data.diagramRefs }}">
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend">Is this system in scope for this assessment period?</legend>
+        <legend class="govuk-fieldset__legend">{{ "Is this system currently in scope for CAF?" if researchRound == "round-2" else "Is this system in scope for this assessment period?" }}</legend>
         {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -77,6 +100,9 @@
       </fieldset>
     </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.scope.systems.addButton }}</button>
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or labels.stages.scope.systems.addButton }}</button>
+      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to critical systems</a>
+    </div>
   </form>
 {% endblock %}

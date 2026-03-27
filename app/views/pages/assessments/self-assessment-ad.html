@@ -1,0 +1,131 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">Complete A and D self-assessment</h1>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Use A and D to assess the organisational contributing outcome for this assessment year.</p>
+
+      {% if frameworkChange and frameworkChange.changed %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body"><strong>CAF has changed from version {{ frameworkChange.assessmentVersion }} to {{ frameworkChange.currentVersion }}.</strong></p>
+          <p class="govuk-body">{{ frameworkChange.summaryText | capitalize }} need review in A and D.</p>
+          {% if frameworkChange.newOutcomes and frameworkChange.newOutcomes.length > 0 %}
+            <p class="govuk-body govuk-!-margin-bottom-1">New outcomes in the current version:</p>
+            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+              {% for outcome in frameworkChange.newOutcomes %}
+                <li><strong>{{ outcome.code }}</strong> {{ outcome.title }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if rows and rows.length > 0 %}
+        <h2 class="govuk-heading-m">Current A and D outcomes</h2>
+        <table class="govuk-table govuk-!-margin-bottom-6">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Outcome</th>
+              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for row in rows %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ row.code }}</strong> {{ row.title }}
+                  {% if row.frameworkFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ row.frameworkFlag }}</strong></div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ row.status }}</td>
+                <td class="govuk-table__cell">
+                  <a class="govuk-link" href="{{ row.href }}">{{ row.actionText }}</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      <div class="govuk-button-group">
+        {% if primaryOutcome %}
+          <a class="govuk-button" href="{{ primaryOutcome.href }}">
+            Open current outcome
+          </a>
+        {% endif %}
+        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+      </div>
+
+      {% if readyToComplete or reviewState.completed %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        {% if error %}
+          <div class="govuk-error-summary" data-module="govuk-error-summary">
+            <div role="alert">
+              <h2 class="govuk-error-summary__title">There is a problem</h2>
+              <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                  {% for item in error.items %}
+                    <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        <h2 class="govuk-heading-m">Complete A and D</h2>
+        <p class="govuk-body">Use this step when the A and D assessment is ready, even if B and C is still in progress.</p>
+        {% if reviewState.completed %}
+          <p class="govuk-body govuk-hint">Marked complete {{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}.</p>
+        {% endif %}
+        <form method="post" action="/assessments/current/self-assessment/ad">
+          <div id="completeAdAssessment" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeAdAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is A and D complete?</legend>
+              <div class="govuk-radios">
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="completeAdAssessment-yes" name="completeAdAssessment" type="radio" value="yes">
+                  <label class="govuk-label govuk-radios__label" for="completeAdAssessment-yes">Yes, A and D is complete</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="completeAdAssessment-no" name="completeAdAssessment" type="radio" value="no">
+                  <label class="govuk-label govuk-radios__label" for="completeAdAssessment-no">No, I need to make changes</label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Complete A and D</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">A and D approach</h2>
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          {% if adAssessmentStatus == "update_existing" %}
+            Update our existing A and D assessment
+          {% elif adAssessmentStatus == "reuse_current" %}
+            Keep our current A and D position with a light review
+          {% elif adAssessmentStatus == "new_assessment" %}
+            Start a new A and D assessment
+          {% else %}
+            Not set
+          {% endif %}
+        </p>
+      </aside>
+
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current progress</h2>
+        <p class="govuk-body">Status: <strong>{{ adPageStatus }}</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ judged }} of {{ total }} A and D outcomes judged.</p>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

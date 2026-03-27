@@ -1,0 +1,59 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ '/round-2/start' if mode == 'sign-in' else '/round-2/sign-in' }}">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">{{ heading }}</h1>
+  <p class="govuk-caption-m">Round 2</p>
+  <p class="govuk-body">
+    {% if mode == "sign-in" %}
+      Enter your details to continue into the service.
+    {% else %}
+      Enter your details to register and continue into the service.
+    {% endif %}
+  </p>
+
+  <form method="post" action="{{ '/round-2/sign-in' if mode == 'sign-in' else '/round-2/register' }}">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="round2AuthName">Name</label>
+      {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','round2AuthName') | list | first).text }}
+        </p>
+      {% endif %}
+      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthName" name="round2AuthName" type="text" value="{{ defaults.name }}">
+    </div>
+
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="round2AuthEmail">Email address</label>
+      {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','round2AuthEmail') | list | first).text }}
+        </p>
+      {% endif %}
+      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthEmail" name="round2AuthEmail" type="email" value="{{ defaults.email }}">
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText }}</button>
+      <a class="govuk-link" href="{{ secondaryHref }}">{{ secondaryText }}</a>
+    </div>
+  </form>
+{% endblock %}

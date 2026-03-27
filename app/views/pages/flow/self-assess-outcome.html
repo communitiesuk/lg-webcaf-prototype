@@ -2,13 +2,21 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="app-outcome-page">
   <a class="govuk-back-link" href="{{ context.backLink }}">Back</a>
 
+  {% if context.roundTwo and context.caption %}
+    <span class="govuk-caption-l">{{ context.caption }}</span>
+  {% endif %}
   <h1 class="govuk-heading-l">{{ context.heading }}</h1>
-  {% if context.subHeading %}
+  {% if context.roundTwo and context.systemName %}
+    <p class="govuk-body"><strong>Critical system:</strong> {{ context.systemName }}</p>
+  {% elif context.subHeading %}
     <p class="govuk-body">{{ context.subHeading }}</p>
   {% endif %}
-  {% if outcome.description %}
+  {% if context.roundTwo and context.intro %}
+    <p class="govuk-body">{{ context.intro }}</p>
+  {% elif outcome.description %}
     <p class="govuk-body govuk-hint">{{ outcome.description }}</p>
   {% endif %}
   {% if form.statusLabel %}
@@ -47,10 +55,277 @@
   {% endif %}
 
   <form method="post" action="">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+    {% if context.roundTwo %}
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+    {% endif %}
+
+    {% if context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
+      {% set negativeStatements = form.igpAssessments | selectattr("group", "equalto", "notAchieved") | list %}
+      {% set achievedStatements = form.igpAssessments | selectattr("group", "equalto", "achieved") | list %}
+      {% set usesCriteriaSelection = (achievedStatements | length) > 0 or (negativeStatements | length) > 0 %}
+      <div id="igpAssessments" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <h2 class="govuk-heading-m">IGP responses</h2>
+        <p class="govuk-body govuk-hint">Review each statement and record whether it applies to your current position.</p>
+        {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','igpAssessments') | list | first).text }}
+          </p>
+        {% endif %}
+
+        {% if usesCriteriaSelection %}
+          <div class="app-igp-group app-igp-group--negative">
+            <h3 class="govuk-heading-s app-igp-group__heading">Statements that suggest not achieved</h3>
+            <p class="govuk-body govuk-hint app-igp-group__hint">If these reflect the current position, they point away from an achieved judgement.</p>
+            {% for item in negativeStatements %}
+              <div class="govuk-form-group app-igp-item">
+                <fieldset class="govuk-fieldset">
+                  <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                    {{ item.statement }}
+                  </legend>
+                  <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-not"
+                             name="igpAssessments[{{ loop.index0 }}][response]"
+                             type="radio"
+                             value="No"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "No" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-not">No</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-na"
+                             name="igpAssessments[{{ loop.index0 }}][response]"
+                             type="radio"
+                             value="Not applicable"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Not applicable" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-na">Not applicable</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-yes"
+                             name="igpAssessments[{{ loop.index0 }}][response]"
+                             type="radio"
+                             value="Yes"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Yes" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-yes">Yes</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-alternative"
+                             name="igpAssessments[{{ loop.index0 }}][response]"
+                             type="radio"
+                             value="Alternative control in place"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Alternative control in place" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-alternative">Alternative control in place</label>
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="app-igp-group app-igp-group--positive">
+            <h3 class="govuk-heading-s app-igp-group__heading">Statements that suggest achieved</h3>
+            <p class="govuk-body govuk-hint app-igp-group__hint">If these are in place, they support an achieved judgement.</p>
+            {% for item in achievedStatements %}
+              <div class="govuk-form-group app-igp-item">
+                <fieldset class="govuk-fieldset">
+                  <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                    {{ item.statement }}
+                  </legend>
+                  <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-not"
+                             name="igpAssessments[{{ loop.index0 + (negativeStatements | length) }}][response]"
+                             type="radio"
+                             value="No"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "No" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-not">No</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-na"
+                             name="igpAssessments[{{ loop.index0 + (negativeStatements | length) }}][response]"
+                             type="radio"
+                             value="Not applicable"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Not applicable" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-na">Not applicable</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-yes"
+                             name="igpAssessments[{{ loop.index0 + (negativeStatements | length) }}][response]"
+                             type="radio"
+                             value="Yes"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Yes" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-yes">Yes</label>
+                    </div>
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input js-igp-response"
+                             id="{{ item.id }}-alternative"
+                             name="igpAssessments[{{ loop.index0 + (negativeStatements | length) }}][response]"
+                             type="radio"
+                             value="Alternative control in place"
+                             data-igp-group="{{ item.group }}"
+                             {% if item.response == "Alternative control in place" %}checked{% endif %}>
+                      <label class="govuk-label govuk-radios__label" for="{{ item.id }}-alternative">Alternative control in place</label>
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          {% for item in form.igpAssessments %}
+            <div class="govuk-form-group app-igp-item app-igp-item--standard">
+              <p class="govuk-caption-m app-igp-item__meta">IGP statement {{ loop.index }} of {{ form.igpAssessments | length }}</p>
+              <fieldset class="govuk-fieldset">
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                  {{ item.statement }}
+                </legend>
+                <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input js-igp-response"
+                           id="{{ item.id }}-not"
+                           name="igpAssessments[{{ loop.index0 }}][response]"
+                           type="radio"
+                           value="No"
+                           data-igp-group="{{ item.group }}"
+                           {% if item.response == "No" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="{{ item.id }}-not">No</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input js-igp-response"
+                           id="{{ item.id }}-na"
+                           name="igpAssessments[{{ loop.index0 }}][response]"
+                           type="radio"
+                           value="Not applicable"
+                           data-igp-group="{{ item.group }}"
+                           {% if item.response == "Not applicable" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="{{ item.id }}-na">Not applicable</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input js-igp-response"
+                           id="{{ item.id }}-yes"
+                           name="igpAssessments[{{ loop.index0 }}][response]"
+                           type="radio"
+                           value="Yes"
+                           data-igp-group="{{ item.group }}"
+                           {% if item.response == "Yes" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="{{ item.id }}-yes">Yes</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input js-igp-response"
+                           id="{{ item.id }}-alternative"
+                           name="igpAssessments[{{ loop.index0 }}][response]"
+                           type="radio"
+                           value="Alternative control in place"
+                           data-igp-group="{{ item.group }}"
+                           {% if item.response == "Alternative control in place" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="{{ item.id }}-alternative">Alternative control in place</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="govuk-form-group">
+      {% if context.roundTwo %}
+        <h2 class="govuk-heading-m">Notes on the criteria selected (optional)</h2>
+        <p class="govuk-body govuk-hint">Use this to capture any extra context before you record the overall judgement.</p>
+      {% else %}
+        <label class="govuk-label" for="igpResponse">{{ labels.flow.selfAssessOutcome.igpResponse }}</label>
+        <p class="govuk-hint">{{ labels.flow.selfAssessOutcome.igpHint }}</p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="igpResponse" name="igpResponse" rows="5">{{ form.igpResponse }}</textarea>
+    </div>
+
+    {% if context.roundTwo and form.evidenceRefs %}
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <h2 class="govuk-heading-m">Evidence links or references</h2>
+        <p class="govuk-body govuk-hint">Add the evidence you used for this judgement. This can include a secure SharePoint link or internal reference. Do not paste sensitive content into the service.</p>
+        {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
+          <p id="evidenceRefs" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','evidenceRefs') | list | first).text }}
+          </p>
+        {% endif %}
+
+        {% for ref in form.evidenceRefs %}
+          <div class="govuk-form-group">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                Evidence reference {{ loop.index }}
+              </legend>
+
+              <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-third">
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-refId">Reference ID or name</label>
+                  <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-refId" name="evidenceRefs[{{ loop.index0 }}][refId]" type="text" value="{{ ref.refId }}">
+                </div>
+
+                <div class="govuk-grid-column-one-third">
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Evidence type</label>
+                  <select class="govuk-select" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]">
+                    <option value="" {% if not ref.type %}selected{% endif %}>Select evidence type</option>
+                    <option value="Document" {% if ref.type == "Document" %}selected{% endif %}>Document</option>
+                    <option value="Policy" {% if ref.type == "Policy" %}selected{% endif %}>Policy</option>
+                    <option value="Procedure" {% if ref.type == "Procedure" %}selected{% endif %}>Procedure</option>
+                    <option value="Report" {% if ref.type == "Report" %}selected{% endif %}>Report</option>
+                    <option value="Architecture" {% if ref.type == "Architecture" %}selected{% endif %}>Architecture</option>
+                    <option value="Meeting notes" {% if ref.type == "Meeting notes" %}selected{% endif %}>Meeting notes</option>
+                    <option value="Other" {% if ref.type == "Other" %}selected{% endif %}>Other</option>
+                  </select>
+                </div>
+
+                <div class="govuk-grid-column-one-third">
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Link (optional)</label>
+                  <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
+                </div>
+              </div>
+
+              <div class="govuk-form-group govuk-!-margin-top-3">
+                <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-note">Note (optional)</label>
+                <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-note" name="evidenceRefs[{{ loop.index0 }}][note]" rows="2">{{ ref.note }}</textarea>
+              </div>
+
+              {% if (form.evidenceRefs | length) > 1 %}
+                <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="removeEvidence:{{ loop.index0 }}">
+                  Remove evidence reference
+                </button>
+              {% endif %}
+            </fieldset>
+          </div>
+
+          {% if not loop.last %}
+            <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+          {% endif %}
+        {% endfor %}
+
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="addEvidence">
+          Add another evidence reference
+        </button>
+      </div>
+    {% endif %}
+
+    <div class="govuk-form-group app-outcome-page__judgement {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-          {{ labels.flow.selfAssessOutcome.judgement }}
+        <legend class="govuk-fieldset__legend {% if context.roundTwo %}govuk-fieldset__legend--m{% else %}govuk-fieldset__legend--s{% endif %}">
+          {% if context.roundTwo %}What is your overall judgement?{% else %}{{ labels.flow.selfAssessOutcome.judgement }}{% endif %}
         </legend>
         {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}
           <p class="govuk-error-message">
@@ -59,7 +334,7 @@
           </p>
         {% endif %}
         <div class="govuk-radios" data-module="govuk-radios">
-          {% for option in labels.flow.selfAssessOutcome.judgementOptions %}
+          {% for option in (form.judgementOptions or labels.flow.selfAssessOutcome.judgementOptions) %}
             <div class="govuk-radios__item">
               <input class="govuk-radios__input" id="judgement-{{ option.value }}" name="judgement" type="radio" value="{{ option.value }}" {% if form.judgement == option.value %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="judgement-{{ option.value }}">{{ option.text }}</label>
@@ -69,8 +344,35 @@
       </fieldset>
     </div>
 
+    {% if context.roundTwo %}
+      <div id="mismatch-reason-group"
+           class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','mismatchReason') | list | length) > 0 %}govuk-form-group--error{% endif %}"
+           {% if not (form.igpJudgementHint and ((form.igpJudgementHint.state == "met" and form.judgement and form.judgement != "Achieved") or (form.igpJudgementHint.state == "not-met" and form.judgement == "Achieved"))) %}hidden{% endif %}>
+        <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+            <span class="govuk-warning-text__assistive">Warning</span>
+            Your judgement differs from the evidence
+          </strong>
+        </div>
+        <label class="govuk-label" for="mismatchReason">Explain why</label>
+        {% if error and (error.items | selectattr('field','equalto','mismatchReason') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','mismatchReason') | list | first).text }}
+          </p>
+        {% endif %}
+        <textarea class="govuk-textarea" id="mismatchReason" name="mismatchReason" rows="4">{{ form.mismatchReason }}</textarea>
+      </div>
+    {% endif %}
+
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="rationale">{{ labels.flow.selfAssessOutcome.rationale }}</label>
+      <label class="govuk-label" for="rationale">{% if context.roundTwo %}Reason for judgement{% else %}{{ labels.flow.selfAssessOutcome.rationale }}{% endif %}</label>
+      {% if context.roundTwo %}
+        <div class="govuk-hint">
+          This is required. Include why you selected this judgement and any important gaps, alternative controls or evidence limits.
+        </div>
+      {% endif %}
       {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}
         <p class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>
@@ -80,26 +382,199 @@
       <textarea class="govuk-textarea" id="rationale" name="rationale" rows="4">{{ form.rationale }}</textarea>
     </div>
 
-    <h2 class="govuk-heading-m">{{ labels.flow.selfAssessOutcome.reviewHeading }}</h2>
-    <div class="govuk-grid-row">
-      <div class="govuk-grid-column-one-half">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="qualityReviewedAt">{{ labels.flow.selfAssessOutcome.qualityReviewedAt }}</label>
-          <input class="govuk-input" id="qualityReviewedAt" name="qualityReviewedAt" type="date" value="{{ form.qualityReviewedAt }}">
+    {% if context.roundTwo %}
+        </div>
+        <div class="govuk-grid-column-one-third">
+          <div class="app-outcome-page__sidebar-card">
+            <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">About this outcome</h2>
+            <p class="govuk-body govuk-!-margin-bottom-1">What it means: {{ context.intro }}</p>
+            <p class="govuk-body govuk-!-margin-bottom-0">Target level: {{ form.targetLevel }}</p>
+            <p class="app-outcome-page__support-note">The IGP criteria may be reused across similar outcomes. Focus on how they apply here.</p>
+          </div>
+
+          <div class="app-outcome-page__sidebar-card" id="igp-synthesis">
+            <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current picture</h2>
+            <p class="govuk-body govuk-!-margin-bottom-0">
+              {{ form.igpSynthesis.strengths }} supports,
+              {{ form.igpSynthesis.partials }} alternative controls,
+              {{ form.igpSynthesis.criticalGaps }} gaps.
+            </p>
+          </div>
+
+          <div id="igp-judgement-hint"
+               class="{% if form.igpJudgementHint and form.igpJudgementHint.state == 'not-met' %}app-outcome-page__hint-panel--warning{% else %}app-outcome-page__hint-panel govuk-inset-text{% endif %}"
+               data-title-met="This pattern suggests the outcome may be met."
+               data-text-met="All achieved statements are in place and none of the not achieved statements appear to apply. You should still use your judgement and supporting evidence."
+               data-title-not-met="This pattern suggests the outcome may not be met."
+               data-text-not-met="One or more achieved statements are not in place, or one or more not achieved statements still appears to apply. Review the evidence before finalising your judgement."
+               data-title-mixed="The picture is mixed."
+               data-text-mixed="Some statements use alternative controls or are marked not applicable. Use your rationale to explain the current position and why you selected the overall judgement."
+               {% if form.igpJudgementHint %}data-state="{{ form.igpJudgementHint.state }}"{% endif %}>
+           {% if form.igpJudgementHint %}
+              {% if form.igpJudgementHint.state == "not-met" %}
+                <h2 class="govuk-heading-s app-outcome-page__hint-title" id="igp-judgement-hint-title">Judgement warning</h2>
+                <p class="govuk-body govuk-!-margin-bottom-0" id="igp-judgement-hint-text">{{ form.igpJudgementHint.text }}</p>
+              {% else %}
+                <h2 class="govuk-heading-s app-outcome-page__hint-title" id="igp-judgement-hint-title">Suggested judgement</h2>
+                <p class="govuk-body govuk-!-margin-bottom-0" id="igp-judgement-hint-text">{{ form.igpJudgementHint.text }}</p>
+              {% endif %}
+            {% else %}
+              <h2 class="govuk-heading-s app-outcome-page__hint-title">Suggested judgement</h2>
+              <p class="govuk-body govuk-!-margin-bottom-0">
+                Select responses against the criteria to see a suggested steer on the overall judgement.
+              </p>
+            {% endif %}
+          </div>
         </div>
       </div>
-      <div class="govuk-grid-column-one-half">
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="approverReviewedAt">{{ labels.flow.selfAssessOutcome.approverReviewedAt }}</label>
-          <input class="govuk-input" id="approverReviewedAt" name="approverReviewedAt" type="date" value="{{ form.approverReviewedAt }}">
+    {% endif %}
+
+    {% if not context.roundTwo %}
+      <h2 class="govuk-heading-m">{{ labels.flow.selfAssessOutcome.reviewHeading }}</h2>
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-half">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="qualityReviewedAt">{{ labels.flow.selfAssessOutcome.qualityReviewedAt }}</label>
+            <input class="govuk-input" id="qualityReviewedAt" name="qualityReviewedAt" type="date" value="{{ form.qualityReviewedAt }}">
+          </div>
+        </div>
+        <div class="govuk-grid-column-one-half">
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="approverReviewedAt">{{ labels.flow.selfAssessOutcome.approverReviewedAt }}</label>
+            <input class="govuk-input" id="approverReviewedAt" name="approverReviewedAt" type="date" value="{{ form.approverReviewedAt }}">
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.saveOutcome }}</button>
-      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="shareForReview">Share with assurer for feedback</button>
-      <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+      {% if context.roundTwo %}
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ context.primaryActionText or "Save and continue" }}</button>
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="saveReturn">{{ context.returnText or "Save and return" }}</button>
+      {% else %}
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.saveOutcome }}</button>
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="shareForReview">Share with assurer for feedback</button>
+        <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+      {% endif %}
     </div>
   </form>
+
+  {% if context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
+    <script>
+      (function () {
+        var panel = document.getElementById("igp-judgement-hint");
+        if (!panel) return;
+        var synthesis = document.getElementById("igp-synthesis");
+        var synthesisText = synthesis ? synthesis.querySelector("p:last-child") : null;
+        var mismatchGroup = document.getElementById("mismatch-reason-group");
+        var judgementInputs = document.querySelectorAll('input[name="judgement"]');
+
+        var radios = document.querySelectorAll('.js-igp-response');
+        if (!radios.length) return;
+
+        function getState() {
+          var grouped = {};
+          var strengths = 0;
+          var partials = 0;
+          var criticalGaps = 0;
+          var hasAny = false;
+
+          radios.forEach(function (radio) {
+            if (!radio.checked) return;
+            hasAny = true;
+            var key = radio.name;
+            grouped[key] = {
+              group: radio.getAttribute("data-igp-group") || "standard",
+              response: radio.value
+            };
+            if (radio.value === "Yes") strengths += 1;
+            if (radio.value === "Alternative control in place") partials += 1;
+            if (radio.value === "No") criticalGaps += 1;
+          });
+          if (!hasAny) return null;
+
+          var rows = Object.keys(grouped).map(function (key) { return grouped[key]; });
+          var hasCriteriaGroups = rows.some(function (item) {
+            return item.group === "achieved" || item.group === "notAchieved";
+          });
+
+          var state = "mixed";
+          if (hasCriteriaGroups) {
+            var achievedRows = rows.filter(function (item) { return item.group === "achieved"; });
+            var notAchievedRows = rows.filter(function (item) { return item.group === "notAchieved"; });
+            var achievedAllYes = achievedRows.length > 0 && achievedRows.every(function (item) { return item.response === "Yes"; });
+            var achievedHasGap = achievedRows.some(function (item) { return item.response === "No"; });
+            var negativeTriggered = notAchievedRows.some(function (item) { return item.response === "Yes"; });
+            if (achievedAllYes && !negativeTriggered) state = "met";
+            else if (achievedHasGap || negativeTriggered) state = "not-met";
+          } else {
+            if (criticalGaps > 0) state = "not-met";
+            else if (partials > 0) state = "mixed";
+            else if (strengths > 0) state = "met";
+          }
+
+          return {
+            state: state,
+            strengths: strengths,
+            partials: partials,
+            criticalGaps: criticalGaps
+          };
+        }
+
+        function renderState(result) {
+          if (!result) return;
+          var state = result.state;
+
+          var title = panel.getAttribute("data-title-" + state);
+          var text = panel.getAttribute("data-text-" + state);
+          panel.setAttribute("data-state", state);
+
+          if (synthesisText) {
+            synthesisText.textContent =
+              result.strengths + " supports, " +
+              result.partials + " alternative controls, " +
+              result.criticalGaps + " gaps.";
+          }
+
+          if (state === "not-met") {
+            panel.className = "app-outcome-page__hint-panel--warning";
+            panel.innerHTML =
+              '<h2 class="govuk-heading-s app-outcome-page__hint-title" id="igp-judgement-hint-title">Judgement warning</h2>' +
+              '<p class="govuk-body govuk-!-margin-bottom-0" id="igp-judgement-hint-text">' + text + '</p>';
+          } else {
+            panel.className = "app-outcome-page__hint-panel govuk-inset-text";
+            panel.innerHTML =
+              '<h2 class="govuk-heading-s app-outcome-page__hint-title" id="igp-judgement-hint-title">Suggested judgement</h2>' +
+              '<p class="govuk-body govuk-!-margin-bottom-0" id="igp-judgement-hint-text">' + text + '</p>';
+          }
+
+          updateMismatch(state);
+        }
+
+        function updateMismatch(state) {
+          if (!mismatchGroup || !judgementInputs.length) return;
+          var selectedJudgement = document.querySelector('input[name="judgement"]:checked');
+          var judgement = selectedJudgement ? selectedJudgement.value : "";
+          var mismatch = false;
+          if (state === "met" && judgement && judgement !== "Achieved") mismatch = true;
+          if (state === "not-met" && judgement === "Achieved") mismatch = true;
+          mismatchGroup.hidden = !mismatch;
+        }
+
+        radios.forEach(function (input) {
+          input.addEventListener("change", function () {
+            renderState(getState());
+          });
+        });
+
+        judgementInputs.forEach(function (input) {
+          input.addEventListener("change", function () {
+            var current = getState();
+            if (current) updateMismatch(current.state);
+          });
+        });
+      })();
+    </script>
+  {% endif %}
+  </div>
 {% endblock %}

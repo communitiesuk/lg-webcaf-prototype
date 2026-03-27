@@ -17,27 +17,31 @@
     </div>
   {% endif %}
 
+  {% set roundTwo = researchRound == "round-2" %}
   {% set contextComplete = assessment.scope.context and assessment.scope.context.completed %}
   {% set rolesComplete = assessment.scope.rolesConfirmed %}
-  {% set strategyComplete = contextComplete and rolesComplete %}
+  {% set strategyComplete = contextComplete if roundTwo else (contextComplete and rolesComplete) %}
   {% set servicesComplete = assessment.scope.servicesConfirmed %}
-  {% set systemsComplete = summary.systemsCount >= 3 and summary.inScopeSystemsCount >= 3 and summary.mappedCount == summary.systemsCount %}
+  {% set systemsComplete = (summary.systemsCount > 0 and summary.inScopeSystemsCount > 0 and summary.mappedCount == summary.systemsCount and summary.priorityCount == summary.systemsCount) if roundTwo else (summary.systemsCount >= 3 and summary.inScopeSystemsCount >= 3 and summary.mappedCount == summary.systemsCount) %}
   {% set servicesMethodologyDone = assessment.scope.essentialMethodology and assessment.scope.essentialMethodology.completed %}
   {% set systemsMethodologyDone = assessment.scope.criticalMethodology and assessment.scope.criticalMethodology.completed %}
-  {% set strategyTaskHref = "/stages/2/scope/context" if not contextComplete else ("/stages/2/scope/roles" if not rolesComplete else "/stages/2/scope/context") %}
+  {% set strategyTaskHref = "/stages/2/scope/context" if roundTwo else ("/stages/2/scope/context" if not contextComplete else ("/stages/2/scope/roles" if not rolesComplete else "/stages/2/scope/context")) %}
   {% set servicesTaskHref = "/stages/2/scope/services/add" if servicesMethodologyDone else "/stages/2/scope/services/methodology" %}
   {% set systemsTaskHref = "/stages/2/scope/systems/add" if systemsMethodologyDone else "/stages/2/scope/systems/methodology" %}
-  {% set servicesLocked = not (contextComplete and rolesComplete) %}
-  {% set systemsLocked = not (contextComplete and rolesComplete and servicesComplete) %}
+  {% set servicesLocked = (not contextComplete) if roundTwo else (not (contextComplete and rolesComplete)) %}
+  {% set systemsLocked = (not (contextComplete and servicesComplete)) if roundTwo else (not (contextComplete and rolesComplete and servicesComplete)) %}
   {% set shareLocked = not systemsComplete %}
   {% set rolesInProgress = assessment.scope.rolesLead or assessment.scope.rolesSme or assessment.scope.rolesTech or assessment.scope.rolesApprover %}
-  {% set strategyInProgress = contextComplete or rolesInProgress %}
+  {% set strategyInProgress = contextComplete if roundTwo else (contextComplete or rolesInProgress) %}
   {% set systemsInProgress = summary.systemsCount > 0 or summary.mappedCount > 0 or summary.inScopeSystemsCount > 0 %}
-  {% set scopeTasksCompleted = (1 if strategyComplete else 0) + (1 if servicesComplete else 0) + (1 if systemsComplete else 0) + (1 if summary.isComplete else 0) %}
-  {% set scopeTasksTotal = 4 %}
+  {% set scopeTasksCompleted = (1 if strategyComplete else 0) + (1 if servicesComplete else 0) + (1 if systemsComplete else 0) %}
+  {% set scopeTasksTotal = 3 if roundTwo else 4 %}
 
-  <h1 class="govuk-heading-l">Set your scope</h1>
+  <h1 class="govuk-heading-l">{{ "CAF scope register" if roundTwo else "Set your scope" }}</h1>
   <p class="govuk-body">{{ labels.stages.scope.hub.intro }}</p>
+  {% if roundTwo %}
+    <p class="govuk-body">Build your full list of strategic context, essential services and critical systems here. You can return to update these registers when things change.</p>
+  {% endif %}
 
   {{ govukSummaryList({
     rows: [
@@ -58,7 +62,7 @@
         value: { text: scopeTasksCompleted + " of " + scopeTasksTotal }
       },
       {
-        key: { text: "Scope pack ready" },
+        key: { text: "Scope register ready" if roundTwo else "Scope pack ready" },
         value: { text: "Yes" if summary.isComplete else "No" }
       }
     ]
@@ -66,10 +70,12 @@
 
   {% if summary.isComplete %}
     <div class="govuk-inset-text">
-      Scope pack is complete.
-      <a class="govuk-link" href="/stages/2/scope/complete">View completion page</a>.
+      {{ "Scope register is complete." if roundTwo else "Scope pack is complete." }}
+      {% if not roundTwo %}
+        <a class="govuk-link" href="/stages/2/scope/complete">View completion page</a>.
+      {% endif %}
     </div>
-  {% else %}
+  {% elif not roundTwo %}
     <div class="govuk-inset-text">
       <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Next scope action</h2>
       <p class="govuk-body govuk-!-margin-bottom-0">
@@ -78,15 +84,14 @@
     </div>
   {% endif %}
 
-  {{ govukTaskList({
-    items: [
+  {% set scopeItems = [
       {
         title: {
-          text: "Review and confirm organisational strategic context"
+          text: "Provide organisation strategic context" if roundTwo else "Review and confirm organisational strategic context"
         },
         href: strategyTaskHref,
         hint: {
-          text: "Done when organisational context and CAF team roles are confirmed."
+          text: "Done when the strategic context for your council has been recorded." if roundTwo else "Done when organisational context and CAF team roles are confirmed."
         },
         status: {
           tag: {
@@ -99,33 +104,36 @@
         title: {
           text: "Identify essential services"
         },
-        href: servicesTaskHref if not servicesLocked else "",
+        href: servicesTaskHref if not servicesLocked or roundTwo else "",
         hint: {
-          text: "Done when essential services are added and confirmed in scope."
+          text: "Done when your full essential services register is recorded and reviewed."
         },
         status: {
           tag: {
-            text: "Completed" if servicesComplete else ("Cannot start yet" if servicesLocked else ("In progress" if summary.servicesCount > 0 else "Ready to start")),
-            classes: "govuk-tag--green" if servicesComplete else ("govuk-tag--grey" if servicesLocked else "govuk-tag--blue")
+            text: "Completed" if servicesComplete else ("Cannot start yet" if servicesLocked and not roundTwo else ("In progress" if summary.servicesCount > 0 else "Ready to start")),
+            classes: "govuk-tag--green" if servicesComplete else ("govuk-tag--grey" if servicesLocked and not roundTwo else "govuk-tag--blue")
           }
         }
       },
       {
         title: {
-          text: "Identify and prioritise 3 critical systems for assessment"
+          text: "Identify and prioritise critical systems" if roundTwo else "Identify and prioritise 3 critical systems for assessment"
         },
-        href: systemsTaskHref if not systemsLocked else "",
+        href: systemsTaskHref if not systemsLocked or roundTwo else "",
         hint: {
-          text: "Done when at least 3 critical systems are added, mapped and marked in scope."
+          text: "Done when your full critical systems register is recorded, mapped to essential services and reviewed. Annual setup will choose up to 3 for this year's B and C assessment." if roundTwo else "Done when at least 3 critical systems are added, mapped and marked in scope."
         },
         status: {
           tag: {
-            text: "Completed" if systemsComplete else ("Cannot start yet" if systemsLocked else ("In progress" if systemsInProgress else "Ready to start")),
-            classes: "govuk-tag--green" if systemsComplete else ("govuk-tag--grey" if systemsLocked else "govuk-tag--blue")
+            text: "Completed" if systemsComplete else ("Cannot start yet" if systemsLocked and not roundTwo else ("In progress" if systemsInProgress else "Ready to start")),
+            classes: "govuk-tag--green" if systemsComplete else ("govuk-tag--grey" if systemsLocked and not roundTwo else "govuk-tag--blue")
           }
         }
-      },
-      {
+      }
+    ] %}
+
+  {% if not roundTwo %}
+    {% set scopeItems = (scopeItems + [{
         title: {
           text: "Share with assurers for feedback"
         },
@@ -139,8 +147,11 @@
             classes: "govuk-tag--green" if summary.isComplete else ("govuk-tag--grey" if shareLocked else "govuk-tag--blue")
           }
         }
-      }
-    ]
+      }]) %}
+  {% endif %}
+
+  {{ govukTaskList({
+    items: scopeItems
   }) }}
 
   <details class="govuk-details" data-module="govuk-details">

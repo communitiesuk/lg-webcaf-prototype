@@ -35,16 +35,6 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
     {{ govukBreadcrumbs({ items: breadcrumbs }) }}
   {% endif %}
 
-  {% if showJourneyTaskListLink %}
-    <p class="govuk-body govuk-!-margin-bottom-2">
-      {% if currentPath.startsWith("/stages/2/scope/") and currentPath != "/stages/2/scope" %}
-        <a class="govuk-link" href="/stages/2/scope">Return to scope task list</a>
-      {% else %}
-        <a class="govuk-link" href="/assessments/current/journey">Return to CAF journey task list</a>
-      {% endif %}
-    </p>
-  {% endif %}
-
   {% if showJourney and progress and showProgressBar %}
     <div class="app-progress" aria-label="Journey progress">
       <p class="govuk-body app-progress__summary">

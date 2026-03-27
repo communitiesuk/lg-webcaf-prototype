@@ -2,19 +2,32 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
 
-  <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.reviewTitle }}</h1>
+  {% if researchRound == "round-2" %}
+  <span class="govuk-caption-l">Critical systems register</span>
+  <h1 class="govuk-heading-l">Manage systems</h1>
+    <p class="govuk-body">Add and maintain the full list of systems that support your essential services.</p>
+    <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
+  {% else %}
+    <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.reviewTitle }}</h1>
+  {% endif %}
 
   {% if systems.length > 0 %}
     <table class="govuk-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
           <th class="govuk-table__header" scope="col">System</th>
-          <th class="govuk-table__header" scope="col">Type</th>
-          <th class="govuk-table__header" scope="col">Owner/supplier</th>
-          <th class="govuk-table__header" scope="col">In scope</th>
-          <th class="govuk-table__header" scope="col">Diagram refs</th>
+          <th class="govuk-table__header" scope="col">Owner or supplier</th>
+          <th class="govuk-table__header" scope="col">In scope for CAF</th>
+          {% if roundTwo %}
+            <th class="govuk-table__header" scope="col">Mapped services</th>
+            <th class="govuk-table__header" scope="col">Priority</th>
+            <th class="govuk-table__header" scope="col">Actions</th>
+          {% else %}
+            <th class="govuk-table__header" scope="col">Type</th>
+            <th class="govuk-table__header" scope="col">Diagram refs</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody class="govuk-table__body">
@@ -22,20 +35,44 @@
           <tr class="govuk-table__row">
             <td class="govuk-table__cell">
               <strong>{{ system.name }}</strong>
-              {% if system.boundaryNotes %}
+              {% if roundTwo and system.systemType %}
+                <div class="govuk-hint govuk-!-margin-top-1">Type: {{ system.systemType }}</div>
+              {% elseif system.boundaryNotes %}
+                <div class="govuk-hint govuk-!-margin-top-1">{{ system.boundaryNotes }}</div>
+              {% endif %}
+              {% if roundTwo and system.boundaryNotes %}
                 <div class="govuk-hint govuk-!-margin-top-1">{{ system.boundaryNotes }}</div>
               {% endif %}
             </td>
-            <td class="govuk-table__cell">{{ system.systemType or "—" }}</td>
-            <td class="govuk-table__cell">{{ system.ownerSupplier or "—" }}</td>
+            <td class="govuk-table__cell">{{ system.ownerSupplier or (roundTwo and "Not added yet") or "—" }}</td>
             <td class="govuk-table__cell">{{ "Yes" if system.inScope else "No" }}</td>
-            <td class="govuk-table__cell">
-              {% if system.diagramRefs and system.diagramRefs.length > 0 %}
-                {{ system.diagramRefs | join(", ") }}
-              {% else %}
-                —
-              {% endif %}
-            </td>
+            {% if roundTwo %}
+              <td class="govuk-table__cell">
+                {% if system.mappedServices and system.mappedServices.length > 0 %}
+                  {{ system.mappedServices | join(", ") }}
+                {% else %}
+                  Not mapped yet
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{{ system.priorityLabel | capitalize if system.priorityLabel else "Not set yet" }}</td>
+              <td class="govuk-table__cell app-register-actions">
+                <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/mapping/{{ system.id }}">Map services</a>
+                <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/priority/{{ system.id }}">Set priority</a>
+                <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/systems/{{ system.id }}/edit">Change</a>
+                <form method="post" action="/stages/2/scope/systems/{{ system.id }}/remove" class="govuk-!-margin-top-1">
+                  <button class="govuk-link app-link-button" type="submit">Remove</button>
+                </form>
+              </td>
+            {% else %}
+              <td class="govuk-table__cell">{{ system.systemType or "—" }}</td>
+              <td class="govuk-table__cell app-register-actions">
+                {% if system.diagramRefs and system.diagramRefs.length > 0 %}
+                  {{ system.diagramRefs | join(", ") }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            {% endif %}
           </tr>
         {% endfor %}
       </tbody>
@@ -46,12 +83,20 @@
 
   <div class="govuk-button-group">
     <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/add">
-      Add another system
+      Add system
     </a>
     {% if systems.length > 0 %}
-      <a class="govuk-button" href="{{ nextAction.href }}">
-        {{ nextAction.text }}
-      </a>
+      {% if roundTwo %}
+        <form method="post" action="/stages/2/scope/systems/review" class="govuk-button-group__item">
+          <button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button" type="submit">
+            Save and return to task list
+          </button>
+        </form>
+      {% else %}
+        <a class="govuk-button" href="{{ nextAction.href }}">
+          {{ nextAction.text }}
+        </a>
+      {% endif %}
     {% endif %}
   </div>
 {% endblock %}

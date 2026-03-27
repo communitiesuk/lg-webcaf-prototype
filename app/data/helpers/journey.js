@@ -92,7 +92,14 @@ function buildProgress(currentPath) {
   };
 }
 
-function buildBreadcrumbs(currentPath) {
+function buildBreadcrumbs(currentPath, options = {}) {
+  const researchRound = options.researchRound || "round-1";
+  const role = options.role || "";
+
+  if (researchRound === "round-2" && role === "council") {
+    return [];
+  }
+
   if (currentPath === "/assessments/current/journey") {
     return [{ text: "CAF journey" }];
   }

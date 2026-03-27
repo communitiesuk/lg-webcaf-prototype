@@ -1,0 +1,82 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/annual-setup/roles">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">Assessment setup</span>
+  <h1 class="govuk-heading-l">Plan assurance support</h1>
+  <p class="govuk-body">Tell us roughly when you expect to need assurer support for this assessment.</p>
+  <p class="govuk-body">This helps with planning only. It does not book assurance.</p>
+
+  <form method="post" action="/assessments/current/annual-setup/planning">
+    <div class="govuk-form-group {% if error and ((error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0) %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" role="group" aria-describedby="assurance-window-hint">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">When do you expect to need assurer support for this assessment?</legend>
+        <div id="assurance-window-hint" class="govuk-hint">Enter an estimated month and year. If A and D and B and C will be ready at different times, enter the earliest point you expect to need support.</div>
+        <div class="govuk-date-input" id="assuranceWindow">
+          <div class="govuk-date-input__item">
+            <div class="govuk-form-group">
+              <label class="govuk-label govuk-date-input__label" for="assuranceMonth">Month</label>
+              <input class="govuk-input govuk-date-input__input govuk-input--width-3" id="assuranceMonth" name="assuranceMonth" type="text" inputmode="numeric" value="{{ form.assuranceMonth or '' }}">
+            </div>
+          </div>
+          <div class="govuk-date-input__item">
+            <div class="govuk-form-group">
+              <label class="govuk-label govuk-date-input__label" for="assuranceYear">Year</label>
+              <input class="govuk-input govuk-date-input__input govuk-input--width-5" id="assuranceYear" name="assuranceYear" type="text" inputmode="numeric" value="{{ form.assuranceYear or '' }}">
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you want an early assurer check-in this year?</legend>
+        <div class="govuk-hint">An early check-in can help you stay on track during self-assessment.</div>
+        <div class="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="checkInPlan-planned" name="checkInPlan" type="radio" value="planned" {% if form.checkInPlan == "planned" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="checkInPlan-planned">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="checkInPlan-not-planned" name="checkInPlan" type="radio" value="not_planned" {% if form.checkInPlan == "not_planned" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="checkInPlan-not-planned">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="assurerContact">Assurer contact or organisation (optional)</label>
+      <div class="govuk-hint">Only add this if you already know who your assurer is likely to be.</div>
+      <input class="govuk-input govuk-!-width-two-thirds" id="assurerContact" name="assurerContact" type="text" value="{{ form.assurerContact or '' }}">
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="checkInNotes">Anything else we should know? (optional)</label>
+      <div class="govuk-hint">For example, known dependencies or timing constraints.</div>
+      <textarea class="govuk-textarea" id="checkInNotes" name="checkInNotes" rows="4">{{ form.checkInNotes or '' }}</textarea>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Finish annual setup</button>
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+    </div>
+  </form>
+{% endblock %}
