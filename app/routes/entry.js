@@ -20,6 +20,7 @@ module.exports = function (router) {
     const hasInProgress = roundTwo
       ? Boolean(assessment && assessment.id && assessment.startedFromEntry)
       : Boolean(assessment && assessment.id);
+    const roundTwoEntry = roundTwo ? buildRoundTwoEntrySummary(assessment, req.session.data.user) : null;
 
     const viewModel = {
       pageTitle: roundTwo ? "My account" : labels.entry.pageTitle,
@@ -27,6 +28,7 @@ module.exports = function (router) {
       user: req.session.data.user,
       hasInProgress,
       roundTwo,
+      roundTwoEntry,
     };
 
     res.render("pages/entry/index", viewModel, (err, html) => {
@@ -212,6 +214,86 @@ module.exports = function (router) {
   });
 };
 
+function buildRoundTwoEntrySummary(assessment, user) {
+  const year = new Date().getFullYear();
+  const orgName =
+    (assessment && assessment.councilName) ||
+    (user && user.orgName) ||
+    "Your council";
+
+  if (!assessment || !assessment.id || !assessment.startedFromEntry) {
+    return {
+      orgName,
+      year,
+      statusLabel: "Not started",
+      primaryActionText: "Start this year's assessment",
+      primaryActionHref: "/entry/start-new?returnTo=/assessments/current/journey",
+      secondaryActions: [],
+      summaryRows: [],
+      helperText: "Use the task list to work through the yearly setup and self-assessment stages.",
+    };
+  }
+
+  const annualSetupComplete = Boolean(assessment.annualSetup && assessment.annualSetup.completed);
+  const adComplete = Boolean(assessment.selfAssess && assessment.selfAssess.adReview && assessment.selfAssess.adReview.completed);
+  const bcComplete = Boolean(assessment.selfAssess && assessment.selfAssess.bcReview && assessment.selfAssess.bcReview.completed);
+  const readyForReview = Boolean(
+    assessment.selfAssessmentReview && assessment.selfAssessmentReview.completed
+  );
+  const selfAssessStarted = Boolean(
+    (assessment.selfAssess &&
+      assessment.selfAssess.ad &&
+      Object.keys(assessment.selfAssess.ad).length > 0) ||
+    (assessment.selfAssess &&
+      assessment.selfAssess.bc &&
+      Object.keys(assessment.selfAssess.bc).length > 0)
+  );
+
+  let statusLabel = "In progress";
+  if (readyForReview) {
+    statusLabel = "Ready for independent review";
+  } else if (annualSetupComplete && !selfAssessStarted) {
+    statusLabel = "Ready to start self-assessment";
+  }
+
+  const secondaryActions = [
+    { text: "View task list", href: "/assessments/current/journey" },
+  ];
+
+  if (annualSetupComplete) {
+    secondaryActions.push({ text: "Go to dashboard", href: "/assessments/current/dashboard?view=my" });
+  }
+
+  return {
+    orgName,
+    year,
+    statusLabel,
+    primaryActionText: "Continue this year's assessment",
+    primaryActionHref: "/entry/resume",
+    secondaryActions,
+    summaryRows: [
+      {
+        key: "Annual setup",
+        value: annualSetupComplete ? "Completed" : "Not started",
+      },
+      {
+        key: "A and D",
+        value: adComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
+      },
+      {
+        key: "B and C",
+        value: bcComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
+      },
+      {
+        key: "Independent review",
+        value: readyForReview ? "Ready to send" : "Not yet ready",
+      },
+    ],
+    helperText:
+      "Use the task list to track yearly progress and major stages. Use the dashboard to continue day-to-day assessment work.",
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -324,13 +406,6 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
     seededOutcomeB.updatedAt = new Date().toISOString();
   }
 
-  const seededOutcomeD = assessment.progressTracker["D1b"];
-  if (seededOutcomeD && !seededOutcomeD.ownerId) {
-    seededOutcomeD.ownerId = ownerId;
-    seededOutcomeD.status = "not_started";
-    seededOutcomeD.updatedAt = new Date().toISOString();
-  }
-
   const seededOutcome = assessment.progressTracker["A1a"];
   if (seededOutcome && !seededOutcome.ownerId && (!seededOutcome.history || seededOutcome.history.length === 0)) {
     seededOutcome.ownerId = ownerId;
@@ -361,7 +436,10 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
 
   assessment.selfAssess = assessment.selfAssess || { ad: {}, bc: {} };
   assessment.selfAssess.bc = assessment.selfAssess.bc || {};
-  if (!assessment.selfAssess.bc["sys-1"]) {
+  if (roundTwo && assessment.hasPreviousAdAssessment) {
+    seedReturningAssessmentData(assessment, now);
+  }
+  if (!roundTwo && !assessment.selfAssess.bc["sys-1"]) {
     assessment.selfAssess.bc["sys-1"] = {
       outcomes: {
         B1a: {
@@ -374,30 +452,12 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
           ],
           updatedAt: addDays(now, -3).toISOString(),
         },
-        C1a: {
-          igpResponse: "Monitoring for core services active; alerts triaged daily.",
-          judgement: "Achieved",
-          rationale: "SOC coverage includes the system and key dependencies.",
-          evidenceRefs: [
-            { refId: "MON-CCMS-07", type: "Monitoring report", link: "", note: "" },
-          ],
-          updatedAt: addDays(now, -2).toISOString(),
-        },
-        C1b: {
-          igpResponse: "Coverage is partial for third-party interfaces.",
-          judgement: "Not achieved",
-          rationale: "Monitoring does not yet include all integrations.",
-          evidenceRefs: [
-            { refId: "MON-GAP-03", type: "Gap log", link: "", note: "" },
-          ],
-          updatedAt: addDays(now, -1).toISOString(),
-        },
       },
     };
   }
 
   assessment.selfAssess.ad = assessment.selfAssess.ad || {};
-  if (!assessment.selfAssess.ad["A1a"]) {
+  if (!roundTwo && !assessment.selfAssess.ad["A1a"]) {
     assessment.selfAssess.ad["A1a"] = {
       igpResponse: "Board reporting exists but is not consistent across directorates.",
       judgement: "Partially achieved",
@@ -406,18 +466,6 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
         { refId: "GOV-TRACK-01", type: "Board tracker", link: "", note: "" },
       ],
       updatedAt: addDays(now, -4).toISOString(),
-    };
-  }
-
-  if (!assessment.selfAssess.ad["D1b"]) {
-    assessment.selfAssess.ad["D1b"] = {
-      igpResponse: "Incident response playbooks exist but have not been exercised.",
-      judgement: "Not achieved",
-      rationale: "Exercises are scheduled but not yet completed.",
-      evidenceRefs: [
-        { refId: "IR-PLAN-02", type: "Playbook", link: "", note: "" },
-      ],
-      updatedAt: addDays(now, -6).toISOString(),
     };
   }
 
@@ -477,12 +525,12 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
       {
         id: `iip-seed-${Date.now() + 1}`,
         sourceType: "bc",
-        sourceId: "sys-1:C1b",
-        title: "Expand monitoring coverage for third-party interfaces",
+        sourceId: "sys-1:B1a",
+        title: "Extend policy coverage for suppliers and operational teams",
         priority: "medium",
         owner: "Security operations lead",
         dueDate: toISODate(addDays(now, 60)),
-        expectedEvidence: "Monitoring coverage report including integrations",
+        expectedEvidence: "Updated policy and supplier assurance evidence",
         evidenceRef: "",
         checkInCadence: "quarterly",
         confirmed: true,
@@ -490,31 +538,31 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
         lastUpdateAt: "",
         lastUpdateNote: "",
         gapMeta: {
-          outcomeCode: "C1.b",
-          outcomeTitle: "Monitoring coverage",
-          judgement: "Not achieved",
+          outcomeCode: "B1.a",
+          outcomeTitle: "Policy, process and procedure development",
+          judgement: "Partially achieved",
           systemName: "Case Management System",
         },
       },
       {
         id: `iip-seed-${Date.now() + 2}`,
         sourceType: "ad",
-        sourceId: "D1b",
-        title: "Run annual incident response exercise",
+        sourceId: "A1b",
+        title: "Clarify ownership and responsibilities across teams",
         priority: "high",
-        owner: "Business continuity lead",
+        owner: "CAF lead",
         dueDate: toISODate(addDays(now, 90)),
-        expectedEvidence: "Exercise report and lessons learned log",
-        evidenceRef: "EVID-IR-04",
+        expectedEvidence: "Updated accountability map and role sign-off",
+        evidenceRef: "EVID-ROLE-04",
         checkInCadence: "monthly",
         confirmed: true,
         status: "in_progress",
         lastUpdateAt: toISODate(addDays(now, -8)),
-        lastUpdateNote: "Scenario agreed; exercise scheduled with directorates.",
+        lastUpdateNote: "Updated draft accountability map circulated for review.",
         gapMeta: {
-          outcomeCode: "D1.b",
-          outcomeTitle: "Incident response and recovery",
-          judgement: "Not achieved",
+          outcomeCode: "A1.b",
+          outcomeTitle: "Roles and responsibilities",
+          judgement: "Partially achieved",
           systemName: "",
         },
       },
@@ -551,11 +599,16 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
 
 function startNewAssessment(req) {
   const nowIso = new Date().toISOString();
+  const roundTwo =
+    req.session &&
+    req.session.data &&
+    req.session.data.researchRound === "round-2";
+  const hasPreviousAdAssessment = roundTwo && isRoundTwoReturningUser(req.session.data.user || null);
   req.session.data.assessment = {
     id: "current",
     startedFromEntry: true,
     cafVersion: CAF_DEFAULT_VERSION,
-    hasPreviousAdAssessment: false,
+    hasPreviousAdAssessment,
     stage: {
       understandCAFComplete: false,
       prepareScopeComplete: false,
@@ -618,7 +671,92 @@ function startNewAssessment(req) {
     progressTracker: {},
   };
 
-  seedPrototypeData(req.session.data.assessment, req.session.data.user);
+  seedPrototypeData(req.session.data.assessment, req.session.data.user, { roundTwo });
+}
+
+function isRoundTwoReturningUser(user) {
+  const email = user && user.email ? String(user.email).toLowerCase() : "";
+  return email.includes("returning") || email.includes("previous") || email.includes("existing");
+}
+
+function seedReturningAssessmentData(assessment, now) {
+  if (!assessment) return;
+  const nowIso = now.toISOString();
+  const previousAssessment = assessment.previousAssessment || buildPreviousAssessmentSeed(now);
+  assessment.previousAssessment = previousAssessment;
+
+  assessment.selfAssess = assessment.selfAssess || { ad: {}, bc: {} };
+  assessment.selfAssess.ad = assessment.selfAssess.ad || {};
+  assessment.selfAssess.bc = assessment.selfAssess.bc || {};
+
+  for (const [outcomeId, prior] of Object.entries(previousAssessment.ad || {})) {
+    if (!assessment.selfAssess.ad[outcomeId]) {
+      assessment.selfAssess.ad[outcomeId] = {
+        igpResponse: prior.igpResponse || "",
+        judgement: prior.judgement || "",
+        rationale: prior.rationale || "",
+        evidenceRefs: Array.isArray(prior.evidenceRefs) ? prior.evidenceRefs : [],
+        updatedAt: nowIso,
+        carriedForward: true,
+        reviewRequired: true,
+      };
+    }
+  }
+
+  if (!assessment.selfAssess.bc["sys-1"]) {
+    assessment.selfAssess.bc["sys-1"] = { outcomes: {} };
+  }
+  if (!assessment.selfAssess.bc["sys-1"].outcomes) {
+    assessment.selfAssess.bc["sys-1"].outcomes = {};
+  }
+  for (const [outcomeId, prior] of Object.entries(previousAssessment.bc || {})) {
+    if (!assessment.selfAssess.bc["sys-1"].outcomes[outcomeId]) {
+      assessment.selfAssess.bc["sys-1"].outcomes[outcomeId] = {
+        igpResponse: prior.igpResponse || "",
+        judgement: prior.judgement || "",
+        rationale: prior.rationale || "",
+        evidenceRefs: Array.isArray(prior.evidenceRefs) ? prior.evidenceRefs : [],
+        updatedAt: nowIso,
+        carriedForward: true,
+        reviewRequired: true,
+      };
+    }
+  }
+}
+
+function buildPreviousAssessmentSeed(now) {
+  return {
+    version: CAF_DEFAULT_VERSION,
+    reviewedAt: toISODate(addDays(now, -40)),
+    ad: {
+      A1a: {
+        judgement: "Achieved",
+        rationale: "Board-level ownership and reporting were in place across the council last year.",
+        igpResponse: "Board reporting was regular and cyber risks were reviewed at the right level.",
+        evidenceRefs: [
+          { refId: "PREV-GOV-01", type: "Board paper", link: "", note: "Previous annual governance report." },
+        ],
+      },
+      A1b: {
+        judgement: "Partially achieved",
+        rationale: "Roles were defined last year but not all responsibilities were consistently understood.",
+        igpResponse: "Role descriptions existed, but handoffs between teams were inconsistent.",
+        evidenceRefs: [
+          { refId: "PREV-ROLE-02", type: "Role description", link: "", note: "Prior accountability matrix." },
+        ],
+      },
+    },
+    bc: {
+      B1a: {
+        judgement: "Partially achieved",
+        rationale: "Core policies were carried by the service, but supplier coverage was incomplete.",
+        igpResponse: "Protection policy existed and was reviewed, with some supplier gaps.",
+        evidenceRefs: [
+          { refId: "PREV-POL-03", type: "Policy", link: "", note: "Last year's service protection policy." },
+        ],
+      },
+    },
+  };
 }
 
 function addDays(date, days) {

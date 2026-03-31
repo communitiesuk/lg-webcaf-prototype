@@ -1,7 +1,13 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/round-2/start' if mode == 'sign-in' else '/round-2/sign-in' }}">Back</a>
+  {% set backHref = "/round-2/sign-in" %}
+  {% set formAction = "/round-2/register" %}
+  {% if mode == "sign-in" %}
+    {% set backHref = "/round-2/start" %}
+    {% set formAction = "/round-2/sign-in" %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -28,7 +34,7 @@
     {% endif %}
   </p>
 
-  <form method="post" action="{{ '/round-2/sign-in' if mode == 'sign-in' else '/round-2/register' }}">
+  <form method="post" action="{{ formAction }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="round2AuthName">Name</label>
       {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}

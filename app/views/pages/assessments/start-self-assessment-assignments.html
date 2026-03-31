@@ -1,7 +1,26 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/start-self-assessment/people' if researchRound == 'round-2' else '/assessments/current/start-self-assessment' }}">Back</a>
+  {% set backHref = "/assessments/current/start-self-assessment" %}
+  {% set successMessage = "Assignment saved." %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/start-self-assessment/people" %}
+  {% endif %}
+  {% if saved == "assignment" and savedName %}
+    {% set successMessage = "Assignment saved for " + savedName + "." %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="assignments-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="assignments-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+      </div>
+    </div>
+  {% endif %}
 
   <span class="govuk-caption-l">Self-assessment</span>
   <h1 class="govuk-heading-l">Assign people to contributing outcomes</h1>

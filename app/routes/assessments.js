@@ -261,6 +261,10 @@ module.exports = function (router) {
     const roundTwoProgress = roundTwo
       ? buildRoundTwoTaskListProgress(assessment, req.session.data.user || null)
       : null;
+    if (roundTwo && roundTwoProgress && nextAction) {
+      roundTwoProgress.nextActionText = nextAction.text;
+      roundTwoProgress.nextActionHref = nextAction.href;
+    }
 
     res.render("pages/assessments/journey", {
       pageTitle: "CAF journey",
@@ -647,17 +651,21 @@ module.exports = function (router) {
     const judged = countADJudged(assessment);
     const rows = outcomes.map((outcome) => {
       const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
+      const carriedForward = Boolean(saved.carriedForward);
+      const reviewRequired = Boolean(saved.reviewRequired);
       return {
         ...outcome,
-        status: saved.judgement ? "In progress" : "Not started",
+        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
-        actionText: saved.judgement ? "Review outcome" : "Start outcome",
+        actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
+        carriedForward,
       };
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "ad", rows);
     rows.forEach((row) => {
       row.frameworkFlag = frameworkChange.updatedIds.includes(row.id) ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
     });
+    const carriedForwardReviewCount = rows.filter((row) => row.carriedForward).length;
     const primaryOutcome = rows[0] || null;
     const adPageStatus = judged === 0 ? "Not started" : judged >= total ? "Complete" : "In progress";
     const reviewState = getADReviewState(assessment);
@@ -675,6 +683,9 @@ module.exports = function (router) {
       reviewState,
       readyToComplete,
       frameworkChange,
+      carriedForwardReviewCount,
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
       error: null,
     });
   });
@@ -694,17 +705,21 @@ module.exports = function (router) {
     const judged = countADJudged(assessment);
     const rows = outcomes.map((outcome) => {
       const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
+      const carriedForward = Boolean(saved.carriedForward);
+      const reviewRequired = Boolean(saved.reviewRequired);
       return {
         ...outcome,
-        status: saved.judgement ? "In progress" : "Not started",
+        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
-        actionText: saved.judgement ? "Review outcome" : "Start outcome",
+        actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
+        carriedForward,
       };
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "ad", rows);
     rows.forEach((row) => {
       row.frameworkFlag = frameworkChange.updatedIds.includes(row.id) ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
     });
+    const carriedForwardReviewCount = rows.filter((row) => row.carriedForward).length;
     const primaryOutcome = rows[0] || null;
     const adPageStatus = judged === 0 ? "Not started" : judged >= total ? "Complete" : "In progress";
     const reviewState = getADReviewState(assessment);
@@ -728,6 +743,9 @@ module.exports = function (router) {
         reviewState,
         readyToComplete,
         frameworkChange,
+        carriedForwardReviewCount,
+        saved: "",
+        savedName: "",
         error: { items: [{ field: "completeAdAssessment", text: "Select whether A and D is complete." }] },
       });
     }
@@ -745,7 +763,29 @@ module.exports = function (router) {
     };
     assessment.updatedAt = nowIso;
     delete req.session.data.completeAdAssessment;
-    return res.redirect("/assessments/current/journey");
+    return res.redirect("/assessments/current/self-assessment/ad/complete");
+  });
+
+  router.get("/assessments/current/self-assessment/ad/complete", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
+
+    ensureSectionReviewData(assessment);
+    const reviewState = getADReviewState(assessment);
+    if (!reviewState.completed) {
+      return res.redirect("/assessments/current/self-assessment/ad");
+    }
+
+    const { ad } = getOutcomesForVersion(assessment);
+    const outcomes = flattenOutcomes(ad);
+
+    return res.render("pages/assessments/self-assessment-ad-complete", {
+      pageTitle: "A and D complete",
+      assessment,
+      reviewState,
+      outcomes,
+    });
   });
 
   router.get("/assessments/current/self-assessment/bc", (req, res) => {
@@ -763,9 +803,15 @@ module.exports = function (router) {
     }
     const { bc } = getOutcomesForVersion(assessment);
     const selectedSystems = getPrototypeBCSystems(assessment.scope || {}, assessment);
-    const totalPerSystem = countOutcomesInTree(bc);
+    const prototypeBcOutcomeIds = flattenOutcomes(bc).map((outcome) => outcome.id);
+    const totalPerSystem = prototypeBcOutcomeIds.length;
     const systems = selectedSystems.map((system) => {
-      const judged = countBCJudgedForSystems(assessment, [system.id]);
+      const systemData =
+        assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
+          ? assessment.selfAssess.bc[system.id]
+          : { outcomes: {} };
+      const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
+      const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
       const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
       const mapping = getMapping(assessment.scope || {}, system.id);
       const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
@@ -773,7 +819,9 @@ module.exports = function (router) {
         .filter(Boolean)
         .map((service) => service.name);
       const priority = getPriority(assessment.scope || {}, system.id);
-      const status = judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
+      const status = primarySaved.carriedForward && primarySaved.reviewRequired
+        ? "Carried forward - review needed"
+        : judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
       return {
         ...system,
         judged,
@@ -783,12 +831,14 @@ module.exports = function (router) {
         mappedCount: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds.length : 0,
         priorityLevel: priority && priority.level ? priority.level : "",
         status,
+        carriedForward: Boolean(primarySaved.carriedForward && primarySaved.reviewRequired),
       };
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "bc", systems.length > 0 ? [{ id: "B1a" }] : []);
     systems.forEach((system) => {
       system.frameworkFlag = frameworkChange.updatedIds.includes("B1a") ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
     });
+    const carriedForwardReviewCount = systems.filter((system) => system.carriedForward).length;
     const bcPageStatus = systems.length === 0
       ? "Not started"
       : systems.every((system) => system.status === "Complete")
@@ -817,6 +867,9 @@ module.exports = function (router) {
       reviewState,
       readyToComplete,
       frameworkChange,
+      carriedForwardReviewCount,
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
       error: null,
     });
   });
@@ -832,9 +885,15 @@ module.exports = function (router) {
 
     const { bc } = getOutcomesForVersion(assessment);
     const selectedSystems = getPrototypeBCSystems(assessment.scope || {}, assessment);
-    const totalPerSystem = countOutcomesInTree(bc);
+    const prototypeBcOutcomeIds = flattenOutcomes(bc).map((outcome) => outcome.id);
+    const totalPerSystem = prototypeBcOutcomeIds.length;
     const systems = selectedSystems.map((system) => {
-      const judged = countBCJudgedForSystems(assessment, [system.id]);
+      const systemData =
+        assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
+          ? assessment.selfAssess.bc[system.id]
+          : { outcomes: {} };
+      const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
+      const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
       const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
       const mapping = getMapping(assessment.scope || {}, system.id);
       const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
@@ -842,7 +901,9 @@ module.exports = function (router) {
         .filter(Boolean)
         .map((service) => service.name);
       const priority = getPriority(assessment.scope || {}, system.id);
-      const status = judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
+      const status = primarySaved.carriedForward && primarySaved.reviewRequired
+        ? "Carried forward - review needed"
+        : judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
       return {
         ...system,
         judged,
@@ -852,12 +913,14 @@ module.exports = function (router) {
         mappedCount: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds.length : 0,
         priorityLevel: priority && priority.level ? priority.level : "",
         status,
+        carriedForward: Boolean(primarySaved.carriedForward && primarySaved.reviewRequired),
       };
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "bc", systems.length > 0 ? [{ id: "B1a" }] : []);
     systems.forEach((system) => {
       system.frameworkFlag = frameworkChange.updatedIds.includes("B1a") ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
     });
+    const carriedForwardReviewCount = systems.filter((system) => system.carriedForward).length;
     const bcPageStatus = systems.length === 0
       ? "Not started"
       : systems.every((system) => system.status === "Complete")
@@ -892,6 +955,9 @@ module.exports = function (router) {
         reviewState,
         readyToComplete,
         frameworkChange,
+        carriedForwardReviewCount,
+        saved: "",
+        savedName: "",
         error: { items: [{ field: "completeBcAssessment", text: "Select whether B and C is complete." }] },
       });
     }
@@ -909,7 +975,28 @@ module.exports = function (router) {
     };
     assessment.updatedAt = nowIso;
     delete req.session.data.completeBcAssessment;
-    return res.redirect("/assessments/current/journey");
+    return res.redirect("/assessments/current/self-assessment/bc/complete");
+  });
+
+  router.get("/assessments/current/self-assessment/bc/complete", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
+
+    ensureSectionReviewData(assessment);
+    const reviewState = getBCReviewState(assessment);
+    if (!reviewState.completed) {
+      return res.redirect("/assessments/current/self-assessment/bc");
+    }
+
+    const systems = getSelectedAnnualSystems(assessment);
+
+    return res.render("pages/assessments/self-assessment-bc-complete", {
+      pageTitle: "B and C complete",
+      assessment,
+      reviewState,
+      systems,
+    });
   });
 
   router.get("/assessments/current/complete-self-assessment", (req, res) => {
@@ -1004,7 +1091,28 @@ module.exports = function (router) {
     };
     assessment.updatedAt = new Date().toISOString();
     delete req.session.data.completeSelfAssessment;
-    return res.redirect("/assessments/current/journey");
+    return res.redirect("/assessments/current/complete-self-assessment/complete");
+  });
+
+  router.get("/assessments/current/complete-self-assessment/complete", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
+
+    ensureSectionReviewData(assessment);
+    const reviewState = getSelfAssessmentReviewState(assessment);
+    const adReviewState = getADReviewState(assessment);
+    const bcReviewState = getBCReviewState(assessment);
+    if (!reviewState.completed || !adReviewState.completed || !bcReviewState.completed) {
+      return res.redirect("/assessments/current/complete-self-assessment");
+    }
+
+    return res.render("pages/assessments/complete-self-assessment-complete", {
+      pageTitle: "Self-assessment complete",
+      assessment,
+      reviewState,
+      selectedSystems: getSelectedAnnualSystems(assessment),
+    });
   });
 
   router.get("/assessments/current/review-scope", (req, res) => {
@@ -1201,6 +1309,26 @@ module.exports = function (router) {
     });
   });
 
+  router.get("/assessments/current/internal-sign-off/complete", (req, res) => {
+    if (isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    const signOff = getInternalSignOffState(assessment);
+    if (!signOff.completed) {
+      return res.redirect("/assessments/current/internal-sign-off");
+    }
+
+    return res.render("pages/assessments/internal-sign-off-complete", {
+      pageTitle: "Internal sign-off complete",
+      labels,
+      assessment,
+      signOff,
+    });
+  });
+
   router.post("/assessments/current/internal-sign-off", (req, res) => {
     if (isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
@@ -1263,7 +1391,7 @@ module.exports = function (router) {
     delete req.session.data.approverName;
     delete req.session.data.approverDate;
 
-    return res.redirect("/assessments/current/internal-sign-off?saved=1");
+    return res.redirect("/assessments/current/internal-sign-off/complete");
   });
 
   router.get("/assessments/current/submit-assessment", (req, res) => {
@@ -1289,6 +1417,30 @@ module.exports = function (router) {
       confirmChoice: "",
       error: null,
       saved: req.query.saved === "1",
+    });
+  });
+
+  router.get("/assessments/current/submit-assessment/complete", (req, res) => {
+    if (isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    const submitted = assessment.assurerSubmission || {};
+    const signOff = getInternalSignOffState(assessment);
+    const submissionWindow = getSubmissionWindowState(assessment);
+    if (!submitted.submitted) {
+      return res.redirect("/assessments/current/submit-assessment");
+    }
+
+    return res.render("pages/assessments/submit-assessment-complete", {
+      pageTitle: "Assessment submitted to assurer",
+      labels,
+      assessment,
+      submitted,
+      signOff,
+      submissionWindow,
     });
   });
 
@@ -1357,7 +1509,7 @@ module.exports = function (router) {
     assessment.updatedAt = submittedAt;
 
     delete req.session.data.submitAssessmentConfirm;
-    return res.redirect("/assessments/current/submit-assessment?saved=1");
+    return res.redirect("/assessments/current/submit-assessment/complete");
   });
 
   router.get("/assessments/current/assurance-report", (req, res) => {
@@ -1615,6 +1767,8 @@ module.exports = function (router) {
       labels,
       assessment,
       contributors,
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
       form: {
         name: "",
         email: "",
@@ -1666,7 +1820,7 @@ module.exports = function (router) {
 
     delete req.session.data.selfAssessPersonName;
     delete req.session.data.selfAssessPersonEmail;
-    return res.redirect("/assessments/current/start-self-assessment/people");
+    return res.redirect(`/assessments/current/start-self-assessment/people?saved=person-added&name=${encodeURIComponent(name)}`);
   });
 
   router.post("/assessments/current/start-self-assessment/people/:personId/remove", (req, res) => {
@@ -1678,6 +1832,7 @@ module.exports = function (router) {
     const personId = (req.params.personId || "").toString();
 
     const target = contributors.find((c) => c.id === personId);
+    const removedName = target && target.name ? target.name : "Person";
     if (target && target.id !== (currentUser && currentUser.id)) {
       assessment.selfAssessContributors = contributors.filter((c) => c.id !== personId);
 
@@ -1706,7 +1861,7 @@ module.exports = function (router) {
       assessment.updatedAt = new Date().toISOString();
     }
 
-    return res.redirect("/assessments/current/start-self-assessment/people");
+    return res.redirect(`/assessments/current/start-self-assessment/people?saved=person-removed&name=${encodeURIComponent(removedName)}`);
   });
 
   router.get("/assessments/current/start-self-assessment/assignments", (req, res) => {
@@ -1752,6 +1907,8 @@ module.exports = function (router) {
       rows,
       assignedCount,
       totalCount: rows.length,
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
     });
   });
 
@@ -1830,7 +1987,8 @@ module.exports = function (router) {
 
     clearOutcomeAssignmentForm(req);
 
-    return res.redirect("/assessments/current/start-self-assessment/assignments");
+    const assignmentName = `${row.outcomeCode} ${row.title}`.trim();
+    return res.redirect(`/assessments/current/start-self-assessment/assignments?saved=assignment&name=${encodeURIComponent(assignmentName)}`);
   });
 
   // DASHBOARD (Progress tracker hub)
@@ -1840,6 +1998,15 @@ module.exports = function (router) {
     ensureAssuranceStageData(assessment);
     ensureIipStage2Data(assessment);
     const roundTwo = isRoundTwoRequest(req);
+    if (roundTwo) {
+      const requestedLens = (req.query.lens || "").toString();
+      if (requestedLens === "ad") {
+        return res.redirect("/assessments/current/self-assessment/ad");
+      }
+      if (requestedLens === "bc") {
+        return res.redirect("/assessments/current/self-assessment/bc");
+      }
+    }
 
     const { ad, bc } = getOutcomesForVersion(assessment);
     const prototypeAdIds = flattenOutcomes(ad).map((outcome) => outcome.id);
@@ -1889,6 +2056,14 @@ module.exports = function (router) {
         linkUrl: roundTwo ? `/self-assess/ad/${row.outcomeId}` : `/assessments/current/outcomes/${row.outcomeId}`,
         selfAssessUrl: `/self-assess/ad/${row.outcomeId}`,
         systemName: "",
+        carriedForwardFlag:
+          Boolean(
+            assessment.selfAssess &&
+            assessment.selfAssess.ad &&
+            assessment.selfAssess.ad[row.outcomeId] &&
+            assessment.selfAssess.ad[row.outcomeId].carriedForward &&
+            assessment.selfAssess.ad[row.outcomeId].reviewRequired
+          ),
         ownerName: getParticipantName(assessment, row.ownerId, req.session.data.user) || "Unassigned",
         collaboratorCount:
           (Array.isArray(row.collaboratorIds) ? row.collaboratorIds.length : 0) +
@@ -1898,11 +2073,22 @@ module.exports = function (router) {
     const bcRows = buildBCOutcomeRows(assessment, bc).map((row) => ({
       ...row,
       linkUrl: roundTwo ? row.selfAssessUrl : row.linkUrl,
+      carriedForwardFlag: Boolean(row.carriedForward && row.reviewRequired),
       ownerName: getParticipantName(assessment, row.ownerId, req.session.data.user) || "Unassigned",
       collaboratorCount:
         (Array.isArray(row.collaboratorIds) ? row.collaboratorIds.length : 0) +
-        parseAdditionalCollaborators(row.additionalCollaborators).length,
+          parseAdditionalCollaborators(row.additionalCollaborators).length,
     }));
+    allRowsAd.forEach((row) => {
+      if (row.carriedForwardFlag) {
+        row.isNeedsAttention = true;
+      }
+    });
+    bcRows.forEach((row) => {
+      if (row.carriedForwardFlag) {
+        row.isNeedsAttention = true;
+      }
+    });
     const adFrameworkChange = roundTwo ? buildFrameworkChangeSummary(assessment, "ad", allRowsAd) : null;
     allRowsAd.forEach((row) => {
       row.frameworkFlag = adFrameworkChange && adFrameworkChange.updatedIds.includes(row.outcomeId)
@@ -2873,6 +3059,8 @@ function buildBCOutcomeRows(assessment, outcomesTree) {
         dueDateDisplay: "",
         nextStep: "",
         evidenceCount,
+        carriedForward: Boolean(saved.carriedForward),
+        reviewRequired: Boolean(saved.reviewRequired),
         isMissingEvidence: evidenceCount === 0 && Boolean(saved.judgement),
         isOverdue: false,
         isBlocked: Boolean(saved.blocker),
@@ -3499,8 +3687,10 @@ function ensureScopeReviewState(assessment) {
 
 function buildRoundTwoTaskListProgress(assessment, currentUser) {
   ensureSectionReviewData(assessment);
+  ensureScopeReviewState(assessment);
   const prepare = assessment && assessment.prepare ? assessment.prepare : {};
   const scope = assessment && assessment.scope ? assessment.scope : {};
+  const scopeReview = assessment && assessment.scopeReview ? assessment.scopeReview : {};
   const annualSetup = assessment && assessment.annualSetup ? assessment.annualSetup : {};
   const adReview = getADReviewState(assessment);
   const bcReview = getBCReviewState(assessment);
@@ -3518,41 +3708,51 @@ function buildRoundTwoTaskListProgress(assessment, currentUser) {
     return Boolean(priority && priority.level);
   }).length;
 
+  const getStartedComplete =
+    Boolean(prepare.onboardingUnderstandingComplete) && Boolean(prepare.onboardingRolesComplete);
+  const scopeComplete =
+    Boolean(scopeReview.completed) &&
+    scopeContextCompleted(scope) &&
+    Array.isArray(scope.essentialServices) &&
+    scope.essentialServices.length > 0 &&
+    systems.length > 0 &&
+    inScopeSystems.length > 0 &&
+    mappedCount === systems.length &&
+    prioritisedCount === systems.length;
+  const annualSetupComplete = scopeComplete && Boolean(annualSetup.completed);
+  const whoInvolvedComplete = annualSetupComplete && assignmentStatus.allAssigned;
+  const adComplete = whoInvolvedComplete && adReview.completed;
+  const bcComplete = whoInvolvedComplete && bcReview.completed;
+  const readyForIndependentReview = adComplete && bcComplete && reviewState.completed;
+
   const milestones = [
     {
       label: "Get started",
-      completed: Boolean(prepare.onboardingUnderstandingComplete) && Boolean(prepare.onboardingRolesComplete),
+      completed: getStartedComplete,
     },
     {
-      label: "CAF scope set",
-      completed:
-        scopeContextCompleted(scope) &&
-        Array.isArray(scope.essentialServices) &&
-        scope.essentialServices.length > 0 &&
-        systems.length > 0 &&
-        inScopeSystems.length > 0 &&
-        mappedCount === systems.length &&
-        prioritisedCount === systems.length,
+      label: "Set CAF scope",
+      completed: scopeComplete,
     },
     {
-      label: "This year's assessment set up",
-      completed: Boolean(annualSetup.completed),
+      label: "Set up this year's assessment",
+      completed: annualSetupComplete,
     },
     {
-      label: "Who is involved set up",
-      completed: assignmentStatus.allAssigned,
+      label: "Set up who is involved",
+      completed: whoInvolvedComplete,
     },
     {
-      label: "A and D complete",
-      completed: adReview.completed,
+      label: "Complete A and D",
+      completed: adComplete,
     },
     {
-      label: "B and C complete",
-      completed: bcReview.completed,
+      label: "Complete B and C",
+      completed: bcComplete,
     },
     {
       label: "Ready for independent review",
-      completed: reviewState.completed,
+      completed: readyForIndependentReview,
     },
   ];
 
@@ -3776,9 +3976,10 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
   ensureSectionReviewData(assessment);
   const scope = assessment.scope || {};
   const systems = getPrototypeBCSystems(scope, assessment);
-  const perSystemTotal = countOutcomesInTree(outcomesTree);
+  const prototypeOutcomeIds = flattenOutcomes(outcomesTree).map((outcome) => outcome.id);
+  const perSystemTotal = prototypeOutcomeIds.length;
   const total = systems.length * perSystemTotal;
-  const judged = countBCJudgedForSystems(assessment, systems.map((s) => s.id));
+  const judged = countBCJudgedForSystems(assessment, systems.map((s) => s.id), prototypeOutcomeIds);
   const reviewState = getBCReviewState(assessment);
   const ready = roundTwo
     ? Boolean(assessment && assessment.annualSetup && assessment.annualSetup.completed)
@@ -3812,10 +4013,18 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
 
 function buildRoundTwoWorkQueues(rows) {
   const list = Array.isArray(rows) ? rows : [];
-  const needsAttention = list.filter((row) => row && row.isNeedsAttention);
+  const carriedForwardReview = list.filter((row) => row && row.carriedForwardFlag);
+  const frameworkUpdates = list.filter(
+    (row) => row && row.frameworkFlag && !row.carriedForwardFlag
+  );
+  const needsAttention = list.filter(
+    (row) => row && row.isNeedsAttention && !row.carriedForwardFlag && !row.frameworkFlag
+  );
   const inProgress = list.filter(
     (row) =>
       row &&
+      !row.carriedForwardFlag &&
+      !row.frameworkFlag &&
       !row.isNeedsAttention &&
       (row.status === "in_progress" ||
         row.status === "ready_for_review" ||
@@ -3833,6 +4042,8 @@ function buildRoundTwoWorkQueues(rows) {
     });
 
   return {
+    carriedForwardReview: sortRows(carriedForwardReview).slice(0, 6),
+    frameworkUpdates: sortRows(frameworkUpdates).slice(0, 6),
     needsAttention: sortRows(needsAttention).slice(0, 6),
     inProgress: sortRows(inProgress).slice(0, 6),
   };
@@ -4120,8 +4331,13 @@ function getAssessmentCompletionState(assessment) {
   const adJudged = countADJudged(assessment);
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const bcSystems = getPrototypeBCSystems(scope, assessment);
-  const bcTotal = bcSystems.length * countOutcomesInTree(bc);
-  const bcJudged = countBCJudgedForSystems(assessment, bcSystems.map((system) => system.id));
+  const prototypeBcOutcomeIds = flattenOutcomes(bc).map((outcome) => outcome.id);
+  const bcTotal = bcSystems.length * prototypeBcOutcomeIds.length;
+  const bcJudged = countBCJudgedForSystems(
+    assessment,
+    bcSystems.map((system) => system.id),
+    prototypeBcOutcomeIds
+  );
   const totalOutcomes = adTotal + bcTotal;
   const judgedCount = adJudged + bcJudged;
   const allJudged = totalOutcomes > 0 && judgedCount >= totalOutcomes;
@@ -4545,20 +4761,26 @@ function countADJudged(assessment) {
   const ad = assessment && assessment.selfAssess && assessment.selfAssess.ad ? assessment.selfAssess.ad : {};
   let count = 0;
   for (const key of Object.keys(ad)) {
-    if ((ad[key] || {}).judgement) count += 1;
+    const row = ad[key] || {};
+    if (row.judgement && !(row.carriedForward && row.reviewRequired)) count += 1;
   }
   return count;
 }
 
-function countBCJudgedForSystems(assessment, systemIds) {
+function countBCJudgedForSystems(assessment, systemIds, allowedOutcomeIds = null) {
   const bc = assessment && assessment.selfAssess && assessment.selfAssess.bc ? assessment.selfAssess.bc : {};
   const selectedSystemIds = Array.isArray(systemIds) ? systemIds : Object.keys(bc);
+  const allowed = Array.isArray(allowedOutcomeIds) && allowedOutcomeIds.length > 0
+    ? new Set(allowedOutcomeIds)
+    : null;
   let count = 0;
   for (const systemId of selectedSystemIds) {
     const system = bc[systemId] || {};
     const outcomes = system.outcomes || {};
     for (const outcomeId of Object.keys(outcomes)) {
-      if ((outcomes[outcomeId] || {}).judgement) count += 1;
+      if (allowed && !allowed.has(outcomeId)) continue;
+      const row = outcomes[outcomeId] || {};
+      if (row.judgement && !(row.carriedForward && row.reviewRequired)) count += 1;
     }
   }
   return count;

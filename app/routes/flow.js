@@ -195,6 +195,7 @@ module.exports = function (router) {
       labels,
       assessment,
       defaults,
+      saved: (req.query.saved || "").toString(),
       rolesAudit: buildRolesAudit(
         assessment.prepare.onboardingRolesMeta,
         assessment.prepare.onboardingRolesHistory
@@ -273,7 +274,7 @@ module.exports = function (router) {
     delete req.session.data.onboardingApprover;
     delete req.session.data.onboardingContributors;
 
-    return res.redirect("/assessments/current/journey");
+    return res.redirect("/assessments/current/journey?saved=roles");
   });
 
   router.get("/profile", (req, res) => {
@@ -339,7 +340,11 @@ module.exports = function (router) {
     const { ad } = getOutcomesForVersion(assessment);
     const allowedIds = getPrototypeOutcomeIds(ad);
     if (!allowedIds.includes(req.params.outcomeId)) {
-      return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
+      return res.redirect(
+        isRoundTwoRequest(req)
+          ? "/assessments/current/self-assessment/ad"
+          : "/assessments/current/dashboard?lens=ad&view=all"
+      );
     }
     const outcome = findOutcome(ad, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
@@ -350,7 +355,7 @@ module.exports = function (router) {
     const roundTwo = isRoundTwoRequest(req);
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
     const context = roundTwo
-      ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+      ? buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId })
       : {
           backLink: `/assessments/current/outcomes/${outcome.id}`,
           heading: buildOutcomeOverviewTitle(outcome),
@@ -375,6 +380,7 @@ module.exports = function (router) {
         judgement: saved.judgement || "",
         judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
         mismatchReason: saved.mismatchReason || "",
+        reuseDecision: saved.reuseDecision || "",
         rationale: saved.rationale || "",
         qualityReviewedAt: formatDateForInput(saved.qualityReviewedAt),
         approverReviewedAt: formatDateForInput(saved.approverReviewedAt),
@@ -396,7 +402,11 @@ module.exports = function (router) {
     const { ad } = getOutcomesForVersion(assessment);
     const allowedIds = getPrototypeOutcomeIds(ad);
     if (!allowedIds.includes(req.params.outcomeId)) {
-      return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
+      return res.redirect(
+        isRoundTwoRequest(req)
+          ? "/assessments/current/self-assessment/ad"
+          : "/assessments/current/dashboard?lens=ad&view=all"
+      );
     }
     const outcome = findOutcome(ad, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
@@ -414,6 +424,7 @@ module.exports = function (router) {
     );
     const judgement = (req.session.data.judgement || "").toString();
     const mismatchReason = (req.session.data.mismatchReason || existingAd.mismatchReason || "").toString().trim();
+    const reuseDecision = (req.session.data.reuseDecision || existingAd.reuseDecision || "").toString().trim();
     const rationale = (req.session.data.rationale || "").toString().trim();
     const qualityReviewedAt = (req.session.data.qualityReviewedAt || "").toString().trim();
     const approverReviewedAt = (req.session.data.approverReviewedAt || "").toString().trim();
@@ -429,7 +440,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${outcome.id}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -445,6 +456,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -466,7 +478,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${outcome.id}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -482,6 +494,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -517,6 +530,7 @@ module.exports = function (router) {
             igpResponse,
             igpAssessments,
             judgement,
+            reuseDecision,
             rationale,
             qualityReviewedAt,
             approverReviewedAt,
@@ -544,10 +558,13 @@ module.exports = function (router) {
         igpResponse,
         igpAssessments,
         judgement,
+        reuseDecision,
         rationale,
         qualityReviewedAt,
         approverReviewedAt,
         evidenceRefs: evidenceRefs.filter(hasAnyEvidenceValue),
+        carriedForward: false,
+        reviewRequired: false,
         status: "ready_for_review",
         history,
         updatedAt: nowIso,
@@ -572,6 +589,8 @@ module.exports = function (router) {
       judgement,
       mismatchReason,
       mismatch: roundTwo ? isJudgementMismatch(judgement, buildIgpJudgementHint(igpAssessments)) : false,
+      requireReuseDecision: roundTwo && Boolean(existingAd.carriedForward || existingAd.reviewRequired),
+      reuseDecision,
       rationale,
       labels,
     });
@@ -583,7 +602,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "ad", outcome, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${outcome.id}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -599,6 +618,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -625,10 +645,13 @@ module.exports = function (router) {
       igpAssessments,
       judgement,
       mismatchReason,
+      reuseDecision,
       rationale,
       qualityReviewedAt,
       approverReviewedAt,
       evidenceRefs: evidenceRefs.filter(hasAnyEvidenceValue),
+      carriedForward: false,
+      reviewRequired: false,
       status: nextStatus,
       updatedAt: nowIso,
     };
@@ -645,14 +668,15 @@ module.exports = function (router) {
     if (roundTwo) {
       invalidateRoundTwoSectionCompletion(assessment, "ad");
       clearOutcomeForm(req);
+      const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
       if (action === "saveReturn") {
-        return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
+        return res.redirect(`/assessments/current/dashboard?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
       }
       const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
       if (nextOutcomeId) {
         return res.redirect(`/self-assess/ad/${encodeURIComponent(nextOutcomeId)}`);
       }
-      return res.redirect("/assessments/current/self-assessment/ad");
+      return res.redirect(`/assessments/current/self-assessment/ad?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
     }
 
     return res.redirect(`/assessments/current/outcomes/${outcome.id}`);
@@ -708,7 +732,8 @@ module.exports = function (router) {
     }
 
     const { bc } = getOutcomesForVersion(assessment);
-    const rows = flattenOutcomes(bc).map((outcome) => {
+    const prototypeRows = getPrototypeOutcomeRows(bc);
+    const rows = prototypeRows.map((outcome) => {
       const saved = getBCOutcome(assessment, system.id, outcome.id);
       const evidenceCount = Array.isArray(saved.evidenceRefs)
         ? saved.evidenceRefs.filter(hasAnyEvidenceValue).length
@@ -719,8 +744,14 @@ module.exports = function (router) {
         title: outcome.title,
         description: outcome.description || "",
         judgement: saved.judgement || "",
+        carriedForward: Boolean(saved.carriedForward && saved.reviewRequired),
         evidenceCount,
-        status: saved.judgement ? "In progress" : "Not started",
+        status:
+          saved.carriedForward && saved.reviewRequired
+            ? "Carried forward - review needed"
+            : saved.judgement
+              ? "Complete"
+              : "Not started",
       };
     });
 
@@ -749,6 +780,8 @@ module.exports = function (router) {
       refsCount,
       pageStatus,
       primaryOutcome,
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
       roundTwo: true,
     });
   });
@@ -777,7 +810,11 @@ module.exports = function (router) {
     const { bc } = getOutcomesForVersion(assessment);
     const allowedIds = getPrototypeOutcomeIds(bc);
     if (!allowedIds.includes(req.params.outcomeId)) {
-      return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+      return res.redirect(
+        isRoundTwoRequest(req)
+          ? `/self-assess/bc/${encodeURIComponent(system.id)}`
+          : "/assessments/current/dashboard?lens=bc&view=all"
+      );
     }
     const outcome = findOutcome(bc, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
@@ -788,7 +825,7 @@ module.exports = function (router) {
     const roundTwo = isRoundTwoRequest(req);
     const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
     const context = roundTwo
-      ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+      ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
       : {
           backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
           heading: buildOutcomeOverviewTitle(outcome),
@@ -813,6 +850,7 @@ module.exports = function (router) {
         judgement: saved.judgement || "",
         judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
         mismatchReason: saved.mismatchReason || "",
+        reuseDecision: saved.reuseDecision || "",
         rationale: saved.rationale || "",
         qualityReviewedAt: formatDateForInput(saved.qualityReviewedAt),
         approverReviewedAt: formatDateForInput(saved.approverReviewedAt),
@@ -858,6 +896,7 @@ module.exports = function (router) {
     );
     const judgement = (req.session.data.judgement || "").toString();
     const mismatchReason = (req.session.data.mismatchReason || existingBc.mismatchReason || "").toString().trim();
+    const reuseDecision = (req.session.data.reuseDecision || existingBc.reuseDecision || "").toString().trim();
     const rationale = (req.session.data.rationale || "").toString().trim();
     const qualityReviewedAt = (req.session.data.qualityReviewedAt || "").toString().trim();
     const approverReviewedAt = (req.session.data.approverReviewedAt || "").toString().trim();
@@ -873,7 +912,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -887,6 +926,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -908,7 +948,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -922,6 +962,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -936,6 +977,7 @@ module.exports = function (router) {
       const shareErrors = validateSelfAssess({
         igpResponse,
         judgement,
+        reuseDecision,
         rationale,
         labels,
       });
@@ -957,6 +999,7 @@ module.exports = function (router) {
             igpResponse,
             igpAssessments,
             judgement,
+            reuseDecision,
             rationale,
             qualityReviewedAt,
             approverReviewedAt,
@@ -984,10 +1027,13 @@ module.exports = function (router) {
         igpResponse,
         igpAssessments,
         judgement,
+        reuseDecision,
         rationale,
         qualityReviewedAt,
         approverReviewedAt,
         evidenceRefs: evidenceRefs.filter(hasAnyEvidenceValue),
+        carriedForward: false,
+        reviewRequired: false,
         status: "ready_for_review",
         history,
         updatedAt: nowIso,
@@ -1004,6 +1050,8 @@ module.exports = function (router) {
       judgement,
       mismatchReason,
       mismatch: roundTwo ? isJudgementMismatch(judgement, buildIgpJudgementHint(igpAssessments)) : false,
+      requireReuseDecision: roundTwo && Boolean(existingBc.carriedForward || existingBc.reviewRequired),
+      reuseDecision,
       rationale,
       labels,
     });
@@ -1015,7 +1063,7 @@ module.exports = function (router) {
         assessment,
         outcome,
         context: roundTwo
-          ? buildRoundTwoOutcomeContext({ lens: "bc", outcome, system, nextOutcomeId })
+          ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
           : {
               backLink: `/assessments/current/outcomes/${encodeURIComponent(system.id)}:${encodeURIComponent(outcome.id)}`,
               heading: buildOutcomeOverviewTitle(outcome),
@@ -1029,6 +1077,7 @@ module.exports = function (router) {
           judgement,
           judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
           mismatchReason,
+          reuseDecision,
           rationale,
           qualityReviewedAt,
           approverReviewedAt,
@@ -1054,10 +1103,13 @@ module.exports = function (router) {
       igpAssessments,
       judgement,
       mismatchReason,
+      reuseDecision,
       rationale,
       qualityReviewedAt,
       approverReviewedAt,
       evidenceRefs: evidenceRefs.filter(hasAnyEvidenceValue),
+      carriedForward: false,
+      reviewRequired: false,
       status: nextStatus,
       updatedAt: nowIso,
     });
@@ -1066,8 +1118,9 @@ module.exports = function (router) {
     if (roundTwo) {
       invalidateRoundTwoSectionCompletion(assessment, "bc");
       clearOutcomeForm(req);
+      const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
       if (action === "saveReturn") {
-        return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+        return res.redirect(`/assessments/current/dashboard?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
       }
       const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
       if (nextOutcomeId) {
@@ -1075,7 +1128,7 @@ module.exports = function (router) {
           `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(nextOutcomeId)}`
         );
       }
-      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}`);
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
     }
 
     return res.redirect(
@@ -2158,21 +2211,38 @@ function buildOutcomeWorkspaceTitle(outcome) {
   return `${outcome.code} ${outcome.title}`;
 }
 
-function buildRoundTwoOutcomeContext({ lens, outcome, system, nextOutcomeId }) {
+function buildRoundTwoOutcomeContext({ lens, tree, outcome, system, nextOutcomeId }) {
   const bc = lens === "bc";
+  const progressText = buildRoundTwoOutcomeProgressText(tree, outcome, {
+    systemName: bc && system ? system.name : "",
+  });
   return {
     roundTwo: true,
+    lens,
     caption: bc ? "B and C self-assessment" : "A and D self-assessment",
     backLink: bc ? `/self-assess/bc/${encodeURIComponent(system.id)}` : "/assessments/current/self-assessment/ad",
     heading: buildOutcomeWorkspaceTitle(outcome),
     intro: outcome && outcome.description ? outcome.description : "",
     systemName: bc && system ? system.name : "",
-    returnHref: bc
-      ? "/assessments/current/dashboard?lens=bc&view=all"
-      : "/assessments/current/dashboard?lens=ad&view=all",
+    systemId: bc && system ? system.id : "",
+    progressText,
+    returnHref: "/assessments/current/dashboard",
     returnText: "Save and return to dashboard",
     primaryActionText: nextOutcomeId ? "Save and continue" : "Save and return",
   };
+}
+
+function buildRoundTwoOutcomeProgressText(tree, outcome, options = {}) {
+  const items = getPrototypeOutcomeRows(tree || {});
+  if (!outcome || items.length === 0) return "";
+  const index = items.findIndex((item) => item.id === outcome.id);
+  if (index < 0) return "";
+  const current = index + 1;
+  const total = items.length;
+  if (options.systemName) {
+    return `Outcome ${current} of ${total} for ${options.systemName}`;
+  }
+  return `Outcome ${current} of ${total} in A and D`;
 }
 
 function getRoundTwoJudgementOptions() {
@@ -2386,9 +2456,17 @@ function buildIgpJudgementHint(igpAssessments) {
     (item) => item.group === "achieved" || item.group === "notAchieved"
   );
 
+  const allAnswered = items.every(hasCompletedIgpResponse);
   const answeredItems = items.filter(hasCompletedIgpResponse);
   const hasResponses = answeredItems.length > 0;
   if (!hasResponses) return null;
+  if (!allAnswered) {
+    return {
+      state: "incomplete",
+      title: "Complete the statement review first.",
+      text: "Answer every statement to see a reliable steer on the overall judgement.",
+    };
+  }
 
   if (usesCriteriaSelection) {
     const achieved = items.filter((item) => item.group === "achieved");
@@ -2399,8 +2477,13 @@ function buildIgpJudgementHint(igpAssessments) {
       achieved.every((item) => item.response === "Yes");
     const achievedHasGap = achieved.some((item) => item.response === "No");
     const negativeTriggered = notAchieved.some((item) => item.response === "Yes");
+    const negativeMixed = notAchieved.some(
+      (item) =>
+        item.response === "Alternative control in place" ||
+        item.response === "Not applicable"
+    );
 
-    if (achievedAllYes && !negativeTriggered) {
+    if (achievedAllYes && !negativeTriggered && !negativeMixed) {
       return {
         state: "met",
         title: "This pattern suggests the outcome may be met.",
@@ -2460,6 +2543,7 @@ function buildIgpSynthesis(igpAssessments) {
   return {
     strengths: items.filter((item) => item.response === "Yes").length,
     partials: items.filter((item) => item.response === "Alternative control in place").length,
+    notApplicable: items.filter((item) => item.response === "Not applicable").length,
     criticalGaps: items.filter((item) => item.response === "No").length,
   };
 }
@@ -2879,18 +2963,6 @@ function seedIipDemoGaps(assessment) {
     };
   }
 
-  if (!assessment.selfAssess.ad["D1b"]) {
-    assessment.selfAssess.ad["D1b"] = {
-      igpResponse: "Incident response playbooks exist but have not been exercised.",
-      judgement: "Not achieved",
-      rationale: "Exercises are scheduled but not yet completed.",
-      evidenceRefs: [
-        { refId: "IR-DEMO-02", type: "Playbook", link: "", note: "" },
-      ],
-      updatedAt: new Date().toISOString(),
-    };
-  }
-
   const scope = assessment.scope || {};
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
   const systemId = systems.length > 0 ? systems[0].id : "sys-1";
@@ -2898,13 +2970,13 @@ function seedIipDemoGaps(assessment) {
     assessment.selfAssess.bc[systemId] = { outcomes: {} };
   }
 
-  if (!assessment.selfAssess.bc[systemId].outcomes["C1b"]) {
-    assessment.selfAssess.bc[systemId].outcomes["C1b"] = {
-      igpResponse: "Coverage is partial for third-party interfaces.",
-      judgement: "Not achieved",
-      rationale: "Monitoring does not yet include all integrations.",
+  if (!assessment.selfAssess.bc[systemId].outcomes["B1a"]) {
+    assessment.selfAssess.bc[systemId].outcomes["B1a"] = {
+      igpResponse: "Documented protection policy exists, but coverage is still inconsistent.",
+      judgement: "Partially achieved",
+      rationale: "The core policy is in place, but supplier and operational coverage is incomplete.",
       evidenceRefs: [
-        { refId: "MON-DEMO-03", type: "Gap log", link: "", note: "" },
+        { refId: "POL-DEMO-03", type: "Policy", link: "", note: "" },
       ],
       updatedAt: new Date().toISOString(),
     };
@@ -2955,8 +3027,11 @@ function clearOutcomeAction(req) {
 
 function clearOutcomeForm(req) {
   delete req.session.data.action;
+  delete req.session.data.igpAssessments;
   delete req.session.data.igpResponse;
   delete req.session.data.judgement;
+  delete req.session.data.mismatchReason;
+  delete req.session.data.reuseDecision;
   delete req.session.data.rationale;
   delete req.session.data.qualityReviewedAt;
   delete req.session.data.approverReviewedAt;
@@ -2992,6 +3067,16 @@ function renderSelfAssessOutcome(res, { labels, assessment, outcome, context, fo
   if (context && context.roundTwo && form && Array.isArray(form.igpAssessments)) {
     form.igpJudgementHint = buildIgpJudgementHint(form.igpAssessments);
   }
+  if (context && context.roundTwo && form) {
+    form.previousAssessment = buildPreviousAssessmentSummary(assessment, context, outcome);
+    if (!form.reuseDecision && form.previousAssessment && form.previousAssessment.carriedForward) {
+      const currentRow =
+        context.lens === "bc"
+          ? getBCOutcome(assessment, context.systemId || "", outcome.id)
+          : ((assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {});
+      form.reuseDecision = (currentRow.reuseDecision || "").toString();
+    }
+  }
   return res.render("pages/flow/self-assess-outcome", {
     pageTitle: context.heading,
     labels,
@@ -3008,11 +3093,52 @@ function hasAnyEvidenceValue(ref) {
   return Boolean(ref.refId || ref.type || ref.link || ref.note);
 }
 
-function validateSelfAssess({ igpAssessments, judgement, mismatchReason, mismatch, rationale, labels }) {
+function buildPreviousAssessmentSummary(assessment, context, outcome) {
+  if (!assessment || !assessment.previousAssessment || !context || !outcome) return null;
+  const lens = (context.lens || "").toString();
+  const previous = assessment.previousAssessment || {};
+  const previousRow =
+    lens === "bc"
+      ? previous.bc && previous.bc[outcome.id]
+      : previous.ad && previous.ad[outcome.id];
+  if (!previousRow) return null;
+
+  const currentRow =
+    lens === "bc"
+      ? getBCOutcome(assessment, context.systemId || "", outcome.id)
+      : ((assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {});
+  const evidenceCount = Array.isArray(previousRow.evidenceRefs)
+    ? previousRow.evidenceRefs.filter(hasAnyEvidenceValue).length
+    : 0;
+
+  return {
+    version: previous.version || "",
+    reviewedAt: previous.reviewedAt || "",
+    judgement: previousRow.judgement || "",
+    rationale: previousRow.rationale || "",
+    evidenceCount,
+    carriedForward: Boolean(currentRow && currentRow.carriedForward),
+    reviewRequired: Boolean(currentRow && currentRow.reviewRequired),
+  };
+}
+
+function validateSelfAssess({
+  igpAssessments,
+  judgement,
+  mismatchReason,
+  mismatch,
+  rationale,
+  labels,
+  requireReuseDecision,
+  reuseDecision,
+}) {
   const errors = [];
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
   if (items.length > 0 && items.some((item) => !hasCompletedIgpResponse(item))) {
     errors.push({ field: "igpAssessments", text: "Complete the IGP responses before saving this outcome." });
+  }
+  if (requireReuseDecision && !reuseDecision) {
+    errors.push({ field: "reuseDecision", text: "Choose how you want to use the previous assessment." });
   }
   if (!judgement) {
     errors.push({ field: "judgement", text: labels.flow.selfAssessOutcome.errors.judgementRequired });

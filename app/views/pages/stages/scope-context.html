@@ -2,7 +2,13 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set saveButtonText = "Save and continue" %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/journey" %}
+    {% set saveButtonText = "Save and return to task list" %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if researchRound == "round-2" %}
     <span class="govuk-caption-l">Strategic context</span>
@@ -110,7 +116,7 @@
     {% endif %}
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and return to task list" if researchRound == "round-2" else "Save and continue" }}</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ saveButtonText }}</button>
     </div>
   </form>
 {% endblock %}

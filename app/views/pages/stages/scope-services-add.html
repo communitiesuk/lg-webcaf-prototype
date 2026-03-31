@@ -2,7 +2,15 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set headingText = "Add an essential service" %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/journey" %}
+  {% endif %}
+  {% if isEdit %}
+    {% set headingText = "Change an essential service" %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -21,7 +29,7 @@
 
   {% if researchRound == "round-2" %}
     <span class="govuk-caption-l">Essential services register</span>
-    <h1 class="govuk-heading-l">{{ "Change an essential service" if isEdit else "Add an essential service" }}</h1>
+    <h1 class="govuk-heading-l">{{ headingText }}</h1>
     <p class="govuk-body">
       {% if isEdit %}
         Update the essential service details for your CAF scope register.
@@ -41,6 +49,17 @@
     </p>
   {% endif %}
 
+  {% if researchRound == "round-2" %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body"><strong>What to include</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Use the name people in the council would recognise for the service.</li>
+        <li>Only add services the council needs to keep running.</li>
+        <li>Critical systems will be mapped to these services later.</li>
+      </ul>
+    </div>
+  {% endif %}
+
   <form method="post" action="{{ formAction or '/stages/2/scope/services/add' }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="serviceName">Service name</label>
@@ -50,6 +69,7 @@
           {{ (error.items | selectattr('field','equalto','serviceName') | list | first).text }}
         </p>
       {% endif %}
+      <div class="govuk-hint">For example, `Adult social care`, `Housing support` or `Waste collection`.</div>
       <input class="govuk-input" id="serviceName" name="serviceName" type="text" value="{{ data.name }}">
     </div>
 
@@ -61,7 +81,7 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="serviceOwner">Who owns this service?</label>
-      <div class="govuk-hint">Enter a role, team or service owner.</div>
+      <div class="govuk-hint">Enter the role, team or service owner responsible for this service.</div>
       <input class="govuk-input" id="serviceOwner" name="serviceOwner" type="text" value="{{ data.owner }}">
     </div>
 

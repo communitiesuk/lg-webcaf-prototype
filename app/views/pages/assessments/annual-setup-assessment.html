@@ -26,8 +26,14 @@
       <form method="post" action="/assessments/current/annual-setup/assessment">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           {% if hasPreviousAdAssessment %}
-            <fieldset class="govuk-fieldset" id="adAssessmentStatus">
+            <fieldset class="govuk-fieldset" id="adAssessmentStatus"{% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %} aria-describedby="adAssessmentStatus-error"{% endif %}>
               <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you handle the organisational assessment (A and D) this year?</legend>
+              {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}
+                <p id="adAssessmentStatus-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span>
+                  {{ (error.items | selectattr('field','equalto','adAssessmentStatus') | list | first).text }}
+                </p>
+              {% endif %}
               <div class="govuk-radios">
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-update" name="adAssessmentStatus" type="radio" value="update_existing" {% if form.adAssessmentStatus == "update_existing" %}checked{% endif %}>
@@ -55,9 +61,15 @@
         </div>
 
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint">
+          <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint{% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %} annualSystemIds-error{% endif %}">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select up to 3 critical systems for this year’s B and C assessment</legend>
             <div id="annualSystemIds-hint" class="govuk-hint">Choose up to 3 systems from your critical systems register for this assessment year.</div>
+            {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}
+              <p id="annualSystemIds-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','annualSystemIds') | list | first).text }}
+              </p>
+            {% endif %}
             {% if systems.length > 0 %}
               <div class="govuk-checkboxes">
                 {% for system in systems %}

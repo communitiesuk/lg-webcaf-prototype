@@ -1,0 +1,30 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <span class="govuk-caption-l">Quality assurance</span>
+  <h1 class="govuk-heading-l">Internal sign-off complete</h1>
+  <p class="govuk-body">The internal quality and approver sign-off has been recorded.</p>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Internal quality assurer</dt>
+      <dd class="govuk-summary-list__value">{{ signOff.qualityAssurerName or "—" }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Internal approver</dt>
+      <dd class="govuk-summary-list__value">{{ signOff.approverName or "—" }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Recorded</dt>
+      <dd class="govuk-summary-list__value">{{ signOff.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__actions">{{ signOff.completedBy }}</dd>
+    </div>
+  </dl>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to CAF journey task list</a>
+    <a class="govuk-link" href="/assessments/current/submit-assessment">Continue to submit to assurer</a>
+  </div>
+{% endblock %}

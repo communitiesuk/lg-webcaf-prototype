@@ -39,8 +39,14 @@
 
   <form method="post" action="/assessments/current/review-scope">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset" id="scopeChanged">
+      <fieldset class="govuk-fieldset" id="scopeChanged"{% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %} aria-describedby="scopeChanged-error"{% endif %}>
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Has your CAF scope changed since it was last reviewed?</legend>
+        {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}
+          <p id="scopeChanged-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','scopeChanged') | list | first).text }}
+          </p>
+        {% endif %}
         <div class="govuk-radios" data-module="govuk-radios">
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="scopeChanged-no" name="scopeChanged" type="radio" value="no" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "no" %}checked{% endif %}>
@@ -52,8 +58,14 @@
           </div>
           <div class="govuk-radios__conditional {% if form.scopeChanged != 'yes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-scopeChanged">
             <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-              <fieldset class="govuk-fieldset" id="scopeUpdateArea">
+              <fieldset class="govuk-fieldset" id="scopeUpdateArea"{% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %} aria-describedby="scopeUpdateArea-error"{% endif %}>
                 <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which part of your CAF scope do you need to update?</legend>
+                {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}
+                  <p id="scopeUpdateArea-error" class="govuk-error-message">
+                    <span class="govuk-visually-hidden">Error:</span>
+                    {{ (error.items | selectattr('field','equalto','scopeUpdateArea') | list | first).text }}
+                  </p>
+                {% endif %}
                 <div class="govuk-radios">
                   <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="scopeUpdateArea-context" name="scopeUpdateArea" type="radio" value="context" {% if form.scopeUpdateArea == "context" %}checked{% endif %}>

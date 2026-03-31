@@ -36,8 +36,14 @@
   {% set systemsInProgress = summary.systemsCount > 0 or summary.mappedCount > 0 or summary.inScopeSystemsCount > 0 %}
   {% set scopeTasksCompleted = (1 if strategyComplete else 0) + (1 if servicesComplete else 0) + (1 if systemsComplete else 0) %}
   {% set scopeTasksTotal = 3 if roundTwo else 4 %}
+  {% set pageTitle = "Set your scope" %}
+  {% set completionLabel = "Scope pack is complete." %}
+  {% if roundTwo %}
+    {% set pageTitle = "CAF scope register" %}
+    {% set completionLabel = "Scope register is complete." %}
+  {% endif %}
 
-  <h1 class="govuk-heading-l">{{ "CAF scope register" if roundTwo else "Set your scope" }}</h1>
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">{{ labels.stages.scope.hub.intro }}</p>
   {% if roundTwo %}
     <p class="govuk-body">Build your full list of strategic context, essential services and critical systems here. You can return to update these registers when things change.</p>
@@ -70,7 +76,7 @@
 
   {% if summary.isComplete %}
     <div class="govuk-inset-text">
-      {{ "Scope register is complete." if roundTwo else "Scope pack is complete." }}
+      {{ completionLabel }}
       {% if not roundTwo %}
         <a class="govuk-link" href="/stages/2/scope/complete">View completion page</a>.
       {% endif %}

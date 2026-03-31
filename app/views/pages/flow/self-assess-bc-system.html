@@ -1,7 +1,19 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{% if roundTwo %}/assessments/current/self-assessment/bc{% else %}/self-assess/bc/select-system{% endif %}">Back</a>
+  {% set backHref = "/self-assess/bc/select-system" %}
+  {% set refsStatus = "Not added yet" %}
+  {% set priorityText = "Not set" %}
+  {% if roundTwo %}
+    {% set backHref = "/assessments/current/self-assessment/bc" %}
+  {% endif %}
+  {% if refsCount > 0 %}
+    {% set refsStatus = "Added" %}
+  {% endif %}
+  {% if priorityLevel %}
+    {% set priorityText = priorityLevel | capitalize %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if roundTwo %}
     <span class="govuk-caption-l">B and C self-assessment</span>
@@ -11,6 +23,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">Review the contributing outcome for this selected critical system.</p>
+      <p class="govuk-hint">Complete the outcome below for this system, then return to the selected systems page.</p>
+
+      {% if saved == "outcome" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="bc-system-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="bc-system-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
+          </div>
+        </div>
+      {% endif %}
 
       {% if rows.length > 0 %}
         <h2 class="govuk-heading-m">Current B and C outcome</h2>
@@ -27,11 +51,21 @@
               <tr class="govuk-table__row">
                 <td class="govuk-table__cell">
                   <strong>{{ row.code }}</strong> {{ row.title }}
+                  {% if row.carriedForward %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                  {% endif %}
                 </td>
                 <td class="govuk-table__cell">{{ row.status }}</td>
                 <td class="govuk-table__cell">
+                  {% set outcomeActionText = "Start outcome" %}
+                  {% if row.judgement %}
+                    {% set outcomeActionText = "Review outcome" %}
+                  {% endif %}
+                  {% if row.carriedForward %}
+                    {% set outcomeActionText = "Review carried-forward outcome" %}
+                  {% endif %}
                   <a class="govuk-link" href="/self-assess/bc/{{ system.id }}/outcomes/{{ row.id }}">
-                    {{ "Review outcome" if row.judgement else "Start outcome" }}
+                    {{ outcomeActionText }}
                   </a>
                 </td>
               </tr>
@@ -61,8 +95,8 @@
           {% if mappedServices and mappedServices.length > 0 %}
             <p class="govuk-body">Supports: <strong>{{ mappedServices | join(", ") }}</strong></p>
           {% endif %}
-          <p class="govuk-body">Architecture link: <strong>{{ "Added" if refsCount > 0 else "Not added yet" }}</strong></p>
-          <p class="govuk-body govuk-!-margin-bottom-0">Priority: <strong>{{ priorityLevel | capitalize if priorityLevel else "Not set" }}</strong></p>
+          <p class="govuk-body">Architecture link: <strong>{{ refsStatus }}</strong></p>
+          <p class="govuk-body govuk-!-margin-bottom-0">Priority: <strong>{{ priorityText }}</strong></p>
         </aside>
 
         <aside class="app-outcome-page__sidebar-card">

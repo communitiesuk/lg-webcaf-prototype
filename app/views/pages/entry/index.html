@@ -5,37 +5,38 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {% if roundTwo %}
-        <h1 class="govuk-heading-xl">My account</h1>
-
+        <span class="govuk-caption-l">{{ roundTwoEntry.orgName }}</span>
+        <h1 class="govuk-heading-xl">Your CAF assessment</h1>
+        <p class="govuk-body">{{ roundTwoEntry.year }} assessment</p>
         <p class="govuk-body">
-          On this page you can:
+          <strong class="govuk-tag {% if roundTwoEntry.statusLabel == 'Ready for independent review' %}govuk-tag--green{% elif roundTwoEntry.statusLabel == 'Not started' %}govuk-tag--grey{% else %}govuk-tag--blue{% endif %}">
+            {{ roundTwoEntry.statusLabel }}
+          </strong>
         </p>
 
-        <ul class="govuk-list govuk-list--bullet">
-          <li>start a new self-assessment</li>
-          <li>continue a draft self-assessment</li>
-          <li>manage users</li>
-          <li>view your organisation details</li>
-        </ul>
+        <p class="govuk-body">{{ roundTwoEntry.helperText }}</p>
 
-        <form method="post" action="/entry/start-new?returnTo=/assessments/current/journey">
-          <button class="govuk-button" data-module="govuk-button" type="submit">
-            Start a self-assessment
-          </button>
-        </form>
-
-        {% if hasInProgress %}
-          <h2 class="govuk-heading-m">Continue a draft self-assessment</h2>
-          <form method="post" action="/entry/resume">
-            <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">
-              Continue draft
-            </button>
-          </form>
-          <p class="govuk-hint">Resume the most recently updated part of your current assessment.</p>
+        {% if roundTwoEntry.summaryRows and roundTwoEntry.summaryRows.length > 0 %}
+          <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+            {% for row in roundTwoEntry.summaryRows %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ row.key }}</dt>
+                <dd class="govuk-summary-list__value">{{ row.value }}</dd>
+              </div>
+            {% endfor %}
+          </dl>
         {% endif %}
 
-        <h2 class="govuk-heading-m">Self-assessments sent for review</h2>
-        <p class="govuk-body">You do not have any submitted self-assessments.</p>
+        <div class="govuk-button-group">
+          <form method="post" action="{{ roundTwoEntry.primaryActionHref }}" class="govuk-button-group__item">
+            <button class="govuk-button" data-module="govuk-button" type="submit">
+              {{ roundTwoEntry.primaryActionText }}
+            </button>
+          </form>
+          {% for action in roundTwoEntry.secondaryActions %}
+            <a class="govuk-link" href="{{ action.href }}">{{ action.text }}</a>
+          {% endfor %}
+        </div>
       {% else %}
         <h1 class="govuk-heading-xl">{{ labels.entry.heading }}</h1>
 
@@ -87,20 +88,28 @@
     </div>
     <div class="govuk-grid-column-one-third">
       {% if user %}
-        <p class="govuk-body">Logged in as</p>
-        <p class="govuk-body govuk-!-margin-bottom-1">
-          <strong>{{ user.name }}</strong>
-        </p>
-        <p class="govuk-body govuk-!-margin-top-0">{{ user.orgName or "Council user" }}</p>
-        <ul class="govuk-list">
-          <li><a class="govuk-link" href="/organisation-details">Your organisation details</a></li>
-          {% if roundTwo %}
-            <li><a class="govuk-link" href="/manage-users">Manage users</a></li>
-          {% else %}
+        {% if roundTwo %}
+          <aside class="app-outcome-page__sidebar-card">
+            <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Account</h2>
+            <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{ user.name }}</strong></p>
+            <p class="govuk-body">{{ user.orgName or "Council user" }}</p>
+            <p class="govuk-body govuk-!-margin-bottom-0">
+              <a class="govuk-link" href="/organisation-details">View organisation details</a><br>
+              <a class="govuk-link" href="/manage-users">Manage users</a>
+            </p>
+          </aside>
+        {% else %}
+          <p class="govuk-body">Logged in as</p>
+          <p class="govuk-body govuk-!-margin-bottom-1">
+            <strong>{{ user.name }}</strong>
+          </p>
+          <p class="govuk-body govuk-!-margin-top-0">{{ user.orgName or "Council user" }}</p>
+          <ul class="govuk-list">
+            <li><a class="govuk-link" href="/organisation-details">Your organisation details</a></li>
             <li><a class="govuk-link" href="/manage-users">Manage users</a></li>
             <li><a class="govuk-link" href="/engagement/request">Request an MHCLG check-in</a></li>
-          {% endif %}
-        </ul>
+          </ul>
+        {% endif %}
       {% endif %}
     </div>
   </div>

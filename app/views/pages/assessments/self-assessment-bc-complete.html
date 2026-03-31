@@ -1,0 +1,33 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">B and C complete</h1>
+  <p class="govuk-body">You have marked the selected-system B and C self-assessment as complete for this year.</p>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Marked complete</dt>
+      <dd class="govuk-summary-list__value">{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__actions">{{ reviewState.completedBy }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Selected systems</dt>
+      <dd class="govuk-summary-list__value">
+        {% if systems.length > 0 %}
+          {% for system in systems %}
+            {{ system.name }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        {% else %}
+          —
+        {% endif %}
+      </dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+  </dl>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
+    <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+{% endblock %}

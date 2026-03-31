@@ -1,0 +1,38 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <span class="govuk-caption-l">Submission</span>
+  <h1 class="govuk-heading-l">Assessment submitted to assurer</h1>
+  <p class="govuk-body">The full assessment package has been submitted to the assurer.</p>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submitted by</dt>
+      <dd class="govuk-summary-list__value">{{ submitted.submittedBy or "—" }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submitted at</dt>
+      <dd class="govuk-summary-list__value">{{ submitted.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Workshop date</dt>
+      <dd class="govuk-summary-list__value">{{ submissionWindow.workshopDateDisplay or "Not set" }}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Internal sign-off</dt>
+      <dd class="govuk-summary-list__value">{% if signOff.completed %}Completed{% else %}Not completed{% endif %}</dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+  </dl>
+
+  <div class="govuk-inset-text">
+    The assurer can now review the submitted package outside the council workflow.
+  </div>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to CAF journey task list</a>
+  </div>
+{% endblock %}

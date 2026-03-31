@@ -2,13 +2,77 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set successMessage = "Systems updated." %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/journey" %}
+  {% endif %}
+  {% if saved == "system-added" %}
+    {% set successMessage = "System added." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " added." %}
+    {% endif %}
+  {% elif saved == "system-updated" %}
+    {% set successMessage = "System updated." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " updated." %}
+    {% endif %}
+  {% elif saved == "system-removed" %}
+    {% set successMessage = "System removed." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " removed." %}
+    {% endif %}
+  {% elif saved == "mapping" %}
+    {% set successMessage = "System mapping saved." %}
+    {% if savedName %}
+      {% set successMessage = "Mapping saved for " + savedName + "." %}
+    {% endif %}
+  {% elif saved == "priority" %}
+    {% set successMessage = "System priority saved." %}
+    {% if savedName %}
+      {% set successMessage = "Priority saved for " + savedName + "." %}
+    {% endif %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="systems-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="systems-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+      </div>
+    </div>
+  {% endif %}
 
   {% if researchRound == "round-2" %}
   <span class="govuk-caption-l">Critical systems register</span>
   <h1 class="govuk-heading-l">Manage systems</h1>
     <p class="govuk-body">Add and maintain the full list of systems that support your essential services.</p>
     <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
+    {% set mappedCount = 0 %}
+    {% set prioritisedCount = 0 %}
+    {% set inScopeCount = 0 %}
+    {% for system in systems %}
+      {% if system.mappedServices and system.mappedServices.length > 0 %}
+        {% set mappedCount = mappedCount + 1 %}
+      {% endif %}
+      {% if system.priorityLabel %}
+        {% set prioritisedCount = prioritisedCount + 1 %}
+      {% endif %}
+      {% if system.inScope %}
+        {% set inScopeCount = inScopeCount + 1 %}
+      {% endif %}
+    {% endfor %}
+    {% if systems.length > 0 %}
+      <div class="govuk-inset-text">
+        <p class="govuk-body"><strong>Register summary</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          {{ systems.length }} systems listed, {{ inScopeCount }} in scope for CAF, {{ mappedCount }} mapped to services, {{ prioritisedCount }} with a priority set.
+        </p>
+      </div>
+    {% endif %}
   {% else %}
     <h1 class="govuk-heading-l">{{ labels.stages.scope.systems.reviewTitle }}</h1>
   {% endif %}
@@ -32,6 +96,30 @@
       </thead>
       <tbody class="govuk-table__body">
         {% for system in systems %}
+          {% set ownerText = "—" %}
+          {% set inScopeText = "No" %}
+          {% set priorityText = "Not set yet" %}
+          {% set priorityTagClass = "govuk-tag--grey" %}
+          {% if roundTwo %}
+            {% set ownerText = "Not added yet" %}
+          {% endif %}
+          {% if system.ownerSupplier %}
+            {% set ownerText = system.ownerSupplier %}
+          {% endif %}
+          {% if system.inScope %}
+            {% set inScopeText = "Yes" %}
+          {% endif %}
+          {% if system.priorityLabel %}
+            {% set priorityText = system.priorityLabel | capitalize %}
+            {% if system.priorityLabel == "high" %}
+              {% set priorityTagClass = "govuk-tag--red" %}
+            {% elif system.priorityLabel == "medium" %}
+              {% set priorityTagClass = "govuk-tag--blue" %}
+            {% elif system.priorityLabel == "low" %}
+              {% set priorityTagClass = "govuk-tag--green" %}
+            {% endif %}
+          {% endif %}
+          {% set hasMappedServices = system.mappedServices and system.mappedServices.length > 0 %}
           <tr class="govuk-table__row">
             <td class="govuk-table__cell">
               <strong>{{ system.name }}</strong>
@@ -44,20 +132,29 @@
                 <div class="govuk-hint govuk-!-margin-top-1">{{ system.boundaryNotes }}</div>
               {% endif %}
             </td>
-            <td class="govuk-table__cell">{{ system.ownerSupplier or (roundTwo and "Not added yet") or "—" }}</td>
-            <td class="govuk-table__cell">{{ "Yes" if system.inScope else "No" }}</td>
+            <td class="govuk-table__cell">{{ ownerText }}</td>
+            <td class="govuk-table__cell">
+              <strong class="govuk-tag {% if system.inScope %}govuk-tag--green{% else %}govuk-tag--grey{% endif %}">{{ inScopeText }}</strong>
+            </td>
             {% if roundTwo %}
               <td class="govuk-table__cell">
-                {% if system.mappedServices and system.mappedServices.length > 0 %}
-                  {{ system.mappedServices | join(", ") }}
+                {% if hasMappedServices %}
+                  <strong>{{ system.mappedServices.length }} service{% if system.mappedServices.length != 1 %}s{% endif %}</strong>
+                  <div class="govuk-hint govuk-!-margin-top-1">{{ system.mappedServices | join(", ") }}</div>
                 {% else %}
-                  Not mapped yet
+                  <strong class="govuk-tag govuk-tag--yellow">Not mapped yet</strong>
                 {% endif %}
               </td>
-              <td class="govuk-table__cell">{{ system.priorityLabel | capitalize if system.priorityLabel else "Not set yet" }}</td>
+              <td class="govuk-table__cell">
+                {% if system.priorityLabel %}
+                  <strong class="govuk-tag {{ priorityTagClass }}">{{ priorityText }}</strong>
+                {% else %}
+                  <strong class="govuk-tag govuk-tag--yellow">{{ priorityText }}</strong>
+                {% endif %}
+              </td>
               <td class="govuk-table__cell app-register-actions">
-                <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/mapping/{{ system.id }}">Map services</a>
-                <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/priority/{{ system.id }}">Set priority</a>
+                <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/mapping/{{ system.id }}">{% if hasMappedServices %}Change mapping{% else %}Map services{% endif %}</a>
+                <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/priority/{{ system.id }}">{% if system.priorityLabel %}Change priority{% else %}Set priority{% endif %}</a>
                 <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/systems/{{ system.id }}/edit">Change</a>
                 <form method="post" action="/stages/2/scope/systems/{{ system.id }}/remove" class="govuk-!-margin-top-1">
                   <button class="govuk-link app-link-button" type="submit">Remove</button>

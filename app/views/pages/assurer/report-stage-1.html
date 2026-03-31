@@ -51,13 +51,19 @@
     {% for row in outcomeRows %}
       {% set key = row.outcomeId | replace(":", "_") %}
       {% set existingItem = (existing.items | selectattr("outcomeId","equalto",row.outcomeId) | list | first) %}
+      {% set recommendationText = "" %}
+      {% set riskDescriptionText = "" %}
+      {% if existingItem %}
+        {% set recommendationText = existingItem.recommendation %}
+        {% set riskDescriptionText = existingItem.riskDescription %}
+      {% endif %}
       <h2 class="govuk-heading-m">{{ row.outcomeCode }} {{ row.title }}</h2>
       {% if row.systemName %}
         <p class="govuk-hint">System: {{ row.systemName }}</p>
       {% endif %}
       <div class="govuk-form-group">
         <label class="govuk-label" for="stage1Recommendation-{{ key }}">Assurer recommendation</label>
-        <textarea class="govuk-textarea" id="stage1Recommendation-{{ key }}" name="stage1Recommendation-{{ key }}" rows="3">{{ existingItem.recommendation if existingItem else "" }}</textarea>
+        <textarea class="govuk-textarea" id="stage1Recommendation-{{ key }}" name="stage1Recommendation-{{ key }}" rows="3">{{ recommendationText }}</textarea>
       </div>
       <div class="govuk-form-group">
         <label class="govuk-label" for="stage1RiskLevel-{{ key }}">Risk level</label>
@@ -71,7 +77,7 @@
       </div>
       <div class="govuk-form-group">
         <label class="govuk-label" for="stage1RiskDescription-{{ key }}">Risk description</label>
-        <textarea class="govuk-textarea" id="stage1RiskDescription-{{ key }}" name="stage1RiskDescription-{{ key }}" rows="3">{{ existingItem.riskDescription if existingItem else "" }}</textarea>
+        <textarea class="govuk-textarea" id="stage1RiskDescription-{{ key }}" name="stage1RiskDescription-{{ key }}" rows="3">{{ riskDescriptionText }}</textarea>
       </div>
       <div class="govuk-form-group">
         <fieldset class="govuk-fieldset">

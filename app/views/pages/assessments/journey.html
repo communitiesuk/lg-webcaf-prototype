@@ -12,24 +12,33 @@
       </p>
       <ul class="govuk-list app-milestone-summary__list">
         {% for milestone in roundTwoProgress.milestones %}
-          {% set milestoneTagClass = 'govuk-tag--grey' %}
-          {% set milestoneTagText = 'Not yet' %}
+          {% set milestoneTagClass = '' %}
+          {% set milestoneTagText = '' %}
           {% if milestone.state == 'completed' %}
             {% set milestoneTagClass = 'govuk-tag--green' %}
             {% set milestoneTagText = 'Completed' %}
           {% elif milestone.state == 'current' %}
             {% set milestoneTagClass = 'govuk-tag--blue' %}
-            {% set milestoneTagText = 'Current' %}
+            {% set milestoneTagText = 'Current step' %}
           {% endif %}
           <li class="app-milestone-summary__item app-milestone-summary__item--{{ milestone.state }}">
-            <strong class="govuk-tag {{ milestoneTagClass }}">
-              {{ milestoneTagText }}
-            </strong>
+            {% if milestoneTagText %}
+              <strong class="govuk-tag {{ milestoneTagClass }}">
+                {{ milestoneTagText }}
+              </strong>
+            {% endif %}
             <span class="app-milestone-summary__label">{{ milestone.label }}</span>
           </li>
         {% endfor %}
       </ul>
-      {% if roundTwoProgress.nextMilestoneLabel %}
+      {% if roundTwoProgress.nextActionText and roundTwoProgress.nextActionHref %}
+        <p class="govuk-body app-milestone-summary__next">
+          <strong>Next:</strong>
+          <a class="govuk-link govuk-link--no-visited-state" href="{{ roundTwoProgress.nextActionHref }}">
+            {{ roundTwoProgress.nextActionText }}
+          </a>
+        </p>
+      {% elif roundTwoProgress.nextMilestoneLabel %}
         <p class="govuk-body app-milestone-summary__next">
           <strong>Next:</strong> {{ roundTwoProgress.nextMilestoneLabel }}
         </p>
@@ -38,6 +47,7 @@
     <div class="govuk-inset-text">
       You started this self-assessment on <strong>{{ assessmentStartedAtDisplay }}</strong>. You need to complete it by <strong>{{ assessmentDueAtDisplay }}</strong>.
     </div>
+    <p class="govuk-body govuk-hint">Use the task list to track yearly progress and complete major stages. Use the dashboard for day-to-day assessment work.</p>
   {% else %}
     <h1 class="govuk-heading-l">CAF journey</h1>
     <p class="govuk-body">Use this task list to move through the full CAF process.</p>

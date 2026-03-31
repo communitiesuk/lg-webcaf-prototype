@@ -1,7 +1,23 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/assessments/current/start-self-assessment' }}">Back</a>
+  {% set backHref = "/assessments/current/start-self-assessment" %}
+  {% set successMessage = "People updated." %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/journey" %}
+  {% endif %}
+  {% if saved == "person-added" %}
+    {% set successMessage = "Person added." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " added." %}
+    {% endif %}
+  {% elif saved == "person-removed" %}
+    {% set successMessage = "Person removed." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " removed." %}
+    {% endif %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -14,6 +30,17 @@
             {% endfor %}
           </ul>
         </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="people-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="people-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
       </div>
     </div>
   {% endif %}
@@ -60,11 +87,23 @@
   <form method="post" action="/assessments/current/start-self-assessment/people">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="selfAssessPersonName">Name</label>
+      {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}
+        <p id="selfAssessPersonName-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','selfAssessPersonName') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonName" name="selfAssessPersonName" type="text" value="{{ form.name or '' }}">
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="selfAssessPersonEmail">Email</label>
+      {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}
+        <p id="selfAssessPersonEmail-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonEmail" name="selfAssessPersonEmail" type="email" value="{{ form.email or '' }}">
     </div>
 

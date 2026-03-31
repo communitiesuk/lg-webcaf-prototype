@@ -1,0 +1,37 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">Self-assessment complete</h1>
+  <p class="govuk-body">Your self-assessment is now ready to be sent for independent review.</p>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Marked complete</dt>
+      <dd class="govuk-summary-list__value">{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__actions">{{ reviewState.completedBy }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Selected systems</dt>
+      <dd class="govuk-summary-list__value">
+        {% if selectedSystems.length > 0 %}
+          {% for system in selectedSystems %}
+            {{ system.name }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        {% else %}
+          —
+        {% endif %}
+      </dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+  </dl>
+
+  <div class="govuk-inset-text">
+    Next, you can return to the task list or download the self-assessment summary before sending it for independent review.
+  </div>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
+    <a class="govuk-link" href="/assessments/current/complete-self-assessment/download">Download self-assessment summary</a>
+  </div>
+{% endblock %}

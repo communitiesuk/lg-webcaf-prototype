@@ -9,6 +9,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">Assess the selected critical systems for this assessment year.</p>
+      <p class="govuk-hint">Choose a selected system to complete its contributing outcomes. Your work saves as you go.</p>
+
+      {% if saved == "outcome" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="bc-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="bc-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
+          </div>
+        </div>
+      {% endif %}
 
       {% if frameworkChange and frameworkChange.changed %}
         <div class="govuk-inset-text">
@@ -23,6 +35,15 @@
             </ul>
           {% endif %}
         </div>
+      {% endif %}
+
+      {% if assessment.hasPreviousAdAssessment %}
+        <div class="govuk-inset-text">
+          Carried-forward B and C work should be reviewed before you treat it as complete for this year.
+        </div>
+      {% endif %}
+      {% if carriedForwardReviewCount and carriedForwardReviewCount > 0 %}
+        <p class="govuk-body"><strong>{{ carriedForwardReviewCount }}</strong> selected system{% if carriedForwardReviewCount != 1 %}s{% endif %} still have carried-forward B and C work to review.</p>
       {% endif %}
 
       {% if systems.length > 0 %}
@@ -40,14 +61,24 @@
               <tr class="govuk-table__row">
                 <td class="govuk-table__cell">
                   <strong>{{ system.name }}</strong>
+                  {% if system.carriedForward %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                  {% endif %}
                   {% if system.mappedServices and system.mappedServices.length > 0 %}
                     <div class="govuk-hint govuk-!-margin-top-1">Supports: {{ system.mappedServices | join(", ") }}</div>
                   {% endif %}
                 </td>
                 <td class="govuk-table__cell">{{ system.status }}</td>
                 <td class="govuk-table__cell">
+                  {% set systemActionText = "Start system" %}
+                  {% if system.judged > 0 %}
+                    {% set systemActionText = "Review system" %}
+                  {% endif %}
+                  {% if system.carriedForward %}
+                    {% set systemActionText = "Review carried-forward system" %}
+                  {% endif %}
                   <a class="govuk-link" href="/self-assess/bc/{{ system.id }}">
-                    {{ "Review system" if system.judged > 0 else "Start system" }}
+                    {{ systemActionText }}
                   </a>
                 </td>
               </tr>
@@ -83,13 +114,26 @@
         {% endif %}
         <h2 class="govuk-heading-m">Complete B and C</h2>
         <p class="govuk-body">Use this step when the selected-system B and C work is ready, even if A and D was completed earlier.</p>
+        <h3 class="govuk-heading-s">To complete B and C</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>review the contributing outcome for each selected system</li>
+          <li>record an overall judgement for each</li>
+          <li>add a reason for each judgement</li>
+        </ul>
+        <p class="govuk-hint">After B and C is complete, return to the task list to mark the full self-assessment ready for independent review.</p>
         {% if reviewState.completed %}
           <p class="govuk-body govuk-hint">Marked complete {{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}.</p>
         {% endif %}
         <form method="post" action="/assessments/current/self-assessment/bc">
           <div id="completeBcAssessment" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeBcAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-            <fieldset class="govuk-fieldset">
+            <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','completeBcAssessment') | list | length) > 0 %} aria-describedby="completeBcAssessment-error"{% endif %}>
               <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is B and C complete?</legend>
+              {% if error and (error.items | selectattr('field','equalto','completeBcAssessment') | list | length) > 0 %}
+                <p id="completeBcAssessment-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span>
+                  {{ (error.items | selectattr('field','equalto','completeBcAssessment') | list | first).text }}
+                </p>
+              {% endif %}
               <div class="govuk-radios">
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="completeBcAssessment-yes" name="completeBcAssessment" type="radio" value="yes">

@@ -6,7 +6,7 @@
     <a href="/assessments/current/journey" class="govuk-back-link">Return to task list</a>
     <span class="govuk-caption-l">Self-assessment</span>
     <h1 class="govuk-heading-l">Assessment dashboard</h1>
-    <p class="govuk-body">Review your contributing outcomes and continue the assessment work for this year.</p>
+    <p class="govuk-body">Continue this year's assessment work and review the outcomes that need your attention.</p>
   {% else %}
     <h1 class="govuk-heading-l">{{ labels.dashboard.heading }}</h1>
   {% endif %}
@@ -40,19 +40,38 @@
     </div>
   {% endif %}
 
-  {% if researchRound == "round-2" and dashboardFrameworkChange and dashboardFrameworkChange.changed %}
-    <div class="govuk-inset-text">
-      <p class="govuk-body"><strong>CAF has changed from version {{ dashboardFrameworkChange.assessmentVersion }} to {{ dashboardFrameworkChange.currentVersion }}.</strong></p>
-      <p class="govuk-body">{{ dashboardFrameworkChange.updatedCount }} updated outcome{% if dashboardFrameworkChange.updatedCount != 1 %}s{% endif %} need review across A and D and B and C.</p>
-      {% if dashboardFrameworkChange.newOutcomes and dashboardFrameworkChange.newOutcomes.length > 0 %}
-        <p class="govuk-body govuk-!-margin-bottom-1">New outcomes in the current version:</p>
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          {% for outcome in dashboardFrameworkChange.newOutcomes %}
-            <li><strong>{{ outcome.code }}</strong> {{ outcome.title }}{% if outcome.lens %} ({{ outcome.lens }}){% endif %}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+  {% if researchRound == "round-2" and query.saved == "outcome" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="dashboard-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ query.name or "Outcome" }} saved.</p>
+      </div>
     </div>
+  {% endif %}
+
+  {% if researchRound == "round-2" and dashboardFrameworkChange and dashboardFrameworkChange.changed %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="dashboard-framework-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="dashboard-framework-title">Framework updates</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">
+          CAF has changed from version {{ dashboardFrameworkChange.assessmentVersion }} to {{ dashboardFrameworkChange.currentVersion }}.
+        </p>
+        <p class="govuk-body">
+          {{ dashboardFrameworkChange.updatedCount }} updated outcome{% if dashboardFrameworkChange.updatedCount != 1 %}s{% endif %} need review.
+          {% if dashboardFrameworkChange.newOutcomes and dashboardFrameworkChange.newOutcomes.length > 0 %}
+            {{ dashboardFrameworkChange.newOutcomes.length }} new outcome{% if dashboardFrameworkChange.newOutcomes.length != 1 %}s{% endif %} are in the current version.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if researchRound == "round-2" %}
+    <p class="govuk-hint">Some CAF work stays outside WebCAF, such as secure evidence storage, architecture mapping and offline drafting. Use the dashboard to continue outcome work. Use the task list to track yearly milestones and complete major stages.</p>
   {% endif %}
 
   {% if notifications and notifications.length %}
@@ -185,6 +204,73 @@
   {% endif %}
 
   {% if researchRound == "round-2" %}
+    {% if roundTwoWorkQueues and roundTwoWorkQueues.carriedForwardReview.length > 0 %}
+      <h2 class="govuk-heading-m">Carried forward - review needed</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Assessment item</th>
+            <th scope="col" class="govuk-table__header">Area</th>
+            <th scope="col" class="govuk-table__header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for r in roundTwoWorkQueues.carriedForwardReview %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                {% if r.frameworkFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                {% endif %}
+                {% if r.systemName %}
+                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
+              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review carried-forward outcome</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% elif researchRound == "round-2" %}
+      <h2 class="govuk-heading-m">Carried forward - review needed</h2>
+      <p class="govuk-body govuk-hint">No carried-forward outcomes need review right now.</p>
+    {% endif %}
+
+    {% if roundTwoWorkQueues and roundTwoWorkQueues.frameworkUpdates.length > 0 %}
+      <h2 class="govuk-heading-m">Framework updates to review</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">Assessment item</th>
+            <th scope="col" class="govuk-table__header">Area</th>
+            <th scope="col" class="govuk-table__header">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for r in roundTwoWorkQueues.frameworkUpdates %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                {% if r.frameworkFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                {% endif %}
+                {% if r.systemName %}
+                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
+              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review updated outcome</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% elif researchRound == "round-2" %}
+      <h2 class="govuk-heading-m">Framework updates to review</h2>
+      <p class="govuk-body govuk-hint">No framework updates need review right now.</p>
+    {% endif %}
+
     {% if roundTwoWorkQueues and roundTwoWorkQueues.inProgress.length > 0 %}
       <h2 class="govuk-heading-m">In progress</h2>
       <table class="govuk-table">
@@ -201,6 +287,9 @@
             <tr class="govuk-table__row">
               <td class="govuk-table__cell">
                 <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                {% if r.carriedForwardFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                {% endif %}
                 {% if r.frameworkFlag %}
                   <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
                 {% endif %}
@@ -232,6 +321,9 @@
             <tr class="govuk-table__row">
               <td class="govuk-table__cell">
                 <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                {% if r.carriedForwardFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                {% endif %}
                 {% if r.frameworkFlag %}
                   <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
                 {% endif %}
@@ -242,6 +334,8 @@
               <td class="govuk-table__cell">
                 {% if r.isBlocked %}
                   Blocked
+                {% elif r.carriedForwardFlag %}
+                  Carried forward - review needed
                 {% elif r.isMissingEvidence %}
                   Missing evidence
                 {% else %}
@@ -453,6 +547,9 @@
                 <a class="govuk-link" href="{{ r.linkUrl }}?{{ buildQueryString(query) }}">
                   <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
                 </a>
+                {% if r.carriedForwardFlag %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                {% endif %}
                 {% if r.frameworkFlag %}
                   <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
                 {% endif %}

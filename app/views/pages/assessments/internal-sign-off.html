@@ -43,23 +43,47 @@
   {% endif %}
 
   <form method="post" action="/assessments/current/internal-sign-off">
-    <div class="govuk-form-group">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','qualityAssurerName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="qualityAssurerName">Internal quality assurer</label>
+      {% if error and (error.items | selectattr('field','equalto','qualityAssurerName') | list | length) > 0 %}
+        <p id="qualityAssurerName-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','qualityAssurerName') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-!-width-two-thirds" id="qualityAssurerName" name="qualityAssurerName" type="text" value="{{ signOff.qualityAssurerName }}">
     </div>
 
-    <div class="govuk-form-group">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','qualityAssurerDate') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="qualityAssurerDate">Quality assurer sign-off date</label>
+      {% if error and (error.items | selectattr('field','equalto','qualityAssurerDate') | list | length) > 0 %}
+        <p id="qualityAssurerDate-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','qualityAssurerDate') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-input--width-10" id="qualityAssurerDate" name="qualityAssurerDate" type="date" value="{{ signOff.qualityAssurerDate }}">
     </div>
 
-    <div class="govuk-form-group">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','approverName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="approverName">Internal approver</label>
+      {% if error and (error.items | selectattr('field','equalto','approverName') | list | length) > 0 %}
+        <p id="approverName-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','approverName') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-!-width-two-thirds" id="approverName" name="approverName" type="text" value="{{ signOff.approverName }}">
     </div>
 
-    <div class="govuk-form-group">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','approverDate') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="approverDate">Internal approver sign-off date</label>
+      {% if error and (error.items | selectattr('field','equalto','approverDate') | list | length) > 0 %}
+        <p id="approverDate-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','approverDate') | list | first).text }}
+        </p>
+      {% endif %}
       <input class="govuk-input govuk-input--width-10" id="approverDate" name="approverDate" type="date" value="{{ signOff.approverDate }}">
     </div>
 

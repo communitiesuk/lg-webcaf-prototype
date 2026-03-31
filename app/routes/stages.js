@@ -552,7 +552,7 @@ module.exports = function (router) {
 
     clearServiceForm(req);
 
-    return res.redirect("/stages/2/scope/services/review");
+    return res.redirect(`/stages/2/scope/services/review?saved=service-added&name=${encodeURIComponent(name)}`);
   });
 
   router.get("/stages/2/scope/services/:serviceId(svc-[^/]+)/edit", (req, res) => {
@@ -630,7 +630,7 @@ module.exports = function (router) {
     if (assessment.stage) assessment.stage.prepareScopeComplete = false;
     assessment.updatedAt = new Date().toISOString();
     clearServiceForm(req);
-    return res.redirect("/stages/2/scope/services/review");
+    return res.redirect(`/stages/2/scope/services/review?saved=service-updated&name=${encodeURIComponent(name)}`);
   });
 
   router.post("/stages/2/scope/services/:serviceId(svc-[^/]+)/remove", (req, res) => {
@@ -642,6 +642,7 @@ module.exports = function (router) {
 
     ensureScope(assessment);
     const serviceId = req.params.serviceId;
+    const removedService = findService(assessment.scope, serviceId);
     assessment.scope.essentialServices = assessment.scope.essentialServices.filter(
       (service) => service.id !== serviceId
     );
@@ -655,7 +656,8 @@ module.exports = function (router) {
     if (assessment.stage) assessment.stage.prepareScopeComplete = false;
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
-    return res.redirect("/stages/2/scope/services/review");
+    const removedName = removedService && removedService.name ? removedService.name : "Service";
+    return res.redirect(`/stages/2/scope/services/review?saved=service-removed&name=${encodeURIComponent(removedName)}`);
   });
 
   router.get("/stages/2/scope/services/:serviceId(svc-[^/]+)/remove", (req, res) => {
@@ -707,6 +709,8 @@ module.exports = function (router) {
       assessment,
       services: assessment.scope.essentialServices,
       roundTwo: isRoundTwoRequest(req),
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
     });
   });
 
@@ -848,7 +852,7 @@ module.exports = function (router) {
     }
 
     if (isRoundTwoRequest(req)) {
-      return res.redirect("/stages/2/scope/systems/review");
+      return res.redirect(`/stages/2/scope/systems/review?saved=system-added&name=${encodeURIComponent(name)}`);
     }
 
     return res.redirect(`/stages/2/scope/mapping/${newSystem.id}`);
@@ -934,7 +938,7 @@ module.exports = function (router) {
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
     clearSystemForm(req);
-    return res.redirect("/stages/2/scope/systems/review");
+    return res.redirect(`/stages/2/scope/systems/review?saved=system-updated&name=${encodeURIComponent(name)}`);
   });
 
   router.post("/stages/2/scope/systems/:systemId(sys-[^/]+)/remove", (req, res) => {
@@ -946,6 +950,7 @@ module.exports = function (router) {
 
     ensureScope(assessment);
     const systemId = req.params.systemId;
+    const removedSystem = findSystem(assessment.scope, systemId);
     assessment.scope.criticalSystems = assessment.scope.criticalSystems.filter(
       (system) => system.id !== systemId
     );
@@ -966,7 +971,8 @@ module.exports = function (router) {
     if (assessment.stage) assessment.stage.prepareScopeComplete = false;
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
-    return res.redirect("/stages/2/scope/systems/review");
+    const removedName = removedSystem && removedSystem.name ? removedSystem.name : "System";
+    return res.redirect(`/stages/2/scope/systems/review?saved=system-removed&name=${encodeURIComponent(removedName)}`);
   });
 
   router.get("/stages/2/scope/systems/:systemId(sys-[^/]+)/remove", (req, res) => {
@@ -1059,6 +1065,8 @@ module.exports = function (router) {
       systems: systemRows,
       nextAction,
       roundTwo: isRoundTwoRequest(req),
+      saved: (req.query.saved || "").toString(),
+      savedName: (req.query.name || "").toString(),
     });
   });
 
@@ -1124,7 +1132,7 @@ module.exports = function (router) {
     delete req.session.data.serviceIds;
 
     if (isRoundTwoRequest(req)) {
-      return res.redirect("/stages/2/scope/systems/review");
+      return res.redirect(`/stages/2/scope/systems/review?saved=mapping&name=${encodeURIComponent(system.name || "System")}`);
     }
 
     return res.redirect("/stages/2/scope/mapping/review");
@@ -1164,12 +1172,17 @@ module.exports = function (router) {
     }
 
     const priority = getPriority(assessment.scope, system.id);
+    const mappedServices = (mapping.serviceIds || [])
+      .map((serviceId) => findService(assessment.scope, serviceId))
+      .filter(Boolean)
+      .map((service) => service.name);
 
     res.render("pages/stages/scope-priority", {
       pageTitle: labels.stages.scope.priority.title,
       labels,
       assessment,
       system,
+      mappedServices,
       data: {
         level: priority ? priority.level : "",
         rationale: priority ? priority.rationale : "",
@@ -1200,21 +1213,27 @@ module.exports = function (router) {
     const criteria = coerceArray(req.session.data.priorityCriteria).filter(Boolean);
     const confidence = (req.session.data.priorityConfidence || "").toString();
     const confidenceRationale = (req.session.data.priorityConfidenceRationale || "").toString().trim();
+    const requiresConfidenceRationale = confidence === "medium" || confidence === "low";
 
     const errors = [];
     if (!level) errors.push({ field: "priorityLevel", text: labels.stages.scope.errors.priorityLevel });
     if (!rationale) errors.push({ field: "priorityRationale", text: labels.stages.scope.errors.priorityRationale });
     if (!confidence) errors.push({ field: "priorityConfidence", text: "Select a confidence level" });
-    if (!confidenceRationale) {
-      errors.push({ field: "priorityConfidenceRationale", text: "Enter a short reason for confidence" });
+    if (requiresConfidenceRationale && !confidenceRationale) {
+      errors.push({ field: "priorityConfidenceRationale", text: "Enter a short reason if you are not fully confident" });
     }
 
     if (errors.length > 0) {
+      const mappedServices = (mapping.serviceIds || [])
+        .map((serviceId) => findService(assessment.scope, serviceId))
+        .filter(Boolean)
+        .map((service) => service.name);
       return res.render("pages/stages/scope-priority", {
         pageTitle: labels.stages.scope.priority.title,
         labels,
         assessment,
         system,
+        mappedServices,
         data: { level, rationale, criteria, confidence, confidenceRationale },
         error: { items: errors },
       });
@@ -1238,7 +1257,7 @@ module.exports = function (router) {
     syncRoundTwoScopeCompletion(assessment, req);
 
     if (isRoundTwoRequest(req)) {
-      return res.redirect("/stages/2/scope/systems/review");
+      return res.redirect(`/stages/2/scope/systems/review?saved=priority&name=${encodeURIComponent(system.name || "System")}`);
     }
 
     return res.redirect("/stages/2/scope/priority/shortlist");

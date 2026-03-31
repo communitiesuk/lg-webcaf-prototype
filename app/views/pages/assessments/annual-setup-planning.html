@@ -25,9 +25,20 @@
 
   <form method="post" action="/assessments/current/annual-setup/planning">
     <div class="govuk-form-group {% if error and ((error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0) %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset" role="group" aria-describedby="assurance-window-hint">
+      <fieldset class="govuk-fieldset" role="group" aria-describedby="assurance-window-hint{% if error and ((error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0) %} assuranceWindow-error{% endif %}">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">When do you expect to need assurer support for this assessment?</legend>
         <div id="assurance-window-hint" class="govuk-hint">Enter an estimated month and year. If A and D and B and C will be ready at different times, enter the earliest point you expect to need support.</div>
+        {% if error and (error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 %}
+          <p id="assuranceWindow-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','assuranceMonth') | list | first).text }}
+          </p>
+        {% elif error and (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0 %}
+          <p id="assuranceWindow-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','assuranceYear') | list | first).text }}
+          </p>
+        {% endif %}
         <div class="govuk-date-input" id="assuranceWindow">
           <div class="govuk-date-input__item">
             <div class="govuk-form-group">

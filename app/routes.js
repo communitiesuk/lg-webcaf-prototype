@@ -316,7 +316,7 @@ router.get("/research-start", (req, res) => {
 });
 
 router.get("/sign-out", (req, res) => {
-  const redirectPath = getSignOutRedirect(req);
+  const redirectPath = getSignedOutPageRedirect(req);
   if (req.session && typeof req.session.destroy === "function") {
     return req.session.destroy(() => res.redirect(redirectPath));
   }
@@ -326,11 +326,21 @@ router.get("/sign-out", (req, res) => {
 router.get("/guidance", (req, res) => res.redirect(getSignedInLanding(req)));
 router.get("/my-account", (req, res) => res.redirect(getSignedInLanding(req)));
 router.get("/logout", (req, res) => {
-  const redirectPath = getSignOutRedirect(req);
+  const redirectPath = getSignedOutPageRedirect(req);
   if (req.session && typeof req.session.destroy === "function") {
     return req.session.destroy(() => res.redirect(redirectPath));
   }
   return res.redirect(redirectPath);
+});
+router.get("/signed-out", (req, res) => {
+  const researchRound = normaliseResearchRound((req.query.round || "").toString());
+  const roundTwo = researchRound === "round-2";
+  res.render("pages/signed-out", {
+    pageTitle: "Signed out",
+    roundTwo,
+    signInHref: roundTwo ? "/round-2/sign-in" : "/research-start?reset=1",
+    secondaryHref: roundTwo ? "/research-rounds" : "/research-start?reset=1",
+  });
 });
 router.get("/organisation-details", (req, res) => res.redirect("/entry"));
 router.get("/manage-users", (req, res) => res.redirect("/entry"));
@@ -599,6 +609,12 @@ function getSignOutRedirect(req) {
   const researchRound =
     req.session && req.session.data ? normaliseResearchRound(req.session.data.researchRound) : "round-1";
   return researchRound === "round-2" ? "/research-rounds" : "/research-start?reset=1";
+}
+
+function getSignedOutPageRedirect(req) {
+  const researchRound =
+    req.session && req.session.data ? normaliseResearchRound(req.session.data.researchRound) : "round-1";
+  return `/signed-out?round=${encodeURIComponent(researchRound)}`;
 }
 
 function getSignedInLanding(req) {

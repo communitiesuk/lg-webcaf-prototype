@@ -40,6 +40,10 @@
     {% for row in outcomeRows %}
       {% set key = row.outcomeId | replace(":", "_") %}
       {% set existingOutcome = (existing.outcomes | selectattr("outcomeId","equalto",row.outcomeId) | list | first) %}
+      {% set justificationText = "" %}
+      {% if existingOutcome %}
+        {% set justificationText = existingOutcome.justification %}
+      {% endif %}
       <h2 class="govuk-heading-m">{{ row.outcomeCode }} {{ row.title }}</h2>
       {% if row.systemName %}
         <p class="govuk-hint">System: {{ row.systemName }}</p>
@@ -55,13 +59,17 @@
       </div>
       <div class="govuk-form-group">
         <label class="govuk-label" for="auditJustification-{{ key }}">Assurer justification</label>
-        <textarea class="govuk-textarea" id="auditJustification-{{ key }}" name="auditJustification-{{ key }}" rows="3">{{ existingOutcome.justification if existingOutcome else "" }}</textarea>
+        <textarea class="govuk-textarea" id="auditJustification-{{ key }}" name="auditJustification-{{ key }}" rows="3">{{ justificationText }}</textarea>
       </div>
 
-      {% for igp in ["IGP-1","IGP-2","IGP-3"] %}
-        {% set igpKey = (row.outcomeId ~ "__" ~ igp) | replace(":", "_") %}
-        {% set existingIgp = (existing.igps | selectattr("outcomeId","equalto",row.outcomeId) | selectattr("igpId","equalto",igp) | list | first) %}
-        <div class="govuk-grid-row">
+        {% for igp in ["IGP-1","IGP-2","IGP-3"] %}
+          {% set igpKey = (row.outcomeId ~ "__" ~ igp) | replace(":", "_") %}
+          {% set existingIgp = (existing.igps | selectattr("outcomeId","equalto",row.outcomeId) | selectattr("igpId","equalto",igp) | list | first) %}
+          {% set igpNoteText = "" %}
+          {% if existingIgp %}
+            {% set igpNoteText = existingIgp.note %}
+          {% endif %}
+          <div class="govuk-grid-row">
           <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group">
               <label class="govuk-label" for="auditIgpAssessment-{{ igpKey }}">{{ igp }} assessment</label>
@@ -75,7 +83,7 @@
           <div class="govuk-grid-column-one-half">
             <div class="govuk-form-group">
               <label class="govuk-label" for="auditIgpNote-{{ igpKey }}">{{ igp }} note</label>
-              <input class="govuk-input" id="auditIgpNote-{{ igpKey }}" name="auditIgpNote-{{ igpKey }}" type="text" value="{{ existingIgp.note if existingIgp else '' }}">
+              <input class="govuk-input" id="auditIgpNote-{{ igpKey }}" name="auditIgpNote-{{ igpKey }}" type="text" value="{{ igpNoteText }}">
             </div>
           </div>
         </div>

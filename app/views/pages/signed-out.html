@@ -1,0 +1,20 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">You have signed out</h1>
+
+      {% if roundTwo %}
+        <p class="govuk-body">Your current assessment has been saved in the prototype. You can sign in again later to continue this year's work.</p>
+      {% else %}
+        <p class="govuk-body">You have been signed out of the prototype.</p>
+      {% endif %}
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="{{ signInHref }}">Sign in again</a>
+        <a class="govuk-link" href="{{ secondaryHref }}">{% if roundTwo %}Return to research rounds{% else %}Return to research start{% endif %}</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

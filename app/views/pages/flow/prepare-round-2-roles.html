@@ -18,6 +18,17 @@
     </div>
   {% endif %}
 
+  {% if saved == "roles" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="roles-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="roles-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Key roles saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
   <span class="govuk-caption-l">Onboarding</span>
   <h1 class="govuk-heading-l">Set up key roles</h1>
   <p class="govuk-body">Add the people responsible for leading and approving the CAF work.</p>

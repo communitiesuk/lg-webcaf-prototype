@@ -2,9 +2,13 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  {% set pageTitle = "Identify your priority critical systems" %}
+  {% if researchRound == "round-2" %}
+    {% set pageTitle = "Describe systems you may assess in future years" %}
+  {% endif %}
   <a class="govuk-back-link" href="/stages/2/scope/priority/shortlist">Back</a>
 
-  <h1 class="govuk-heading-l">{{ "Describe systems you may assess in future years" if researchRound == "round-2" else "Identify your priority critical systems" }}</h1>
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
       Record notes for up to 3 systems that are likely to be chosen during annual setup. This helps future planning but is not required to complete the scope register.

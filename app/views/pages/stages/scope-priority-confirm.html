@@ -2,9 +2,15 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  {% set pageTitle = "Complete scope pack" %}
+  {% set confirmButtonText = "Complete scope pack" %}
+  {% if researchRound == "round-2" %}
+    {% set pageTitle = "Complete scope register" %}
+    {% set confirmButtonText = "Complete scope register" %}
+  {% endif %}
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
-  <h1 class="govuk-heading-l">{{ "Complete scope register" if researchRound == "round-2" else "Complete scope pack" }}</h1>
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
       Check the critical systems marked in scope, then confirm the register is ready to use for yearly planning and assessment.
@@ -71,6 +77,6 @@
       </div>
     </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Complete scope register" if researchRound == "round-2" else "Complete scope pack" }}</button>
+    <button class="govuk-button" data-module="govuk-button" type="submit">{{ confirmButtonText }}</button>
   </form>
 {% endblock %}

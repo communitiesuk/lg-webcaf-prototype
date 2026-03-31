@@ -2,7 +2,17 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set headingText = "Add a critical system" %}
+  {% set scopeQuestion = "Is this system in scope for this assessment period?" %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/assessments/current/journey" %}
+    {% set scopeQuestion = "Is this system currently in scope for CAF?" %}
+  {% endif %}
+  {% if isEdit %}
+    {% set headingText = "Change a critical system" %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -21,7 +31,7 @@
 
   {% if researchRound == "round-2" %}
     <span class="govuk-caption-l">Critical systems register</span>
-    <h1 class="govuk-heading-l">{{ "Change a critical system" if isEdit else "Add a critical system" }}</h1>
+    <h1 class="govuk-heading-l">{{ headingText }}</h1>
     <p class="govuk-body">
       {% if isEdit %}
         Update the critical system details for your CAF scope register.
@@ -43,6 +53,17 @@
     </p>
   {% endif %}
 
+  {% if researchRound == "round-2" %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body"><strong>What to include</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Use the name people in the council would recognise for this system.</li>
+        <li>Only add systems that support one or more essential services.</li>
+        <li>After saving, you can map the system to services and set its priority.</li>
+      </ul>
+    </div>
+  {% endif %}
+
   <form method="post" action="{{ formAction or '/stages/2/scope/systems/add' }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="systemName">System name</label>
@@ -52,6 +73,7 @@
           {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
         </p>
       {% endif %}
+      <div class="govuk-hint">For example, `Case Management System` or `Payments Platform`.</div>
       <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
     </div>
 
@@ -63,6 +85,7 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="ownerSupplier">Owner or supplier</label>
+      <div class="govuk-hint">Enter the internal owner, supplier, or team responsible for the system.</div>
       <input class="govuk-input" id="ownerSupplier" name="ownerSupplier" type="text" value="{{ data.ownerSupplier }}">
     </div>
 
@@ -79,10 +102,13 @@
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend">{{ "Is this system currently in scope for CAF?" if researchRound == "round-2" else "Is this system in scope for this assessment period?" }}</legend>
+      <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %} aria-describedby="systemInScope-error"{% endif %}>
+        <legend class="govuk-fieldset__legend">{{ scopeQuestion }}</legend>
+        {% if researchRound == "round-2" %}
+          <div class="govuk-hint">Select `Yes` if this system is currently within your CAF scope register.</div>
+        {% endif %}
         {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}
-          <p class="govuk-error-message">
+          <p id="systemInScope-error" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
             {{ (error.items | selectattr('field','equalto','systemInScope') | list | first).text }}
           </p>

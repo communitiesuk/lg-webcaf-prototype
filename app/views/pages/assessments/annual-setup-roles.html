@@ -45,11 +45,23 @@
       <form method="post" action="/assessments/current/annual-setup/roles">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualLead') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="annualLead">CAF lead for this year</label>
+          {% if error and (error.items | selectattr('field','equalto','annualLead') | list | length) > 0 %}
+            <p id="annualLead-error" class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','annualLead') | list | first).text }}
+            </p>
+          {% endif %}
           <input class="govuk-input govuk-!-width-two-thirds" id="annualLead" name="annualLead" type="text" value="{{ form.annualLead or '' }}">
         </div>
 
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualApprover') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="annualApprover">Approver for this year</label>
+          {% if error and (error.items | selectattr('field','equalto','annualApprover') | list | length) > 0 %}
+            <p id="annualApprover-error" class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','annualApprover') | list | first).text }}
+            </p>
+          {% endif %}
           <input class="govuk-input govuk-!-width-two-thirds" id="annualApprover" name="annualApprover" type="text" value="{{ form.annualApprover or '' }}">
         </div>
 

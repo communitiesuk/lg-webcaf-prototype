@@ -2,12 +2,50 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/assessments/current/journey' if roundTwo else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set successMessage = "Services updated." %}
+  {% if roundTwo %}
+    {% set backHref = "/assessments/current/journey" %}
+  {% endif %}
+  {% if saved == "service-added" %}
+    {% set successMessage = "Service added." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " added." %}
+    {% endif %}
+  {% elif saved == "service-updated" %}
+    {% set successMessage = "Service updated." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " updated." %}
+    {% endif %}
+  {% elif saved == "service-removed" %}
+    {% set successMessage = "Service removed." %}
+    {% if savedName %}
+      {% set successMessage = savedName + " removed." %}
+    {% endif %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="services-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="services-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+      </div>
+    </div>
+  {% endif %}
 
   {% if roundTwo %}
   <span class="govuk-caption-l">Essential services register</span>
   <h1 class="govuk-heading-l">Manage services</h1>
     <p class="govuk-body">Add and maintain the full list of services your council needs to keep running within CAF scope.</p>
+    {% if services.length > 0 %}
+      <div class="govuk-inset-text">
+        <p class="govuk-body"><strong>Register summary</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ services.length }} services listed in the register.</p>
+      </div>
+    {% endif %}
   {% else %}
     <h1 class="govuk-heading-l">{{ labels.stages.scope.services.reviewTitle }}</h1>
   {% endif %}
@@ -27,6 +65,13 @@
       </thead>
       <tbody class="govuk-table__body">
         {% for service in services %}
+          {% set ownerText = "—" %}
+          {% if roundTwo %}
+            {% set ownerText = "Not added yet" %}
+          {% endif %}
+          {% if service.owner %}
+            {% set ownerText = service.owner %}
+          {% endif %}
           <tr class="govuk-table__row">
             <td class="govuk-table__cell">
               <strong>{{ service.name }}</strong>
@@ -34,7 +79,7 @@
                 <div class="govuk-hint govuk-!-margin-top-1">{{ service.description }}</div>
               {% endif %}
             </td>
-            <td class="govuk-table__cell">{{ service.owner or (roundTwo and "Not added yet") or "—" }}</td>
+            <td class="govuk-table__cell">{{ ownerText }}</td>
             {% if roundTwo %}
               <td class="govuk-table__cell app-register-actions">
                 <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/services/{{ service.id }}/edit">Change</a>

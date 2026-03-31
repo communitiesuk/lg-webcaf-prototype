@@ -1,6 +1,14 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  {% set adCompletionText = "Not completed" %}
+  {% set bcCompletionText = "Not completed" %}
+  {% if adReviewState.completed %}
+    {% set adCompletionText = "Completed" %}
+  {% endif %}
+  {% if bcReviewState.completed %}
+    {% set bcCompletionText = "Completed" %}
+  {% endif %}
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
   {% if error %}
@@ -22,6 +30,7 @@
   <h1 class="govuk-heading-l">Complete your self-assessment</h1>
   <p class="govuk-body">Review this year’s self-assessment before marking it complete.</p>
   <p class="govuk-body">Completing the self-assessment confirms it is ready to be sent to the assurer for independent review.</p>
+  <p class="govuk-hint">Next, confirm both sections are complete and then mark the full self-assessment ready for independent review.</p>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -31,7 +40,7 @@
           <dd class="govuk-summary-list__value">
             {{ completion.adJudged }} of {{ completion.adTotal }} outcomes judged
             <br>
-            <strong>{{ "Completed" if adReviewState.completed else "Not completed" }}</strong>
+            <strong>{{ adCompletionText }}</strong>
           </dd>
           <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/ad">Review<span class="govuk-visually-hidden"> A and D self-assessment</span></a></dd>
         </div>
@@ -40,7 +49,7 @@
           <dd class="govuk-summary-list__value">
             {{ completion.bcJudged }} of {{ completion.bcTotal }} outcomes judged
             <br>
-            <strong>{{ "Completed" if bcReviewState.completed else "Not completed" }}</strong>
+            <strong>{{ bcCompletionText }}</strong>
           </dd>
           <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/bc">Review<span class="govuk-visually-hidden"> B and C self-assessment</span></a></dd>
         </div>
@@ -68,8 +77,14 @@
 
       <form method="post" action="/assessments/current/complete-self-assessment">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <fieldset class="govuk-fieldset">
+          <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %} aria-describedby="completeSelfAssessment-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is this self-assessment ready to be sent for independent review?</legend>
+            {% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %}
+              <p id="completeSelfAssessment-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','completeSelfAssessment') | list | first).text }}
+              </p>
+            {% endif %}
             <div class="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="completeSelfAssessment-yes" name="completeSelfAssessment" type="radio" value="yes">

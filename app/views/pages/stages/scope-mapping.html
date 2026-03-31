@@ -2,7 +2,13 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="{{ '/stages/2/scope/systems/review' if researchRound == 'round-2' else '/stages/2/scope' }}">Back</a>
+  {% set backHref = "/stages/2/scope" %}
+  {% set submitText = "Continue" %}
+  {% if researchRound == "round-2" %}
+    {% set backHref = "/stages/2/scope/systems/review" %}
+    {% set submitText = "Save and return to critical systems" %}
+  {% endif %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -20,20 +26,42 @@
   {% if researchRound == "round-2" %}
     <span class="govuk-caption-l">Critical systems register</span>
     <h1 class="govuk-heading-l">{{ system.name }}</h1>
-    <p class="govuk-body">Map this critical system to the essential services it supports.</p>
+    <p class="govuk-body">Map this critical system to the essential services it supports. This helps show which services depend on it.</p>
   {% else %}
     <h1 class="govuk-heading-l">{{ labels.stages.scope.mapping.title }}</h1>
     <p class="govuk-body"><strong>{{ system.name }}</strong></p>
   {% endif %}
 
+  {% if researchRound == "round-2" %}
+    <div class="govuk-inset-text">
+      {% if system.systemType %}
+        <p class="govuk-body"><strong>System type:</strong> {{ system.systemType }}</p>
+      {% endif %}
+      {% if system.ownerSupplier %}
+        <p class="govuk-body"><strong>Owner or supplier:</strong> {{ system.ownerSupplier }}</p>
+      {% endif %}
+      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Architecture reference:</strong> {% if system.diagramRefs and system.diagramRefs.length > 0 %}Added{% else %}Not added yet{% endif %}</p>
+    </div>
+
+    <div class="govuk-inset-text">
+      <p class="govuk-body"><strong>Decision aid</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Select every essential service that depends directly on this system.</li>
+        <li>If a service could not run properly without this system, include it.</li>
+        <li>You can come back later and update this mapping if the register changes.</li>
+      </ul>
+    </div>
+  {% endif %}
+
   <form method="post" action="/stages/2/scope/mapping/{{ system.id }}">
     <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
+      <fieldset class="govuk-fieldset"{% if error %} aria-describedby="serviceIds-error"{% endif %}>
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
           Which essential services does this system support?
         </legend>
+        <div class="govuk-hint">Select all the essential services that rely on this system.</div>
         {% if error %}
-          <p class="govuk-error-message" id="serviceIds">
+          <p class="govuk-error-message" id="serviceIds-error">
             <span class="govuk-visually-hidden">Error:</span> {{ error }}
           </p>
         {% endif %}
@@ -58,7 +86,7 @@
     </div>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and return to critical systems" if researchRound == "round-2" else "Continue" }}</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText }}</button>
       {% if researchRound == "round-2" %}
         <a class="govuk-link" href="/stages/2/scope/systems/review">Cancel and return to critical systems</a>
       {% endif %}

@@ -94,11 +94,17 @@
   </dl>
 
   <form method="post" action="/assessments/current/assurance-report/workshops" class="govuk-!-margin-bottom-6">
-    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','workshopDatesDecision') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','workshopDatesDecision') | list | length) > 0 %} aria-describedby="workshopDatesDecision-error"{% endif %}>
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
           Are these upcoming dates correct for your council?
         </legend>
+        {% if error and (error.items | selectattr('field','equalto','workshopDatesDecision') | list | length) > 0 %}
+          <p id="workshopDatesDecision-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','workshopDatesDecision') | list | first).text }}
+          </p>
+        {% endif %}
         <div class="govuk-radios" data-module="govuk-radios">
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="workshopDatesDecision" name="workshopDatesDecision" type="radio" value="confirm" {% if workshopResponse.decision == "confirm" %}checked{% endif %}>
@@ -111,8 +117,14 @@
         </div>
       </fieldset>
     </div>
-    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','workshopDatesNotes') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="workshopDatesNotes">Notes (optional if confirmed)</label>
+      {% if error and (error.items | selectattr('field','equalto','workshopDatesNotes') | list | length) > 0 %}
+        <p id="workshopDatesNotes-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','workshopDatesNotes') | list | first).text }}
+        </p>
+      {% endif %}
       <textarea class="govuk-textarea" id="workshopDatesNotes" name="workshopDatesNotes" rows="3">{{ workshopResponse.notes or "" }}</textarea>
     </div>
     <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Save workshop response</button>
@@ -152,9 +164,20 @@
   {% endif %}
 
   <form method="post" action="/assessments/current/assurance-report/amendments">
-    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
+    <div class="govuk-form-group {% if error and ((error.items | selectattr('field','equalto','assuranceAmendments') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceAmendmentsNotes') | list | length) > 0) %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="assuranceAmendmentsNotes">Amendment notes</label>
       <div class="govuk-hint">Add requested changes or clarifications for the assurer.</div>
+      {% if error and (error.items | selectattr('field','equalto','assuranceAmendmentsNotes') | list | length) > 0 %}
+        <p id="assuranceAmendmentsNotes-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','assuranceAmendmentsNotes') | list | first).text }}
+        </p>
+      {% elif error and (error.items | selectattr('field','equalto','assuranceAmendments') | list | length) > 0 %}
+        <p id="assuranceAmendmentsNotes-error" class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','assuranceAmendments') | list | first).text }}
+        </p>
+      {% endif %}
       <textarea
         class="govuk-textarea"
         id="assuranceAmendmentsNotes"
