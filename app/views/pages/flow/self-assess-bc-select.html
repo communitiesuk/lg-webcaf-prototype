@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.selectHeading }}</h1>
@@ -42,5 +44,7 @@
   <div class="govuk-button-group">
     <a class="govuk-button" href="/assurance-review">Continue to Stage 5: Assurance review</a>
     <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

@@ -1,6 +1,9 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="/assessments/current/self-assessment/ad">Back</a>
   <span class="govuk-caption-l">Self-assessment</span>
   <h1 class="govuk-heading-l">A and D complete</h1>
   <p class="govuk-body">You have marked the organisational A and D self-assessment as complete for this year.</p>
@@ -23,7 +26,9 @@
   </dl>
 
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
-    <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+    <a class="govuk-button" data-module="govuk-button" href="{{ nextActionHref }}">{{ nextActionText }}</a>
+    <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

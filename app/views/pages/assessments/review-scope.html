@@ -1,6 +1,9 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
   {% if error %}
@@ -18,22 +21,36 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">Review your CAF scope</h1>
-  <p class="govuk-body">Before setting up this year’s assessment, check whether your CAF scope has changed.</p>
-  <p class="govuk-body">You only need to update scope if your council context, essential services or critical systems have changed.</p>
+  {{ appPageHeader({
+    title: "Review and update your scope summary",
+    intro: "Review your current CAF scope summary and update it if anything has changed before you set up this year's assessment.",
+    showSaveReassurance: true
+  }) }}
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Help with this step</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Only update your scope if your context, essential services or critical systems have changed.</li>
+        <li>If something has changed, you will update that part of the scope before continuing.</li>
+      </ul>
+    </div>
+  </details>
 
+  <h2 class="govuk-heading-m">Current scope summary</h2>
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Organisation strategic context</dt>
+      <dt class="govuk-summary-list__key">Organisational context</dt>
       <dd class="govuk-summary-list__value">{{ scopeSummary.contextStatus }}</dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Essential services</dt>
-      <dd class="govuk-summary-list__value">{{ scopeSummary.essentialServicesCount }} in register</dd>
+      <dd class="govuk-summary-list__value">{{ scopeSummary.essentialServicesCount }} in list</dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Critical systems</dt>
-      <dd class="govuk-summary-list__value">{{ scopeSummary.criticalSystemsCount }} in register</dd>
+      <dd class="govuk-summary-list__value">{{ scopeSummary.criticalSystemsCount }} in list</dd>
     </div>
   </dl>
 
@@ -69,7 +86,7 @@
                 <div class="govuk-radios">
                   <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="scopeUpdateArea-context" name="scopeUpdateArea" type="radio" value="context" {% if form.scopeUpdateArea == "context" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-context">Organisation strategic context</label>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-context">Organisational context</label>
                   </div>
                   <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="scopeUpdateArea-services" name="scopeUpdateArea" type="radio" value="services" {% if form.scopeUpdateArea == "services" %}checked{% endif %}>
@@ -87,6 +104,11 @@
       </fieldset>
     </div>
 
-    <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+    </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

@@ -1,0 +1,31 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/research-rounds">Back</a>
+
+      <h1 class="govuk-heading-l">Reset prototype</h1>
+
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          This is for testing only and will remove entered prototype data.
+        </strong>
+      </div>
+
+      <p class="govuk-body">This will clear the current prototype session and saved assessment data used for testing.</p>
+      <p class="govuk-body">You will be signed out and returned to the start page so you can begin again from a clean state.</p>
+
+      <form method="post" action="/research-rounds/reset-prototype">
+        <div class="govuk-button-group">
+          <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">
+            Reset prototype
+          </button>
+          <a class="govuk-link" href="/research-rounds">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

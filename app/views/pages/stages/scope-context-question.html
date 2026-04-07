@@ -1,0 +1,76 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {{ appPageHeader({
+    caption: "Strategic context",
+    title: contextStep.question,
+    intro: "Question " ~ (stepIndex + 1) ~ " of " ~ stepCount,
+    hint: contextStep.hint
+  }) }}
+
+  <form method="post" action="{{ formAction }}">
+    {% if contextStep.type == "textarea" %}
+      <div class="govuk-form-group">
+        <label class="govuk-label govuk-visually-hidden" for="{{ contextStep.sessionKey }}">{{ contextStep.question }}</label>
+        <textarea
+          class="govuk-textarea"
+          id="{{ contextStep.sessionKey }}"
+          name="{{ contextStep.sessionKey }}"
+          rows="{{ contextStep.rows or 3 }}"
+        >{{ assessment.scope.context[contextStep.contextKey] or '' }}</textarea>
+      </div>
+    {% elif contextStep.type == "date" %}
+      {% set dateValue = assessment.scope.context[contextStep.contextKey] or {} %}
+      <div class="govuk-form-group">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-visually-hidden">{{ contextStep.question }}</legend>
+          <div class="govuk-date-input" id="{{ contextStep.slug }}">
+            <div class="govuk-date-input__item">
+              <div class="govuk-form-group">
+                <label class="govuk-label govuk-date-input__label" for="{{ contextStep.sessionKeys[0] }}">Day</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ contextStep.sessionKeys[0] }}" name="{{ contextStep.sessionKeys[0] }}" type="text" inputmode="numeric" value="{{ dateValue.day or '' }}">
+              </div>
+            </div>
+            <div class="govuk-date-input__item">
+              <div class="govuk-form-group">
+                <label class="govuk-label govuk-date-input__label" for="{{ contextStep.sessionKeys[1] }}">Month</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ contextStep.sessionKeys[1] }}" name="{{ contextStep.sessionKeys[1] }}" type="text" inputmode="numeric" value="{{ dateValue.month or '' }}">
+              </div>
+            </div>
+            <div class="govuk-date-input__item">
+              <div class="govuk-form-group">
+                <label class="govuk-label govuk-date-input__label" for="{{ contextStep.sessionKeys[2] }}">Year</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="{{ contextStep.sessionKeys[2] }}" name="{{ contextStep.sessionKeys[2] }}" type="text" inputmode="numeric" value="{{ dateValue.year or '' }}">
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    {% else %}
+      <div class="govuk-form-group">
+        <label class="govuk-label govuk-visually-hidden" for="{{ contextStep.sessionKey }}">{{ contextStep.question }}</label>
+        <input
+          class="govuk-input {{ contextStep.widthClass or '' }}"
+          id="{{ contextStep.sessionKey }}"
+          name="{{ contextStep.sessionKey }}"
+          type="text"
+          value="{{ assessment.scope.context[contextStep.contextKey] or '' }}"
+        >
+      </div>
+    {% endif %}
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+      {% if returnToCheckAnswers %}
+        <a class="govuk-link" href="/stages/2/scope/context/check-answers">Return to check answers</a>
+      {% endif %}
+    </div>
+  </form>
+    </div>
+  </div>
+{% endblock %}

@@ -34,7 +34,7 @@
               <dd class="govuk-summary-list__value">{{ simple.evidenceCount }}</dd>
             </div>
           </dl>
-          <a class="govuk-button" href="/assessments/current/outcomes/{{ simple.outcomeId }}">Test simple outcome</a>
+          <a class="govuk-button" href="/assessments/current/outcomes/{{ simple.outcomeId }}">Open simple outcome</a>
         {% else %}
           <p class="govuk-body">Simple outcome not available.</p>
         {% endif %}
@@ -67,7 +67,7 @@
               <dd class="govuk-summary-list__value">{% if hard.blocker %}Yes{% else %}No{% endif %}</dd>
             </div>
           </dl>
-          <a class="govuk-button govuk-button--secondary" href="/assessments/current/outcomes/{{ hard.outcomeId }}">Test hard outcome</a>
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/outcomes/{{ hard.outcomeId }}">Open complex outcome</a>
         {% else %}
           <p class="govuk-body">Hard outcome not available.</p>
         {% endif %}

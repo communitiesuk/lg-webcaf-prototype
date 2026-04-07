@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   <h1 class="govuk-heading-l">{{ labels.flow.improvement.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.improvement.intro }}</p>
 
@@ -56,5 +58,7 @@
   <div class="govuk-button-group govuk-!-margin-top-6">
     <a class="govuk-button" data-module="govuk-button" href="/submit-progress">Continue to Stage 7: Submit progress</a>
     <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

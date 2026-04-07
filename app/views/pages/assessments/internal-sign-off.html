@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
   {% if error %}
@@ -92,4 +94,6 @@
       <a class="govuk-link" href="/assessments/current/journey">Return to CAF journey task list</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

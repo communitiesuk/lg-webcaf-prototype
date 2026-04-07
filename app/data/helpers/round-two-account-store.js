@@ -26,8 +26,13 @@ function clearAssessment(email) {
   store.delete(key);
 }
 
+function clearAllAssessments() {
+  store.clear();
+}
+
 module.exports = {
   getSavedAssessment,
   saveAssessment,
   clearAssessment,
+  clearAllAssessments,
 };

@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {% set pageTitle = "Complete scope pack" %}
   {% set confirmButtonText = "Complete scope pack" %}
   {% if researchRound == "round-2" %}
@@ -13,15 +15,15 @@
   <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
-      Check the critical systems marked in scope, then confirm the register is ready to use for yearly planning and assessment.
+      Check the critical systems, then confirm the register is ready to use for yearly planning and assessment.
     {% else %}
-      Check the critical systems marked in scope, then confirm internal sign-off and assurance scheduling details.
+      Check the critical systems, then confirm internal sign-off and assurance scheduling details.
     {% endif %}
   </p>
   <p class="govuk-body">
     <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
   </p>
-  <p class="govuk-hint govuk-!-margin-top-1">If you add a system, make sure mapping and in-scope selection are still correct.</p>
+  <p class="govuk-hint govuk-!-margin-top-1">If you add a system, make sure its mapping is still correct.</p>
 
   {% if shortlist.length > 0 %}
     <dl class="govuk-summary-list">
@@ -29,7 +31,7 @@
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">{{ item.system.name }}</dt>
           <dd class="govuk-summary-list__value">
-            In scope: Yes
+            {{ item.system.systemType or "Type not added" }}
             {% if item.mapping and item.mapping.serviceIds and item.mapping.serviceIds.length > 0 %}
               <div class="govuk-hint">Mapped to {{ item.mapping.serviceIds.length }} essential service{% if item.mapping.serviceIds.length != 1 %}s{% endif %}</div>
             {% endif %}
@@ -41,7 +43,7 @@
       {% endfor %}
     </dl>
   {% else %}
-    <p class="govuk-body">No in-scope systems selected yet.</p>
+    <p class="govuk-body">No critical systems added yet.</p>
   {% endif %}
 
   <form method="post" action="/stages/2/scope/priority/confirm">
@@ -79,4 +81,6 @@
 
     <button class="govuk-button" data-module="govuk-button" type="submit">{{ confirmButtonText }}</button>
   </form>
+    </div>
+  </div>
 {% endblock %}

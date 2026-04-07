@@ -9,7 +9,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">Use A and D to assess the organisational contributing outcome for this assessment year.</p>
-      <p class="govuk-hint">Your work saves as you go. Next, review the current A and D outcome and record a judgement.</p>
+      <p class="govuk-hint">Your work saves as you go. Open the current outcome, work through each IGP statement, then confirm it on the check your answers page.</p>
 
       {% if saved == "outcome" %}
         <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="ad-saved-title" data-module="govuk-notification-banner">
@@ -19,21 +19,6 @@
           <div class="govuk-notification-banner__content">
             <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
           </div>
-        </div>
-      {% endif %}
-
-      {% if frameworkChange and frameworkChange.changed %}
-        <div class="govuk-inset-text">
-          <p class="govuk-body"><strong>CAF has changed from version {{ frameworkChange.assessmentVersion }} to {{ frameworkChange.currentVersion }}.</strong></p>
-          <p class="govuk-body">{{ frameworkChange.summaryText | capitalize }} need review in A and D.</p>
-          {% if frameworkChange.newOutcomes and frameworkChange.newOutcomes.length > 0 %}
-            <p class="govuk-body govuk-!-margin-bottom-1">New outcomes in the current version:</p>
-            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-              {% for outcome in frameworkChange.newOutcomes %}
-                <li><strong>{{ outcome.code }}</strong> {{ outcome.title }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
         </div>
       {% endif %}
 
@@ -63,9 +48,6 @@
                   <strong>{{ row.code }}</strong> {{ row.title }}
                   {% if row.carriedForward %}
                     <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                  {% endif %}
-                  {% if row.frameworkFlag %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ row.frameworkFlag }}</strong></div>
                   {% endif %}
                 </td>
                 <td class="govuk-table__cell">{{ row.status }}</td>
@@ -107,9 +89,9 @@
         <p class="govuk-body">Use this step when the A and D assessment is ready, even if B and C is still in progress.</p>
         <h3 class="govuk-heading-s">To complete A and D</h3>
         <ul class="govuk-list govuk-list--bullet">
-          <li>review both contributing outcomes</li>
-          <li>record an overall judgement for each</li>
-          <li>add a reason for each judgement</li>
+          <li>work through each IGP statement for both contributing outcomes</li>
+          <li>review the check your answers page for each outcome</li>
+          <li>confirm each outcome is ready to include in the section</li>
         </ul>
         <p class="govuk-hint">After A and D is complete, return to the task list or continue with B and C.</p>
         {% if reviewState.completed %}
@@ -162,6 +144,15 @@
         <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current progress</h2>
         <p class="govuk-body">Status: <strong>{{ adPageStatus }}</strong></p>
         <p class="govuk-body govuk-!-margin-bottom-0">{{ judged }} of {{ total }} A and D outcomes judged.</p>
+      </aside>
+
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Collaboration status</h2>
+        <p class="govuk-body"><strong class="govuk-tag {{ collaborationState.statusTagClass }}">{{ collaborationState.statusLabel }}</strong></p>
+        {% if collaborationState.reviewNotes %}
+          <p class="govuk-body">{{ collaborationState.reviewNotes }}</p>
+        {% endif %}
+        <p class="govuk-body govuk-!-margin-bottom-0"><a class="govuk-link" href="/assessments/current/complete-self-assessment">Open review summary</a></p>
       </aside>
     </div>
   </div>

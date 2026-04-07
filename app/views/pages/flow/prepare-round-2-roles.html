@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -30,7 +30,7 @@
   {% endif %}
 
   <span class="govuk-caption-l">Onboarding</span>
-  <h1 class="govuk-heading-l">Set up key roles</h1>
+  <h1 class="govuk-heading-l">Set up council roles</h1>
   <p class="govuk-body">Add the people responsible for leading and approving the CAF work.</p>
 
   <div class="govuk-grid-row">
@@ -51,7 +51,7 @@
         </details>
       {% endif %}
 
-      <form method="post" action="/prepare/roles">
+      <form method="post" action="/prepare/roles?returnTo={{ returnTo }}">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="onboardingLead">CAF lead</label>
           {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}
@@ -82,7 +82,7 @@
 
         <div class="govuk-button-group">
           <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
-          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+          <a class="govuk-link" href="{{ returnHref }}">{{ returnText }}</a>
         </div>
       </form>
     </div>

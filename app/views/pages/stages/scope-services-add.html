@@ -1,53 +1,25 @@
 {# app/views/pages/stages/scope-services-add.html #}
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  {% set backHref = "/stages/2/scope" %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {% set headingText = "Add an essential service" %}
-  {% if researchRound == "round-2" %}
-    {% set backHref = "/assessments/current/journey" %}
-  {% endif %}
   {% if isEdit %}
     {% set headingText = "Change an essential service" %}
   {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+  <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  {{ appErrorSummary(error) }}
 
-  {% if researchRound == "round-2" %}
-    <span class="govuk-caption-l">Essential services register</span>
-    <h1 class="govuk-heading-l">{{ headingText }}</h1>
-    <p class="govuk-body">
-      {% if isEdit %}
-        Update the essential service details for your CAF scope register.
-      {% else %}
-        Add a service your council needs to keep running. You can review and update this register over time.
-      {% endif %}
-    </p>
-    <p class="govuk-hint">Essential services are the services your council needs to keep running.</p>
-  {% else %}
-    <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-    <p class="govuk-body">
-      {% if isEdit %}
-        Update the essential service details for your CAF scope register.
-      {% else %}
-        Add an essential service to your CAF scope register.
-      {% endif %}
-    </p>
-  {% endif %}
+  {{ appPageHeader({
+    caption: "Essential services register" if researchRound == "round-2" else "",
+    title: headingText if researchRound == "round-2" else pageTitle,
+    intro: "Update the essential service details for your CAF scope register." if isEdit else ("Add a service your council needs to keep running. You can review and update this register over time." if researchRound == "round-2" else "Add an essential service to your CAF scope register."),
+    hint: "Essential services are the services your council needs to keep running." if researchRound == "round-2" else ""
+  }) }}
 
   {% if researchRound == "round-2" %}
     <div class="govuk-inset-text">
@@ -69,13 +41,13 @@
           {{ (error.items | selectattr('field','equalto','serviceName') | list | first).text }}
         </p>
       {% endif %}
-      <div class="govuk-hint">For example, `Adult social care`, `Housing support` or `Waste collection`.</div>
+      <div class="govuk-hint">Such as `Adult social care`, `Housing support` or `Waste collection`.</div>
       <input class="govuk-input" id="serviceName" name="serviceName" type="text" value="{{ data.name }}">
     </div>
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="serviceDescription">What does this service do?</label>
-      <div class="govuk-hint">For example, who it supports or what it enables the council to deliver.</div>
+      <div class="govuk-hint">Include who it supports or what it enables the council to deliver.</div>
       <textarea class="govuk-textarea" id="serviceDescription" name="serviceDescription" rows="3">{{ data.description }}</textarea>
     </div>
 
@@ -86,8 +58,10 @@
     </div>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or labels.stages.scope.services.addButton }}</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
       <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to essential services</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

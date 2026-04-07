@@ -3,6 +3,8 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
@@ -142,4 +144,6 @@
   {% else %}
     <p class="govuk-body">No blockers logged yet.</p>
   {% endif %}
+    </div>
+  </div>
 {% endblock %}

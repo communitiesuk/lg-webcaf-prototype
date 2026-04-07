@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.evidence.heading }}</h1>
@@ -13,19 +15,19 @@
     <table class="govuk-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
-          <th class="govuk-table__header" scope="col">Reference ID</th>
+          <th class="govuk-table__header" scope="col">Evidence title</th>
           <th class="govuk-table__header" scope="col">Type</th>
           <th class="govuk-table__header" scope="col">Link</th>
-          <th class="govuk-table__header" scope="col">Note</th>
+          <th class="govuk-table__header" scope="col">Description</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
         {% for ref in evidenceLibrary %}
           <tr class="govuk-table__row">
-            <td class="govuk-table__cell">{{ ref.refId }}</td>
+            <td class="govuk-table__cell">{{ ref.title }}</td>
             <td class="govuk-table__cell">{{ ref.type }}</td>
-            <td class="govuk-table__cell">{{ ref.link }}</td>
-            <td class="govuk-table__cell">{{ ref.note }}</td>
+            <td class="govuk-table__cell">{% if ref.link %}<a class="govuk-link" href="{{ ref.link }}">{{ ref.link }}</a>{% endif %}</td>
+            <td class="govuk-table__cell">{{ ref.description }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -35,24 +37,24 @@
   {% endif %}
 
   <h2 class="govuk-heading-m">{{ labels.flow.evidence.addHeading }}</h2>
-  <p class="govuk-hint">Add reference IDs or links only. Do not upload evidence here.</p>
+  <p class="govuk-hint">Add a link to evidence stored outside WebCAF. Do not upload files here. Assurers will need access to the linked evidence.</p>
 
   <form method="post" action="/evidence-library">
     <div class="govuk-form-group">
-      <label class="govuk-label" for="refId">Reference ID</label>
-      <input class="govuk-input" id="refId" name="refId" type="text">
+      <label class="govuk-label" for="title">Evidence title</label>
+      <input class="govuk-input" id="title" name="title" type="text">
     </div>
     <div class="govuk-form-group">
-      <label class="govuk-label" for="type">Type</label>
+      <label class="govuk-label" for="type">Evidence type (optional)</label>
       <input class="govuk-input" id="type" name="type" type="text">
     </div>
     <div class="govuk-form-group">
-      <label class="govuk-label" for="link">Link (optional)</label>
+      <label class="govuk-label" for="link">Evidence link</label>
       <input class="govuk-input" id="link" name="link" type="text">
     </div>
     <div class="govuk-form-group">
-      <label class="govuk-label" for="note">Note (optional)</label>
-      <textarea class="govuk-textarea" id="note" name="note" rows="3"></textarea>
+      <label class="govuk-label" for="description">Description</label>
+      <textarea class="govuk-textarea" id="description" name="description" rows="3"></textarea>
     </div>
 
     <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.flow.actions.addEvidence }}</button>
@@ -75,10 +77,10 @@
         {% for ref in collectedEvidence %}
           <tr class="govuk-table__row">
             <td class="govuk-table__cell">{{ ref.source }}</td>
-            <td class="govuk-table__cell">{{ ref.refId }}</td>
+            <td class="govuk-table__cell">{{ ref.title }}</td>
             <td class="govuk-table__cell">{{ ref.type }}</td>
-            <td class="govuk-table__cell">{{ ref.link }}</td>
-            <td class="govuk-table__cell">{{ ref.note }}</td>
+            <td class="govuk-table__cell">{% if ref.link %}<a class="govuk-link" href="{{ ref.link }}">{{ ref.link }}</a>{% endif %}</td>
+            <td class="govuk-table__cell">{{ ref.description }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -90,5 +92,7 @@
   <div class="govuk-button-group govuk-!-margin-top-6">
     <a class="govuk-button" data-module="govuk-button" href="/assurance-review">Continue to assurance review</a>
     <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

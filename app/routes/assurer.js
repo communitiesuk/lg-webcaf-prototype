@@ -5,8 +5,9 @@ const labels = require("../data/content/labels");
 const statuses = require("../data/content/statuses");
 const users = require("../data/seed/users");
 const { getOutcomesForVersion } = require("../data/helpers/caf-version");
-const assurerAssignments = require("../data/seed/assurer-assignments");
 const engagementSeed = require("../data/seed/mhclg-engagement");
+const { getAssurerAccessContext } = require("../data/helpers/assurer-access");
+const { normaliseEvidenceRefs } = require("../data/helpers/outcome");
 
 const {
   requireSignedIn,
@@ -615,7 +616,7 @@ module.exports = function (router) {
     }
     if (!feedback) errors.push({ field: "stage2AssurerFeedback", text: "Enter assurer feedback." });
     if (outcome === "rework_required" && assessment.improvementPlan.stage2.rework.completedAt) {
-      errors.push({ field: "stage2AssurerOutcome", text: "Only one rework cycle is supported in this prototype." });
+      errors.push({ field: "stage2AssurerOutcome", text: "Only one rework cycle is supported for this improvement plan." });
     }
     if (errors.length > 0) {
       return res.render("pages/assurer/iip-stage-2", {
@@ -835,22 +836,12 @@ module.exports = function (router) {
 };
 
 function getAssurerContext(user, assessment) {
-  const supplierName = assurerAssignments.supplierName || "Assurance supplier";
-  const assignedCouncils = user && assurerAssignments.assignments[user.id]
-    ? assurerAssignments.assignments[user.id]
-    : [];
-  const activeCouncilName =
-    (assessment && assessment.councilName) || assignedCouncils[0] || "";
-  const isAssignedCouncil =
-    assignedCouncils.length === 0 || !activeCouncilName
-      ? true
-      : assignedCouncils.includes(activeCouncilName);
-
+  const context = getAssurerAccessContext(user, assessment);
   return {
-    supplierName,
-    assignedCouncils,
-    activeCouncilName,
-    isAssignedCouncil,
+    supplierName: context.supplierName,
+    assignedCouncils: context.assignedCouncils,
+    activeCouncilName: context.activeCouncilName,
+    isAssignedCouncil: context.isAssignedAssessment,
   };
 }
 
@@ -875,7 +866,7 @@ function buildAssurerBCRows(assessment, outcomesTree) {
 
     for (const outcome of outcomeList) {
       const saved = outcomeData[outcome.id] || {};
-      const evidenceRefs = Array.isArray(saved.evidenceRefs) ? saved.evidenceRefs : [];
+      const evidenceRefs = normaliseEvidenceRefs(saved.evidenceRefs);
       const evidenceCount = evidenceRefs.filter(hasAnyEvidenceValue).length;
       const hasContent = Boolean(saved.igpResponse || saved.rationale || evidenceCount > 0);
       const statusValue = (saved.status || "").toString() || (
@@ -936,7 +927,7 @@ function buildAssurerBCOutcomeRow(assessment, outcomesTree, rowId) {
       ? assessment.selfAssess.bc[system.id]
       : { outcomes: {} };
   const saved = (bcData.outcomes || {})[outcome.id] || {};
-  const evidenceRefs = Array.isArray(saved.evidenceRefs) ? saved.evidenceRefs : [];
+  const evidenceRefs = normaliseEvidenceRefs(saved.evidenceRefs);
   const evidenceCount = evidenceRefs.filter(hasAnyEvidenceValue).length;
   const hasContent = Boolean(saved.igpResponse || saved.rationale || evidenceCount > 0);
   const statusValue = (saved.status || "").toString() || (
@@ -1005,7 +996,7 @@ function findOutcomeInTree(outcomesTree, outcomeId) {
 
 function hasAnyEvidenceValue(ref) {
   if (!ref) return false;
-  return Boolean(ref.refId || ref.type || ref.link || ref.note);
+  return Boolean(ref.title || ref.type || ref.link || ref.description || ref.refId || ref.note);
 }
 
 function ensureEngagementData(req) {

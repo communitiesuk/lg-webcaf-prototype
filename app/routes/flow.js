@@ -20,6 +20,8 @@ const {
 } = require("../data/helpers/outcome");
 
 const { formatDateForInput } = require("../data/helpers/progress");
+const { PERMISSIONS, userHasPermission } = require("../data/helpers/roles");
+const { getRoundTwoOutcomeReturnContext } = require("../data/helpers/navigation");
 
 const PROTOTYPE_OUTCOME_LIMITS = {
   AD: 2,
@@ -45,6 +47,19 @@ module.exports = function (router) {
     if (!isProtected) return next();
     if (!requireSignedIn(req, res)) return;
     if (!ensureAssessment(req)) return res.redirect("/entry");
+    const requiresEditPermission =
+      isRoundTwoRequest(req) &&
+      (req.path === "/prepare/roles" ||
+        req.path.startsWith("/self-assess"));
+    const requiredPermission =
+      req.path === "/prepare/roles"
+        ? PERMISSIONS.MANAGE_ROLES
+        : PERMISSIONS.EDIT_CONTENT;
+    if (requiresEditPermission && !userHasPermission(req.session.data.user || null, requiredPermission)) {
+      return res.status(403).render("pages/errors/restricted", {
+        pageTitle: "Access restricted",
+      });
+    }
     next();
   });
 
@@ -76,19 +91,7 @@ module.exports = function (router) {
     const roundTwo = isRoundTwoRequest(req);
 
     if (roundTwo) {
-      const defaults = {
-        understandService: Boolean(assessment.prepare.understandService),
-        hasStakeholderSupport: Boolean(assessment.prepare.hasStakeholderSupport),
-      };
-
-      return res.render("pages/flow/prepare-round-2", {
-        pageTitle: "Prepare for CAF",
-        labels,
-        assessment,
-        defaults,
-        error: null,
-        gatedNotice,
-      });
+      return res.redirect("/onboarding");
     }
 
     res.render("pages/flow/prepare", {
@@ -109,37 +112,6 @@ module.exports = function (router) {
     const roundTwo = isRoundTwoRequest(req);
 
     if (roundTwo) {
-      const understand = coerceArray(req.session.data.onboardingChecks);
-      const understandingComplete =
-        understand.includes("understandService") &&
-        understand.includes("hasStakeholderSupport");
-
-      assessment.prepare = {
-        ...assessment.prepare,
-        understandService: understand.includes("understandService"),
-        hasStakeholderSupport: understand.includes("hasStakeholderSupport"),
-        onboardingUnderstandingComplete: understandingComplete,
-        cafReviewed: understand.includes("understandService"),
-        guidanceRead: Boolean(assessment.prepare.onboardingRolesComplete),
-      };
-
-      assessment.updatedAt = new Date().toISOString();
-
-      if (!understandingComplete) {
-        return res.render("pages/flow/prepare-round-2", {
-          pageTitle: "Prepare for CAF",
-          labels,
-          assessment,
-          defaults: {
-            understandService: assessment.prepare.understandService,
-            hasStakeholderSupport: assessment.prepare.hasStakeholderSupport,
-          },
-          error: { items: [{ field: "onboardingChecks", text: "Confirm the preparation statements before continuing." }] },
-          gatedNotice: null,
-        });
-      }
-
-      delete req.session.data.onboardingChecks;
       return res.redirect("/prepare/roles");
     }
 
@@ -189,12 +161,17 @@ module.exports = function (router) {
       onboardingApprover: (assessment.prepare.onboardingApprover || "").toString(),
       onboardingContributors: (assessment.prepare.onboardingContributors || "").toString(),
     };
+    const returnTo = getCouncilRolesReturnTo(req);
 
     return res.render("pages/flow/prepare-round-2-roles", {
-      pageTitle: "Set up key roles",
+      pageTitle: "Set up council roles",
       labels,
       assessment,
       defaults,
+      returnTo,
+      backHref: getCouncilRolesReturnHref(returnTo),
+      returnHref: getCouncilRolesReturnHref(returnTo),
+      returnText: getCouncilRolesReturnText(returnTo),
       saved: (req.query.saved || "").toString(),
       rolesAudit: buildRolesAudit(
         assessment.prepare.onboardingRolesMeta,
@@ -214,6 +191,7 @@ module.exports = function (router) {
     }
 
     const currentUser = req.session.data.user || null;
+    const returnTo = getCouncilRolesReturnTo(req);
     const onboardingLead = (req.session.data.onboardingLead || "").toString().trim();
     const onboardingApprover = (req.session.data.onboardingApprover || "").toString().trim();
     const onboardingContributors = (req.session.data.onboardingContributors || "").toString().trim();
@@ -232,11 +210,7 @@ module.exports = function (router) {
       onboardingContributors,
       onboardingRolesComplete: Boolean(onboardingLead && onboardingApprover),
       contributorsConfirmed: Boolean(onboardingContributors),
-      guidanceRead: Boolean(
-        assessment.prepare.onboardingUnderstandingComplete &&
-        onboardingLead &&
-        onboardingApprover
-      ),
+      guidanceRead: Boolean(onboardingLead && onboardingApprover),
     };
     applyRoleAudit(assessment.prepare, "onboardingRoles", currentUser, {
       lead: onboardingLead,
@@ -254,7 +228,7 @@ module.exports = function (router) {
 
     if (errors.length > 0) {
       return res.render("pages/flow/prepare-round-2-roles", {
-        pageTitle: "Set up key roles",
+        pageTitle: "Set up council roles",
         labels,
         assessment,
         defaults: {
@@ -262,6 +236,10 @@ module.exports = function (router) {
           onboardingApprover,
           onboardingContributors,
         },
+        returnTo,
+        backHref: getCouncilRolesReturnHref(returnTo),
+        returnHref: getCouncilRolesReturnHref(returnTo),
+        returnText: getCouncilRolesReturnText(returnTo),
         rolesAudit: buildRolesAudit(
           assessment.prepare.onboardingRolesMeta,
           assessment.prepare.onboardingRolesHistory
@@ -273,8 +251,9 @@ module.exports = function (router) {
     delete req.session.data.onboardingLead;
     delete req.session.data.onboardingApprover;
     delete req.session.data.onboardingContributors;
+    delete req.session.data.councilRolesReturnTo;
 
-    return res.redirect("/assessments/current/journey?saved=roles");
+    return res.redirect(getCouncilRolesSaveRedirect(returnTo));
   });
 
   router.get("/profile", (req, res) => {
@@ -353,6 +332,14 @@ module.exports = function (router) {
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
     const roundTwo = isRoundTwoRequest(req);
+    if (roundTwo) {
+      const igpAssessments = buildIgpAssessmentForm(saved.igpAssessments, outcome);
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      const destination = igpAssessments.every(hasCompletedIgpResponse)
+        ? `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`
+        : `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`;
+      return res.redirect(destination);
+    }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
     const context = roundTwo
       ? buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId })
@@ -393,6 +380,231 @@ module.exports = function (router) {
     });
   });
 
+  router.get("/self-assess/ad/:outcomeId/statements/:statementNumber", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (redirectIfScopeNotReady(req, res, assessment, `/self-assess/ad/${req.params.outcomeId}`)) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const { ad } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(ad, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const igpAssessments = buildIgpAssessmentForm(
+      ((assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {}).igpAssessments,
+      outcome
+    );
+    const returnToCheckAnswers = req.query.return === "check-answers";
+    const statementIndex = Number(req.params.statementNumber) - 1;
+    if (statementIndex < 0 || statementIndex >= igpAssessments.length) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}`);
+    }
+
+    return renderRoundTwoIgpStatement(res, {
+      labels,
+      assessment,
+      outcome,
+      context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: getNextPrototypeOutcomeId(ad, outcome.id) }),
+      igpAssessments,
+      statementIndex,
+      postAction: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 1}`,
+      changeBaseHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements`,
+      checkAnswersHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`,
+      backHref:
+        returnToCheckAnswers
+          ? `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`
+          : statementIndex === 0
+          ? "/assessments/current/self-assessment/ad"
+          : `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${statementIndex}`,
+      returnToCheckAnswers,
+    });
+  });
+
+  router.post("/self-assess/ad/:outcomeId/statements/:statementNumber", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const { ad } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(ad, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const returnToCheckAnswers = (req.session.data.returnToCheckAnswers || "").toString() === "yes";
+    const statementIndex = Number(req.params.statementNumber) - 1;
+    const existingAd = assessment.selfAssess.ad[outcome.id] || {};
+    const igpAssessments = normaliseIgpAssessments(
+      remapSingleStatementSubmission(req.session.data.igpAssessments, statementIndex),
+      existingAd.igpAssessments,
+      outcome
+    );
+    if (statementIndex < 0 || statementIndex >= igpAssessments.length) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}`);
+    }
+
+    const statement = igpAssessments[statementIndex];
+    const errors = [];
+    if (!statement.maturity) errors.push({ field: "statement-maturity", text: "Select the maturity level for this statement." });
+    if (!statement.rationale.trim()) errors.push({ field: "statement-rationale", text: "Enter the rationale for this statement." });
+    if (!statement.evidenceNote.trim()) errors.push({ field: "statement-evidence-note", text: "Enter an evidence note for this statement." });
+    if (!statement.confidence) errors.push({ field: "statement-confidence-low", text: "Select the confidence level for this statement." });
+
+    if (errors.length > 0) {
+      return renderRoundTwoIgpStatement(res, {
+        labels,
+        assessment,
+        outcome,
+        context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: getNextPrototypeOutcomeId(ad, outcome.id) }),
+        igpAssessments,
+        statementIndex,
+        postAction: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 1}`,
+        changeBaseHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements`,
+        checkAnswersHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`,
+        backHref:
+          returnToCheckAnswers
+            ? `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`
+            : statementIndex === 0
+            ? "/assessments/current/self-assessment/ad"
+            : `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${statementIndex}`,
+        returnToCheckAnswers,
+        error: { items: errors },
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    assessment.selfAssess.ad[outcome.id] = {
+      ...existingAd,
+      igpAssessments,
+      igpResponse: buildRoundTwoOutcomeSummary(igpAssessments),
+      status: "in_progress",
+      updatedAt: nowIso,
+    };
+    if (assessment.progressTracker && assessment.progressTracker[outcome.id]) {
+      assessment.progressTracker[outcome.id] = {
+        ...assessment.progressTracker[outcome.id],
+        status: "in_progress",
+        updatedAt: nowIso,
+      };
+    }
+    assessment.updatedAt = nowIso;
+    invalidateRoundTwoSectionCompletion(assessment, "ad");
+    updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
+    clearOutcomeForm(req);
+
+    const action = (req.body.action || req.session.data.action || "").toString();
+    if (action === "saveReturn") {
+      const returnContext = getRoundTwoOutcomeReturnContext("ad");
+      return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(`${outcome.code} ${outcome.title}`)}`);
+    }
+    if (returnToCheckAnswers) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`);
+    }
+    if (statementIndex + 1 < igpAssessments.length) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 2}`);
+    }
+    return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`);
+  });
+
+  router.get("/self-assess/ad/:outcomeId/check-answers", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (redirectIfScopeNotReady(req, res, assessment, `/self-assess/ad/${req.params.outcomeId}`)) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const { ad } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(ad, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const existingAd = assessment.selfAssess.ad[outcome.id] || {};
+    const igpAssessments = buildIgpAssessmentForm(existingAd.igpAssessments, outcome);
+    if (igpAssessments.some((item) => !hasCompletedIgpResponse(item))) {
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`);
+    }
+
+    return renderRoundTwoIgpCheckAnswers(res, {
+      assessment,
+      outcome,
+      context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: getNextPrototypeOutcomeId(ad, outcome.id) }),
+      igpAssessments,
+      formAction: `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`,
+      changeBaseHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements`,
+      backHref: `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${igpAssessments.length}`,
+    });
+  });
+
+  router.post("/self-assess/ad/:outcomeId/check-answers", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const { ad } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(ad, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const existingAd = assessment.selfAssess.ad[outcome.id] || {};
+    const igpAssessments = buildIgpAssessmentForm(existingAd.igpAssessments, outcome);
+    if (igpAssessments.some((item) => !hasCompletedIgpResponse(item))) {
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`);
+    }
+
+    const nowIso = new Date().toISOString();
+    const judgement = buildRoundTwoOutcomeJudgement(igpAssessments);
+    assessment.selfAssess.ad[outcome.id] = {
+      ...existingAd,
+      igpAssessments,
+      igpResponse: buildRoundTwoOutcomeSummary(igpAssessments),
+      judgement,
+      rationale: buildRoundTwoOutcomeSummary(igpAssessments),
+      mismatchReason: "",
+      reuseDecision: "",
+      evidenceRefs: normaliseEvidenceRefs(existingAd.evidenceRefs),
+      carriedForward: false,
+      reviewRequired: false,
+      status: judgement ? "complete" : "not_started",
+      updatedAt: nowIso,
+    };
+    if (assessment.progressTracker && assessment.progressTracker[outcome.id]) {
+      assessment.progressTracker[outcome.id] = {
+        ...assessment.progressTracker[outcome.id],
+        status: judgement ? "complete" : "not_started",
+        updatedAt: nowIso,
+      };
+    }
+    assessment.updatedAt = nowIso;
+    invalidateRoundTwoSectionCompletion(assessment, "ad");
+    updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
+    clearOutcomeForm(req);
+
+    const action = (req.body.action || req.session.data.action || "").toString();
+    const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
+    if (action === "saveReturn") {
+      const returnContext = getRoundTwoOutcomeReturnContext("ad");
+      return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+    }
+    const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
+    if (nextOutcomeId) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(nextOutcomeId)}`);
+    }
+    return res.redirect(`/assessments/current/self-assessment/ad?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+  });
+
   router.post("/self-assess/ad/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
@@ -413,6 +625,9 @@ module.exports = function (router) {
 
     const action = (req.session.data.action || "").toString();
     const roundTwo = isRoundTwoRequest(req);
+    if (roundTwo) {
+      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
 
     const existingAd = assessment.selfAssess.ad[outcome.id] || {};
@@ -512,6 +727,8 @@ module.exports = function (router) {
         rationale,
         labels,
       });
+      const evidenceError = validateEvidenceRefs(evidenceRefsFromForm);
+      if (evidenceError) shareErrors.push({ field: "evidenceRefs", text: evidenceError });
 
       if (shareErrors.length > 0) {
         clearOutcomeAction(req);
@@ -594,6 +811,8 @@ module.exports = function (router) {
       rationale,
       labels,
     });
+    const evidenceError = validateEvidenceRefs(evidenceRefsFromForm);
+    if (evidenceError) errors.push({ field: "evidenceRefs", text: evidenceError });
 
     if (errors.length > 0) {
       clearOutcomeAction(req);
@@ -635,7 +854,7 @@ module.exports = function (router) {
       existingStatus === "feedback_received" || existingStatus === "updated_after_feedback"
         ? "updated_after_feedback"
         : judgement
-        ? "in_progress"
+        ? "complete"
         : "not_started";
 
     const nowIso = new Date().toISOString();
@@ -667,10 +886,12 @@ module.exports = function (router) {
 
     if (roundTwo) {
       invalidateRoundTwoSectionCompletion(assessment, "ad");
+      updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
       clearOutcomeForm(req);
       const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
       if (action === "saveReturn") {
-        return res.redirect(`/assessments/current/dashboard?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+        const returnContext = getRoundTwoOutcomeReturnContext("ad");
+        return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
       }
       const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
       if (nextOutcomeId) {
@@ -712,9 +933,7 @@ module.exports = function (router) {
     const scope = assessment.scope || {};
     const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
     const annualSetup = assessment.annualSetup || {};
-    const selectedSystemIds = Array.isArray(annualSetup.systemIds) ? annualSetup.systemIds : [];
-    const shortlist = Array.isArray(scope.priorityShortlist) ? scope.priorityShortlist : [];
-    const allowedSystemIds = isRoundTwoRequest(req) && selectedSystemIds.length > 0 ? selectedSystemIds : shortlist;
+    const allowedSystemIds = getResolvedBCSystemIds(assessment);
 
     if (allowedSystemIds.length > 0 && !allowedSystemIds.includes(req.params.systemId)) {
       return res.redirect(isRoundTwoRequest(req) ? "/assessments/current/self-assessment/bc" : "/self-assess/bc/select-system");
@@ -738,6 +957,9 @@ module.exports = function (router) {
       const evidenceCount = Array.isArray(saved.evidenceRefs)
         ? saved.evidenceRefs.filter(hasAnyEvidenceValue).length
         : 0;
+      const started = Array.isArray(saved.igpAssessments)
+        ? saved.igpAssessments.some(hasStartedIgpAssessment)
+        : false;
       return {
         id: outcome.id,
         code: outcome.code,
@@ -751,6 +973,8 @@ module.exports = function (router) {
             ? "Carried forward - review needed"
             : saved.judgement
               ? "Complete"
+              : started
+                ? "In progress"
               : "Not started",
       };
     });
@@ -761,7 +985,6 @@ module.exports = function (router) {
       .filter(Boolean)
       .map((service) => service.name);
     const priority = getScopePriority(scope, system.id);
-    const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
     const pageStatus = rows.length > 0 && rows.every((row) => row.judgement)
       ? "Complete"
       : rows.some((row) => row.judgement)
@@ -777,7 +1000,6 @@ module.exports = function (router) {
       rows,
       mappedServices,
       priorityLevel: priority && priority.level ? priority.level : "",
-      refsCount,
       pageStatus,
       primaryOutcome,
       saved: (req.query.saved || "").toString(),
@@ -823,6 +1045,14 @@ module.exports = function (router) {
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
     const roundTwo = isRoundTwoRequest(req);
+    if (roundTwo) {
+      const igpAssessments = buildIgpAssessmentForm(saved.igpAssessments, outcome);
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      const destination = igpAssessments.every(hasCompletedIgpResponse)
+        ? `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`
+        : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`;
+      return res.redirect(destination);
+    }
     const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
     const context = roundTwo
       ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
@@ -863,6 +1093,254 @@ module.exports = function (router) {
     });
   });
 
+  router.get("/self-assess/bc/:systemId/outcomes/:outcomeId/statements/:statementNumber", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (
+      redirectIfScopeNotReady(
+        req,
+        res,
+        assessment,
+        `/self-assess/bc/${req.params.systemId}/outcomes/${req.params.outcomeId}`
+      )
+    ) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const scopeSystems = assessment.scope && Array.isArray(assessment.scope.criticalSystems)
+      ? assessment.scope.criticalSystems
+      : [];
+    const system = scopeSystems.find((item) => item.id === req.params.systemId);
+    if (!system) return renderNotFound(res);
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(bc, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const igpAssessments = buildIgpAssessmentForm(getBCOutcome(assessment, system.id, outcome.id).igpAssessments, outcome);
+    const returnToCheckAnswers = req.query.return === "check-answers";
+    const statementIndex = Number(req.params.statementNumber) - 1;
+    if (statementIndex < 0 || statementIndex >= igpAssessments.length) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`);
+    }
+
+    return renderRoundTwoIgpStatement(res, {
+      labels,
+      assessment,
+      outcome,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: getNextPrototypeOutcomeId(bc, outcome.id) }),
+      igpAssessments,
+      statementIndex,
+      postAction: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 1}`,
+      changeBaseHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements`,
+      checkAnswersHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`,
+      backHref:
+        returnToCheckAnswers
+          ? `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`
+          : statementIndex === 0
+          ? `/self-assess/bc/${encodeURIComponent(system.id)}`
+          : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${statementIndex}`,
+      returnToCheckAnswers,
+    });
+  });
+
+  router.post("/self-assess/bc/:systemId/outcomes/:outcomeId/statements/:statementNumber", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const scopeSystems = assessment.scope && Array.isArray(assessment.scope.criticalSystems)
+      ? assessment.scope.criticalSystems
+      : [];
+    const system = scopeSystems.find((item) => item.id === req.params.systemId);
+    if (!system) return renderNotFound(res);
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(bc, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const returnToCheckAnswers = (req.session.data.returnToCheckAnswers || "").toString() === "yes";
+    const statementIndex = Number(req.params.statementNumber) - 1;
+    const existingBc = getBCOutcome(assessment, system.id, outcome.id);
+    const igpAssessments = normaliseIgpAssessments(
+      remapSingleStatementSubmission(req.session.data.igpAssessments, statementIndex),
+      existingBc.igpAssessments,
+      outcome
+    );
+    if (statementIndex < 0 || statementIndex >= igpAssessments.length) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`);
+    }
+
+    const statement = igpAssessments[statementIndex];
+    const errors = [];
+    if (!statement.maturity) errors.push({ field: "statement-maturity", text: "Select the maturity level for this statement." });
+    if (!statement.rationale.trim()) errors.push({ field: "statement-rationale", text: "Enter the rationale for this statement." });
+    if (!statement.evidenceNote.trim()) errors.push({ field: "statement-evidence-note", text: "Enter an evidence note for this statement." });
+    if (!statement.confidence) errors.push({ field: "statement-confidence-low", text: "Select the confidence level for this statement." });
+
+    if (errors.length > 0) {
+      return renderRoundTwoIgpStatement(res, {
+        labels,
+        assessment,
+        outcome,
+        context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: getNextPrototypeOutcomeId(bc, outcome.id) }),
+        igpAssessments,
+        statementIndex,
+        postAction: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 1}`,
+        changeBaseHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements`,
+        checkAnswersHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`,
+        backHref:
+          returnToCheckAnswers
+            ? `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`
+            : statementIndex === 0
+            ? `/self-assess/bc/${encodeURIComponent(system.id)}`
+            : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${statementIndex}`,
+        returnToCheckAnswers,
+        error: { items: errors },
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    setBCOutcome(assessment, system.id, outcome.id, {
+      ...existingBc,
+      igpAssessments,
+      igpResponse: buildRoundTwoOutcomeSummary(igpAssessments),
+      status: "in_progress",
+      updatedAt: nowIso,
+    });
+    assessment.updatedAt = nowIso;
+    invalidateRoundTwoSectionCompletion(assessment, "bc");
+    updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
+    clearOutcomeForm(req);
+
+    const action = (req.body.action || req.session.data.action || "").toString();
+    if (action === "saveReturn") {
+      const returnContext = getRoundTwoOutcomeReturnContext("bc", system.id);
+      return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(`${outcome.code} ${outcome.title}`)}`);
+    }
+    if (returnToCheckAnswers) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`);
+    }
+    if (statementIndex + 1 < igpAssessments.length) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${statementIndex + 2}`);
+    }
+    return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`);
+  });
+
+  router.get("/self-assess/bc/:systemId/outcomes/:outcomeId/check-answers", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (
+      redirectIfScopeNotReady(
+        req,
+        res,
+        assessment,
+        `/self-assess/bc/${req.params.systemId}/outcomes/${req.params.outcomeId}`
+      )
+    ) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const scopeSystems = assessment.scope && Array.isArray(assessment.scope.criticalSystems)
+      ? assessment.scope.criticalSystems
+      : [];
+    const system = scopeSystems.find((item) => item.id === req.params.systemId);
+    if (!system) return renderNotFound(res);
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(bc, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const existingBc = getBCOutcome(assessment, system.id, outcome.id);
+    const igpAssessments = buildIgpAssessmentForm(existingBc.igpAssessments, outcome);
+    if (igpAssessments.some((item) => !hasCompletedIgpResponse(item))) {
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`);
+    }
+
+    return renderRoundTwoIgpCheckAnswers(res, {
+      assessment,
+      outcome,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: getNextPrototypeOutcomeId(bc, outcome.id) }),
+      igpAssessments,
+      formAction: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`,
+      changeBaseHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements`,
+      backHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${igpAssessments.length}`,
+    });
+  });
+
+  router.post("/self-assess/bc/:systemId/outcomes/:outcomeId/check-answers", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${encodeURIComponent(req.params.outcomeId)}`);
+    }
+
+    const scopeSystems = assessment.scope && Array.isArray(assessment.scope.criticalSystems)
+      ? assessment.scope.criticalSystems
+      : [];
+    const system = scopeSystems.find((item) => item.id === req.params.systemId);
+    if (!system) return renderNotFound(res);
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(bc, req.params.outcomeId);
+    if (!outcome) return renderNotFound(res);
+
+    const existingBc = getBCOutcome(assessment, system.id, outcome.id);
+    const igpAssessments = buildIgpAssessmentForm(existingBc.igpAssessments, outcome);
+    if (igpAssessments.some((item) => !hasCompletedIgpResponse(item))) {
+      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`);
+    }
+
+    const nowIso = new Date().toISOString();
+    const judgement = buildRoundTwoOutcomeJudgement(igpAssessments);
+    setBCOutcome(assessment, system.id, outcome.id, {
+      ...existingBc,
+      igpAssessments,
+      igpResponse: buildRoundTwoOutcomeSummary(igpAssessments),
+      judgement,
+      rationale: buildRoundTwoOutcomeSummary(igpAssessments),
+      mismatchReason: "",
+      reuseDecision: "",
+      evidenceRefs: normaliseEvidenceRefs(existingBc.evidenceRefs),
+      carriedForward: false,
+      reviewRequired: false,
+      status: judgement ? "complete" : "not_started",
+      updatedAt: nowIso,
+    });
+    assessment.updatedAt = nowIso;
+    invalidateRoundTwoSectionCompletion(assessment, "bc");
+    updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
+    clearOutcomeForm(req);
+
+    const action = (req.body.action || req.session.data.action || "").toString();
+    const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
+    if (action === "saveReturn") {
+      const returnContext = getRoundTwoOutcomeReturnContext("bc", system.id);
+      return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+    }
+    const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
+    if (nextOutcomeId) {
+      return res.redirect(
+        `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(nextOutcomeId)}`
+      );
+    }
+    return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+  });
+
   router.post("/self-assess/bc/:systemId/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
@@ -885,6 +1363,9 @@ module.exports = function (router) {
 
     const action = (req.session.data.action || "").toString();
     const roundTwo = isRoundTwoRequest(req);
+    if (roundTwo) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`);
+    }
     const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
 
     const existingBc = getBCOutcome(assessment, system.id, outcome.id);
@@ -981,6 +1462,8 @@ module.exports = function (router) {
         rationale,
         labels,
       });
+      const evidenceError = validateEvidenceRefs(evidenceRefsFromForm);
+      if (evidenceError) shareErrors.push({ field: "evidenceRefs", text: evidenceError });
 
       if (shareErrors.length > 0) {
         clearOutcomeAction(req);
@@ -1055,6 +1538,8 @@ module.exports = function (router) {
       rationale,
       labels,
     });
+    const evidenceError = validateEvidenceRefs(evidenceRefsFromForm);
+    if (evidenceError) errors.push({ field: "evidenceRefs", text: evidenceError });
 
     if (errors.length > 0) {
       clearOutcomeAction(req);
@@ -1094,7 +1579,7 @@ module.exports = function (router) {
       existingStatus === "feedback_received" || existingStatus === "updated_after_feedback"
         ? "updated_after_feedback"
         : judgement
-        ? "in_progress"
+        ? "complete"
         : "not_started";
     const nowIso = new Date().toISOString();
     setBCOutcome(assessment, system.id, outcome.id, {
@@ -1117,10 +1602,12 @@ module.exports = function (router) {
 
     if (roundTwo) {
       invalidateRoundTwoSectionCompletion(assessment, "bc");
+      updateRoundTwoCollaborationDraftState(assessment, req.session.data.user || null);
       clearOutcomeForm(req);
       const savedOutcomeLabel = `${outcome.code} ${outcome.title}`;
       if (action === "saveReturn") {
-        return res.redirect(`/assessments/current/dashboard?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
+        const returnContext = getRoundTwoOutcomeReturnContext("bc", system.id);
+        return res.redirect(`${returnContext.href}?saved=outcome&name=${encodeURIComponent(savedOutcomeLabel)}`);
       }
       const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
       if (nextOutcomeId) {
@@ -1146,7 +1633,7 @@ module.exports = function (router) {
       pageTitle: labels.flow.evidence.pageTitle,
       labels,
       assessment,
-      evidenceLibrary: assessment.evidenceLibrary,
+      evidenceLibrary: normaliseEvidenceRefs(assessment.evidenceLibrary),
       collectedEvidence: collectEvidenceReferences(assessment),
     });
   });
@@ -1157,25 +1644,27 @@ module.exports = function (router) {
 
     ensureFlowData(assessment);
 
-    const refId = (req.session.data.refId || "").toString().trim();
+    const title = (req.session.data.title || req.session.data.refId || "").toString().trim();
     const type = (req.session.data.type || "").toString().trim();
     const link = (req.session.data.link || "").toString().trim();
-    const note = (req.session.data.note || "").toString().trim();
+    const description = (req.session.data.description || req.session.data.note || "").toString().trim();
 
-    if (refId || link || type || note) {
+    if (title || link || type || description) {
       assessment.evidenceLibrary.push({
-        refId,
+        title,
         type,
         link,
-        note,
+        description,
         createdAt: new Date().toISOString(),
       });
       assessment.updatedAt = new Date().toISOString();
     }
 
+    delete req.session.data.title;
     delete req.session.data.refId;
     delete req.session.data.type;
     delete req.session.data.link;
+    delete req.session.data.description;
     delete req.session.data.note;
 
     return res.redirect("/evidence-library");
@@ -2006,7 +2495,6 @@ function ensureFlowData(assessment) {
       understandCaf: false,
       understandService: false,
       hasStakeholderSupport: false,
-      onboardingUnderstandingComplete: false,
       onboardingRolesComplete: false,
       onboardingLead: "",
       onboardingApprover: "",
@@ -2132,7 +2620,7 @@ function hasEvidence(row) {
   if (!row) return false;
   const refs = Array.isArray(row.evidenceRefs) ? row.evidenceRefs : [];
   return refs.some((ref) =>
-    [ref.refId, ref.type, ref.link, ref.note].some((value) => (value || "").toString().trim())
+    [ref.title, ref.type, ref.link, ref.description, ref.refId, ref.note].some((value) => (value || "").toString().trim())
   );
 }
 
@@ -2216,6 +2704,7 @@ function buildRoundTwoOutcomeContext({ lens, tree, outcome, system, nextOutcomeI
   const progressText = buildRoundTwoOutcomeProgressText(tree, outcome, {
     systemName: bc && system ? system.name : "",
   });
+  const returnContext = getRoundTwoOutcomeReturnContext(lens, bc && system ? system.id : "");
   return {
     roundTwo: true,
     lens,
@@ -2226,8 +2715,8 @@ function buildRoundTwoOutcomeContext({ lens, tree, outcome, system, nextOutcomeI
     systemName: bc && system ? system.name : "",
     systemId: bc && system ? system.id : "",
     progressText,
-    returnHref: "/assessments/current/dashboard",
-    returnText: "Save and return to dashboard",
+    returnHref: returnContext.href,
+    returnText: returnContext.text,
     primaryActionText: nextOutcomeId ? "Save and continue" : "Save and return",
   };
 }
@@ -2250,6 +2739,23 @@ function getRoundTwoJudgementOptions() {
     { value: "Achieved", text: "Achieved" },
     { value: "Partially achieved", text: "Partially achieved" },
     { value: "Not achieved", text: "Not achieved" },
+  ];
+}
+
+function getRoundTwoMaturityOptions() {
+  return [
+    { value: "Not in place", text: "Not in place" },
+    { value: "Partially in place", text: "Partially in place" },
+    { value: "Mostly in place", text: "Mostly in place" },
+    { value: "Fully in place", text: "Fully in place" },
+  ];
+}
+
+function getRoundTwoConfidenceOptions() {
+  return [
+    { value: "Low", text: "Low" },
+    { value: "Medium", text: "Medium" },
+    { value: "High", text: "High" },
   ];
 }
 
@@ -2406,19 +2912,63 @@ function buildIgpAssessmentForm(saved, outcome) {
   const existing = Array.isArray(saved) ? saved : [];
   return getPrototypeIgpStatements(outcome).map((statement, idx) => {
     const prior = existing[idx] || {};
+    const response = (prior.response || "").toString();
     return {
       id: `igp-${idx + 1}`,
       statement: statement.statement,
       group: statement.group || "standard",
       groupLabel: statement.groupLabel || "Indicators of good practice",
-      selected: Boolean(prior.selected),
-      response: (prior.response || "").toString(),
+      guidance: buildIgpStatementGuidance(statement),
+      maturity:
+        (prior.maturity || mapLegacyIgpResponseToMaturity(response) || "").toString(),
+      rationale: (prior.rationale || "").toString(),
+      evidenceNote: (prior.evidenceNote || "").toString(),
+      confidence: (prior.confidence || "").toString(),
     };
   });
 }
 
+function buildIgpStatementGuidance(statement) {
+  const group = statement && statement.group ? statement.group : "standard";
+  if (group === "achieved") {
+    return "Judge how consistently this expected practice is in place today, using current evidence rather than intent.";
+  }
+  if (group === "notAchieved") {
+    return "Judge how far this risk or weakness reflects the current position today, using current evidence rather than historic gaps.";
+  }
+  return "Judge how consistently this statement is in place today, using current evidence rather than planned activity.";
+}
+
+function mapLegacyIgpResponseToMaturity(response) {
+  if (response === "Yes") return "Fully in place";
+  if (response === "Alternative control in place") return "Mostly in place";
+  if (response === "Not applicable") return "Partially in place";
+  if (response === "No") return "Not in place";
+  return "";
+}
+
+function hasStartedIgpAssessment(item) {
+  if (!item) return false;
+  return Boolean(
+    (item.maturity && item.maturity.toString().trim()) ||
+    (item.rationale && item.rationale.toString().trim()) ||
+    (item.evidenceNote && item.evidenceNote.toString().trim()) ||
+    (item.confidence && item.confidence.toString().trim())
+  );
+}
+
 function hasCompletedIgpResponse(item) {
-  return Boolean(item && item.response && item.response.toString().trim());
+  return Boolean(
+    item &&
+    item.maturity &&
+    item.maturity.toString().trim() &&
+    item.rationale &&
+    item.rationale.toString().trim() &&
+    item.evidenceNote &&
+    item.evidenceNote.toString().trim() &&
+    item.confidence &&
+    item.confidence.toString().trim()
+  );
 }
 
 function normaliseIgpAssessments(raw, existing, outcome) {
@@ -2438,14 +2988,42 @@ function normaliseIgpAssessments(raw, existing, outcome) {
   return base.map((item, idx) => {
     const incoming = incomingByIndex[idx] || {};
     return {
-    id: item.id,
-    statement: item.statement,
-    group: item.group,
-    groupLabel: item.groupLabel,
-    selected: Boolean(incoming.selected || item.selected),
-    response: ((incoming && incoming.response) || item.response || "").toString(),
-  };
+      id: item.id,
+      statement: item.statement,
+      group: item.group,
+      groupLabel: item.groupLabel,
+      guidance: item.guidance,
+      maturity: ((incoming && incoming.maturity) || item.maturity || "").toString(),
+      rationale: ((incoming && incoming.rationale) || item.rationale || "").toString(),
+      evidenceNote: ((incoming && incoming.evidenceNote) || item.evidenceNote || "").toString(),
+      confidence: ((incoming && incoming.confidence) || item.confidence || "").toString(),
+    };
   });
+}
+
+function remapSingleStatementSubmission(raw, statementIndex) {
+  if (!raw || statementIndex < 0) return raw;
+
+  if (Array.isArray(raw)) {
+    if (raw[statementIndex]) return raw;
+    const firstFilledIndex = raw.findIndex((item) => item && typeof item === "object");
+    if (firstFilledIndex >= 0) {
+      const remapped = [];
+      remapped[statementIndex] = raw[firstFilledIndex];
+      return remapped;
+    }
+    return raw;
+  }
+
+  if (typeof raw === "object") {
+    if (raw[statementIndex] || raw[String(statementIndex)]) return raw;
+    const keys = Object.keys(raw);
+    if (keys.length === 1) {
+      return { [statementIndex]: raw[keys[0]] };
+    }
+  }
+
+  return raw;
 }
 
 function buildIgpJudgementHint(igpAssessments) {
@@ -2474,13 +3052,14 @@ function buildIgpJudgementHint(igpAssessments) {
 
     const achievedAllYes =
       achieved.length > 0 &&
-      achieved.every((item) => item.response === "Yes");
-    const achievedHasGap = achieved.some((item) => item.response === "No");
-    const negativeTriggered = notAchieved.some((item) => item.response === "Yes");
+      achieved.every((item) => item.maturity === "Fully in place");
+    const achievedHasGap = achieved.some((item) => item.maturity === "Not in place");
+    const negativeTriggered = notAchieved.some(
+      (item) => item.maturity === "Mostly in place" || item.maturity === "Fully in place"
+    );
     const negativeMixed = notAchieved.some(
       (item) =>
-        item.response === "Alternative control in place" ||
-        item.response === "Not applicable"
+        item.maturity === "Partially in place"
     );
 
     if (achievedAllYes && !negativeTriggered && !negativeMixed) {
@@ -2506,12 +3085,10 @@ function buildIgpJudgementHint(igpAssessments) {
     };
   }
 
-  const anyNo = items.some((item) => item.response === "No");
-  const anyAlternative = items.some(
-    (item) => item.response === "Alternative control in place"
-  );
-  const anyNotApplicable = items.some((item) => item.response === "Not applicable");
-  const allYes = items.length > 0 && items.every((item) => item.response === "Yes");
+  const anyNo = items.some((item) => item.maturity === "Not in place");
+  const anyAlternative = items.some((item) => item.maturity === "Mostly in place");
+  const anyNotApplicable = items.some((item) => item.maturity === "Partially in place");
+  const allYes = items.length > 0 && items.every((item) => item.maturity === "Fully in place");
 
   if (allYes) {
     return {
@@ -2541,11 +3118,38 @@ function buildIgpJudgementHint(igpAssessments) {
 function buildIgpSynthesis(igpAssessments) {
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
   return {
-    strengths: items.filter((item) => item.response === "Yes").length,
-    partials: items.filter((item) => item.response === "Alternative control in place").length,
-    notApplicable: items.filter((item) => item.response === "Not applicable").length,
-    criticalGaps: items.filter((item) => item.response === "No").length,
+    strengths: items.filter((item) => item.maturity === "Fully in place").length,
+    partials: items.filter((item) => item.maturity === "Mostly in place").length,
+    notApplicable: items.filter((item) => item.maturity === "Partially in place").length,
+    criticalGaps: items.filter((item) => item.maturity === "Not in place").length,
   };
+}
+
+function findFirstIncompleteIgpIndex(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  const index = items.findIndex((item) => !hasCompletedIgpResponse(item));
+  return index >= 0 ? index : 0;
+}
+
+function buildRoundTwoOutcomeJudgement(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  if (!items.length || items.some((item) => !hasCompletedIgpResponse(item))) return "";
+  if (items.every((item) => item.maturity === "Fully in place")) return "Achieved";
+  if (items.some((item) => item.maturity === "Not in place")) return "Not achieved";
+  return "Partially achieved";
+}
+
+function buildRoundTwoOutcomeSummary(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  const synthesis = buildIgpSynthesis(items);
+  const total = items.length;
+  if (!total) return "";
+  return [
+    `${synthesis.strengths} fully in place`,
+    `${synthesis.partials} mostly in place`,
+    `${synthesis.notApplicable} partially in place`,
+    `${synthesis.criticalGaps} not in place`,
+  ].join(", ");
 }
 
 function isJudgementMismatch(judgement, igpJudgementHint) {
@@ -2957,7 +3561,7 @@ function seedIipDemoGaps(assessment) {
       judgement: "Partially achieved",
       rationale: "Some directorates follow the agreed cadence; others do not.",
       evidenceRefs: [
-        { refId: "GOV-DEMO-01", type: "Board tracker", link: "", note: "" },
+        { title: "Board cyber tracker", type: "Board tracker", link: "https://intranet.west-marchshire.gov.uk/governance/board-tracker", description: "Tracker showing planned governance reviews and reporting." },
       ],
       updatedAt: new Date().toISOString(),
     };
@@ -2976,7 +3580,7 @@ function seedIipDemoGaps(assessment) {
       judgement: "Partially achieved",
       rationale: "The core policy is in place, but supplier and operational coverage is incomplete.",
       evidenceRefs: [
-        { refId: "POL-DEMO-03", type: "Policy", link: "", note: "" },
+        { title: "Service protection policy", type: "Policy", link: "https://intranet.west-marchshire.gov.uk/policies/service-protection", description: "Policy reference used during improvement plan drafting." },
       ],
       updatedAt: new Date().toISOString(),
     };
@@ -2999,6 +3603,27 @@ function getStage1GateNotice(req, labels) {
     title: "Complete this step first",
     text: `You chose ${targetLabel}. Finish this step and you will return to it.`,
   };
+}
+
+function getCouncilRolesReturnTo(req) {
+  const requested = (req.query.returnTo || req.session.data.councilRolesReturnTo || "").toString().trim().toLowerCase();
+  const value = requested === "journey" ? "journey" : "onboarding";
+  req.session.data.councilRolesReturnTo = value;
+  return value;
+}
+
+function getCouncilRolesReturnHref(returnTo) {
+  return returnTo === "journey" ? "/assessments/current/journey" : "/onboarding";
+}
+
+function getCouncilRolesReturnText(returnTo) {
+  return returnTo === "journey"
+    ? "Return to annual assessment task list"
+    : "Return to council onboarding and setup";
+}
+
+function getCouncilRolesSaveRedirect(returnTo) {
+  return "/onboarding/scope";
 }
 
 function redirectIfScopeNotReady(req, res, assessment, target) {
@@ -3029,6 +3654,7 @@ function clearOutcomeForm(req) {
   delete req.session.data.action;
   delete req.session.data.igpAssessments;
   delete req.session.data.igpResponse;
+  delete req.session.data.returnToCheckAnswers;
   delete req.session.data.judgement;
   delete req.session.data.mismatchReason;
   delete req.session.data.reuseDecision;
@@ -3063,6 +3689,81 @@ function invalidateRoundTwoSectionCompletion(assessment, lens) {
   }
 }
 
+function updateRoundTwoCollaborationDraftState(assessment, currentUser) {
+  if (!assessment) return;
+  if (!assessment.collaborationWorkflow || typeof assessment.collaborationWorkflow !== "object") {
+    assessment.collaborationWorkflow = {
+      status: "draft",
+      reviewerName: "",
+      approverName: "",
+      submittedAt: "",
+      submittedBy: "",
+      reviewDecision: "",
+      reviewNotes: "",
+      reviewedAt: "",
+      reviewedBy: "",
+      approvedAt: "",
+      approvedBy: "",
+      lastEditedAt: "",
+      lastEditedBy: "",
+    };
+  }
+
+  const actor = getCollaborationActor(currentUser);
+  const nowIso = new Date().toISOString();
+  const currentStatus = (assessment.collaborationWorkflow.status || "draft").toString();
+  const nextStatus = currentStatus === "needs_changes" ? "needs_changes" : "draft";
+
+  assessment.collaborationWorkflow = {
+    ...assessment.collaborationWorkflow,
+    status: nextStatus,
+    submittedAt:
+      currentStatus === "in_review" ||
+      currentStatus === "ready_for_approval" ||
+      currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.submittedAt,
+    submittedBy:
+      currentStatus === "in_review" ||
+      currentStatus === "ready_for_approval" ||
+      currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.submittedBy,
+    reviewDecision:
+      currentStatus === "in_review" ||
+      currentStatus === "ready_for_approval" ||
+      currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.reviewDecision,
+    reviewNotes:
+      currentStatus === "in_review" ||
+      currentStatus === "ready_for_approval" ||
+      currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.reviewNotes,
+    reviewedAt:
+      currentStatus === "ready_for_approval" || currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.reviewedAt,
+    reviewedBy:
+      currentStatus === "ready_for_approval" || currentStatus === "approved"
+        ? ""
+        : assessment.collaborationWorkflow.reviewedBy,
+    approvedAt: currentStatus === "approved" ? "" : assessment.collaborationWorkflow.approvedAt,
+    approvedBy: currentStatus === "approved" ? "" : assessment.collaborationWorkflow.approvedBy,
+    lastEditedAt: nowIso,
+    lastEditedBy: actor,
+  };
+}
+
+function getCollaborationActor(user) {
+  if (!user) return "Unknown user";
+  const name = (user.name || "").toString().trim();
+  const email = (user.email || "").toString().trim();
+  if (name && email) return `${name} (${email})`;
+  return name || email || "Unknown user";
+}
+
 function renderSelfAssessOutcome(res, { labels, assessment, outcome, context, form, error }) {
   if (context && context.roundTwo && form && Array.isArray(form.igpAssessments)) {
     form.igpJudgementHint = buildIgpJudgementHint(form.igpAssessments);
@@ -3088,9 +3789,81 @@ function renderSelfAssessOutcome(res, { labels, assessment, outcome, context, fo
   });
 }
 
+function renderRoundTwoIgpStatement(res, {
+  assessment,
+  outcome,
+  context,
+  igpAssessments,
+  statementIndex,
+  postAction,
+  checkAnswersHref,
+  backHref,
+  returnToCheckAnswers,
+  error,
+}) {
+  const statement = igpAssessments[statementIndex];
+  return res.render("pages/flow/self-assess-igp-statement", {
+    pageTitle: context.heading,
+    assessment,
+    outcome,
+    context,
+    form: {
+      targetLevel: getOutcomeTargetLevel(outcome),
+      totalStatements: igpAssessments.length,
+      currentStatementNumber: statementIndex + 1,
+      statement,
+      maturityOptions: getRoundTwoMaturityOptions(),
+      confidenceOptions: getRoundTwoConfidenceOptions(),
+      statementSummary: buildRoundTwoOutcomeSummary(igpAssessments),
+    },
+    postAction,
+    checkAnswersHref,
+    backHref,
+    returnToCheckAnswers: Boolean(returnToCheckAnswers),
+    error: error || null,
+  });
+}
+
+function renderRoundTwoIgpCheckAnswers(res, {
+  assessment,
+  outcome,
+  context,
+  igpAssessments,
+  formAction,
+  changeBaseHref,
+  backHref,
+}) {
+  return res.render("pages/flow/self-assess-igp-check-answers", {
+    pageTitle: `Check your answers: ${context.heading}`,
+    assessment,
+    outcome,
+    context,
+    form: {
+      targetLevel: getOutcomeTargetLevel(outcome),
+      igpAssessments,
+      derivedJudgement: buildRoundTwoOutcomeJudgement(igpAssessments),
+      statementSummary: buildRoundTwoOutcomeSummary(igpAssessments),
+    },
+    formAction,
+    changeBaseHref,
+    backHref,
+  });
+}
+
 function hasAnyEvidenceValue(ref) {
   if (!ref) return false;
-  return Boolean(ref.refId || ref.type || ref.link || ref.note);
+  return Boolean(ref.title || ref.type || ref.link || ref.description || ref.refId || ref.note);
+}
+
+function validateEvidenceRefs(evidenceRefs) {
+  const refs = Array.isArray(evidenceRefs) ? evidenceRefs.filter(hasAnyEvidenceValue) : [];
+  if (refs.length === 0) return "";
+  for (const ref of refs) {
+    if (!(ref.title || "").toString().trim()) return "Enter an evidence title for each evidence reference.";
+    if (!(ref.link || "").toString().trim()) return "Enter a link for each evidence reference.";
+    if (!(ref.description || "").toString().trim()) return "Enter a description for each evidence reference.";
+  }
+  return "";
 }
 
 function buildPreviousAssessmentSummary(assessment, context, outcome) {
@@ -3186,6 +3959,24 @@ function getScopePriority(scope, systemId) {
   return scope.priority.find((priority) => priority && priority.systemId === systemId) || null;
 }
 
+function getResolvedBCSystemIds(assessment) {
+  const scope = assessment && assessment.scope ? assessment.scope : {};
+  const validIds = new Set(
+    Array.isArray(scope.criticalSystems) ? scope.criticalSystems.map((system) => system.id) : []
+  );
+  const shortlistIds = Array.isArray(scope.priorityShortlist)
+    ? scope.priorityShortlist.filter((systemId) => validIds.has(systemId))
+    : [];
+  const annualIds =
+    assessment && assessment.annualSetup && Array.isArray(assessment.annualSetup.systemIds)
+      ? assessment.annualSetup.systemIds.filter((systemId) => validIds.has(systemId))
+      : [];
+
+  if (shortlistIds.length > 0) return shortlistIds;
+  if (annualIds.length > 0) return annualIds;
+  return [];
+}
+
 function findScopeService(scope, serviceId) {
   if (!scope || !Array.isArray(scope.essentialServices)) return null;
   return scope.essentialServices.find((service) => service && service.id === serviceId) || null;
@@ -3201,7 +3992,7 @@ function collectEvidenceReferences(assessment) {
           if (hasAnyEvidenceValue(ref)) {
             rows.push({
               source: `Progress tracker ${row.outcomeCode}`,
-              ...ref,
+              ...normaliseEvidenceRefs([ref])[0],
             });
           }
         }
@@ -3216,7 +4007,7 @@ function collectEvidenceReferences(assessment) {
           if (hasAnyEvidenceValue(ref)) {
             rows.push({
               source: `Self-assess A and D ${outcomeId}`,
-              ...ref,
+              ...normaliseEvidenceRefs([ref])[0],
             });
           }
         }
@@ -3233,7 +4024,7 @@ function collectEvidenceReferences(assessment) {
             if (hasAnyEvidenceValue(ref)) {
               rows.push({
                 source: `Self-assess B and C ${systemId} ${outcomeId}`,
-                ...ref,
+                ...normaliseEvidenceRefs([ref])[0],
               });
             }
           }

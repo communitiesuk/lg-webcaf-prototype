@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
   <h1 class="govuk-heading-l">IIP Stage 2</h1>
   <p class="govuk-body">Complete implementation planning, approvals and submission for Stage 2.</p>
@@ -29,5 +31,7 @@
     <a class="govuk-button" href="{{ summary.nextActionHref }}">Continue</a>
     <a class="govuk-link" href="/improvement-plan/stage-2/review">Review rows</a>
     <a class="govuk-link" href="/improvement-plan/stage-2/setup">Set owners and deadlines</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

@@ -2,24 +2,24 @@
 // Centralised copy/labels (adds export copy label)
 
 module.exports = {
-  serviceName: "WebCAF for Local Government",
+  serviceName: "WebCAF for local government",
 
   entry: {
     pageTitle: "CAF for Local Government",
-    heading: "CAF for Local Government",
+    heading: "WebCAF for local government",
     intro:
-      "Plan, run and submit your CAF self-assessment with clear ownership, evidence references and assurance.",
+      "Plan, complete and submit your Cyber Assessment Framework (CAF) self-assessment, with clear ownership, evidence references and independent review.",
     actions: {
-      startNew: "Start CAF journey",
-      resume: "Continue in-progress work",
+      startNew: "Start your assessment",
+      resume: "Continue your assessment",
     },
-    scopeLink: "Go to scope pack",
+    scopeLink: "Go to scope summary",
     resumeHint:
-      "Resume takes you to the most recently updated outcome assigned to you. If none, it opens your dashboard view.",
+      "Continue takes you to the most recently updated assessment item assigned to you. If none, it opens your dashboard.",
     nextSteps: [
-      "Complete the scope pack (essential services, critical systems and mapping)",
-      "Confirm the scope pack with CAF lead internal sign-off and share it with your assurer",
-      "Start self-assessment once the scope pack is complete",
+      "Complete your scope summary, including essential services, critical systems and system mappings",
+      "Get internal sign-off for the scope summary and share it with your independent assurer",
+      "Start the self-assessment once the scope summary is complete",
     ],
     optionalLinks: {
       previousSubmissions: "View previous submissions (optional)",
@@ -30,36 +30,36 @@ module.exports = {
     pageTitle: "Start",
     heading: "Start a CAF self-assessment",
     intro:
-      "Use this service to plan, run and submit your CAF self-assessment for local government. Preparation happens offline before you build the scope pack.",
+      "Use this service to plan, complete and submit your CAF self-assessment for local government. Some preparation happens outside the service before you record your scope.",
     startButton: "Start now",
     beforeYouStart: [
       "Agree who owns the assessment and who needs to contribute",
       "Collect evidence references (IDs or links) — do not upload evidence",
-      "Decide which critical systems will be assessed for Objectives B and C",
+      "Decide which critical systems you will assess for Objectives B and C",
     ],
     youWillNeed: {
       intro: "You will need:",
       items: [
-        "a list of contributing outcomes for your profile target level",
+        "a list of the contributing outcomes in your target profile",
         "owners and collaborators for each outcome",
         "evidence reference IDs or links for each outcome",
-        "an assurer contact for review and submission",
+        "an assurer contact for independent review",
       ],
     },
     details: {
       heading: "About CAF and evidence references",
       caf:
-        "The Cyber Assessment Framework (CAF) sets outcomes and indicators of good practice (IGPs) used to assess maturity.",
+        "The Cyber Assessment Framework (CAF) is used to assess cyber resilience. It is made up of outcomes and indicators of good practice (IGPs).",
       evidence:
-        "This service captures references to evidence stored elsewhere. Keep evidence in your own systems and record IDs or links here.",
+        "This service records references to evidence stored elsewhere. Keep the evidence in your own systems and record the ID or link here.",
     },
   },
   signIn: {
     pageTitle: "Switch user",
     heading: "Switch user",
-    intro: "Select a user profile to view the prototype as that role.",
+    intro: "Select a user profile to open the service in that role.",
     prototypeNote:
-      "Prototype only: this switches the active user role for testing.",
+      "This changes what this session can see and do.",
     chooseUser: "Choose a user",
     hint: "Switching user changes which dashboards and pages you can see.",
     signInButton: "Switch user",
@@ -81,11 +81,11 @@ module.exports = {
         "Use the CAF to assess and improve cyber resilience across your council and its critical systems.",
       programmeGoal:
         "Good looks like councils understanding resilience gaps, acting on improvement plans, and MHCLG gaining a sector-wide view of resilience.",
-      prototypeNote: "This is a prototype. You will not upload evidence here.",
+      prototypeNote: "You will not upload evidence here.",
       structure: {
         objectives: {
           title: "Objectives",
-          text: "4 objectives define what good cyber resilience looks like.",
+          text: "4 objectives describe what good cyber resilience looks like.",
         },
         principles: {
           title: "Principles",
@@ -93,7 +93,7 @@ module.exports = {
         },
         outcomes: {
           title: "Contributing outcomes",
-          text: "You work outcome-by-outcome to capture progress and judgement.",
+          text: "You assess each outcome and record your judgement.",
         },
         igps: {
           title: "Indicators of good practice (IGPs)",
@@ -102,18 +102,18 @@ module.exports = {
       },
       lens: {
         ad: {
-          title: "Organisation self-assessment (Objectives A & D)",
+          title: "Council-wide self-assessment (Objectives A and D)",
           text: "Governance, risk, incident response and recovery across the council.",
         },
         bc: {
-          title: "Critical-systems self-assessment (Objectives B & C)",
+          title: "Critical systems self-assessment (Objectives B and C)",
           text: "Technical and operational controls for each priority system.",
         },
       },
       profileDetails: {
         heading: "What is the local government CAF profile?",
         text:
-          "The local government profile is a tailored subset of CAF outcomes set by MHCLG. It defines the baseline outcomes councils are assessed against.",
+          "The local government profile is the set of CAF outcomes councils are expected to assess. MHCLG has tailored it for local government.",
       },
       evidenceDetails: {
         heading: "What counts as evidence references?",
@@ -135,11 +135,11 @@ module.exports = {
     stage1Decision: {
       pageTitle: "Choose your next step",
       heading: "Choose your next step",
-      intro: "Choose which self-assessment you want to start now.",
+      intro: "Choose which part of the self-assessment you want to start now.",
       question: "What do you want to do next?",
       options: {
-        stage3: "Self-assess your organisation (Objectives A & D) — Stage 3",
-        stage4: "Self-assess critical systems (Objectives B & C) — Stage 4",
+        stage3: "Self-assess your council (Objectives A and D) — Stage 3",
+        stage4: "Self-assess critical systems (Objectives B and C) — Stage 4",
       },
       continue: "Continue",
       errors: {
@@ -155,13 +155,13 @@ module.exports = {
     },
     scope: {
       hub: {
-        title: "Scope pack",
+        title: "Scope summary",
         intro:
-          "Build the registers, map systems to services, confirm at least 3 in-scope critical systems, then complete the scope pack.",
-        continue: "Continue scope pack",
-        completeContinue: "Scope pack complete",
-        statusHeading: "Scope pack status",
-        statusHint: "Use this to record if the scope pack is stalled and why.",
+          "Build your essential services list and critical systems list, map systems to services, confirm at least 3 in-scope critical systems, then complete your scope summary.",
+        continue: "Continue scope summary",
+        completeContinue: "Scope summary complete",
+        statusHeading: "Scope summary status",
+        statusHint: "Use this to record whether work on the scope summary is stalled and why.",
         statusOptions: {
           onTrack: "On track",
           stalled: "Stalled",
@@ -169,26 +169,26 @@ module.exports = {
         blockerLabel: "What is blocking progress?",
         blockerHint: "Keep this short so engagement managers can act quickly.",
         blockerNotesLabel: "Notes (optional)",
-        rolesHeading: "Who is involved in the CAF work",
+        rolesHeading: "Who is involved in this assessment",
         rolesHint: "Name the people or teams who will help complete the assessment.",
         rolesLeadLabel: "CAF lead or assessment owner",
         rolesSmeLabel: "Subject matter experts (governance, risk, legal, procurement)",
         rolesTechLabel: "System and technical owners",
         rolesApproverLabel: "Approver or senior sign-off",
-        rolesConfirmLabel: "I have confirmed the team who will complete the CAF work",
-        leadConfirmLabel: "CAF lead has reviewed and signed off the scope pack internally",
-        assurerReviewLabel: "I have shared the scope pack with the assurer for review",
+        rolesConfirmLabel: "I have confirmed the team who will complete this assessment",
+        leadConfirmLabel: "The CAF lead has reviewed and signed off the scope summary internally",
+        assurerReviewLabel: "I have shared the scope summary with the assurer for review",
       },
       services: {
-        addTitle: "Essential services register",
-        reviewTitle: "Review essential services",
+        addTitle: "Essential services list",
+        reviewTitle: "Review your essential services list",
         confirmTitle: "Confirm essential services in scope",
         addButton: "Add service",
         continueButton: "Continue to critical systems",
       },
       systems: {
-        addTitle: "Critical systems register",
-        reviewTitle: "Review critical systems",
+        addTitle: "Critical systems list",
+        reviewTitle: "Review your critical systems list",
         addButton: "Add system",
         continueButton: "Continue to mapping",
       },
@@ -215,28 +215,28 @@ module.exports = {
         mappingRequired: "Select at least one essential service",
         priorityLevel: "Select a priority level",
         priorityRationale: "Enter a short rationale for the priority",
-        scopePackStatus: "Select the scope pack status",
+        scopePackStatus: "Select the scope summary status",
         scopeBlockerReason: "Select a blocker reason",
-        scopeRolesConfirm: "Confirm the team who will complete the CAF work",
-        scopeLeadConfirm: "Confirm the CAF lead has signed off the scope pack internally",
-        scopeAssurerReview: "Confirm the scope pack has been shared with the assurer for review",
+        scopeRolesConfirm: "Confirm the team who will complete this assessment",
+        scopeLeadConfirm: "Confirm the CAF lead has signed off the scope summary internally",
+        scopeAssurerReview: "Confirm the scope summary has been shared with the assurer for review",
         shortlistMinimum: "Add and prioritise at least 3 critical systems before continuing",
       },
     },
   },
 
   dashboard: {
-    pageTitle: "Progress tracker dashboard",
-    heading: "Progress tracker dashboard",
+    pageTitle: "Assessment dashboard",
+    heading: "Assessment dashboard",
     hint:
-      "Assign owners, track status, set due dates, and capture notes for each contributing outcome.",
+      "Assign owners, track progress, set due dates, and record notes for each contributing outcome.",
     resumeHint:
-      "Resume takes you to the most recently updated outcome assigned to you.",
+      "Continue takes you to the most recently updated outcome assigned to you.",
     evidenceHint:
-      "Evidence here is working references. Record the formal evidence set in the self-assessment outcome.",
+      "Evidence references here are working notes. Record the final evidence set in the self-assessment outcome.",
     lensNotice:
-      "This dashboard combines organisation (A & D) outcomes and critical systems (B & C). Use filters to focus.",
-    pickOutcome: "Pick an outcome to test",
+      "This dashboard combines council-wide outcomes (A and D) and critical systems outcomes (B and C). Use the filters to focus on the work you need.",
+    pickOutcome: "Choose an outcome",
     summaryHeading: "Summary",
     filterHeading: "Filter outcomes",
     viewsHeading: "Views",
@@ -270,7 +270,7 @@ module.exports = {
       checklistHeading: "Preparation checklist",
       checklistLegend: "Confirm you have completed the preparation steps",
       checklist: {
-        awareness: "I am aware of the CAF and why we are completing it",
+        awareness: "I understand what the CAF is and why we are completing it",
         signoff: "I have internal sign-off to complete the CAF",
         support: "I know how to access support if we need it",
         understanding: "I understand what the CAF involves",
@@ -282,28 +282,28 @@ module.exports = {
       },
     },
     profile: {
-      pageTitle: "Profile targets",
-      heading: "Profile targets",
+      pageTitle: "Assessment profile and target level",
+      heading: "Assessment profile and target level",
       intro:
-        "Use the profile to see the outcomes included in this assessment and the target level the council should aim for.",
-      switchLink: "Switch assessment lens",
+        "Use this page to see which outcomes are included in this assessment and the target level your council should aim for.",
+      switchLink: "Switch assessment view",
       reviewedYes: "I have reviewed the profile targets",
       reviewedNo: "I will review these later",
     },
     selfAssessAD: {
-      pageTitle: "Self-assess the organisation (Objectives A & D)",
-      heading: "Self-assess the organisation (Objectives A & D)",
+      pageTitle: "Self-assess your council (Objectives A and D)",
+      heading: "Self-assess your council (Objectives A and D)",
       intro: "Complete each contributing outcome with IGP responses, evidence references and a judgement.",
       outcomeHeading: "Outcome",
     },
     selfAssessBC: {
-      pageTitle: "Self-assess critical systems (Objectives B & C)",
-      heading: "Self-assess critical systems (Objectives B & C)",
+      pageTitle: "Self-assess critical systems (Objectives B and C)",
+      heading: "Self-assess critical systems (Objectives B and C)",
       intro:
         "Assess each priority critical system against Objectives B and C, capturing IGP responses, evidence and judgements.",
-      selectHeading: "Pick a system to assess",
+      selectHeading: "Choose a system to assess",
       selectIntro:
-        "Only shortlisted systems appear here. Add or update priorities in the scope pack if you need to change the list.",
+        "Only shortlisted systems appear here. Add or update priorities in the scope summary if you need to change the list.",
       noShortlist: "No shortlisted systems yet.",
       addSystemLink: "Add another critical system",
       addHeading: "Add a critical system",
@@ -317,17 +317,17 @@ module.exports = {
     },
     selfAssessOutcome: {
       igpResponse: "IGP responses",
-      igpHint: "Summarise the IGP responses for this outcome. Keep it factual.",
+      igpHint: "Summarise the IGP responses for this outcome. Keep it factual and clear.",
       judgement: "Overall judgement",
       judgementOptions: [
         { value: "Achieved", text: "Met" },
         { value: "Not achieved", text: "Not met" },
       ],
-      rationale: "Reasons for judgement",
+      rationale: "Reasons for this judgement",
       evidenceHeading: "Evidence references",
       evidenceHint:
-        "Add reference IDs or links only. If you have working references in the progress tracker, copy them here for the judgement record.",
-      progressLink: "View progress tracker record",
+        "Add reference IDs or links only. If you have working references in the assessment dashboard, copy them here for the judgement record.",
+      progressLink: "View the dashboard record for this outcome",
       reviewHeading: "Internal review and approval",
       qualityReviewedAt: "Quality review date",
       approverReviewedAt: "Approver sign-off date",
@@ -348,10 +348,10 @@ module.exports = {
       collectedHeading: "Evidence references captured in outcomes",
     },
     assurance: {
-      pageTitle: "Assurance review",
-      heading: "Assurance review",
-      intro: "Capture assurer feedback and whether changes are needed before submission.",
-      statusLabel: "Assurance status",
+      pageTitle: "Independent review",
+      heading: "Independent review",
+      intro: "Record the assurer's feedback and whether changes are needed before submission.",
+      statusLabel: "Independent review status",
       statusOptions: [
         { value: "changes_needed", text: "Changes needed" },
         { value: "approved", text: "Approved" },
@@ -412,9 +412,9 @@ module.exports = {
         },
       },
       review: {
-        pageTitle: "Review improvement plan",
-        heading: "Review improvement plan",
-        intro: "Confirm the final action list before assurer sign-off.",
+      pageTitle: "Review your improvement plan",
+      heading: "Review your improvement plan",
+      intro: "Confirm the final action list before the assurer signs it off.",
         editLink: "Edit actions",
         signOffButton: "Continue to assurer sign-off",
       },
@@ -470,14 +470,14 @@ module.exports = {
     queue: {
       pageTitle: "Assurer queue",
       heading: "Assurer queue",
-      intro: "Review outcomes that are ready or blocked by missing evidence references.",
-      readyHeading: "Ready for review",
+      intro: "Review outcomes that are ready for assurance review or blocked by missing evidence references.",
+      readyHeading: "Ready for assurance review",
       missingHeading: "Blocked by missing evidence references",
       linkText: "Go to assurer queue (stub)",
     },
     outcome: {
       pageTitlePrefix: "Assurer review",
-      headingPrefix: "Outcome",
+      headingPrefix: "Outcome review",
       evidenceHeading: "Evidence references",
       historyHeading: "Change log",
       reviewHeading: "Assurer decision",
@@ -531,7 +531,7 @@ module.exports = {
       keepEvidence: "Keep evidence references",
     },
     hints: {
-      cycleName: "If blank, the prototype will name it automatically (for example, Cycle 2).",
+      cycleName: "If blank, the service will name it automatically, such as Cycle 2.",
     },
     errors: {
       carryOwners: "Select whether to carry forward owners",
@@ -545,9 +545,9 @@ module.exports = {
   outcome: {
     pageTitlePrefix: "Contributing outcome",
     headingPrefix: "Contributing outcome",
-    pickTitle: "Pick an outcome to test",
+    pickTitle: "Choose an outcome",
     pickIntro:
-      "Choose one simple outcome and one hard outcome so you can test the end-to-end flow.",
+      "Choose one simpler outcome and one more complex outcome so you can work through the full journey.",
     pickSimpleTitle: "Simple outcome",
     pickHardTitle: "Hard outcome",
     save: "Save update",
@@ -555,7 +555,7 @@ module.exports = {
     back: "Back to dashboard",
 
     sections: {
-      assignment: "Assignment",
+      assignment: "People assigned",
       update: "Notes and updates",
       evidence: "Evidence references",
       history: "Update history",
@@ -563,29 +563,29 @@ module.exports = {
     },
 
     fields: {
-      owner: "Assigned owner",
-      collaborators: "Additional collaborators",
+      owner: "Owner",
+      collaborators: "Other contributors",
       status: "Progress status",
       dueDate: "Due date",
-      updateText: "Use this box to record notes or decisions",
+      updateText: "Latest update",
       blocker: "Blocker or dependency",
       nextStep: "Next step",
-      evidenceRefId: "Reference ID",
-      evidenceType: "Type",
-      evidenceLink: "Link (optional)",
-      evidenceNote: "Note (optional)",
+      evidenceTitle: "Evidence title",
+      evidenceType: "Evidence type (optional)",
+      evidenceLink: "Evidence link",
+      evidenceDescription: "Description",
     },
 
     hints: {
       updateText: "Capture the latest notes, decisions, or activity for this outcome.",
-      blocker: "Required if status is Not started or Blocked.",
+      blocker: "Required if the status is Not started or Blocked.",
       nextStep: "The next concrete action to move this outcome forward.",
       evidence:
-        "Add reference IDs or links only. Do not paste evidence content into the prototype. Record formal evidence for judgement in the self-assessment.",
+        "Add links to evidence stored outside WebCAF, such as SharePoint files or architecture diagrams. Describe what each item shows and why it is relevant. Assurers will need access to the linked evidence.",
     },
 
     actions: {
-      addEvidence: "Add another reference",
+      addEvidence: "Add another evidence reference",
       removeEvidence: "Remove",
       openSelfAssess: "Open self-assessment for this outcome",
     },
@@ -595,7 +595,7 @@ module.exports = {
     evidenceRules: "Select yes if you have agreed evidence referencing rules with the assurer",
     chooseAssessment: "Select which assessment you want to start now",
     criticalSystemName: "Enter the name of the critical system",
-    evidenceRequired: "Add at least one evidence reference (ID or link)",
+    evidenceRequired: "Add at least one evidence reference with a title, link and description",
     ownerRequired: "Select an owner",
     statusRequired: "Select a progress status",
     updateRequired: "Enter an update",

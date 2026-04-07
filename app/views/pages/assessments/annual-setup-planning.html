@@ -1,6 +1,9 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/annual-setup/roles">Back</a>
 
   {% if error %}
@@ -18,16 +21,29 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Assessment setup</span>
-  <h1 class="govuk-heading-l">Plan assurance support</h1>
-  <p class="govuk-body">Tell us roughly when you expect to need assurer support for this assessment.</p>
-  <p class="govuk-body">This helps with planning only. It does not book assurance.</p>
+  {{ appPageHeader({
+    caption: "Assessment setup",
+    title: "Plan assurance support",
+    intro: "Tell us when you expect to need assurance support."
+  }) }}
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Help with this step</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>This helps planning only and does not book assurance.</li>
+        <li>If A and D and B and C will be ready at different times, use the earliest date.</li>
+        <li>After this, you will review and finish annual setup.</li>
+      </ul>
+    </div>
+  </details>
 
   <form method="post" action="/assessments/current/annual-setup/planning">
     <div class="govuk-form-group {% if error and ((error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0) %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset" role="group" aria-describedby="assurance-window-hint{% if error and ((error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceYear') | list | length) > 0) %} assuranceWindow-error{% endif %}">
         <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">When do you expect to need assurer support for this assessment?</legend>
-        <div id="assurance-window-hint" class="govuk-hint">Enter an estimated month and year. If A and D and B and C will be ready at different times, enter the earliest point you expect to need support.</div>
+        <div id="assurance-window-hint" class="govuk-hint">Enter an estimated month and year.</div>
         {% if error and (error.items | selectattr('field','equalto','assuranceMonth') | list | length) > 0 %}
           <p id="assuranceWindow-error" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -81,13 +97,15 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="checkInNotes">Anything else we should know? (optional)</label>
-      <div class="govuk-hint">For example, known dependencies or timing constraints.</div>
+      <div class="govuk-hint">Include known dependencies or timing constraints.</div>
       <textarea class="govuk-textarea" id="checkInNotes" name="checkInNotes" rows="4">{{ form.checkInNotes or '' }}</textarea>
     </div>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Finish annual setup</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

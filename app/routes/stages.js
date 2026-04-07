@@ -9,6 +9,104 @@ const {
   getAssessmentOrRedirect,
 } = require("../data/helpers/session");
 
+const SCOPE_CONTEXT_STEPS = [
+  {
+    slug: "mission",
+    sessionKey: "scopeContextMission",
+    contextKey: "mission",
+    question: "What is your mission?",
+    hint: "Summarise your council mission in 2 to 3 sentences.",
+    type: "textarea",
+    rows: 3,
+  },
+  {
+    slug: "objectives",
+    sessionKey: "scopeContextObjectives",
+    contextKey: "objectives",
+    question: "What are your objectives?",
+    type: "textarea",
+    rows: 3,
+  },
+  {
+    slug: "priorities",
+    sessionKey: "scopeContextPriorities",
+    contextKey: "priorities",
+    question: "What are your priorities?",
+    type: "textarea",
+    rows: 3,
+  },
+  {
+    slug: "setup",
+    sessionKey: "scopeContextSetup",
+    contextKey: "setup",
+    question: "How are you currently set up to deliver your mission, objectives and strategy?",
+    type: "textarea",
+    rows: 3,
+  },
+  {
+    slug: "operate",
+    sessionKey: "scopeContextOperate",
+    contextKey: "operate",
+    question: "How does your organisation operate?",
+    hint: "Include whether you run 24/7 services, online delivery or offline services.",
+    type: "textarea",
+    rows: 3,
+  },
+  {
+    slug: "threat",
+    sessionKey: "scopeContextThreat",
+    contextKey: "threat",
+    question: "Summarise your organisation's current threat landscape",
+    hint: "Include who may target you, why, and what could go wrong.",
+    type: "textarea",
+    rows: 4,
+  },
+  {
+    slug: "appetite",
+    sessionKey: "scopeContextAppetite",
+    contextKey: "appetite",
+    question: "Summarise your organisation's cyber risk appetite",
+    hint: "Include where it is defined and what level of appetite it is.",
+    type: "textarea",
+    rows: 3,
+  },
+];
+
+const SCOPE_CONTEXT_APPROVAL_STEPS = [
+  {
+    slug: "qa-reviewed-by",
+    sessionKey: "scopeContextQaName",
+    contextKey: "qaReviewedBy",
+    question: "Who quality assured this strategic context?",
+    hint: "Enter the name of the CAF quality assurer.",
+    type: "text",
+    widthClass: "govuk-!-width-two-thirds",
+  },
+  {
+    slug: "qa-reviewed-date",
+    sessionKeys: ["scopeContextQaDay", "scopeContextQaMonth", "scopeContextQaYear"],
+    contextKey: "qaReviewed",
+    question: "When was this strategic context quality assured?",
+    type: "date",
+  },
+  {
+    slug: "approver-reviewed-by",
+    sessionKey: "scopeContextApproverName",
+    contextKey: "approverReviewedBy",
+    question: "Who approved this strategic context?",
+    hint: "Enter the name of the CAF approver.",
+    type: "text",
+    widthClass: "govuk-!-width-two-thirds",
+  },
+  {
+    slug: "approver-reviewed-date",
+    sessionKeys: ["scopeContextApproverDay", "scopeContextApproverMonth", "scopeContextApproverYear"],
+    contextKey: "approverReviewed",
+    question: "When was this strategic context approved?",
+    type: "date",
+  },
+];
+
 module.exports = function (router) {
   router.use("/stages", (req, res, next) => {
     if (!requireSignedIn(req, res)) return;
@@ -115,73 +213,120 @@ module.exports = function (router) {
   });
 
   router.get("/stages/2/scope/context", (req, res) => {
-    const assessment = getAssessmentOrRedirect(req, res);
-    if (!assessment) return;
-
-    ensureScope(assessment);
-
-    res.render("pages/stages/scope-context", {
-      pageTitle: "Set your organisational context",
-      labels,
-      assessment,
-      error: null,
+    const backHref = getScopeContextStartBackHref(req);
+    return res.render("pages/stages/scope-context-start", {
+      pageTitle: "Provide organisation strategic context",
+      backHref,
+      returnText: backHref === "/assessments/current/review-scope"
+        ? "Return to scope review"
+        : (isRoundTwoRequest(req) ? "Return to task list" : "Return to scope task list"),
     });
   });
 
   router.post("/stages/2/scope/context", (req, res) => {
+    const firstStep = getScopeContextSteps(req)[0];
+    return res.redirect(`/stages/2/scope/context/${firstStep.slug}`);
+  });
+
+  router.get("/stages/2/scope/context/check-answers", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
     ensureScope(assessment);
-    const roundTwo = isRoundTwoRequest(req);
 
-    const context = {
-      mission: (req.session.data.scopeContextMission || "").toString().trim(),
-      objectives: (req.session.data.scopeContextObjectives || "").toString().trim(),
-      priorities: (req.session.data.scopeContextPriorities || "").toString().trim(),
-      setup: (req.session.data.scopeContextSetup || "").toString().trim(),
-      operate: (req.session.data.scopeContextOperate || "").toString().trim(),
-      threat: (req.session.data.scopeContextThreat || "").toString().trim(),
-      appetite: (req.session.data.scopeContextAppetite || "").toString().trim(),
-      qaReviewed: buildDateParts(
-        req.session.data.scopeContextQaDay,
-        req.session.data.scopeContextQaMonth,
-        req.session.data.scopeContextQaYear
-      ),
-      qaReviewedBy: (req.session.data.scopeContextQaName || "").toString().trim(),
-      approverReviewed: buildDateParts(
-        req.session.data.scopeContextApproverDay,
-        req.session.data.scopeContextApproverMonth,
-        req.session.data.scopeContextApproverYear
-      ),
-      approverReviewedBy: (req.session.data.scopeContextApproverName || "").toString().trim(),
+    res.render("pages/stages/scope-context-check-answers", {
+      pageTitle: "Check your answers",
+      assessment,
+      backHref: getScopeContextCheckAnswersBackHref(req),
+      rows: buildScopeContextCheckAnswersRows(req, assessment),
+    });
+  });
+
+  router.post("/stages/2/scope/context/check-answers", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureScope(assessment);
+
+    assessment.scope.context = {
+      ...(assessment.scope.context || {}),
       completed: true,
     };
-
-    assessment.scope.context = context;
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
 
-    delete req.session.data.scopeContextMission;
-    delete req.session.data.scopeContextObjectives;
-    delete req.session.data.scopeContextPriorities;
-    delete req.session.data.scopeContextSetup;
-    delete req.session.data.scopeContextOperate;
-    delete req.session.data.scopeContextThreat;
-    delete req.session.data.scopeContextAppetite;
-    delete req.session.data.scopeContextQaDay;
-    delete req.session.data.scopeContextQaMonth;
-    delete req.session.data.scopeContextQaYear;
-    delete req.session.data.scopeContextQaName;
-    delete req.session.data.scopeContextApproverDay;
-    delete req.session.data.scopeContextApproverMonth;
-    delete req.session.data.scopeContextApproverYear;
-    delete req.session.data.scopeContextApproverName;
-
-    if (!roundTwo && !assessment.scope.rolesConfirmed) {
+    if (!isRoundTwoRequest(req) && !assessment.scope.rolesConfirmed) {
       return res.redirect("/stages/2/scope/roles");
     }
     return redirectToScopeReviewReturnOr(req, res, "/stages/2/scope/services/add");
+  });
+
+  router.get("/stages/2/scope/context/:step", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureScope(assessment);
+
+    const contextStep = getScopeContextStep(req, req.params.step);
+    if (!contextStep) {
+      return res.redirect("/stages/2/scope/context");
+    }
+
+    res.render("pages/stages/scope-context-question", {
+      pageTitle: contextStep.question,
+      assessment,
+      contextStep,
+      stepIndex: getScopeContextStepIndex(req, contextStep.slug),
+      stepCount: getScopeContextSteps(req).length,
+      backHref: getScopeContextBackHref(req, contextStep.slug, req.query.return),
+      formAction: getScopeContextFormAction(req, contextStep.slug, req.query.return),
+      returnToCheckAnswers: req.query.return === "check-answers",
+    });
+  });
+
+  router.post("/stages/2/scope/context/:step", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureScope(assessment);
+
+    const contextStep = getScopeContextStep(req, req.params.step);
+    if (!contextStep) {
+      return res.redirect("/stages/2/scope/context");
+    }
+
+    const existingContext = assessment.scope.context || {};
+    const nextContext = { ...existingContext };
+
+    if (contextStep.type === "date") {
+      nextContext[contextStep.contextKey] = buildDateParts(
+        req.session.data[contextStep.sessionKeys[0]],
+        req.session.data[contextStep.sessionKeys[1]],
+        req.session.data[contextStep.sessionKeys[2]]
+      );
+      contextStep.sessionKeys.forEach((key) => delete req.session.data[key]);
+    } else {
+      nextContext[contextStep.contextKey] = (req.session.data[contextStep.sessionKey] || "").toString().trim();
+      delete req.session.data[contextStep.sessionKey];
+    }
+
+    if (typeof nextContext.completed !== "boolean") {
+      nextContext.completed = false;
+    }
+
+    assessment.scope.context = nextContext;
+    assessment.updatedAt = new Date().toISOString();
+    syncRoundTwoScopeCompletion(assessment, req);
+
+    if (req.query.return === "check-answers") {
+      return res.redirect("/stages/2/scope/context/check-answers");
+    }
+
+    const nextStep = getNextScopeContextStep(req, contextStep.slug);
+    if (nextStep) {
+      return res.redirect(`/stages/2/scope/context/${nextStep.slug}`);
+    }
+    return res.redirect("/stages/2/scope/context/check-answers");
   });
 
   router.get("/stages/2/scope/roles", (req, res) => {
@@ -415,7 +560,7 @@ module.exports = function (router) {
 
     ensureScope(assessment);
     if (isRoundTwoRequest(req)) {
-      return res.redirect("/assessments/current/journey");
+      return res.redirect("/onboarding");
     }
     const gatedNotice = getStage1GateNotice(req, labels);
 
@@ -494,6 +639,7 @@ module.exports = function (router) {
       labels,
       assessment,
       formAction: "/stages/2/scope/services/add",
+      backHref: getScopeServicesAddBackHref(req, assessment, { isEdit: false }),
       submitText: labels.stages.scope.services.addButton,
       cancelHref: "/stages/2/scope/services/review",
       isEdit: false,
@@ -529,6 +675,7 @@ module.exports = function (router) {
         pageTitle: labels.stages.scope.services.addTitle,
         labels,
         assessment,
+        backHref: getScopeServicesAddBackHref(req, assessment, { isEdit: false }),
         error: { items: errors },
         data: {
           name,
@@ -568,6 +715,7 @@ module.exports = function (router) {
       labels,
       assessment,
       formAction: `/stages/2/scope/services/${service.id}/edit`,
+      backHref: getScopeServicesAddBackHref(req, assessment, { isEdit: true }),
       submitText: "Save changes",
       cancelHref: "/stages/2/scope/services/review",
       isEdit: true,
@@ -606,6 +754,7 @@ module.exports = function (router) {
         labels,
         assessment,
         formAction: `/stages/2/scope/services/${service.id}/edit`,
+        backHref: getScopeServicesAddBackHref(req, assessment, { isEdit: true }),
         submitText: "Save changes",
         cancelHref: "/stages/2/scope/services/review",
         isEdit: true,
@@ -700,6 +849,9 @@ module.exports = function (router) {
   router.get("/stages/2/scope/services/review", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (shouldRedirectRoundTwoRegistersToOnboarding(req, assessment)) {
+      return res.redirect("/onboarding/scope");
+    }
 
     ensureScope(assessment);
 
@@ -707,6 +859,7 @@ module.exports = function (router) {
       pageTitle: labels.stages.scope.services.reviewTitle,
       labels,
       assessment,
+      backHref: getScopeServicesReviewBackHref(req),
       services: assessment.scope.essentialServices,
       roundTwo: isRoundTwoRequest(req),
       saved: (req.query.saved || "").toString(),
@@ -717,6 +870,9 @@ module.exports = function (router) {
   router.post("/stages/2/scope/services/review", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (shouldRedirectRoundTwoRegistersToOnboarding(req, assessment)) {
+      return res.redirect("/onboarding/scope");
+    }
 
     ensureScope(assessment);
     assessment.scope.servicesConfirmed = assessment.scope.essentialServices.length > 0;
@@ -725,7 +881,7 @@ module.exports = function (router) {
     }
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
-    return redirectToScopeReviewReturnOr(req, res, "/assessments/current/journey");
+    return redirectToScopeReviewReturnOr(req, res, "/onboarding");
   });
 
   router.get("/stages/2/scope/services/confirm", (req, res) => {
@@ -751,7 +907,7 @@ module.exports = function (router) {
       assessment.scope.servicesConfirmed = assessment.scope.essentialServices.length > 0;
       assessment.updatedAt = new Date().toISOString();
       syncRoundTwoScopeCompletion(assessment, req);
-      return redirectToScopeReviewReturnOr(req, res, "/assessments/current/journey");
+      return redirectToScopeReviewReturnOr(req, res, "/onboarding");
     }
     assessment.scope.servicesConfirmed = true;
     assessment.updatedAt = new Date().toISOString();
@@ -778,6 +934,7 @@ module.exports = function (router) {
       labels,
       assessment,
       formAction: "/stages/2/scope/systems/add",
+      backHref: getScopeSystemsAddBackHref(req, assessment, { isEdit: false }),
       submitText: labels.stages.scope.systems.addButton,
       cancelHref: "/stages/2/scope/systems/review",
       isEdit: false,
@@ -785,10 +942,7 @@ module.exports = function (router) {
       data: {
         name: "",
         systemType: "",
-        ownerSupplier: "",
-        boundaryNotes: "",
-        diagramRefs: "",
-        inScope: "",
+        supplier: "",
       },
     });
   });
@@ -801,40 +955,36 @@ module.exports = function (router) {
 
     const name = (req.session.data.systemName || "").toString().trim();
     const systemType = (req.session.data.systemType || "").toString().trim();
-    const ownerSupplier = (req.session.data.ownerSupplier || "").toString().trim();
-    const boundaryNotes = (req.session.data.boundaryNotes || "").toString().trim();
-    const diagramRefs = (req.session.data.diagramRefs || "").toString().trim();
-    const inScope = (req.session.data.systemInScope || "").toString().trim();
+    const supplier = (req.session.data.supplier || "").toString().trim();
 
     const errors = [];
     if (!name) errors.push({ field: "systemName", text: labels.stages.scope.errors.systemName });
-    if (!inScope) errors.push({ field: "systemInScope", text: "Select whether this system is in scope" });
+    if (!systemType) errors.push({ field: "systemType", text: "Enter the system type" });
+    if (!supplier) errors.push({ field: "supplier", text: "Enter the supplier" });
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-systems-add", {
         pageTitle: labels.stages.scope.systems.addTitle,
         labels,
         assessment,
+        backHref: getScopeSystemsAddBackHref(req, assessment, { isEdit: false }),
         error: { items: errors },
         data: {
           name,
           systemType,
-          ownerSupplier,
-          boundaryNotes,
-          diagramRefs,
-          inScope,
+          supplier,
         },
       });
     }
 
+    const timestamp = new Date().toISOString();
     const newSystem = {
       id: `sys-${Date.now()}`,
       name,
       systemType,
-      ownerSupplier,
-      boundaryNotes,
-      diagramRefs: splitCsv(diagramRefs),
-      inScope: inScope === "yes",
+      supplier,
+      createdAt: timestamp,
+      lastUpdatedAt: timestamp,
     };
     assessment.scope.criticalSystems.push(newSystem);
     assessment.scope.assurerReviewed = false;
@@ -842,7 +992,7 @@ module.exports = function (router) {
     if (assessment.stage) {
       assessment.stage.prepareScopeComplete = false;
     }
-    assessment.updatedAt = new Date().toISOString();
+    assessment.updatedAt = timestamp;
     syncRoundTwoScopeCompletion(assessment, req);
 
     clearSystemForm(req);
@@ -871,6 +1021,7 @@ module.exports = function (router) {
       labels,
       assessment,
       formAction: `/stages/2/scope/systems/${system.id}/edit`,
+      backHref: getScopeSystemsAddBackHref(req, assessment, { isEdit: true }),
       submitText: "Save changes",
       cancelHref: "/stages/2/scope/systems/review",
       isEdit: true,
@@ -878,10 +1029,7 @@ module.exports = function (router) {
       data: {
         name: system.name || "",
         systemType: system.systemType || "",
-        ownerSupplier: system.ownerSupplier || "",
-        boundaryNotes: system.boundaryNotes || "",
-        diagramRefs: Array.isArray(system.diagramRefs) ? system.diagramRefs.join(", ") : "",
-        inScope: system.inScope ? "yes" : "no",
+        supplier: getSystemSupplier(system),
       },
     });
   });
@@ -896,14 +1044,12 @@ module.exports = function (router) {
 
     const name = (req.session.data.systemName || "").toString().trim();
     const systemType = (req.session.data.systemType || "").toString().trim();
-    const ownerSupplier = (req.session.data.ownerSupplier || "").toString().trim();
-    const boundaryNotes = (req.session.data.boundaryNotes || "").toString().trim();
-    const diagramRefs = (req.session.data.diagramRefs || "").toString().trim();
-    const inScope = (req.session.data.systemInScope || "").toString().trim();
+    const supplier = (req.session.data.supplier || "").toString().trim();
 
     const errors = [];
     if (!name) errors.push({ field: "systemName", text: labels.stages.scope.errors.systemName });
-    if (!inScope) errors.push({ field: "systemInScope", text: "Select whether this system is in scope" });
+    if (!systemType) errors.push({ field: "systemType", text: "Enter the system type" });
+    if (!supplier) errors.push({ field: "supplier", text: "Enter the supplier" });
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-systems-add", {
@@ -911,6 +1057,7 @@ module.exports = function (router) {
         labels,
         assessment,
         formAction: `/stages/2/scope/systems/${system.id}/edit`,
+        backHref: getScopeSystemsAddBackHref(req, assessment, { isEdit: true }),
         submitText: "Save changes",
         cancelHref: "/stages/2/scope/systems/review",
         isEdit: true,
@@ -918,24 +1065,24 @@ module.exports = function (router) {
         data: {
           name,
           systemType,
-          ownerSupplier,
-          boundaryNotes,
-          diagramRefs,
-          inScope,
+          supplier,
         },
       });
     }
 
+    const timestamp = new Date().toISOString();
     system.name = name;
     system.systemType = systemType;
-    system.ownerSupplier = ownerSupplier;
-    system.boundaryNotes = boundaryNotes;
-    system.diagramRefs = splitCsv(diagramRefs);
-    system.inScope = inScope === "yes";
+    system.supplier = supplier;
+    touchCriticalSystem(system, timestamp);
+    delete system.ownerSupplier;
+    delete system.boundaryNotes;
+    delete system.diagramRefs;
+    delete system.inScope;
     assessment.scope.assurerReviewed = false;
     assessment.scope.leadConfirmed = false;
     if (assessment.stage) assessment.stage.prepareScopeComplete = false;
-    assessment.updatedAt = new Date().toISOString();
+    assessment.updatedAt = timestamp;
     syncRoundTwoScopeCompletion(assessment, req);
     clearSystemForm(req);
     return res.redirect(`/stages/2/scope/systems/review?saved=system-updated&name=${encodeURIComponent(name)}`);
@@ -1022,17 +1169,33 @@ module.exports = function (router) {
   router.get("/stages/2/scope/systems/review", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (shouldRedirectRoundTwoRegistersToOnboarding(req, assessment)) {
+      return res.redirect("/onboarding/scope");
+    }
 
     ensureScope(assessment);
 
-    const nextMappingId = getNextMappingId(assessment.scope);
-    const hasUnmappedSystems = Boolean(nextMappingId);
     const roundTwo = isRoundTwoRequest(req);
-    const nextAction = hasUnmappedSystems
+    const nextStepUrl = getNextSystemJourneyHref(assessment.scope, { roundTwo });
+    const hasIncompleteSystems = Boolean(nextStepUrl);
+    const nextMappingId = getNextMappingId(assessment.scope);
+    const nextAction = hasIncompleteSystems
       ? {
-          href: `/stages/2/scope/mapping/${nextMappingId}`,
-          text: "Continue mapping systems",
+          href: nextStepUrl,
+          text: nextMappingId ? "Continue mapping systems" : "Continue prioritising systems",
         }
+      : !roundTwo && assessment.scope.criticalSystems.length < 3
+        ? {
+            href: "/stages/2/scope/systems/add",
+            text: "Add another critical system",
+          }
+      : !roundTwo && !areNonRoundTwoPrioritiesComplete(assessment.scope)
+        ? {
+            href: (!Array.isArray(assessment.scope.priorityShortlist) || assessment.scope.priorityShortlist.length === 0)
+              ? "/stages/2/scope/priority/shortlist"
+              : "/stages/2/scope/priority/describe",
+            text: "Continue prioritising systems",
+          }
       : roundTwo
         ? {
             href: "/stages/2/scope/priority/shortlist",
@@ -1055,6 +1218,7 @@ module.exports = function (router) {
         ...system,
         mappedServices,
         priorityLabel: priority && priority.level ? priority.level : "",
+        lastUpdatedDisplay: formatCriticalSystemLastUpdated(system.lastUpdatedAt),
       };
     });
 
@@ -1062,6 +1226,7 @@ module.exports = function (router) {
       pageTitle: labels.stages.scope.systems.reviewTitle,
       labels,
       assessment,
+      backHref: getScopeSystemsReviewBackHref(req),
       systems: systemRows,
       nextAction,
       roundTwo: isRoundTwoRequest(req),
@@ -1073,11 +1238,14 @@ module.exports = function (router) {
   router.post("/stages/2/scope/systems/review", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (shouldRedirectRoundTwoRegistersToOnboarding(req, assessment)) {
+      return res.redirect("/onboarding/scope");
+    }
 
     ensureScope(assessment);
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
-    return redirectToScopeReviewReturnOr(req, res, "/assessments/current/journey");
+    return redirectToScopeReviewReturnOr(req, res, "/onboarding");
   });
 
   router.get("/stages/2/scope/mapping/:systemId(sys-[^/]+)", (req, res) => {
@@ -1089,15 +1257,9 @@ module.exports = function (router) {
     const system = findSystem(assessment.scope, req.params.systemId);
     if (!system) return res.redirect("/stages/2/scope/systems/review");
 
-    const mapping = getMapping(assessment.scope, system.id);
-
-    res.render("pages/stages/scope-mapping", {
-      pageTitle: labels.stages.scope.mapping.title,
-      labels,
+    return renderSystemMappingPage(req, res, {
       assessment,
       system,
-      services: assessment.scope.essentialServices,
-      selected: mapping ? mapping.serviceIds : [],
       error: null,
     });
   });
@@ -1111,50 +1273,11 @@ module.exports = function (router) {
     const system = findSystem(assessment.scope, req.params.systemId);
     if (!system) return res.redirect("/stages/2/scope/systems/review");
 
-    const serviceIds = coerceArray(req.session.data.serviceIds).filter(Boolean);
-
-    if (serviceIds.length === 0) {
-      return res.render("pages/stages/scope-mapping", {
-        pageTitle: labels.stages.scope.mapping.title,
-        labels,
-        assessment,
-        system,
-        services: assessment.scope.essentialServices,
-        selected: [],
-        error: labels.stages.scope.errors.mappingRequired,
-      });
-    }
-
-    upsertMapping(assessment.scope, system.id, serviceIds);
-    assessment.updatedAt = new Date().toISOString();
-    syncRoundTwoScopeCompletion(assessment, req);
-
-    delete req.session.data.serviceIds;
-
-    if (isRoundTwoRequest(req)) {
-      return res.redirect(`/stages/2/scope/systems/review?saved=mapping&name=${encodeURIComponent(system.name || "System")}`);
-    }
-
-    return res.redirect("/stages/2/scope/mapping/review");
+    return saveSystemMapping(req, res, assessment, system);
   });
 
   router.get("/stages/2/scope/mapping/review", (req, res) => {
-    const assessment = getAssessmentOrRedirect(req, res);
-    if (!assessment) return;
-
-    ensureScope(assessment);
-    const nextMappingId = getNextMappingId(assessment.scope);
-
-    res.render("pages/stages/scope-mapping-review", {
-      pageTitle: labels.stages.scope.mapping.reviewTitle,
-      labels,
-      assessment,
-      systems: assessment.scope.criticalSystems,
-      services: assessment.scope.essentialServices,
-      mappings: assessment.scope.mappings,
-      nextMappingId,
-      nextUrl: "/stages/2/scope",
-    });
+    return res.redirect("/stages/2/scope/systems/review");
   });
 
   router.get("/stages/2/scope/priority/:systemId(sys-[^/]+)", (req, res) => {
@@ -1167,29 +1290,13 @@ module.exports = function (router) {
     if (!system) return res.redirect("/stages/2/scope/systems/review");
 
     const mapping = getMapping(assessment.scope, system.id);
-    if (!mapping || mapping.serviceIds.length === 0) {
+    if (!mapping || !Array.isArray(mapping.serviceIds) || mapping.serviceIds.length === 0) {
       return res.redirect(`/stages/2/scope/mapping/${system.id}`);
     }
 
-    const priority = getPriority(assessment.scope, system.id);
-    const mappedServices = (mapping.serviceIds || [])
-      .map((serviceId) => findService(assessment.scope, serviceId))
-      .filter(Boolean)
-      .map((service) => service.name);
-
-    res.render("pages/stages/scope-priority", {
-      pageTitle: labels.stages.scope.priority.title,
-      labels,
+    return renderSystemPriorityPage(req, res, {
       assessment,
       system,
-      mappedServices,
-      data: {
-        level: priority ? priority.level : "",
-        rationale: priority ? priority.rationale : "",
-        criteria: priority ? priority.criteria : [],
-        confidence: priority ? priority.confidence : "",
-        confidenceRationale: priority ? priority.confidenceRationale : "",
-      },
       error: null,
     });
   });
@@ -1204,63 +1311,11 @@ module.exports = function (router) {
     if (!system) return res.redirect("/stages/2/scope/systems/review");
 
     const mapping = getMapping(assessment.scope, system.id);
-    if (!mapping || mapping.serviceIds.length === 0) {
+    if (!mapping || !Array.isArray(mapping.serviceIds) || mapping.serviceIds.length === 0) {
       return res.redirect(`/stages/2/scope/mapping/${system.id}`);
     }
 
-    const level = (req.session.data.priorityLevel || "").toString();
-    const rationale = (req.session.data.priorityRationale || "").toString().trim();
-    const criteria = coerceArray(req.session.data.priorityCriteria).filter(Boolean);
-    const confidence = (req.session.data.priorityConfidence || "").toString();
-    const confidenceRationale = (req.session.data.priorityConfidenceRationale || "").toString().trim();
-    const requiresConfidenceRationale = confidence === "medium" || confidence === "low";
-
-    const errors = [];
-    if (!level) errors.push({ field: "priorityLevel", text: labels.stages.scope.errors.priorityLevel });
-    if (!rationale) errors.push({ field: "priorityRationale", text: labels.stages.scope.errors.priorityRationale });
-    if (!confidence) errors.push({ field: "priorityConfidence", text: "Select a confidence level" });
-    if (requiresConfidenceRationale && !confidenceRationale) {
-      errors.push({ field: "priorityConfidenceRationale", text: "Enter a short reason if you are not fully confident" });
-    }
-
-    if (errors.length > 0) {
-      const mappedServices = (mapping.serviceIds || [])
-        .map((serviceId) => findService(assessment.scope, serviceId))
-        .filter(Boolean)
-        .map((service) => service.name);
-      return res.render("pages/stages/scope-priority", {
-        pageTitle: labels.stages.scope.priority.title,
-        labels,
-        assessment,
-        system,
-        mappedServices,
-        data: { level, rationale, criteria, confidence, confidenceRationale },
-        error: { items: errors },
-      });
-    }
-
-    upsertPriority(assessment.scope, system.id, {
-      level,
-      rationale,
-      criteria,
-      confidence,
-      confidenceRationale,
-    });
-    assessment.updatedAt = new Date().toISOString();
-
-    delete req.session.data.priorityLevel;
-    delete req.session.data.priorityRationale;
-    delete req.session.data.priorityCriteria;
-    delete req.session.data.priorityConfidence;
-    delete req.session.data.priorityConfidenceRationale;
-
-    syncRoundTwoScopeCompletion(assessment, req);
-
-    if (isRoundTwoRequest(req)) {
-      return res.redirect(`/stages/2/scope/systems/review?saved=priority&name=${encodeURIComponent(system.name || "System")}`);
-    }
-
-    return res.redirect("/stages/2/scope/priority/shortlist");
+    return saveSystemPriority(req, res, assessment, system);
   });
 
   router.get("/stages/2/scope/priority/shortlist", (req, res) => {
@@ -1278,6 +1333,7 @@ module.exports = function (router) {
       pageTitle: labels.stages.scope.priority.shortlistTitle,
       labels,
       assessment,
+      backHref: getScopePriorityShortlistBackHref(req),
       eligible,
       selected: assessment.scope.priorityShortlist,
       error: null,
@@ -1301,6 +1357,7 @@ module.exports = function (router) {
         pageTitle: labels.stages.scope.priority.shortlistTitle,
         labels,
         assessment,
+        backHref: getScopePriorityShortlistBackHref(req),
         eligible,
         selected: assessment.scope.priorityShortlist,
         error: { items: [{ field: "shortlistSystemIds", text: labels.stages.scope.errors.shortlistMinimum }] },
@@ -1315,6 +1372,7 @@ module.exports = function (router) {
           pageTitle: labels.stages.scope.priority.shortlistTitle,
           labels,
           assessment,
+          backHref: getScopePriorityShortlistBackHref(req),
           eligible,
           selected: assessment.scope.priorityShortlist,
           error: { items: [{ field: "shortlistSystemIds", text: labels.stages.scope.errors.shortlistMinimum }] },
@@ -1444,7 +1502,6 @@ module.exports = function (router) {
     ensureScope(assessment);
 
     const summary = assessment.scope.criticalSystems
-      .filter((system) => system && system.inScope)
       .map((system) => ({
         system,
         mapping: getMapping(assessment.scope, system.id),
@@ -1468,7 +1525,6 @@ module.exports = function (router) {
 
     ensureScope(assessment);
     const summary = assessment.scope.criticalSystems
-      .filter((system) => system && system.inScope)
       .map((system) => ({
         system,
         mapping: getMapping(assessment.scope, system.id),
@@ -1479,19 +1535,26 @@ module.exports = function (router) {
       const mapping = getMapping(assessment.scope, system.id);
       return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
     }).length;
+    const priorityCount = getPriorityCount(assessment.scope);
     const systemsCount = assessment.scope.criticalSystems.length;
     if (isRoundTwoRequest(req)) {
       if (systemsCount === 0) {
         errors.push({ field: "scopeSystemMinimum", text: "Add the critical systems that make up your CAF scope register before you continue" });
       }
-      if (systemsCount > 0 && summary.length === 0) {
-        errors.push({ field: "scopeSystemMinimum", text: "Mark at least 1 critical system as in scope before you continue" });
-      }
     } else if (summary.length < 3) {
-      errors.push({ field: "scopeSystemMinimum", text: "Add at least 3 critical systems marked in scope before you continue" });
+      errors.push({ field: "scopeSystemMinimum", text: "Add at least 3 critical systems before you continue" });
     }
     if (systemsCount > 0 && mappedCount < systemsCount) {
       errors.push({ field: "scopeMappingsComplete", text: "Map every critical system to at least one essential service before continuing" });
+    }
+    if (!isRoundTwoRequest(req) && priorityCount < 3) {
+      errors.push({ field: "scopePriorityComplete", text: "Set a priority for at least 3 critical systems before continuing" });
+    }
+    if (!isRoundTwoRequest(req) && (!Array.isArray(assessment.scope.priorityShortlist) || assessment.scope.priorityShortlist.length === 0)) {
+      errors.push({ field: "scopePriorityShortlist", text: "Select the critical systems to assess before continuing" });
+    }
+    if (!isRoundTwoRequest(req) && !assessment.scope.priorityDetailsComplete) {
+      errors.push({ field: "scopePriorityDetails", text: "Complete the priority system summaries before continuing" });
     }
     if (!assessment.scope.context || !assessment.scope.context.completed) {
       errors.push({ field: "scopeContextComplete", text: "Complete organisational context before continuing" });
@@ -1547,8 +1610,10 @@ module.exports = function (router) {
     }
 
     const continueTo = (req.query.continue || "").toString();
-    const continueHref = continueTo || "/assessments/current/journey";
-    const continueText = continueTo ? "Continue to selected self-assessment" : "Return to CAF journey";
+    const continueHref = continueTo || (isRoundTwoRequest(req) ? "/onboarding" : "/assessments/current/journey");
+    const continueText = continueTo
+      ? "Continue to selected self-assessment"
+      : (isRoundTwoRequest(req) ? "Return to onboarding and setup" : "Return to CAF journey");
 
     return res.render("pages/stages/scope-complete", {
       pageTitle: isRoundTwoRequest(req) ? "Scope register complete" : "Scope pack complete",
@@ -1572,6 +1637,141 @@ module.exports = function (router) {
   });
 };
 
+function renderSystemMappingPage(req, res, { assessment, system, error = null }) {
+  const scope = assessment.scope || {};
+  const mapping = getMapping(scope, system.id);
+
+  return res.render("pages/stages/scope-mapping", {
+    pageTitle: `Which essential services does ${system.name} support?`,
+    labels,
+    assessment,
+    system,
+    systemLastUpdatedDisplay: formatCriticalSystemLastUpdated(system.lastUpdatedAt),
+    backHref: getScopeMappingBackHref(req, scope, system),
+    services: scope.essentialServices,
+    selected: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [],
+    error,
+    formAction: `/stages/2/scope/mapping/${system.id}`,
+  });
+}
+
+function saveSystemMapping(req, res, assessment, system) {
+  const scope = assessment.scope;
+  const serviceIds = coerceArray(req.session.data.serviceIds).filter(Boolean);
+
+  const errors = [];
+  if (serviceIds.length === 0) {
+    errors.push({ field: "serviceIds", text: labels.stages.scope.errors.mappingRequired });
+  }
+
+  if (errors.length > 0) {
+    return renderSystemMappingPage(req, res, {
+      assessment,
+      system,
+      error: { items: errors },
+    });
+  }
+
+  upsertMapping(scope, system.id, serviceIds);
+
+  const timestamp = new Date().toISOString();
+  assessment.updatedAt = timestamp;
+  touchCriticalSystem(system, timestamp);
+  syncRoundTwoScopeCompletion(assessment, req);
+
+  delete req.session.data.serviceIds;
+
+  return res.redirect(`/stages/2/scope/priority/${system.id}`);
+}
+
+function renderSystemPriorityPage(req, res, { assessment, system, error = null, formData = null }) {
+  const scope = assessment.scope || {};
+  const mapping = getMapping(scope, system.id);
+  const priority = getPriority(scope, system.id);
+  const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
+    .map((serviceId) => findService(scope, serviceId))
+    .filter(Boolean)
+    .map((service) => service.name);
+  const resolvedData = formData || {
+    level: priority ? priority.level : "",
+    criteria: priority && Array.isArray(priority.criteria) ? priority.criteria : [],
+  };
+
+  return res.render("pages/stages/scope-priority", {
+    pageTitle: `Set the priority for ${system.name}`,
+    labels,
+    assessment,
+    system,
+    backHref: `/stages/2/scope/mapping/${system.id}`,
+    submitText: "Save and continue",
+    cancelHref: "/stages/2/scope/systems/review",
+    mappedServices,
+    data: resolvedData,
+    error,
+  });
+}
+
+function saveSystemPriority(req, res, assessment, system) {
+  const scope = assessment.scope;
+  const level = (req.session.data.priorityLevel || "").toString();
+  const criteria = coerceArray(req.session.data.priorityCriteria).filter(Boolean);
+
+  const errors = [];
+  if (!level) errors.push({ field: "priorityLevel", text: labels.stages.scope.errors.priorityLevel });
+
+  if (errors.length > 0) {
+    return renderSystemPriorityPage(req, res, {
+      assessment,
+      system,
+      formData: {
+        level,
+        criteria,
+      },
+      error: { items: errors },
+    });
+  }
+
+  upsertPriority(scope, system.id, {
+    level,
+    criteria,
+  });
+
+  const timestamp = new Date().toISOString();
+  assessment.updatedAt = timestamp;
+  touchCriticalSystem(system, timestamp);
+  syncRoundTwoScopeCompletion(assessment, req);
+
+  delete req.session.data.priorityLevel;
+  delete req.session.data.priorityRationale;
+  delete req.session.data.priorityCriteria;
+  delete req.session.data.priorityConfidence;
+  delete req.session.data.priorityConfidenceRationale;
+
+  const nextStepUrl = getNextSystemJourneyHref(scope, { roundTwo: isRoundTwoRequest(req) });
+  if (nextStepUrl) {
+    return res.redirect(nextStepUrl);
+  }
+
+  const savedName = encodeURIComponent(system.name || "System");
+  if (isRoundTwoRequest(req)) {
+    return res.redirect(`/stages/2/scope/systems/review?saved=priority&name=${savedName}`);
+  }
+
+  if (assessment.scope.criticalSystems.length < 3) {
+    return res.redirect("/stages/2/scope/systems/review");
+  }
+
+  if (!areNonRoundTwoPrioritiesComplete(scope)) {
+    return res.redirect(
+      (!Array.isArray(scope.priorityShortlist) || scope.priorityShortlist.length === 0)
+        ? "/stages/2/scope/priority/shortlist"
+        : "/stages/2/scope/priority/describe"
+    );
+  }
+
+  return res.redirect("/stages/2/scope/priority/confirm");
+}
+
 function redirectToScopeReviewReturnOr(req, res, fallback) {
   const returnTo = req && req.session && req.session.data ? req.session.data.scopeReviewReturnTo : "";
   if (returnTo) {
@@ -1592,43 +1792,38 @@ function isRoundTwoScopeComplete(assessment) {
   if (!assessment || !assessment.scope) return false;
   const scope = assessment.scope;
   const contextComplete = Boolean(scope.context && scope.context.completed);
-  const servicesComplete = Boolean(scope.servicesConfirmed);
+  const services = Array.isArray(scope.essentialServices) ? scope.essentialServices : [];
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const inScopeSystemsCount = systems.filter((system) => Boolean(system && system.inScope)).length;
-  const mappedCount = systems.filter((system) => {
-    const mapping = getMapping(scope, system.id);
-    return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
-  }).length;
-  const priorityCount = systems.filter((system) => {
-    const priority = getPriority(scope, system.id);
-    return Boolean(priority && priority.level);
-  }).length;
-
   return contextComplete &&
-    servicesComplete &&
-    systems.length > 0 &&
-    inScopeSystemsCount > 0 &&
-    mappedCount === systems.length &&
-    priorityCount === systems.length;
+    services.length > 0 &&
+    systems.length > 0;
 }
 
 function syncRoundTwoScopeCompletion(assessment, req) {
   if (!assessment || !assessment.stage || !isRoundTwoRequest(req)) return;
   assessment.stage.prepareScopeComplete = isRoundTwoScopeComplete(assessment);
+  if (!assessment.scopeReview) {
+    assessment.scopeReview = {
+      decision: "",
+      completed: false,
+      updatedAt: "",
+    };
+  }
+  assessment.scopeReview.completed = assessment.stage.prepareScopeComplete;
+  if (assessment.scopeReview.completed) {
+    assessment.scopeReview.updatedAt = new Date().toISOString();
+  }
 }
 
 function ensureScope(assessment) {
   if (!assessment.scope) assessment.scope = {};
+  if (!assessment.scope.context) assessment.scope.context = {};
   if (!Array.isArray(assessment.scope.essentialServices)) assessment.scope.essentialServices = [];
   if (!Array.isArray(assessment.scope.criticalSystems)) assessment.scope.criticalSystems = [];
+  assessment.scope.criticalSystems = assessment.scope.criticalSystems.map((system) => normaliseCriticalSystem(system));
   if (!Array.isArray(assessment.scope.mappings)) assessment.scope.mappings = [];
   if (!Array.isArray(assessment.scope.priority)) assessment.scope.priority = [];
   if (!Array.isArray(assessment.scope.priorityShortlist)) assessment.scope.priorityShortlist = [];
-  assessment.scope.criticalSystems.forEach((system) => {
-    if (typeof system.inScope !== "boolean") {
-      system.inScope = true;
-    }
-  });
   if (typeof assessment.scope.servicesConfirmed !== "boolean") {
     assessment.scope.servicesConfirmed = false;
   }
@@ -1745,6 +1940,26 @@ function findSystem(scope, systemId) {
   return scope.criticalSystems.find((s) => s.id === systemId) || null;
 }
 
+function normaliseCriticalSystem(system) {
+  if (!system || typeof system !== "object") return system;
+  if (typeof system.createdAt !== "string") {
+    system.createdAt = "";
+  }
+  if (typeof system.lastUpdatedAt !== "string") {
+    system.lastUpdatedAt = "";
+  }
+  return system;
+}
+
+function touchCriticalSystem(system, timestamp = new Date().toISOString()) {
+  if (!system || typeof system !== "object") return "";
+  if (!system.createdAt) {
+    system.createdAt = timestamp;
+  }
+  system.lastUpdatedAt = timestamp;
+  return timestamp;
+}
+
 function getMapping(scope, systemId) {
   return scope.mappings.find((m) => m.systemId === systemId) || null;
 }
@@ -1762,15 +1977,52 @@ function getPriority(scope, systemId) {
   return scope.priority.find((p) => p.systemId === systemId) || null;
 }
 
+function getPriorityCount(scope) {
+  const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
+  return systems.filter((system) => {
+    const priority = getPriority(scope, system.id);
+    return Boolean(priority && priority.level);
+  }).length;
+}
+
 function upsertPriority(scope, systemId, data) {
   const existing = getPriority(scope, systemId);
   if (existing) {
     existing.level = data.level;
-    existing.rationale = data.rationale;
     existing.criteria = data.criteria;
+    delete existing.rationale;
+    delete existing.confidence;
+    delete existing.confidenceRationale;
   } else {
-    scope.priority.push({ systemId, ...data });
+    scope.priority.push({
+      systemId,
+      level: data.level,
+      criteria: data.criteria,
+    });
   }
+}
+
+function getPriorityStatus(priority) {
+  const level = priority && priority.level ? priority.level : "";
+  if (!level) {
+    return {
+      label: "Not set yet",
+      tagClass: "govuk-tag--grey",
+      isSet: false,
+    };
+  }
+
+  const levelMap = {
+    high: { label: "High", tagClass: "govuk-tag--red" },
+    medium: { label: "Medium", tagClass: "govuk-tag--blue" },
+    low: { label: "Low", tagClass: "govuk-tag--green" },
+    not_sure: { label: "Not sure yet", tagClass: "govuk-tag--yellow" },
+  };
+
+  return {
+    ...(levelMap[level] || { label: level, tagClass: "govuk-tag--grey" }),
+    isSet: true,
+  };
 }
 
 function getEligibleShortlist(scope) {
@@ -1801,11 +2053,38 @@ function getNextMappingId(scope) {
 function getNextPriorityId(scope) {
   for (const system of scope.criticalSystems) {
     const priority = getPriority(scope, system.id);
-    if (!priority) {
+    if (!priority || !priority.level) {
       return system.id;
     }
   }
   return "";
+}
+
+function getNextSystemJourneyHref(scope, { roundTwo = false } = {}) {
+  const nextMappingId = getNextMappingId(scope);
+  if (nextMappingId) return `/stages/2/scope/mapping/${nextMappingId}`;
+  if (roundTwo) {
+    const nextPriorityId = getNextPriorityId(scope);
+    return nextPriorityId ? `/stages/2/scope/priority/${nextPriorityId}` : "";
+  }
+
+  if (!Array.isArray(scope.criticalSystems) || scope.criticalSystems.length < 3) {
+    return "";
+  }
+
+  if (getPriorityCount(scope) >= 3) {
+    return "";
+  }
+
+  const nextPriorityId = getNextPriorityId(scope);
+  return nextPriorityId ? `/stages/2/scope/priority/${nextPriorityId}` : "";
+}
+
+function areNonRoundTwoPrioritiesComplete(scope) {
+  return getPriorityCount(scope) >= 3 &&
+    Array.isArray(scope.priorityShortlist) &&
+    scope.priorityShortlist.length > 0 &&
+    Boolean(scope.priorityDetailsComplete);
 }
 
 function clearServiceForm(req) {
@@ -1818,10 +2097,16 @@ function clearServiceForm(req) {
 function clearSystemForm(req) {
   delete req.session.data.systemName;
   delete req.session.data.systemType;
+  delete req.session.data.supplier;
   delete req.session.data.ownerSupplier;
   delete req.session.data.boundaryNotes;
   delete req.session.data.diagramRefs;
   delete req.session.data.systemInScope;
+}
+
+function getSystemSupplier(system) {
+  if (!system) return "";
+  return (system.supplier || system.ownerSupplier || "").toString();
 }
 
 function buildDateParts(day, month, year) {
@@ -1912,21 +2197,170 @@ function formatTimestamp(value) {
   });
 }
 
+function formatCriticalSystemLastUpdated(value) {
+  if (!value) return "No update date available";
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return "No update date available";
+  const datePart = dt.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const timePart = dt.toLocaleTimeString("en-GB", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${datePart} at ${timePart}`;
+}
+
+function getScopeContextSteps(req) {
+  return isRoundTwoRequest(req)
+    ? SCOPE_CONTEXT_STEPS
+    : SCOPE_CONTEXT_STEPS.concat(SCOPE_CONTEXT_APPROVAL_STEPS);
+}
+
+function getScopeContextStep(req, slug) {
+  return getScopeContextSteps(req).find((step) => step.slug === slug) || null;
+}
+
+function getScopeContextStepIndex(req, slug) {
+  return getScopeContextSteps(req).findIndex((step) => step.slug === slug);
+}
+
+function getNextScopeContextStep(req, slug) {
+  const steps = getScopeContextSteps(req);
+  const index = getScopeContextStepIndex(req, slug);
+  if (index < 0 || index >= steps.length - 1) return null;
+  return steps[index + 1];
+}
+
+function getPreviousScopeContextStep(req, slug) {
+  const steps = getScopeContextSteps(req);
+  const index = getScopeContextStepIndex(req, slug);
+  if (index <= 0) return null;
+  return steps[index - 1];
+}
+
+function getScopeContextBackHref(req, slug, returnParam) {
+  if (returnParam === "check-answers") {
+    return "/stages/2/scope/context/check-answers";
+  }
+
+  const previousStep = getPreviousScopeContextStep(req, slug);
+  if (previousStep) {
+    return `/stages/2/scope/context/${previousStep.slug}`;
+  }
+
+  return "/stages/2/scope/context";
+}
+
+function getScopeContextStartBackHref(req) {
+  const returnTo = req && req.session && req.session.data ? req.session.data.scopeReviewReturnTo : "";
+  if (returnTo) {
+    return returnTo;
+  }
+  return isRoundTwoRequest(req) ? "/onboarding" : "/stages/2/scope";
+}
+
+function getScopeContextCheckAnswersBackHref(req) {
+  const steps = getScopeContextSteps(req);
+  const lastStep = steps[steps.length - 1];
+  return `/stages/2/scope/context/${lastStep.slug}`;
+}
+
+function hasScopeReviewReturn(req) {
+  return Boolean(req && req.session && req.session.data && req.session.data.scopeReviewReturnTo);
+}
+
+function getScopeServicesAddBackHref(req, assessment, options = {}) {
+  const scope = assessment && assessment.scope ? assessment.scope : {};
+  const services = Array.isArray(scope.essentialServices) ? scope.essentialServices : [];
+  if (options.isEdit || services.length > 0 || hasScopeReviewReturn(req)) {
+    return "/stages/2/scope/services/review";
+  }
+  return isRoundTwoRequest(req) ? "/stages/2/scope/context/check-answers" : "/stages/2/scope";
+}
+
+function getScopeServicesReviewBackHref(req) {
+  if (hasScopeReviewReturn(req)) {
+    return req.session.data.scopeReviewReturnTo;
+  }
+  return isRoundTwoRequest(req) ? "/onboarding" : "/stages/2/scope";
+}
+
+function getScopeSystemsAddBackHref(req, assessment, options = {}) {
+  const scope = assessment && assessment.scope ? assessment.scope : {};
+  const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
+  if (options.isEdit || systems.length > 0 || hasScopeReviewReturn(req)) {
+    return "/stages/2/scope/systems/review";
+  }
+  return isRoundTwoRequest(req) ? "/stages/2/scope/services/review" : "/stages/2/scope";
+}
+
+function getScopeSystemsReviewBackHref(req) {
+  if (hasScopeReviewReturn(req)) {
+    return req.session.data.scopeReviewReturnTo;
+  }
+  return isRoundTwoRequest(req) ? "/stages/2/scope/services/review" : "/stages/2/scope";
+}
+
+function getScopeMappingBackHref(req, scope, system) {
+  const mapping = getMapping(scope, system.id);
+  const hasMapping = Boolean(mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0);
+  const hasPriority = Boolean(getPriority(scope, system.id));
+  if (!hasMapping && !hasPriority && !isRoundTwoRequest(req)) {
+    return "/stages/2/scope/systems/add";
+  }
+  return "/stages/2/scope/systems/review";
+}
+
+function getScopePriorityShortlistBackHref(req) {
+  return isRoundTwoRequest(req) ? "/stages/2/scope/systems/review" : "/stages/2/scope";
+}
+
+function getScopeContextFormAction(req, slug, returnParam) {
+  const suffix = returnParam === "check-answers" ? "?return=check-answers" : "";
+  return `/stages/2/scope/context/${slug}${suffix}`;
+}
+
+function formatScopeContextAnswer(value) {
+  const text = String(value || "").trim();
+  return text || "Not provided";
+}
+
+function formatScopeContextDateAnswer(value) {
+  const parts = value || {};
+  const day = String(parts.day || "").trim();
+  const month = String(parts.month || "").trim();
+  const year = String(parts.year || "").trim();
+  if (!day && !month && !year) return "Not provided";
+  return [day, month, year].filter(Boolean).join(" / ");
+}
+
+function buildScopeContextCheckAnswersRows(req, assessment) {
+  const context = (assessment && assessment.scope && assessment.scope.context) || {};
+  return getScopeContextSteps(req).map((step) => ({
+    question: step.question,
+    answer: step.type === "date"
+      ? formatScopeContextDateAnswer(context[step.contextKey])
+      : formatScopeContextAnswer(context[step.contextKey]),
+    changeHref: `/stages/2/scope/context/${step.slug}?return=check-answers`,
+    isMultiline: step.type === "textarea",
+  }));
+}
+
 function buildScopeSummary(assessment, { roundTwo = false } = {}) {
   const scope = assessment.scope;
   const servicesCount = scope.essentialServices.length;
   const inScopeCount = scope.essentialServices.filter((s) => s.inScope).length;
   const systemsCount = scope.criticalSystems.length;
-  const inScopeSystemsCount = scope.criticalSystems.filter((system) => system.inScope).length;
   const mappedCount = scope.criticalSystems.filter((system) => {
     const mapping = getMapping(scope, system.id);
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
   }).length;
-  const priorityCount = scope.criticalSystems.filter((system) => {
-    const priority = getPriority(scope, system.id);
-    return Boolean(priority && priority.level);
-  }).length;
+  const priorityCount = getPriorityCount(scope);
   const shortlistCount = Array.isArray(scope.priorityShortlist) ? scope.priorityShortlist.length : 0;
+  const prioritiesReadyForAssessment = areNonRoundTwoPrioritiesComplete(scope);
   const isComplete = roundTwo
     ? isRoundTwoScopeComplete(assessment)
     : Boolean(assessment.stage && assessment.stage.prepareScopeComplete);
@@ -1964,12 +2398,17 @@ function buildScopeSummary(assessment, { roundTwo = false } = {}) {
       : "/stages/2/scope/systems/methodology";
     nextStepLabel = roundTwo ? "Build your full critical systems register" : "Identify and prioritise 3 critical systems for assessment";
   } else if (systemsCount > 0 && mappedCount < systemsCount) {
-    const nextMappingId = getNextMappingId(scope);
-    nextStepUrl = nextMappingId
-      ? `/stages/2/scope/mapping/${nextMappingId}`
-      : "/stages/2/scope/mapping/review";
+    nextStepUrl = getNextSystemJourneyHref(scope, { roundTwo }) || "/stages/2/scope/systems/review";
     nextStepLabel = roundTwo ? "Build your full critical systems register" : "Identify and prioritise 3 critical systems for assessment";
-  } else if (!roundTwo && inScopeSystemsCount < 3) {
+  } else if (!roundTwo && systemsCount >= 3 && !prioritiesReadyForAssessment) {
+    const nextPriorityId = getNextPriorityId(scope);
+    nextStepUrl = nextPriorityId
+      ? `/stages/2/scope/priority/${nextPriorityId}`
+      : (!Array.isArray(scope.priorityShortlist) || scope.priorityShortlist.length === 0
+        ? "/stages/2/scope/priority/shortlist"
+        : "/stages/2/scope/priority/describe");
+    nextStepLabel = "Identify and prioritise 3 critical systems for assessment";
+  } else if (!roundTwo && systemsCount < 3) {
     nextStepUrl = "/stages/2/scope/systems/review";
     nextStepLabel = "Identify and prioritise 3 critical systems for assessment";
   } else if (roundTwo) {
@@ -1980,10 +2419,7 @@ function buildScopeSummary(assessment, { roundTwo = false } = {}) {
     nextStepLabel = roundTwo ? "Confirm the scope register is ready to use" : "Share with assurers for feedback";
   }
 
-  const nextMappingId = getNextMappingId(scope);
-  const mappingNextUrl = nextMappingId
-    ? `/stages/2/scope/mapping/${nextMappingId}`
-    : "/stages/2/scope/mapping/review";
+  const mappingNextUrl = getNextSystemJourneyHref(scope, { roundTwo }) || "/stages/2/scope/systems/review";
   const workshopDate = scope.assuranceSchedule ? parseDateISO(scope.assuranceSchedule.workshopDate) : null;
   const shareByDate = scope.assuranceSchedule ? parseDateISO(scope.assuranceSchedule.shareByDate) : null;
 
@@ -1994,7 +2430,7 @@ function buildScopeSummary(assessment, { roundTwo = false } = {}) {
     mappedCount,
     priorityCount,
     shortlistCount,
-    inScopeSystemsCount,
+    prioritiesReadyForAssessment,
     nextStepUrl,
     nextStepLabel,
     mappingNextUrl,
@@ -2116,4 +2552,14 @@ function getStage1GateNotice(req, labels) {
     title: "Complete this step first",
     text: `You chose ${targetLabel}. Finish this step and you will return to it.`,
   };
+}
+
+function shouldRedirectRoundTwoRegistersToOnboarding(req, assessment) {
+  if (!isRoundTwoRequest(req) || !assessment) return false;
+  if (hasScopeReviewReturn(req)) return false;
+  return !scopeContextCompleted(assessment.scope || {});
+}
+
+function scopeContextCompleted(scope) {
+  return Boolean(scope && scope.context && scope.context.completed);
 }

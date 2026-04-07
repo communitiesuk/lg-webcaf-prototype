@@ -1,7 +1,8 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/assessments/current/review-scope">Back</a>
+  <a class="govuk-back-link" href="/assessments/current/annual-setup">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -18,16 +19,19 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Assessment setup</span>
-  <h1 class="govuk-heading-l">Set up this year's assessment</h1>
-  <p class="govuk-body">Set the assessment work for this year. Choose the critical systems you will assess in B and C.</p>
+  {{ appPageHeader({
+    caption: "Assessment setup",
+    title: "Set up this year's assessment",
+    intro: "Decide what you will assess this year.",
+    showSaveReassurance: true
+  }) }}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <form method="post" action="/assessments/current/annual-setup/assessment">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           {% if hasPreviousAdAssessment %}
             <fieldset class="govuk-fieldset" id="adAssessmentStatus"{% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %} aria-describedby="adAssessmentStatus-error"{% endif %}>
-              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you handle the organisational assessment (A and D) this year?</legend>
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you handle A and D this year?</legend>
               {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}
                 <p id="adAssessmentStatus-error" class="govuk-error-message">
                   <span class="govuk-visually-hidden">Error:</span>
@@ -38,24 +42,24 @@
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-update" name="adAssessmentStatus" type="radio" value="update_existing" {% if form.adAssessmentStatus == "update_existing" %}checked{% endif %}>
                   <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-update">Update our existing A and D assessment</label>
-                  <div class="govuk-hint govuk-radios__hint">Use this if your organisational position has changed and needs updating.</div>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if your council-wide position has changed and needs updating.</div>
                 </div>
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-reuse" name="adAssessmentStatus" type="radio" value="reuse_current" {% if form.adAssessmentStatus == "reuse_current" %}checked{% endif %}>
                   <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-reuse">Keep our current A and D position with a light review</label>
-                  <div class="govuk-hint govuk-radios__hint">Use this if only minor changes are needed this year.</div>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if only minor changes are needed this year.</div>
                 </div>
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-new" name="adAssessmentStatus" type="radio" value="new_assessment" {% if form.adAssessmentStatus == "new_assessment" %}checked{% endif %}>
                   <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-new">Start a new A and D assessment</label>
-                  <div class="govuk-hint govuk-radios__hint">Use this if a full reassessment is needed.</div>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if a full reassessment is needed.</div>
                 </div>
               </div>
             </fieldset>
           {% else %}
-            <h2 class="govuk-heading-m">Organisational assessment (A and D)</h2>
+            <h2 class="govuk-heading-m">Council-wide assessment (A and D)</h2>
             <div class="govuk-inset-text govuk-!-margin-top-0">
-              This is your first A and D assessment. You will start a new A and D assessment this year.
+              You'll start your A and D assessment for this year.
             </div>
           {% endif %}
         </div>
@@ -63,7 +67,7 @@
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint{% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %} annualSystemIds-error{% endif %}">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select up to 3 critical systems for this year’s B and C assessment</legend>
-            <div id="annualSystemIds-hint" class="govuk-hint">Choose up to 3 systems from your critical systems register for this assessment year.</div>
+            <div id="annualSystemIds-hint" class="govuk-hint">Select up to 3 critical systems to assess for B and C this year.</div>
             {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}
               <p id="annualSystemIds-error" class="govuk-error-message">
                 <span class="govuk-visually-hidden">Error:</span>
@@ -77,6 +81,9 @@
                     <input class="govuk-checkboxes__input" id="annualSystemIds-{{ system.id }}" name="annualSystemIds" type="checkbox" value="{{ system.id }}" {% if system.id in form.systemIds %}checked{% endif %}>
                     <label class="govuk-label govuk-checkboxes__label" for="annualSystemIds-{{ system.id }}">
                       <span class="govuk-!-font-weight-bold">{{ system.name }}</span>
+                      {% if system.priorityLabel %}
+                        <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Priority: {{ system.priorityLabel | capitalize }}</span>
+                      {% endif %}
                       {% if system.mappedServices and system.mappedServices.length > 0 %}
                         <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Supports: {{ system.mappedServices | join(", ") }}</span>
                       {% endif %}
@@ -86,9 +93,9 @@
               </div>
             {% else %}
               <div class="govuk-inset-text">
-                You need at least 1 critical system in scope for CAF before you can set up this year's B and C assessment.
+                You need at least 1 critical system in your list before you can set up this year's B and C assessment.
                 <div class="govuk-!-margin-top-2">
-                  <a class="govuk-link" href="/stages/2/scope/systems/review">Go to critical systems register</a>
+                  <a class="govuk-link" href="/stages/2/scope/systems/review">Go to critical systems list</a>
                 </div>
               </div>
             {% endif %}
@@ -100,24 +107,6 @@
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       </form>
-    </div>
-
-    <div class="govuk-grid-column-one-third">
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">About this step</h2>
-        <p class="govuk-body">This page sets the assessment work for this year only.</p>
-        <p class="govuk-body">It does not change your full CAF scope.</p>
-        <p class="govuk-body govuk-!-margin-bottom-0">If something changes later, you can come back and update this setup.</p>
-      </aside>
-
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Selection rules</h2>
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Choose up to 3 critical systems.</li>
-          <li>Only systems already in scope for CAF appear here.</li>
-          <li>You can change the selected systems later if needed.</li>
-        </ul>
-      </aside>
     </div>
   </div>
 {% endblock %}

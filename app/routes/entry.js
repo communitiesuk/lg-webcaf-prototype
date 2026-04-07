@@ -3,9 +3,12 @@
 
 const labels = require("../data/content/labels");
 const { CAF_DEFAULT_VERSION, getOutcomesForVersion } = require("../data/helpers/caf-version");
-const users = require("../data/seed/users");
 const { buildInitialProgressTracker } = require("../data/helpers/progress");
+const { isRoundTwoOnboardingComplete } = require("../data/helpers/phase-progress");
 const { requireSignedIn } = require("../data/helpers/session");
+const { canManageUsers } = require("../data/helpers/round-two-access");
+const { getCouncilDisplayName, getStoredCouncilName, isCouncilSetupComplete } = require("../data/helpers/council-context");
+const { buildCouncilAccount, getCouncilUsers } = require("../data/helpers/prototype-session");
 
 module.exports = function (router) {
   router.get("/entry", (req, res) => {
@@ -20,7 +23,8 @@ module.exports = function (router) {
     const hasInProgress = roundTwo
       ? Boolean(assessment && assessment.id && assessment.startedFromEntry)
       : Boolean(assessment && assessment.id);
-    const roundTwoEntry = roundTwo ? buildRoundTwoEntrySummary(assessment, req.session.data.user) : null;
+    const roundTwoEntry = roundTwo ? buildRoundTwoEntrySummary(assessment, req.session.data) : null;
+    const accessAccount = roundTwo ? buildCouncilAccount(req.session.data) : null;
 
     const viewModel = {
       pageTitle: roundTwo ? "My account" : labels.entry.pageTitle,
@@ -29,6 +33,8 @@ module.exports = function (router) {
       hasInProgress,
       roundTwo,
       roundTwoEntry,
+      accessAccount,
+      canManageUsers: canManageUsers(req.session.data.user || null),
     };
 
     res.render("pages/entry/index", viewModel, (err, html) => {
@@ -74,16 +80,8 @@ module.exports = function (router) {
       req.session.data.researchRound === "round-2";
 
     if (roundTwo) {
-      if (!a.prepare || !a.prepare.onboardingUnderstandingComplete) {
-        return res.redirect("/prepare");
-      }
-
-      if (!a.prepare || !a.prepare.onboardingRolesComplete) {
-        return res.redirect("/prepare/roles");
-      }
-
-      if (!a.stage || !a.stage.prepareScopeComplete) {
-        return res.redirect("/assessments/current/journey");
+      if (!isRoundTwoOnboardingComplete(a)) {
+        return res.redirect("/onboarding");
       }
 
       if (!a.scopeReview || !a.scopeReview.completed) {
@@ -94,7 +92,7 @@ module.exports = function (router) {
         return res.redirect("/assessments/current/annual-setup");
       }
 
-      return res.redirect("/assessments/current/dashboard?view=my");
+      return res.redirect("/assessments/current/journey");
     }
 
     if (!a.stage || !a.stage.understandCAFComplete) {
@@ -113,7 +111,10 @@ module.exports = function (router) {
 
     if (!a.progressTracker || Object.keys(a.progressTracker).length === 0) {
       const { ad } = getOutcomesForVersion(a);
-      a.progressTracker = buildInitialProgressTracker({ outcomesTree: ad, users });
+      a.progressTracker = buildInitialProgressTracker({
+        outcomesTree: ad,
+        users: getCouncilUsers(req.session.data),
+      });
       a.updatedAt = new Date().toISOString();
     }
 
@@ -208,32 +209,36 @@ module.exports = function (router) {
 
     seedPrototypeData(req.session.data.assessment, req.session.data.user, {
       roundTwo: req.session && req.session.data && req.session.data.researchRound === "round-2",
+      sessionData: req.session.data,
     });
 
     return res.redirect("/assessments/current/dashboard");
   });
 };
 
-function buildRoundTwoEntrySummary(assessment, user) {
+function buildRoundTwoEntrySummary(assessment, sessionData) {
   const year = new Date().getFullYear();
-  const orgName =
-    (assessment && assessment.councilName) ||
-    (user && user.orgName) ||
-    "Your council";
+  const orgName = getCouncilDisplayName(sessionData);
 
   if (!assessment || !assessment.id || !assessment.startedFromEntry) {
     return {
       orgName,
       year,
       statusLabel: "Not started",
-      primaryActionText: "Start this year's assessment",
-      primaryActionHref: "/entry/start-new?returnTo=/assessments/current/journey",
+      primaryActionText: "Start council onboarding",
+      primaryActionHref: "/entry/start-new?returnTo=/onboarding",
       secondaryActions: [],
+      onboardingStatus: "Not started",
+      onboardingComplete: false,
+      onboardingActionText: "Open council setup",
+      onboardingActionHref: "/onboarding",
+      assessmentRows: [],
       summaryRows: [],
-      helperText: "Use the task list to work through the yearly setup and self-assessment stages.",
+      helperText: "Complete council onboarding and setup first. The annual assessment becomes available after onboarding is complete.",
     };
   }
 
+  const onboardingComplete = isRoundTwoOnboardingComplete(assessment);
   const annualSetupComplete = Boolean(assessment.annualSetup && assessment.annualSetup.completed);
   const adComplete = Boolean(assessment.selfAssess && assessment.selfAssess.adReview && assessment.selfAssess.adReview.completed);
   const bcComplete = Boolean(assessment.selfAssess && assessment.selfAssess.bcReview && assessment.selfAssess.bcReview.completed);
@@ -252,45 +257,78 @@ function buildRoundTwoEntrySummary(assessment, user) {
   let statusLabel = "In progress";
   if (readyForReview) {
     statusLabel = "Ready for independent review";
+  } else if (!onboardingComplete) {
+    statusLabel = "Onboarding in progress";
   } else if (annualSetupComplete && !selfAssessStarted) {
     statusLabel = "Ready to start self-assessment";
   }
 
   const secondaryActions = [
-    { text: "View task list", href: "/assessments/current/journey" },
+    { text: "View onboarding and setup", href: "/onboarding" },
+    { text: "Manage team access", href: "/manage-users" },
   ];
 
-  if (annualSetupComplete) {
-    secondaryActions.push({ text: "Go to dashboard", href: "/assessments/current/dashboard?view=my" });
+  if (onboardingComplete) {
+    secondaryActions.push({ text: "Open annual assessment", href: "/assessments/current/journey" });
   }
+
+  if (annualSetupComplete) {
+    secondaryActions.push({ text: "Open assessment dashboard", href: "/assessments/current/dashboard?view=my" });
+  }
+
+  let primaryActionText = "Continue onboarding";
+  let primaryActionHref = "/onboarding";
+  if (onboardingComplete) {
+    primaryActionText = "Continue this year's assessment";
+    primaryActionHref = "/entry/resume";
+  }
+  if (readyForReview) {
+    primaryActionText = "Open annual assessment task list";
+    primaryActionHref = "/assessments/current/journey";
+  }
+
+  const assessmentRows = [
+    {
+      key: "Annual setup",
+      value: annualSetupComplete ? "Completed" : "Not started",
+    },
+    {
+      key: "A and D",
+      value: adComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
+    },
+    {
+      key: "B and C",
+      value: bcComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
+    },
+    {
+      key: "Independent review",
+      value: readyForReview ? "Ready to send" : "Not ready",
+    },
+  ];
 
   return {
     orgName,
     year,
     statusLabel,
-    primaryActionText: "Continue this year's assessment",
-    primaryActionHref: "/entry/resume",
+    primaryActionText,
+    primaryActionHref,
     secondaryActions,
+    onboardingStatus: onboardingComplete ? "Completed" : "In progress",
+    onboardingComplete,
+    onboardingActionText: onboardingComplete ? "Review council setup" : "Continue council setup",
+    onboardingActionHref: "/onboarding",
+    assessmentRows,
     summaryRows: [
       {
-        key: "Annual setup",
-        value: annualSetupComplete ? "Completed" : "Not started",
+        key: "Council onboarding",
+        value: onboardingComplete ? "Completed" : "In progress",
       },
-      {
-        key: "A and D",
-        value: adComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
-      },
-      {
-        key: "B and C",
-        value: bcComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
-      },
-      {
-        key: "Independent review",
-        value: readyForReview ? "Ready to send" : "Not yet ready",
-      },
+      ...assessmentRows,
     ],
     helperText:
-      "Use the task list to track yearly progress and major stages. Use the dashboard to continue day-to-day assessment work.",
+      onboardingComplete
+        ? "Onboarding is complete. Use the annual assessment task list and dashboard for this year's work."
+        : "Finish council onboarding and setup before starting the annual assessment.",
   };
 }
 
@@ -314,7 +352,14 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
     assessment.cafVersion = CAF_DEFAULT_VERSION;
   }
 
-  if (!assessment.councilName && currentUser && currentUser.orgName) {
+  if (
+    roundTwo &&
+    options.sessionData &&
+    isCouncilSetupComplete(options.sessionData) &&
+    !assessment.councilName
+  ) {
+    assessment.councilName = getStoredCouncilName(options.sessionData);
+  } else if (!roundTwo && !assessment.councilName && currentUser && currentUser.orgName) {
     assessment.councilName = currentUser.orgName;
   }
 
@@ -395,7 +440,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
     const { ad } = getOutcomesForVersion(assessment);
     assessment.progressTracker = buildInitialProgressTracker({
       outcomesTree: ad,
-      users,
+      users: getCouncilUsers(options.sessionData || {}),
     });
   }
 
@@ -413,10 +458,10 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
     seededOutcome.dueDate = toISODate(addDays(now, 14));
     seededOutcome.evidenceRefs = [
       {
-        refId: "GOV-001",
+        title: "Board update on cyber priorities",
         type: "Governance note",
-        link: "https://intranet.example.gov.uk/governance/board-update",
-        note: "Latest board update on cyber priorities.",
+        link: "https://intranet.west-marchshire.gov.uk/governance/board-update",
+        description: "Latest board update showing current cyber priorities and governance actions.",
       },
     ];
     seededOutcome.history = [
@@ -448,7 +493,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
           rationale: "Policy exists but not consistently applied across suppliers.",
           blocker: "Waiting on supplier assurance statement.",
           evidenceRefs: [
-            { refId: "POL-BC-01", type: "Policy", link: "", note: "Service protection policy." },
+            { title: "Service protection policy", type: "Policy", link: "https://intranet.west-marchshire.gov.uk/policies/service-protection", description: "Current service protection policy used to support the judgement." },
           ],
           updatedAt: addDays(now, -3).toISOString(),
         },
@@ -463,7 +508,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
       judgement: "Partially achieved",
       rationale: "Some directorates follow the agreed governance cadence.",
       evidenceRefs: [
-        { refId: "GOV-TRACK-01", type: "Board tracker", link: "", note: "" },
+        { title: "Board cyber tracker", type: "Board tracker", link: "https://intranet.west-marchshire.gov.uk/governance/board-tracker", description: "Tracking sheet showing board-level cyber reporting cadence." },
       ],
       updatedAt: addDays(now, -4).toISOString(),
     };
@@ -472,16 +517,16 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
   if (!Array.isArray(assessment.evidenceLibrary) || assessment.evidenceLibrary.length === 0) {
     assessment.evidenceLibrary = [
       {
-        refId: "EVID-001",
+        title: "Council cyber policy",
         type: "Policy",
-        link: "https://intranet.example.gov.uk/policies/cyber-policy",
-        note: "Current council cyber policy.",
+        link: "https://intranet.west-marchshire.gov.uk/policies/cyber-policy",
+        description: "Current council cyber policy stored in SharePoint.",
       },
       {
-        refId: "EVID-002",
+        title: "Risk register extract",
         type: "Risk register",
-        link: "",
-        note: "Latest risk register extract.",
+        link: "https://intranet.west-marchshire.gov.uk/risk/risk-register",
+        description: "Latest risk register extract covering cyber risks.",
       },
     ];
   }
@@ -734,7 +779,7 @@ function buildPreviousAssessmentSeed(now) {
         rationale: "Board-level ownership and reporting were in place across the council last year.",
         igpResponse: "Board reporting was regular and cyber risks were reviewed at the right level.",
         evidenceRefs: [
-          { refId: "PREV-GOV-01", type: "Board paper", link: "", note: "Previous annual governance report." },
+          { title: "Previous annual governance report", type: "Board paper", link: "https://intranet.west-marchshire.gov.uk/archive/governance-report", description: "Board paper used in the previous assessment cycle." },
         ],
       },
       A1b: {
@@ -742,7 +787,7 @@ function buildPreviousAssessmentSeed(now) {
         rationale: "Roles were defined last year but not all responsibilities were consistently understood.",
         igpResponse: "Role descriptions existed, but handoffs between teams were inconsistent.",
         evidenceRefs: [
-          { refId: "PREV-ROLE-02", type: "Role description", link: "", note: "Prior accountability matrix." },
+          { title: "Prior accountability matrix", type: "Role description", link: "https://intranet.west-marchshire.gov.uk/archive/accountability-matrix", description: "Previous role and accountability matrix for this outcome." },
         ],
       },
     },
@@ -752,7 +797,7 @@ function buildPreviousAssessmentSeed(now) {
         rationale: "Core policies were carried by the service, but supplier coverage was incomplete.",
         igpResponse: "Protection policy existed and was reviewed, with some supplier gaps.",
         evidenceRefs: [
-          { refId: "PREV-POL-03", type: "Policy", link: "", note: "Last year's service protection policy." },
+          { title: "Last year's service protection policy", type: "Policy", link: "https://intranet.west-marchshire.gov.uk/archive/service-protection-policy", description: "Policy reference carried from the previous assessment year." },
         ],
       },
     },

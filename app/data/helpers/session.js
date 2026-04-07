@@ -1,9 +1,11 @@
 // app/data/helpers/session.js
 // Session helpers used by route modules
+const { ensurePrototypeSession } = require("./prototype-session");
 
 function ensureUser(req) {
   if (!req.session) req.session = {};
   if (!req.session.data) req.session.data = {};
+  ensurePrototypeSession(req.session.data);
 }
 
 function requireSignedIn(req, res) {

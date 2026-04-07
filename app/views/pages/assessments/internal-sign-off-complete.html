@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <span class="govuk-caption-l">Quality assurance</span>
   <h1 class="govuk-heading-l">Internal sign-off complete</h1>
   <p class="govuk-body">The internal quality and approver sign-off has been recorded.</p>
@@ -26,5 +28,7 @@
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to CAF journey task list</a>
     <a class="govuk-link" href="/assessments/current/submit-assessment">Continue to submit to assurer</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

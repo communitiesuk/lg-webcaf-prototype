@@ -1,42 +1,41 @@
 {# app/views/pages/assessments/dashboard.html #}
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/status-summary.njk" import appStatusSummary %}
 
 {% block content %}
-  {% if researchRound == "round-2" %}
+  {% if isAssurerView %}
+    {{ appPageHeader({
+      caption: "Independent review",
+      title: "Assessment dashboard",
+      intro: "Review the assessment assigned to you and open the outcomes that need independent review feedback."
+    }) }}
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Acting as assurer</strong></p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} for assurance.
+      </p>
+    </div>
+  {% elif researchRound == "round-2" %}
     <a href="/assessments/current/journey" class="govuk-back-link">Return to task list</a>
-    <span class="govuk-caption-l">Self-assessment</span>
-    <h1 class="govuk-heading-l">Assessment dashboard</h1>
-    <p class="govuk-body">Continue this year's assessment work and review the outcomes that need your attention.</p>
+    {{ appPageHeader({
+      caption: councilDisplayName,
+      title: "Assessment dashboard",
+      intro: "Continue this year's assessment work and review the outcomes that need your attention.",
+      hint: "Use the dashboard to continue outcome work. Use the task list to track yearly milestones and complete the main stages."
+    }) }}
   {% else %}
-    <h1 class="govuk-heading-l">{{ labels.dashboard.heading }}</h1>
+    {{ appPageHeader({
+      title: labels.dashboard.heading
+    }) }}
   {% endif %}
-  {% if currentUser and researchRound != "round-2" %}
+  {% if currentUser and researchRound != "round-2" and not isAssurerView %}
     <p class="govuk-hint">Role: {{ currentUser.role | capitalize }}</p>
   {% endif %}
 
-  {% if researchRound != "round-2" %}
-    <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
-    <p class="govuk-body govuk-!-margin-bottom-2">
-      Viewing: <strong>Current cycle</strong>.
-      <a class="govuk-link govuk-!-margin-left-1" href="/assessments/current/cycle/history">View previous cycles</a>
-    </p>
-    <div class="govuk-inset-text">
-      <p class="govuk-body govuk-!-margin-bottom-1">
-        <strong>{{ assessment.cycle.name }}</strong>
-      </p>
-      <p class="govuk-body govuk-!-margin-bottom-0">
-        Started: {{ cycleStartedAt }}
-      </p>
-    </div>
-
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Cycle actions</h3>
-    <div class="govuk-button-group">
-      <a class="govuk-button govuk-button--secondary" href="/assessments/current/cycle/start?{{ buildQueryString(query) }}">
-        {{ labels.dashboard.startNewCycle }}
-      </a>
-      <a class="govuk-link" href="/assessments/current/export.csv">
-        Export CSV (current cycle)
-      </a>
+  {% if researchRound == "round-2" and not isAssurerView %}
+    <div class="govuk-!-margin-bottom-4" style="text-align: right;">
+      <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
     </div>
   {% endif %}
 
@@ -51,27 +50,153 @@
     </div>
   {% endif %}
 
-  {% if researchRound == "round-2" and dashboardFrameworkChange and dashboardFrameworkChange.changed %}
-    <div class="govuk-notification-banner" role="region" aria-labelledby="dashboard-framework-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="dashboard-framework-title">Framework updates</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">
-          CAF has changed from version {{ dashboardFrameworkChange.assessmentVersion }} to {{ dashboardFrameworkChange.currentVersion }}.
-        </p>
-        <p class="govuk-body">
-          {{ dashboardFrameworkChange.updatedCount }} updated outcome{% if dashboardFrameworkChange.updatedCount != 1 %}s{% endif %} need review.
-          {% if dashboardFrameworkChange.newOutcomes and dashboardFrameworkChange.newOutcomes.length > 0 %}
-            {{ dashboardFrameworkChange.newOutcomes.length }} new outcome{% if dashboardFrameworkChange.newOutcomes.length != 1 %}s{% endif %} are in the current version.
-          {% endif %}
-        </p>
-      </div>
+  <section aria-labelledby="dashboard-summary-heading">
+    <h2 class="govuk-heading-m" id="dashboard-summary-heading">{{ labels.dashboard.summaryHeading }}</h2>
+    <div class="govuk-grid-row app-dashboard-summary">
+      {% for card in summaryCards %}
+        <div class="govuk-grid-column-one-third">
+          <a class="app-dashboard-card app-dashboard-card--link" href="{{ card.href }}">
+            <p class="app-dashboard-card__label">{{ card.label }}</p>
+            <p class="app-dashboard-card__value">{{ card.value }}</p>
+            {% if card.meta %}
+              <p class="app-dashboard-card__meta">{{ card.meta }}</p>
+            {% endif %}
+            <p class="app-dashboard-card__action">{{ card.actionText }}</p>
+          </a>
+        </div>
+      {% endfor %}
     </div>
+  </section>
+
+  {% if researchRound == "round-2" and not isAssurerView %}
+    <section aria-labelledby="dashboard-registers-heading">
+      <h2 class="govuk-heading-m" id="dashboard-registers-heading">Scope lists</h2>
+      <p class="govuk-body">Use these lists to keep your council's essential services and critical systems up to date throughout the year.</p>
+      <ul class="govuk-list govuk-list--spaced govuk-!-margin-bottom-6">
+        <li>
+          <a class="govuk-link" href="/stages/2/scope/services/review">Essential services list</a>
+        </li>
+        <li>
+          <a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems list</a>
+        </li>
+      </ul>
+    </section>
   {% endif %}
 
-  {% if researchRound == "round-2" %}
-    <p class="govuk-hint">Some CAF work stays outside WebCAF, such as secure evidence storage, architecture mapping and offline drafting. Use the dashboard to continue outcome work. Use the task list to track yearly milestones and complete major stages.</p>
+  {% if researchRound == "round-2" and roundTwoWorkQueues %}
+    <section aria-labelledby="dashboard-next-actions-heading">
+      <h2 class="govuk-heading-m" id="dashboard-next-actions-heading">Next actions</h2>
+
+      <h3 class="govuk-heading-s">Needs attention</h3>
+      {% if roundTwoWorkQueues.needsAttention.length > 0 %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Assessment item</th>
+              <th scope="col" class="govuk-table__header">Issue</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for r in roundTwoWorkQueues.needsAttention %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                  {% if r.carriedForwardFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                  {% endif %}
+                  {% if r.frameworkFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                  {% endif %}
+                  {% if r.systemName %}
+                    <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ r.issueText }}</td>
+                <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.actionHref }}">{{ r.actionText }}</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="govuk-body">No actions need attention right now.</p>
+      {% endif %}
+
+      {% if roundTwoWorkQueues.inProgress.length > 0 %}
+        <h3 class="govuk-heading-s">In progress</h3>
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Assessment item</th>
+              <th scope="col" class="govuk-table__header">Area</th>
+              <th scope="col" class="govuk-table__header">Status</th>
+              <th scope="col" class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for r in roundTwoWorkQueues.inProgress %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                  {% if r.carriedForwardFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                  {% endif %}
+                  {% if r.frameworkFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                  {% endif %}
+                  {% if r.systemName %}
+                    <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
+                <td class="govuk-table__cell"><strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong></td>
+                <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.actionHref }}">{{ r.actionText }}</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if researchRound == "round-2" and not isAssurerView %}
+    <p class="govuk-hint">Some CAF work stays outside WebCAF, such as secure evidence storage, architecture mapping and offline drafting.</p>
+  {% endif %}
+
+  {% if researchRound == "round-2" and collaborationState and not isAssurerView %}
+    {% set collaborationRows = [
+      {
+        key: { text: "Status" },
+        value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+      },
+      {
+        key: { text: "Drafted by" },
+        value: { text: collaborationState.drafterName }
+      },
+      {
+        key: { text: "Reviewer" },
+        value: { text: collaborationState.reviewerName or "Not set" }
+      },
+      {
+        key: { text: "Approver" },
+        value: { text: collaborationState.approverName or "Not set" }
+      }
+    ] %}
+    {% if collaborationState.reviewNotes %}
+      {% set collaborationRows = (collaborationRows.push({
+        key: { text: "Latest review note" },
+        value: { text: collaborationState.reviewNotes }
+      }), collaborationRows) %}
+    {% endif %}
+    {% set collaborationRows = (collaborationRows.push({
+      key: { text: "Next step" },
+      value: { html: '<a class="govuk-link" href="' ~ dashboardNextAction.href ~ '">' ~ dashboardNextAction.text ~ '</a>' }
+    }), collaborationRows) %}
+    {{ appStatusSummary({
+      id: "collaboration-status",
+      heading: "Assessment roles and status",
+      rows: collaborationRows
+    }) }}
   {% endif %}
 
   {% if notifications and notifications.length %}
@@ -136,218 +261,30 @@
     </div>
   {% endif %}
 
-  <h2 class="govuk-heading-m">{{ labels.dashboard.summaryHeading }}</h2>
-
-  <div class="govuk-grid-row app-dashboard-summary">
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Needs attention</p>
-        <p class="app-dashboard-card__value">{{ summaryAll.needsAttention }}</p>
-        <p class="app-dashboard-card__meta">
-          Overdue {{ summaryAll.overdue }}, Blocked {{ summaryAll.blocked }}, Missing evidence {{ summaryAll.missingEvidence }}
-        </p>
-      </div>
-    </div>
-
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">My work</p>
-        <p class="app-dashboard-card__value">{{ summaryAll.mine }}</p>
-        <p class="app-dashboard-card__meta">Assigned to you</p>
-      </div>
-    </div>
-
-    <div class="govuk-grid-column-one-third">
-      <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Complete</p>
-        <p class="app-dashboard-card__value">{{ summaryAll.complete }}</p>
-        <p class="app-dashboard-card__meta">Outcomes finished</p>
-      </div>
-    </div>
-  </div>
   {% if researchRound != "round-2" %}
-    <div class="govuk-grid-row app-dashboard-summary">
-      <div class="govuk-grid-column-one-third">
-        <div class="app-dashboard-card">
-          <p class="app-dashboard-card__label">Assurance report</p>
-          <p class="app-dashboard-card__value">{{ assuranceSummary.reportStatus }}</p>
-          <p class="app-dashboard-card__meta">
-            Record of Audit: {{ assuranceSummary.recordStatus }}
-          </p>
-          <p class="govuk-!-margin-bottom-0">
-            <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
-          </p>
-        </div>
-      </div>
-      <div class="govuk-grid-column-one-third">
-        <div class="app-dashboard-card">
-          <p class="app-dashboard-card__label">IIP Stage 2</p>
-          <p class="app-dashboard-card__value">{{ iipStage2Summary.statusLabel }}</p>
-          <p class="app-dashboard-card__meta">
-            {% if iipStage2Summary.expectedByDisplay %}Offline drafting target: {{ iipStage2Summary.expectedByDisplay }}{% else %}No target date yet{% endif %}
-          </p>
-          <p class="govuk-!-margin-bottom-0">
-            <a class="govuk-link" href="{{ iipStage2Summary.nextActionHref }}">Open IIP Stage 2</a>
-          </p>
-        </div>
-      </div>
-      <div class="govuk-grid-column-one-third">
-        <div class="app-dashboard-card">
-          <p class="app-dashboard-card__label">Evidence requests</p>
-          <p class="app-dashboard-card__value">{{ assuranceSummary.openEvidenceRequests }}</p>
-          <p class="govuk-!-margin-bottom-0">
-            <a class="govuk-link" href="/assessments/current/evidence-requests">Open requests</a>
-          </p>
-        </div>
-      </div>
+    <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
+    <p class="govuk-body govuk-!-margin-bottom-2">
+      Viewing: <strong>Current cycle</strong>.
+      <a class="govuk-link govuk-!-margin-left-1" href="/assessments/current/cycle/history">View previous cycles</a>
+    </p>
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1">
+        <strong>{{ assessment.cycle.name }}</strong>
+      </p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        Started: {{ cycleStartedAt }}
+      </p>
     </div>
-  {% endif %}
 
-  {% if researchRound == "round-2" %}
-    {% if roundTwoWorkQueues and roundTwoWorkQueues.carriedForwardReview.length > 0 %}
-      <h2 class="govuk-heading-m">Carried forward - review needed</h2>
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Assessment item</th>
-            <th scope="col" class="govuk-table__header">Area</th>
-            <th scope="col" class="govuk-table__header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for r in roundTwoWorkQueues.carriedForwardReview %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                {% if r.frameworkFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                {% endif %}
-                {% if r.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
-              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review carried-forward outcome</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% elif researchRound == "round-2" %}
-      <h2 class="govuk-heading-m">Carried forward - review needed</h2>
-      <p class="govuk-body govuk-hint">No carried-forward outcomes need review right now.</p>
-    {% endif %}
-
-    {% if roundTwoWorkQueues and roundTwoWorkQueues.frameworkUpdates.length > 0 %}
-      <h2 class="govuk-heading-m">Framework updates to review</h2>
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Assessment item</th>
-            <th scope="col" class="govuk-table__header">Area</th>
-            <th scope="col" class="govuk-table__header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for r in roundTwoWorkQueues.frameworkUpdates %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                {% if r.frameworkFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                {% endif %}
-                {% if r.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
-              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review updated outcome</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% elif researchRound == "round-2" %}
-      <h2 class="govuk-heading-m">Framework updates to review</h2>
-      <p class="govuk-body govuk-hint">No framework updates need review right now.</p>
-    {% endif %}
-
-    {% if roundTwoWorkQueues and roundTwoWorkQueues.inProgress.length > 0 %}
-      <h2 class="govuk-heading-m">In progress</h2>
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Assessment item</th>
-            <th scope="col" class="govuk-table__header">Area</th>
-            <th scope="col" class="govuk-table__header">Status</th>
-            <th scope="col" class="govuk-table__header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for r in roundTwoWorkQueues.inProgress %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                {% if r.carriedForwardFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                {% endif %}
-                {% if r.frameworkFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                {% endif %}
-                {% if r.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
-              <td class="govuk-table__cell"><strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong></td>
-              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review outcome</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-
-    {% if roundTwoWorkQueues and roundTwoWorkQueues.needsAttention.length > 0 %}
-      <h2 class="govuk-heading-m">Needs attention</h2>
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Assessment item</th>
-            <th scope="col" class="govuk-table__header">Issue</th>
-            <th scope="col" class="govuk-table__header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for r in roundTwoWorkQueues.needsAttention %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                {% if r.carriedForwardFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                {% endif %}
-                {% if r.frameworkFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                {% endif %}
-                {% if r.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell">
-                {% if r.isBlocked %}
-                  Blocked
-                {% elif r.carriedForwardFlag %}
-                  Carried forward - review needed
-                {% elif r.isMissingEvidence %}
-                  Missing evidence
-                {% else %}
-                  Needs review
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.selfAssessUrl }}">Review outcome</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Cycle actions</h3>
+    <div class="govuk-button-group">
+      <a class="govuk-button govuk-button--secondary" href="/assessments/current/cycle/start?{{ buildQueryString(query) }}">
+        {{ labels.dashboard.startNewCycle }}
+      </a>
+      <a class="govuk-link" href="/assessments/current/export.csv">
+        Export CSV (current cycle)
+      </a>
+    </div>
   {% endif %}
 
   {% if researchRound == "round-2" %}

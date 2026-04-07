@@ -3,6 +3,8 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {% set topics = data.checkInTopic %}
   {% if topics is string %}
     {% set topics = [topics] %}
@@ -133,4 +135,6 @@
   <p class="govuk-body govuk-!-margin-top-6">
     <a class="govuk-link" href="/entry">Back to entry</a>
   </p>
+    </div>
+  </div>
 {% endblock %}

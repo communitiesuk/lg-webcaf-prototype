@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/dashboard{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
     {{ labels.cycles.start.cancel }}
   </a>
@@ -138,4 +140,6 @@
       </a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

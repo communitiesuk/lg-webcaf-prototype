@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/stages/1">Back</a>
 
   {% if error %}
@@ -53,4 +55,6 @@
 
     <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.stages.stage1Decision.continue }}</button>
   </form>
+    </div>
+  </div>
 {% endblock %}

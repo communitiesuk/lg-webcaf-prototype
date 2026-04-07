@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/evidence-library">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.assurance.heading }}</h1>
@@ -45,4 +47,6 @@
   <p class="govuk-body govuk-!-margin-top-6">
     <a class="govuk-link" href="/assurer/queue">{{ labels.assurer.queue.linkText }}</a>
   </p>
+    </div>
+  </div>
 {% endblock %}

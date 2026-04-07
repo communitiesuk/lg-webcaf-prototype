@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {% set backHref = "/round-2/sign-in" %}
   {% set formAction = "/round-2/register" %}
   {% if mode == "sign-in" %}
@@ -25,41 +27,107 @@
   {% endif %}
 
   <h1 class="govuk-heading-l">{{ heading }}</h1>
-  <p class="govuk-caption-m">Round 2</p>
   <p class="govuk-body">
     {% if mode == "sign-in" %}
-      Enter your details to continue into the service.
+      Use your work details to access your council account.
     {% else %}
-      Enter your details to register and continue into the service.
+      Choose the option that matches your situation. This service uses one council account per council.
     {% endif %}
   </p>
 
+  {% if mode == "sign-in" %}
+    <div class="govuk-inset-text">
+      Enter your full name and work email address. We will use these details throughout this session.
+    </div>
+  {% endif %}
+
   <form method="post" action="{{ formAction }}">
+    {% if mode == "register" %}
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AccessPath') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="round2AccessPath-hint">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What do you need to do?</legend>
+          <div id="round2AccessPath-hint" class="govuk-hint">
+            Choose one option. If your council already uses webCAF, ask to join that council instead of creating a new account.
+          </div>
+          {% if error and (error.items | selectattr('field','equalto','round2AccessPath') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','round2AccessPath') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-radios" data-module="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="round2AccessPath" name="round2AccessPath" type="radio" value="join-existing" {% if defaults.accessPath == "join-existing" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="round2AccessPath">
+                Join your council
+              </label>
+              <div class="govuk-hint govuk-radios__hint">
+                Use this if your council already has a webCAF account and you need access to it.
+              </div>
+            </div>
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="round2AccessPath-2" name="round2AccessPath" type="radio" value="request-new" {% if defaults.accessPath == "request-new" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="round2AccessPath-2">
+                Request access for a council
+              </label>
+              <div class="govuk-hint govuk-radios__hint">
+                Use this if your council is not set up yet and needs its first webCAF account.
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    {% endif %}
+
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="round2AuthName">Name</label>
+      {% if mode == "sign-in" %}
+        <div class="govuk-hint">Enter your full name as you would want it shown in the service.</div>
+      {% endif %}
       {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}
         <p class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>
           {{ (error.items | selectattr('field','equalto','round2AuthName') | list | first).text }}
         </p>
       {% endif %}
-      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthName" name="round2AuthName" type="text" value="{{ defaults.name }}">
+      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthName" name="round2AuthName" type="text" autocomplete="name" spellcheck="false" value="{{ defaults.name }}">
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="round2AuthEmail">Email address</label>
+      {% if mode == "sign-in" %}
+        <div class="govuk-hint">Use your council, government or other public sector work email address.</div>
+      {% endif %}
       {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}
         <p class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>
           {{ (error.items | selectattr('field','equalto','round2AuthEmail') | list | first).text }}
         </p>
       {% endif %}
-      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthEmail" name="round2AuthEmail" type="email" value="{{ defaults.email }}">
+      <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthEmail" name="round2AuthEmail" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="{{ defaults.email }}">
     </div>
+
+    {% if mode == "register" %}
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2CouncilName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="round2CouncilName">Council</label>
+        <div id="round2CouncilName-hint" class="govuk-hint">Enter the name of the council you need to join or request access for.</div>
+        {% if error and (error.items | selectattr('field','equalto','round2CouncilName') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','round2CouncilName') | list | first).text }}
+          </p>
+        {% endif %}
+        <input class="govuk-input govuk-!-width-two-thirds" id="round2CouncilName" name="round2CouncilName" type="text" aria-describedby="round2CouncilName-hint" value="{{ defaults.councilName }}">
+      </div>
+    {% endif %}
 
     <div class="govuk-button-group">
       <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText }}</button>
-      <a class="govuk-link" href="{{ secondaryHref }}">{{ secondaryText }}</a>
+      {% for link in secondaryLinks %}
+        <a class="govuk-link" href="{{ link.href }}">{{ link.text }}</a>
+      {% endfor %}
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

@@ -1,0 +1,70 @@
+{% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel, appNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="/round-2/register">Back</a>
+
+  <h1 class="govuk-heading-l">Get access</h1>
+
+  {% if outcome.status == "join-request" %}
+    {{ appConfirmationPanel({
+      title: "Access request submitted",
+      body: "Your request will be reviewed before access is granted."
+    }) }}
+    <p class="govuk-body">Your request will be sent to the existing webCAF account for {{ outcome.councilName }}.</p>
+    <p class="govuk-body">A council lead or admin will review it and decide whether to give you access.</p>
+    <p class="govuk-body">You will not get a separate council account.</p>
+  {% elif outcome.status == "existing-council" %}
+    {{ appNotificationBanner({
+      title: "Important",
+      titleId: "existing-account-title",
+      heading: outcome.councilName + " already has a webCAF account."
+    }) }}
+    <p class="govuk-body">To avoid duplicate council accounts, a new account will not be created.</p>
+    <p class="govuk-body">Choose Join your council instead so your request can be reviewed for the existing account.</p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>Existing CAF lead: {{ outcome.matchedAccount.contactName }}</li>
+      <li>Contact email: {{ outcome.matchedAccount.contactEmail }}</li>
+      <li>Alternative route: contact the central webCAF admin team</li>
+    </ul>
+    <p class="govuk-body">
+      <a class="govuk-link" href="/round-2/register?path=join-existing">Join your council</a>
+    </p>
+  {% elif outcome.status == "new-council-request" %}
+    {{ appConfirmationPanel({
+      title: "Access request submitted",
+      body: "Your request will be reviewed before a council account is set up."
+    }) }}
+    <p class="govuk-body">A central admin will review the request, set up the council account if appropriate, and assign the first council lead.</p>
+    <p class="govuk-body">No council account has been created automatically.</p>
+  {% elif outcome.status == "council-not-found" %}
+    {{ appNotificationBanner({
+      title: "Important",
+      titleId: "council-not-found-title",
+      heading: "We could not find an existing webCAF account for " + outcome.councilName + "."
+    }) }}
+    <p class="govuk-body">Check the council name and try again if you expected it to exist.</p>
+    <p class="govuk-body">If your council has not been set up yet, choose Request access so this can be reviewed.</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="/round-2/register?path=request-new">Request access</a>
+    </p>
+  {% else %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        You cannot use this email address to get access.
+      </strong>
+    </div>
+    <p class="govuk-body">Use an approved council or civil service email address to get access to this service.</p>
+    <p class="govuk-body">If you believe this is wrong, contact the central webCAF admin team.</p>
+  {% endif %}
+
+  <p class="govuk-body">
+    <a class="govuk-link" href="/round-2/sign-in">Return to sign in</a>
+  </p>
+    </div>
+  </div>
+{% endblock %}

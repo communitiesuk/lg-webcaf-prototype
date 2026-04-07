@@ -1,9 +1,14 @@
 {% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
 
 {% block content %}
-  <span class="govuk-caption-l">Submission</span>
-  <h1 class="govuk-heading-l">Assessment submitted to assurer</h1>
-  <p class="govuk-body">The full assessment package has been submitted to the assurer.</p>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <span class="govuk-caption-l">{{ "Annual assessment" if roundTwo else "Submission" }}</span>
+  {{ appConfirmationPanel({
+    title: "Assessment submitted to assurer",
+    body: "The assessment has been sent to the assurer for review." if roundTwo else "The full assessment package has been submitted to the assurer."
+  }) }}
 
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
@@ -16,23 +21,31 @@
       <dd class="govuk-summary-list__value">{{ submitted.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
       <dd class="govuk-summary-list__actions"></dd>
     </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Workshop date</dt>
-      <dd class="govuk-summary-list__value">{{ submissionWindow.workshopDateDisplay or "Not set" }}</dd>
-      <dd class="govuk-summary-list__actions"></dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Internal sign-off</dt>
-      <dd class="govuk-summary-list__value">{% if signOff.completed %}Completed{% else %}Not completed{% endif %}</dd>
-      <dd class="govuk-summary-list__actions"></dd>
-    </div>
+    {% if not roundTwo %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Workshop date</dt>
+        <dd class="govuk-summary-list__value">{{ submissionWindow.workshopDateDisplay or "Not set" }}</dd>
+        <dd class="govuk-summary-list__actions"></dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Internal sign-off</dt>
+        <dd class="govuk-summary-list__value">{% if signOff.completed %}Completed{% else %}Not completed{% endif %}</dd>
+        <dd class="govuk-summary-list__actions"></dd>
+      </div>
+    {% endif %}
   </dl>
 
   <div class="govuk-inset-text">
-    The assurer can now review the submitted package outside the council workflow.
+    {% if roundTwo %}
+      Council users do not need to do anything else in WebCAF for this submission. The assurer can now review the assessment.
+    {% else %}
+      The assurer can now review the submitted package outside the council workflow.
+    {% endif %}
   </div>
 
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to CAF journey task list</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">{{ "Return to annual assessment" if roundTwo else "Return to CAF journey task list" }}</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

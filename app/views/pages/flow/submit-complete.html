@@ -3,6 +3,8 @@
 {% from "govuk/components/panel/macro.njk" import govukPanel %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {{ govukPanel({
     titleText: labels.flow.submit.completeHeading,
     text: labels.flow.submit.completeIntro
@@ -13,5 +15,7 @@
       {{ labels.flow.submit.completeReturn }}
     </a>
     <a class="govuk-link" href="/entry">{{ labels.flow.submit.completeStart }}</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

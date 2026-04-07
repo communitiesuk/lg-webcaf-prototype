@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <h1 class="govuk-heading-l">{{ labels.flow.selfAssessBC.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.selfAssessBC.intro }}</p>
 
@@ -41,5 +43,7 @@
 
   <div class="govuk-button-group">
     <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

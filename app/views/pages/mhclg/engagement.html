@@ -3,6 +3,8 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   {{ govukBreadcrumbs({
     items: [
       { text: "Council overview", href: "/mhclg/dashboard" },
@@ -363,5 +365,7 @@
 
   <div class="govuk-button-group govuk-!-margin-top-6">
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/mhclg/dashboard">Back to dashboard</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

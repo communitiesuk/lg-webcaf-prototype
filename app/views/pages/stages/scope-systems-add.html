@@ -1,57 +1,25 @@
 {# app/views/pages/stages/scope-systems-add.html #}
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  {% set backHref = "/stages/2/scope" %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   {% set headingText = "Add a critical system" %}
-  {% set scopeQuestion = "Is this system in scope for this assessment period?" %}
-  {% if researchRound == "round-2" %}
-    {% set backHref = "/assessments/current/journey" %}
-    {% set scopeQuestion = "Is this system currently in scope for CAF?" %}
-  {% endif %}
   {% if isEdit %}
     {% set headingText = "Change a critical system" %}
   {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+  <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  {{ appErrorSummary(error) }}
 
-  {% if researchRound == "round-2" %}
-    <span class="govuk-caption-l">Critical systems register</span>
-    <h1 class="govuk-heading-l">{{ headingText }}</h1>
-    <p class="govuk-body">
-      {% if isEdit %}
-        Update the critical system details for your CAF scope register.
-      {% else %}
-        Add a system that supports one or more essential services. You can map and prioritise it after adding it to the register.
-      {% endif %}
-    </p>
-    <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
-  {% else %}
-    <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-    <p class="govuk-body">
-      {% if isEdit %}
-        Update the critical system details for your CAF scope register.
-      {% elif researchRound == "round-2" %}
-        Add a critical system to your CAF scope register.
-      {% else %}
-        Add each critical system and capture boundaries and references.
-      {% endif %}
-    </p>
-  {% endif %}
+  {{ appPageHeader({
+    caption: "Critical systems register" if researchRound == "round-2" else "",
+    title: headingText if researchRound == "round-2" else pageTitle,
+    intro: "Update the critical system details for your CAF scope register." if isEdit else ("Add a system that supports one or more essential services. You will then map it to services and set its priority in 2 steps." if researchRound == "round-2" else "Add each critical system with the core details you need."),
+    hint: "Critical systems should support one or more essential services." if researchRound == "round-2" else ""
+  }) }}
 
   {% if researchRound == "round-2" %}
     <div class="govuk-inset-text">
@@ -59,7 +27,7 @@
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         <li>Use the name people in the council would recognise for this system.</li>
         <li>Only add systems that support one or more essential services.</li>
-        <li>After saving, you can map the system to services and set its priority.</li>
+        <li>After saving, first map the system to services, then set its priority.</li>
       </ul>
     </div>
   {% endif %}
@@ -73,62 +41,39 @@
           {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
         </p>
       {% endif %}
-      <div class="govuk-hint">For example, `Case Management System` or `Payments Platform`.</div>
+      <div class="govuk-hint">Such as `Case Management System` or `Payments Platform`.</div>
       <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
     </div>
 
-    <div class="govuk-form-group">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="systemType">System type</label>
-      <div class="govuk-hint">For example, line-of-business application, shared platform or supplier-managed service.</div>
+      {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','systemType') | list | first).text }}
+        </p>
+      {% endif %}
+      <div class="govuk-hint">Such as line-of-business application, shared platform or supplier-managed service.</div>
       <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
     </div>
 
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="ownerSupplier">Owner or supplier</label>
-      <div class="govuk-hint">Enter the internal owner, supplier, or team responsible for the system.</div>
-      <input class="govuk-input" id="ownerSupplier" name="ownerSupplier" type="text" value="{{ data.ownerSupplier }}">
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="boundaryNotes">Boundary notes</label>
-      <div class="govuk-hint">Summarise what is included in this system and any important boundaries.</div>
-      <textarea class="govuk-textarea" id="boundaryNotes" name="boundaryNotes" rows="3">{{ data.boundaryNotes }}</textarea>
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="diagramRefs">Architecture link or storage reference</label>
-      <div class="govuk-hint">For example, a link to a secure SharePoint folder or document, or another internal storage reference. Do not paste sensitive content into the service.</div>
-      <input class="govuk-input" id="diagramRefs" name="diagramRefs" type="text" value="{{ data.diagramRefs }}">
-    </div>
-
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %} aria-describedby="systemInScope-error"{% endif %}>
-        <legend class="govuk-fieldset__legend">{{ scopeQuestion }}</legend>
-        {% if researchRound == "round-2" %}
-          <div class="govuk-hint">Select `Yes` if this system is currently within your CAF scope register.</div>
-        {% endif %}
-        {% if error and (error.items | selectattr('field','equalto','systemInScope') | list | length) > 0 %}
-          <p id="systemInScope-error" class="govuk-error-message">
-            <span class="govuk-visually-hidden">Error:</span>
-            {{ (error.items | selectattr('field','equalto','systemInScope') | list | first).text }}
-          </p>
-        {% endif %}
-        <div class="govuk-radios" data-module="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="systemInScope-yes" name="systemInScope" type="radio" value="yes" {% if data.inScope == "yes" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="systemInScope-yes">Yes</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="systemInScope-no" name="systemInScope" type="radio" value="no" {% if data.inScope == "no" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="systemInScope-no">No</label>
-          </div>
-        </div>
-      </fieldset>
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label" for="supplier">Supplier</label>
+      {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','supplier') | list | first).text }}
+        </p>
+      {% endif %}
+      <div class="govuk-hint">Enter the supplier for this system.</div>
+      <input class="govuk-input" id="supplier" name="supplier" type="text" value="{{ data.supplier }}">
     </div>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or labels.stages.scope.systems.addButton }}</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
       <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to critical systems</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

@@ -2,12 +2,12 @@
 
 {% block content %}
   {% set backHref = "/assessments/current/start-self-assessment" %}
-  {% set successMessage = "Assignment saved." %}
+  {% set successMessage = "Changes saved." %}
   {% if researchRound == "round-2" %}
     {% set backHref = "/assessments/current/start-self-assessment/people" %}
   {% endif %}
   {% if saved == "assignment" and savedName %}
-    {% set successMessage = "Assignment saved for " + savedName + "." %}
+    {% set successMessage = "Changes saved for " + savedName + "." %}
   {% endif %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
@@ -23,9 +23,9 @@
   {% endif %}
 
   <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Assign people to contributing outcomes</h1>
+  <h1 class="govuk-heading-l">Assign people to assessment outcomes</h1>
   <p class="govuk-body">Set an owner for each contributing outcome.</p>
-  <p class="govuk-body">You can also add collaborators where other people need to contribute.</p>
+  <p class="govuk-body">You can also add other contributors where more than one person needs to help.</p>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -51,7 +51,7 @@
               <td class="govuk-table__cell">{{ row.collaboratorCount }}</td>
               <td class="govuk-table__cell">
                 <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
-                  {% if row.isAssigned %}Change assignment{% else %}Assign people{% endif %}
+                  {% if row.isAssigned %}Change people{% else %}Assign people{% endif %}
                 </a>
               </td>
             </tr>
@@ -89,7 +89,7 @@
       <aside class="app-outcome-page__sidebar-card">
         <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Need to change the team?</h2>
         <p class="govuk-body govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add or manage people involved</a>
+          <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add or manage the people involved</a>
         </p>
       </aside>
     </div>

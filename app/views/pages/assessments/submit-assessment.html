@@ -1,32 +1,19 @@
 {% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appErrorSummary, appNotificationBanner %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  {{ appErrorSummary(error) }}
 
   {% if saved %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="submission-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="submission-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">Assessment submitted to assurer.</p>
-      </div>
-    </div>
+    {{ appNotificationBanner({
+      type: "success",
+      titleId: "submission-saved-title",
+      heading: "Your assessment has been submitted to the assurer."
+    }) }}
   {% endif %}
 
   <h1 class="govuk-heading-l">Submit full assessment to assurer</h1>
@@ -99,4 +86,6 @@
       <a class="govuk-link" href="/assessments/current/journey">Return to CAF journey task list</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

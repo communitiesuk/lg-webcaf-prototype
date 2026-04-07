@@ -1,0 +1,49 @@
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% macro appSectionStart(params) %}
+  {{ appPageHeader({
+    caption: params.caption,
+    title: params.title,
+    intro: params.intro,
+    showSaveReassurance: params.showSaveReassurance
+  }) }}
+
+  {% if params.guidanceItems and params.guidanceItems.length %}
+    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">{{ params.guidanceHeading or "Help with this step" }}</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          {% for item in params.guidanceItems %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </details>
+  {% endif %}
+
+  {% if params.needToKnowItems and params.needToKnowItems.length %}
+    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">{{ params.needToKnowTitle or "What happens next" }}</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          {% for item in params.needToKnowItems %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </details>
+  {% endif %}
+
+  <div class="govuk-button-group">
+    <form method="{{ params.method or 'post' }}" action="{{ params.action }}" class="govuk-button-group__item">
+      <button class="govuk-button" data-module="govuk-button" type="submit">{{ params.buttonText or "Continue" }}</button>
+    </form>
+    {% if params.secondaryHref %}
+      <a class="govuk-link" href="{{ params.secondaryHref }}">{{ params.secondaryText or "Back" }}</a>
+    {% endif %}
+  </div>
+{% endmacro %}

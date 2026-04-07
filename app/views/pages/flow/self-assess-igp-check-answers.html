@@ -1,0 +1,68 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if context.caption %}
+    <span class="govuk-caption-l">{{ context.caption }}</span>
+  {% endif %}
+  <h1 class="govuk-heading-l">Check your answers</h1>
+  <p class="govuk-body">{{ context.heading }}</p>
+  {% if context.systemName %}
+    <p class="govuk-body"><strong>Critical system:</strong> {{ context.systemName }}</p>
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% for item in form.igpAssessments %}
+        <h2 class="govuk-heading-m">IGP statement {{ loop.index }}</h2>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-7">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Statement</dt>
+            <dd class="govuk-summary-list__value">{{ item.statement }}</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ changeBaseHref }}/{{ loop.index }}?return=check-answers">Change<span class="govuk-visually-hidden"> IGP statement {{ loop.index }}</span></a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Maturity level</dt>
+            <dd class="govuk-summary-list__value">{{ item.maturity }}</dd>
+            <dd class="govuk-summary-list__actions"></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Rationale</dt>
+            <dd class="govuk-summary-list__value">{{ item.rationale }}</dd>
+            <dd class="govuk-summary-list__actions"></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Evidence note</dt>
+            <dd class="govuk-summary-list__value">{{ item.evidenceNote }}</dd>
+            <dd class="govuk-summary-list__actions"></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Confidence</dt>
+            <dd class="govuk-summary-list__value">{{ item.confidence }}</dd>
+            <dd class="govuk-summary-list__actions"></dd>
+          </div>
+        </dl>
+      {% endfor %}
+
+      <div class="govuk-inset-text">
+        <p class="govuk-body"><strong>Derived outcome judgement:</strong> {{ form.derivedJudgement }}</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ form.statementSummary }}</p>
+      </div>
+
+      <form method="post" action="{{ formAction }}">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="saveReturn">Save and return</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="govuk-grid-column-one-third">
+      <aside class="app-outcome-page__sidebar-card">
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">What happens next</h2>
+        <p class="govuk-body govuk-!-margin-bottom-0">Saving this page marks the outcome as judged and returns you to the next outcome or the section summary.</p>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

@@ -367,8 +367,8 @@
 
     {% if context.roundTwo and form.evidenceRefs %}
       <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-        <h2 class="govuk-heading-m">5. Add evidence links or references</h2>
-        <p class="govuk-body govuk-hint">Add the evidence you used for this judgement. For example, a secure SharePoint link, policy name, meeting paper or architecture reference. Do not paste sensitive content into the service.</p>
+        <h2 class="govuk-heading-m">5. Add evidence links</h2>
+        <p class="govuk-body govuk-hint">Add links to evidence stored outside WebCAF, such as a SharePoint document, policy, process note or architecture diagram. Describe what each item shows and why it matters. Assurers will need access to the linked evidence.</p>
         {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
           <p id="evidenceRefs" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -385,33 +385,34 @@
 
               <div class="govuk-grid-row">
                 <div class="govuk-grid-column-one-third">
-                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-refId">Reference ID or name</label>
-                  <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-refId" name="evidenceRefs[{{ loop.index0 }}][refId]" type="text" value="{{ ref.refId }}">
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-title">Evidence title</label>
+                  <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-title" name="evidenceRefs[{{ loop.index0 }}][title]" type="text" value="{{ ref.title }}">
                 </div>
 
                 <div class="govuk-grid-column-one-third">
-                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Evidence type</label>
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Evidence type (optional)</label>
                   <select class="govuk-select" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]">
                     <option value="" {% if not ref.type %}selected{% endif %}>Select evidence type</option>
-                    <option value="Document" {% if ref.type == "Document" %}selected{% endif %}>Document</option>
                     <option value="Policy" {% if ref.type == "Policy" %}selected{% endif %}>Policy</option>
-                    <option value="Procedure" {% if ref.type == "Procedure" %}selected{% endif %}>Procedure</option>
+                    <option value="Process" {% if ref.type == "Process" %}selected{% endif %}>Process</option>
                     <option value="Report" {% if ref.type == "Report" %}selected{% endif %}>Report</option>
-                    <option value="Architecture" {% if ref.type == "Architecture" %}selected{% endif %}>Architecture</option>
-                    <option value="Meeting notes" {% if ref.type == "Meeting notes" %}selected{% endif %}>Meeting notes</option>
+                    <option value="Architecture diagram" {% if ref.type == "Architecture diagram" %}selected{% endif %}>Architecture diagram</option>
+                    <option value="Meeting paper" {% if ref.type == "Meeting paper" %}selected{% endif %}>Meeting paper</option>
+                    <option value="Procedure" {% if ref.type == "Procedure" %}selected{% endif %}>Procedure</option>
                     <option value="Other" {% if ref.type == "Other" %}selected{% endif %}>Other</option>
                   </select>
                 </div>
 
                 <div class="govuk-grid-column-one-third">
-                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Link (optional)</label>
+                  <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Evidence link</label>
                   <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
                 </div>
               </div>
 
               <div class="govuk-form-group govuk-!-margin-top-3">
-                <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-note">Note (optional)</label>
-                <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-note" name="evidenceRefs[{{ loop.index0 }}][note]" rows="2">{{ ref.note }}</textarea>
+                <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-description">Description</label>
+                <div class="govuk-hint">Explain what the evidence shows and why it is relevant to this assessment item.</div>
+                <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-description" name="evidenceRefs[{{ loop.index0 }}][description]" rows="3">{{ ref.description }}</textarea>
               </div>
 
               {% if (form.evidenceRefs | length) > 1 %}
@@ -446,7 +447,6 @@
           {% if form.previousAssessment %}
             <div class="app-outcome-page__sidebar-card">
               <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Previous assessment</h2>
-              <p class="govuk-body">Version: <strong>{{ form.previousAssessment.version }}</strong></p>
               {% if form.previousAssessment.reviewedAt %}
                 <p class="govuk-body">Reviewed: <strong>{{ form.previousAssessment.reviewedAt }}</strong></p>
               {% endif %}

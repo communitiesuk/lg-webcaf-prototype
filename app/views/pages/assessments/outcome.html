@@ -6,6 +6,17 @@
     {{ labels.outcome.back }}
   </a>
 
+  {% if savedAssurance %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="assurance-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="assurance-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Independent review saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
       <div role="alert">
@@ -21,7 +32,20 @@
     </div>
   {% endif %}
 
+  {% if isAssurerView %}
+    <span class="govuk-caption-l">Independent review</span>
+  {% endif %}
   <h1 class="govuk-heading-l">Overview: '{{ row.outcomeCode }} {{ row.title or "" }}'</h1>
+  {% if isAssurerView %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1">
+        <strong>Acting as assurer</strong>
+      </p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} for independent review. You can review the assessment content below and record feedback.
+      </p>
+    </div>
+  {% endif %}
   {% if outcomeGuidance %}
     <p class="govuk-body">
       <a class="govuk-link" href="{{ outcomeGuidance.url }}" target="_blank" rel="noreferrer noopener">
@@ -35,11 +59,13 @@
       <a class="govuk-link" href="/assessments/current/evidence-requests">Review requests</a>.
     </div>
   {% endif %}
-  <div class="govuk-button-group">
-    <a class="govuk-button" href="{{ selfAssessUrl }}">
-      Open self-assessment for this outcome
-    </a>
-  </div>
+  {% if not isAssurerView %}
+    <div class="govuk-button-group">
+      <a class="govuk-button" href="{{ selfAssessUrl }}">
+        Open self-assessment for this outcome
+      </a>
+    </div>
+  {% endif %}
 
   <h2 id="self-assessment-summary" class="govuk-heading-m">Self-assessment summary</h2>
   {% if selfAssessSummary %}
@@ -77,6 +103,54 @@
     </div>
   {% endif %}
 
+  {% if isAssurerView %}
+    <h2 class="govuk-heading-m">Independent review</h2>
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>What you can do</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Review the self-assessment summary, evidence references and change history.</li>
+        <li>Record whether you agree with the judgement or want it changed.</li>
+      </ul>
+    </div>
+
+    <form method="post" action="/assessments/current/outcomes/{{ row.outcomeId }}">
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerDecision') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">{{ labels.assurer.outcome.decisionLabel }}</legend>
+          {% if error and (error.items | selectattr('field','equalto','assurerDecision') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','assurerDecision') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-radios" data-module="govuk-radios">
+            {% for option in labels.assurer.outcome.decisionOptions %}
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assurerDecision-{{ option.value }}" name="assurerDecision" type="radio" value="{{ option.value }}" {% if review and review.decision == option.value %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assurerDecision-{{ option.value }}">{{ option.text }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="assurerRationale">{{ labels.assurer.outcome.rationaleLabel }}</label>
+        {% if error and (error.items | selectattr('field','equalto','assurerRationale') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','assurerRationale') | list | first).text }}
+          </p>
+        {% endif %}
+        <textarea class="govuk-textarea" id="assurerRationale" name="assurerRationale" rows="5">{{ review.rationale or "" }}</textarea>
+      </div>
+
+      <div class="govuk-button-group">
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ labels.assurer.outcome.saveReview }}</button>
+        <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+      </div>
+    </form>
+  {% else %}
   <form method="post" action="/assessments/current/outcomes/{{ row.outcomeId }}{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
     <input type="hidden" name="action" value="">
 
@@ -263,25 +337,26 @@
           </legend>
 
           <div class="govuk-grid-row">
-            <div class="govuk-grid-column-one-quarter">
-              <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-refId">{{ labels.outcome.fields.evidenceRefId }}</label>
-              <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-refId" name="evidenceRefs[{{ loop.index0 }}][refId]" type="text" value="{{ ref.refId }}">
+            <div class="govuk-grid-column-one-third">
+              <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-title">{{ labels.outcome.fields.evidenceTitle }}</label>
+              <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-title" name="evidenceRefs[{{ loop.index0 }}][title]" type="text" value="{{ ref.title }}">
             </div>
 
-            <div class="govuk-grid-column-one-quarter">
+            <div class="govuk-grid-column-one-third">
               <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">{{ labels.outcome.fields.evidenceType }}</label>
               <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]" type="text" value="{{ ref.type }}">
             </div>
 
-            <div class="govuk-grid-column-one-half">
+            <div class="govuk-grid-column-one-third">
               <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">{{ labels.outcome.fields.evidenceLink }}</label>
               <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
             </div>
           </div>
 
           <div class="govuk-form-group">
-            <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-note">{{ labels.outcome.fields.evidenceNote }}</label>
-            <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-note" name="evidenceRefs[{{ loop.index0 }}][note]" rows="2">{{ ref.note }}</textarea>
+            <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-description">{{ labels.outcome.fields.evidenceDescription }}</label>
+            <div class="govuk-hint">Explain what the linked evidence shows and why it is relevant. Assurers will need access to it outside WebCAF.</div>
+            <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-description" name="evidenceRefs[{{ loop.index0 }}][description]" rows="3">{{ ref.description }}</textarea>
           </div>
 
           {% if row.evidenceRefs.length > 1 %}
@@ -315,6 +390,7 @@
       </a>
     </div>
   </form>
+  {% endif %}
 
   <h2 class="govuk-heading-m">{{ labels.outcome.sections.history }}</h2>
 

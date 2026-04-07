@@ -1,6 +1,9 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   {% set backHref = "/assessments/current/start-self-assessment" %}
   {% set successMessage = "People updated." %}
   {% if researchRound == "round-2" %}
@@ -45,10 +48,16 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Who is involved</h1>
-  <p class="govuk-body">Add the people who will help complete this year's self-assessment.</p>
-  <p class="govuk-body">You will assign them to contributing outcomes on the next page.</p>
+  {{ appPageHeader({
+    caption: "Self-assessment",
+    title: "Assign people to contributing outcomes",
+    guidanceHeadingId: "self-assessment-people-guidance",
+    guidanceItems: [
+      "Add the people who will help complete this year's self-assessment.",
+      "Use the list below to review who is already involved.",
+      "You will assign people to contributing outcomes on the next page."
+    ]
+  }) }}
 
   <p class="govuk-body"><strong>{{ contributors.length }} people involved</strong></p>
   <h2 class="govuk-heading-m">People involved</h2>
@@ -119,5 +128,7 @@
     {% if researchRound == "round-2" %}
       <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     {% endif %}
+  </div>
+    </div>
   </div>
 {% endblock %}

@@ -1,0 +1,39 @@
+{% macro appMilestoneSummary(params) %}
+  <section class="app-milestone-summary govuk-!-margin-bottom-6" aria-labelledby="{{ params.id }}-heading">
+    <h2 class="govuk-heading-m govuk-!-margin-bottom-3" id="{{ params.id }}-heading">{{ params.title }}</h2>
+    <p class="govuk-body app-milestone-summary__summary">{{ params.summaryText }}</p>
+    <ul class="govuk-list app-milestone-summary__list">
+      {% for milestone in params.progress.milestones %}
+        {% set milestoneTagClass = "" %}
+        {% set milestoneTagText = "" %}
+        {% if milestone.state == "completed" %}
+          {% set milestoneTagClass = "govuk-tag--green" %}
+          {% set milestoneTagText = "Completed" %}
+        {% elif milestone.state == "current" %}
+          {% set milestoneTagClass = "govuk-tag--blue" %}
+          {% set milestoneTagText = "Current step" %}
+        {% endif %}
+        <li class="app-milestone-summary__item app-milestone-summary__item--{{ milestone.state }}">
+          {% if milestoneTagText %}
+            <strong class="govuk-tag {{ milestoneTagClass }}">{{ milestoneTagText }}</strong>
+          {% endif %}
+          {% if milestone.href and milestone.state == "current" %}
+            <a class="govuk-link govuk-link--no-visited-state app-milestone-summary__label" href="{{ milestone.href }}">{{ milestone.label }}</a>
+          {% else %}
+            <span class="app-milestone-summary__label">{{ milestone.label }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if params.showNext != false and params.nextHref and params.nextText %}
+      <p class="govuk-body app-milestone-summary__next">
+        <strong>Next:</strong>
+        <a class="govuk-link govuk-link--no-visited-state" href="{{ params.nextHref }}">{{ params.nextText }}</a>
+      </p>
+    {% elif params.showNext != false and params.nextLabel %}
+      <p class="govuk-body app-milestone-summary__next">
+        <strong>Next:</strong> {{ params.nextLabel }}
+      </p>
+    {% endif %}
+  </section>
+{% endmacro %}

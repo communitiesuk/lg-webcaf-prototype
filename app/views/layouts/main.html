@@ -14,7 +14,7 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
         serviceUrl: "/entry",
         navigation: headerNavigation
     }) }}
-    {% if showNavigation and not showJourney %}
+    {% if showNavigation %}
       {{ govukServiceNavigation({
           serviceName: serviceName,
           navigation: navigation
@@ -28,8 +28,14 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
     tag: {
       text: "Prototype"
     },
-    text: "This is a prototype service used for user research and internal testing."
+    text: "This service is for research only. Do not use it to make real decisions."
   }) }}
+
+  {% if currentUser and activeRole == "assurer" %}
+    <div class="govuk-inset-text">
+      Signed in as <strong>{{ activeRoleLabel or "Assurer" }}</strong>{% if currentUser.orgName %} for {{ currentUser.orgName }}{% endif %}.
+    </div>
+  {% endif %}
 
   {% if showJourney and breadcrumbs.length > 0 %}
     {{ govukBreadcrumbs({ items: breadcrumbs }) }}

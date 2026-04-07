@@ -2,7 +2,9 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/stages/2/scope">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.shortlistTitle }}</h1>
   <p class="govuk-body">
@@ -16,9 +18,9 @@
     <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
     <span class="govuk-hint govuk-!-margin-top-1">
       {% if researchRound == "round-2" %}
-        Adding a system means updating mapping and priority before confirming the scope register.
+        Adding a system means completing its mapping step and priority step before confirming the scope register.
       {% else %}
-        Adding a system means updating mapping and priority before confirming the scope pack.
+        Adding a system means completing its mapping step and priority step before confirming the scope pack.
       {% endif %}
     </span>
   </p>
@@ -83,4 +85,6 @@
       <a class="govuk-link" href="/stages/2/scope/systems/review">Review systems</a>
     {% endif %}
   {% endif %}
+    </div>
+  </div>
 {% endblock %}

@@ -2,61 +2,261 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Self-assessment summary</title>
+    <title>{{ exportSummary.title }}</title>
     <style>
+      :root {
+        color-scheme: light;
+      }
+
       body {
         font-family: Arial, sans-serif;
-        margin: 32px;
+        margin: 0;
         color: #0b0c0c;
         line-height: 1.5;
+        background: #fff;
       }
-      h1, h2 {
-        margin-bottom: 12px;
+
+      .app-export-shell {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px;
       }
-      dl {
-        margin: 0 0 24px 0;
+
+      .app-export-actions {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
       }
-      dt {
-        font-weight: bold;
+
+      .app-export-button {
+        display: inline-block;
+        padding: 10px 18px;
+        background: #1d70b8;
+        color: #fff;
+        text-decoration: none;
+        border: 0;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .app-export-link {
+        color: #1d70b8;
+      }
+
+      .app-export-caption {
+        color: #505a5f;
+        margin-bottom: 8px;
+      }
+
+      .app-export-meta {
+        margin: 0 0 24px;
+      }
+
+      .app-export-meta dt {
+        font-weight: 700;
         margin-top: 12px;
       }
-      dd {
-        margin-left: 0;
+
+      .app-export-meta dd {
+        margin: 0;
       }
-      ul {
+
+      .app-export-section {
+        page-break-inside: avoid;
+        margin-top: 36px;
+        padding-top: 24px;
+        border-top: 4px solid #b1b4b6;
+      }
+
+      .app-export-outcome {
+        page-break-inside: avoid;
+        margin-top: 24px;
+        padding: 20px;
+        border: 1px solid #b1b4b6;
+      }
+
+      .app-export-kicker {
+        font-size: 16px;
+        color: #505a5f;
+        margin: 0 0 4px;
+      }
+
+      .app-export-summary {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0 20px;
+      }
+
+      .app-export-summary th,
+      .app-export-summary td {
+        border-bottom: 1px solid #d8dde0;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .app-export-summary th {
+        width: 32%;
+      }
+
+      .app-export-statements {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .app-export-statement {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #d8dde0;
+      }
+
+      .app-export-statement:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .app-export-evidence-list {
+        margin: 0;
         padding-left: 20px;
+      }
+
+      @media print {
+        .app-export-actions {
+          display: none;
+        }
+
+        .app-export-shell {
+          max-width: none;
+          padding: 0;
+        }
+
+        .app-export-outcome {
+          break-inside: avoid-page;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>WebCAF self-assessment summary</h1>
-    <p>Generated for {{ assessment.councilName or "Council" }}.</p>
+    <main class="app-export-shell">
+      <div class="app-export-actions">
+        <button class="app-export-button" type="button" onclick="window.print()">Print or save as PDF</button>
+        <a class="app-export-link" href="/assessments/current/export-assessment">Change scope</a>
+        <a class="app-export-link" href="/assessments/current/dashboard">Return to dashboard</a>
+      </div>
 
-    <h2>Assessment summary</h2>
-    <dl>
-      <dt>A and D outcomes judged</dt>
-      <dd>{{ completion.adJudged }} of {{ completion.adTotal }}</dd>
+      <p class="app-export-caption">WebCAF for local government</p>
+      <h1>{{ exportSummary.title }}</h1>
+      <p>Printable self-assessment summary for {{ assessment.councilName or "this council" }}.</p>
 
-      <dt>B and C outcomes judged</dt>
-      <dd>{{ completion.bcJudged }} of {{ completion.bcTotal }}</dd>
+      <dl class="app-export-meta">
+        <dt>Included in this summary</dt>
+        <dd>{{ exportSummary.scopeLabel }}</dd>
+        <dt>Generated</dt>
+        <dd>{{ printGeneratedAt }}</dd>
+        <dt>Assessment status</dt>
+        <dd>{{ exportSummary.collaborationState.statusLabel }}</dd>
+        <dt>Outcomes included</dt>
+        <dd>{{ exportSummary.outcomeCount }}</dd>
+      </dl>
 
-      <dt>Selected systems this year</dt>
-      <dd>
-        {% if selectedSystems.length > 0 %}
-          <ul>
-            {% for system in selectedSystems %}
-              <li>{{ system.name }}</li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          None selected
-        {% endif %}
-      </dd>
-
-      {% if reviewState.completed %}
-        <dt>Marked complete</dt>
-        <dd>{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}</dd>
+      {% if exportSummary.selectedSystems.length > 0 %}
+        <h2>Selected critical systems</h2>
+        <ul class="app-export-evidence-list">
+          {% for system in exportSummary.selectedSystems %}
+            <li>{{ system.name }}</li>
+          {% endfor %}
+        </ul>
       {% endif %}
-    </dl>
+
+      {% for section in exportSummary.sections %}
+        <section class="app-export-section" aria-labelledby="section-{{ section.id }}">
+          <h2 id="section-{{ section.id }}">{{ section.title }}</h2>
+          <p>{{ section.subtitle }}</p>
+
+          {% for outcome in section.outcomes %}
+            <article class="app-export-outcome" aria-labelledby="outcome-{{ section.id }}-{{ loop.index }}">
+              <p class="app-export-kicker">Contributing outcome</p>
+              <h3 id="outcome-{{ section.id }}-{{ loop.index }}">{{ outcome.code }} {{ outcome.title }}</h3>
+              {% if outcome.systemName %}
+                <p><strong>Critical system:</strong> {{ outcome.systemName }}</p>
+              {% endif %}
+              {% if outcome.description %}
+                <p>{{ outcome.description }}</p>
+              {% endif %}
+
+              <table class="app-export-summary">
+                <tbody>
+                  <tr>
+                    <th scope="row">Outcome judgement</th>
+                    <td>{{ outcome.judgement or "Not provided" }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Rationale</th>
+                    <td>{{ outcome.rationale or "Not provided" }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Evidence references</th>
+                    <td>
+                      {% if outcome.evidenceRefs.length > 0 %}
+                        <ul class="app-export-evidence-list">
+                          {% for evidence in outcome.evidenceRefs %}
+                            <li>
+                              {% if evidence.title %}<strong>{{ evidence.title }}</strong>{% endif %}
+                              {% if evidence.type %} {% if evidence.title %}-{% endif %} {{ evidence.type }}{% endif %}
+                              {% if evidence.description %}<br>{{ evidence.description }}{% endif %}
+                              {% if evidence.link %}<br><a class="govuk-link" href="{{ evidence.link }}">{{ evidence.link }}</a>{% endif %}
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        Not provided
+                      {% endif %}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Latest saved update</th>
+                    <td>{{ outcome.updatedAt or "Not available" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h4>IGP statements</h4>
+              <ol class="app-export-statements">
+                {% for statement in outcome.igpAssessments %}
+                  <li class="app-export-statement">
+                    <h5>IGP statement {{ loop.index }}</h5>
+                    <p>{{ statement.statement }}</p>
+                    <table class="app-export-summary">
+                      <tbody>
+                        <tr>
+                          <th scope="row">Selected maturity level</th>
+                          <td>{{ statement.maturity or "Not provided" }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Rationale</th>
+                          <td>{{ statement.rationale or "Not provided" }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Evidence</th>
+                          <td>{{ statement.evidenceNote or "Not provided" }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Confidence level</th>
+                          <td>{{ statement.confidence or "Not provided" }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </li>
+                {% endfor %}
+              </ol>
+            </article>
+          {% endfor %}
+        </section>
+      {% endfor %}
+    </main>
   </body>
-  </html>
+</html>

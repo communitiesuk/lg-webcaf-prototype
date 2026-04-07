@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.improvement.generate.heading }}</h1>
@@ -71,4 +73,6 @@
       <button class="govuk-button" data-module="govuk-button" type="submit">Generate plan</button>
     </form>
   {% endif %}
+    </div>
+  </div>
 {% endblock %}

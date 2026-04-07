@@ -1,0 +1,102 @@
+{% extends "layouts/main.html" %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/milestone-summary.njk" import appMilestoneSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="/entry">Back</a>
+
+  {{ appPageHeader({
+    caption: councilDisplayName,
+    title: "Council onboarding and setup",
+    intro: "Complete these setup steps before you start this year's annual assessment.",
+    showSaveReassurance: true
+  }) }}
+
+  {{ appMilestoneSummary({
+    id: "setup-progress",
+    title: "Setup progress",
+    summaryText: onboardingProgress.completed ~ " of " ~ onboardingProgress.total ~ " setup milestones completed",
+    progress: onboardingProgress,
+    nextHref: nextTask.href if nextTask else "",
+    nextText: nextTask.title if nextTask else ""
+  }) }}
+
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Help with onboarding</span>
+    </summary>
+    <div class="govuk-details__text">
+      <p class="govuk-body">Use onboarding to confirm the right people have access and to set up your council scope.</p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li><a class="govuk-link" href="https://www.ncsc.gov.uk/collection/caf/cyber-assessment-framework" rel="noreferrer noopener" target="_blank">Read the NCSC Cyber Assessment Framework overview</a></li>
+        <li><a class="govuk-link" href="/organisation-details">Check your council account details and approved email domains</a></li>
+        <li><a class="govuk-link" href="/manage-users">Review who already has access to this council account</a></li>
+      </ul>
+    </div>
+  </details>
+
+  <h2 class="govuk-heading-m">Start onboarding</h2>
+  {{ govukTaskList({
+    items: [
+      {
+        title: {
+          text: tasks[0].title
+        },
+        href: tasks[0].href if canManageSetup else "",
+        hint: {
+          text: tasks[0].hint if canManageSetup else (tasks[0].hint + " Only the CAF lead or a central admin can change council roles.")
+        },
+        status: {
+          tag: {
+            text: tasks[0].status,
+            classes: "govuk-tag--green" if tasks[0].status == "Complete" else ("govuk-tag--blue" if tasks[0].status == "In progress" else "govuk-tag--grey")
+          }
+        }
+      },
+      {
+        title: {
+          text: tasks[1].title
+        },
+        href: tasks[1].href if tasks[1].status != "Cannot start yet" else "",
+        hint: {
+          text: tasks[1].hint
+        },
+        status: {
+          tag: {
+            text: tasks[1].status,
+            classes: "govuk-tag--green" if tasks[1].status == "Complete" else ("govuk-tag--blue" if tasks[1].status == "In progress" else "govuk-tag--grey")
+          }
+        }
+      }
+    ]
+  }) }}
+
+  {% if onboardingComplete %}
+    <div class="govuk-inset-text">
+      Onboarding is complete. You can now move into this year's annual assessment.
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Users and roles</h2>
+  <p class="govuk-body">
+    {% if canManageSetup %}
+      As {{ currentUser.roleTitle | lower }}, you can manage council setup roles and add authorised users.
+    {% else %}
+      Your access is read only for council setup. Contact the CAF lead if users or roles need to change.
+    {% endif %}
+  </p>
+  <p class="govuk-body">
+    <a class="govuk-link" href="/manage-users">Open users and roles</a>
+  </p>
+
+  {% if onboardingComplete %}
+    <div class="govuk-button-group">
+      <a class="govuk-button" href="/assessments/current/journey">Go to annual assessment</a>
+    </div>
+  {% endif %}
+    </div>
+  </div>
+{% endblock %}

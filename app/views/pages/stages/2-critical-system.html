@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <div class="govuk-inset-text">
     This page has been replaced by the scope pack. <a class="govuk-link" href="/stages/2/scope">Go to scope pack</a>.
   </div>
@@ -31,7 +33,7 @@
       {% endif %}
       <input class="govuk-input" id="criticalSystemName" name="criticalSystemName" type="text" value="{{ data.criticalSystemName or '' }}">
       <div class="govuk-hint">
-        Keep it simple in alpha. You can add more detail later.
+        Keep it short. You can add more detail later.
       </div>
     </div>
 
@@ -39,10 +41,12 @@
       <label class="govuk-label" for="architectureRef">Architecture reference (optional)</label>
       <input class="govuk-input" id="architectureRef" name="architectureRef" type="text" value="{{ data.architectureRef or '' }}">
       <div class="govuk-hint">
-        Link or reference ID only. Do not paste sensitive content into the prototype.
+        Link or reference ID only. Do not paste sensitive content into the service.
       </div>
     </div>
 
     <button class="govuk-button" data-module="govuk-button" type="submit">Continue to dashboard</button>
   </form>
+    </div>
+  </div>
 {% endblock %}

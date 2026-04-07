@@ -2,13 +2,9 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  {% set backHref = "/stages/2/scope" %}
-  {% set submitText = "Continue" %}
-  {% if researchRound == "round-2" %}
-    {% set backHref = "/stages/2/scope/systems/review" %}
-    {% set submitText = "Save and return to critical systems" %}
-  {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope/systems/review' }}">Back</a>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -16,80 +12,79 @@
         <h2 class="govuk-error-summary__title">There is a problem</h2>
         <div class="govuk-error-summary__body">
           <ul class="govuk-list govuk-error-summary__list">
-            <li><a href="#serviceIds">{{ error }}</a></li>
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
           </ul>
         </div>
       </div>
     </div>
   {% endif %}
 
-  {% if researchRound == "round-2" %}
-    <span class="govuk-caption-l">Critical systems register</span>
-    <h1 class="govuk-heading-l">{{ system.name }}</h1>
-    <p class="govuk-body">Map this critical system to the essential services it supports. This helps show which services depend on it.</p>
-  {% else %}
-    <h1 class="govuk-heading-l">{{ labels.stages.scope.mapping.title }}</h1>
-    <p class="govuk-body"><strong>{{ system.name }}</strong></p>
-  {% endif %}
-
-  {% if researchRound == "round-2" %}
-    <div class="govuk-inset-text">
-      {% if system.systemType %}
-        <p class="govuk-body"><strong>System type:</strong> {{ system.systemType }}</p>
-      {% endif %}
-      {% if system.ownerSupplier %}
-        <p class="govuk-body"><strong>Owner or supplier:</strong> {{ system.ownerSupplier }}</p>
-      {% endif %}
-      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Architecture reference:</strong> {% if system.diagramRefs and system.diagramRefs.length > 0 %}Added{% else %}Not added yet{% endif %}</p>
-    </div>
-
-    <div class="govuk-inset-text">
-      <p class="govuk-body"><strong>Decision aid</strong></p>
+  <span class="govuk-caption-l">Critical systems register</span>
+  <h1 class="govuk-heading-l">Which essential services does {{ system.name }} support?</h1>
+  <p class="govuk-body">Select one or more essential services to show what this system supports.</p>
+  <p class="govuk-body-s govuk-hint">Last updated on {{ systemLastUpdatedDisplay }}</p>
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Help with this step</span>
+    </summary>
+    <div class="govuk-details__text">
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>Select every essential service that depends directly on this system.</li>
-        <li>If a service could not run properly without this system, include it.</li>
-        <li>You can come back later and update this mapping if the register changes.</li>
+        <li>Select every essential service that depends on this system.</li>
+        <li>You will set the system's priority on the next page.</li>
       </ul>
     </div>
-  {% endif %}
+  </details>
 
-  <form method="post" action="/stages/2/scope/mapping/{{ system.id }}">
-    <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset"{% if error %} aria-describedby="serviceIds-error"{% endif %}>
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-          Which essential services does this system support?
-        </legend>
-        <div class="govuk-hint">Select all the essential services that rely on this system.</div>
-        {% if error %}
-          <p class="govuk-error-message" id="serviceIds-error">
-            <span class="govuk-visually-hidden">Error:</span> {{ error }}
-          </p>
-        {% endif %}
-        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-          {% for service in services %}
-            <div class="govuk-checkboxes__item">
-              <input
-                class="govuk-checkboxes__input"
-                id="serviceIds-{{ service.id }}"
-                name="serviceIds"
-                type="checkbox"
-                value="{{ service.id }}"
-                {% if service.id in selected %}checked{% endif %}
-              >
-              <label class="govuk-label govuk-checkboxes__label" for="serviceIds-{{ service.id }}">
-                {{ service.name }}
-              </label>
-            </div>
-          {% endfor %}
-        </div>
-      </fieldset>
-    </div>
+  <div class="govuk-inset-text">
+    {% if system.systemType %}
+      <p class="govuk-body"><strong>System type:</strong> {{ system.systemType }}</p>
+    {% endif %}
+    {% if system.supplier or system.ownerSupplier %}
+      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Supplier:</strong> {{ system.supplier or system.ownerSupplier }}</p>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{{ formAction or ('/stages/2/scope/mapping/' + system.id) }}">
+    <section class="govuk-!-margin-bottom-7" aria-labelledby="mapping-heading">
+      <h2 class="govuk-heading-m" id="mapping-heading">Essential services this system supports</h2>
+
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" {% if error and (error.items | selectattr('field','equalto','serviceIds') | list | length) > 0 %}aria-describedby="serviceIds-error"{% endif %}>
+          <legend class="govuk-fieldset__legend govuk-visually-hidden">Essential services</legend>
+          {% if error and (error.items | selectattr('field','equalto','serviceIds') | list | length) > 0 %}
+            <p class="govuk-error-message" id="serviceIds-error">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','serviceIds') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            {% for service in services %}
+              <div class="govuk-checkboxes__item">
+                <input
+                  class="govuk-checkboxes__input"
+                  id="serviceIds-{{ service.id }}"
+                  name="serviceIds"
+                  type="checkbox"
+                  value="{{ service.id }}"
+                  {% if service.id in selected %}checked{% endif %}
+                >
+                <label class="govuk-label govuk-checkboxes__label" for="serviceIds-{{ service.id }}">
+                  {{ service.name }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+    </section>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText }}</button>
-      {% if researchRound == "round-2" %}
-        <a class="govuk-link" href="/stages/2/scope/systems/review">Cancel and return to critical systems</a>
-      {% endif %}
+      <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+      <a class="govuk-link" href="/stages/2/scope/systems/review">Cancel and return to critical systems</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

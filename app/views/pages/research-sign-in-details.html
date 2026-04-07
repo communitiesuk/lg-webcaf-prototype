@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/research-start?round={{ researchRound or 'round-1' }}">Back</a>
 
   <h1 class="govuk-heading-l">Sign in</h1>
@@ -20,4 +22,6 @@
 
     <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
   </form>
+    </div>
+  </div>
 {% endblock %}

@@ -1,0 +1,62 @@
+{% macro appNotificationBanner(params) %}
+  {% set type = params.type or "information" %}
+  {% set title = params.title or ("Success" if type == "success" else "Important") %}
+  {% set titleId = params.titleId or ("app-feedback-banner-title-" + (title | lower | replace(" ", "-"))) %}
+  {% set role = params.role or ("alert" if type == "success" else "region") %}
+  {% set bannerClasses = "govuk-notification-banner" %}
+  {% if type == "success" %}
+    {% set bannerClasses = bannerClasses + " govuk-notification-banner--success" %}
+  {% endif %}
+  <div class="{{ bannerClasses }}" role="{{ role }}" aria-labelledby="{{ titleId }}" data-module="govuk-notification-banner">
+    <div class="govuk-notification-banner__header">
+      <h2 class="govuk-notification-banner__title" id="{{ titleId }}">{{ title }}</h2>
+    </div>
+    <div class="govuk-notification-banner__content">
+      {% if params.heading %}
+        <p class="govuk-notification-banner__heading">{{ params.heading }}</p>
+      {% endif %}
+      {% if params.body %}
+        {% if params.bodyIsHtml %}
+          {{ params.body | safe }}
+        {% else %}
+          <p class="govuk-body">{{ params.body }}</p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro appConfirmationPanel(params) %}
+  <div class="govuk-panel govuk-panel--confirmation">
+    <h1 class="govuk-panel__title">{{ params.title }}</h1>
+    {% if params.body %}
+      <div class="govuk-panel__body">
+        {{ params.body }}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro appErrorSummary(error) %}
+  {% if error and error.items and error.items.length > 0 %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              {% set href = item.href or (item.field and ("#" + item.field)) %}
+              <li>
+                {% if href %}
+                  <a href="{{ href }}">{{ item.text }}</a>
+                {% else %}
+                  {{ item.text }}
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endmacro %}

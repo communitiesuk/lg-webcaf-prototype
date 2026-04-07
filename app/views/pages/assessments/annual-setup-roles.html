@@ -1,4 +1,5 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
   <a class="govuk-back-link" href="/assessments/current/annual-setup/assessment">Back</a>
@@ -18,14 +19,29 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Assessment setup</span>
-  <h1 class="govuk-heading-l">Set up annual roles</h1>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <p class="govuk-body">Confirm who will lead and approve the CAF work for this assessment year.</p>
-      <p class="govuk-body">If you already set up key roles earlier, they are used here as the starting point.</p>
-      <p class="govuk-body govuk-!-margin-bottom-6"><a class="govuk-link" href="/prepare/roles">Change key roles</a> if the starting names are not right.</p>
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Set up annual roles",
+        intro: "Confirm who will lead and approve this year's assessment."
+      }) }}
+      <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Help with this step</span>
+        </summary>
+        <div class="govuk-details__text">
+          <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+            <li>The names from earlier setup are used as a starting point.</li>
+            <li>You can update these annual roles later if needed.</li>
+          </ul>
+        </div>
+      </details>
+      {% if currentUserCanManageRoles %}
+        <p class="govuk-body govuk-!-margin-bottom-6"><a class="govuk-link" href="/prepare/roles?returnTo=journey">Change council roles</a> if the starting names are not right.</p>
+      {% else %}
+        <p class="govuk-body govuk-!-margin-bottom-6">If the starting names are not right, ask the CAF lead to update the council roles.</p>
+      {% endif %}
 
       {% if rolesAudit.history and rolesAudit.history.length > 0 %}
         <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
@@ -72,56 +88,5 @@
       </form>
     </div>
 
-    <div class="govuk-grid-column-one-third">
-      <aside class="app-outcome-page__sidebar-card app-roles-sidebar">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current annual roles</h2>
-        <p class="govuk-body-s app-roles-sidebar__intro">This summary updates as you change the annual roles.</p>
-        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 app-roles-sidebar__summary">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">CAF lead</dt>
-            <dd class="govuk-summary-list__value" id="currentAnnualLead">{{ form.annualLead or "Not added yet" }}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Approver</dt>
-            <dd class="govuk-summary-list__value" id="currentAnnualApprover">{{ form.annualApprover or "Not added yet" }}</dd>
-          </div>
-          {% if rolesAudit.updatedAt %}
-            <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Last updated</dt>
-              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedAt | replace("T", ", ") | replace("Z", "") }}</dd>
-            </div>
-            <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">Updated by</dt>
-              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedBy }}</dd>
-            </div>
-          {% endif %}
-        </dl>
-      </aside>
-    </div>
   </div>
-
-  <script>
-    (function () {
-      var leadInput = document.getElementById("annualLead");
-      var approverInput = document.getElementById("annualApprover");
-      var leadOutput = document.getElementById("currentAnnualLead");
-      var approverOutput = document.getElementById("currentAnnualApprover");
-
-      function setValue(output, value, emptyText) {
-        if (!output) return;
-        output.textContent = value && value.trim() ? value.trim() : emptyText;
-      }
-
-      function updateSummary() {
-        setValue(leadOutput, leadInput && leadInput.value, "Not added yet");
-        setValue(approverOutput, approverInput && approverInput.value, "Not added yet");
-      }
-
-      [leadInput, approverInput].forEach(function (input) {
-        if (input) input.addEventListener("input", updateSummary);
-      });
-
-      updateSummary();
-    })();
-  </script>
 {% endblock %}

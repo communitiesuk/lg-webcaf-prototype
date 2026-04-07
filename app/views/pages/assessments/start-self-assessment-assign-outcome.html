@@ -23,11 +23,11 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <p class="govuk-body">Choose who will own this contributing outcome and who else should collaborate on it.</p>
+      <p class="govuk-body">Choose who will own this contributing outcome and who else should help with it.</p>
 
       <form method="post" action="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="ownerId">Assigned owner</label>
+          <label class="govuk-label" for="ownerId">Owner</label>
           {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
@@ -35,7 +35,7 @@
             </p>
           {% endif %}
           <select class="govuk-select" id="ownerId" name="ownerId">
-            <option value="">Select owner</option>
+            <option value="">Select an owner</option>
             {% for u in councilUsers %}
               <option value="{{ u.id }}" {% if row.ownerId == u.id %}selected{% endif %}>{{ u.name }}</option>
             {% endfor %}
@@ -44,7 +44,7 @@
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Collaborators</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Other contributors</legend>
             <div class="govuk-hint">Select any other people who should contribute to this outcome.</div>
             <div class="govuk-checkboxes" data-module="govuk-checkboxes">
               {% for u in councilUsers %}
@@ -67,8 +67,8 @@
         </div>
 
         <div class="govuk-form-group">
-          <label class="govuk-label" for="additionalCollaborators">Additional collaborators (optional)</label>
-          <div class="govuk-hint">Add names or emails separated by commas or new lines.</div>
+          <label class="govuk-label" for="additionalCollaborators">Additional contributors (optional)</label>
+          <div class="govuk-hint">Add names or email addresses separated by commas or new lines.</div>
           <textarea class="govuk-textarea" id="additionalCollaborators" name="additionalCollaborators" rows="3">{{ row.additionalCollaborators or "" }}</textarea>
         </div>
 
@@ -91,7 +91,7 @@
       <aside class="app-outcome-page__sidebar-card">
         <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Assignment guidance</h2>
         <p class="govuk-body">Assign one owner for this outcome.</p>
-        <p class="govuk-body govuk-!-margin-bottom-0">Add collaborators if other people will help prepare evidence or contribute to the judgement.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">Add other contributors if more people will help prepare evidence or support the judgement.</p>
       </aside>
     </div>
   </div>

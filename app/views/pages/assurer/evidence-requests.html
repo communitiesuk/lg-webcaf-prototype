@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
   <h1 class="govuk-heading-l">Evidence clarification requests</h1>
   <p class="govuk-body">Request missing evidence from councils and track responses.</p>
@@ -104,4 +106,6 @@
   {% else %}
     <p class="govuk-body">No open evidence requests.</p>
   {% endif %}
+    </div>
+  </div>
 {% endblock %}

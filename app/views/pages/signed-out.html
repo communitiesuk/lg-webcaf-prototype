@@ -6,14 +6,14 @@
       <h1 class="govuk-heading-l">You have signed out</h1>
 
       {% if roundTwo %}
-        <p class="govuk-body">Your current assessment has been saved in the prototype. You can sign in again later to continue this year's work.</p>
+        <p class="govuk-body">Your current assessment has been saved. You can sign in again later to continue this year's work.</p>
       {% else %}
-        <p class="govuk-body">You have been signed out of the prototype.</p>
+        <p class="govuk-body">You have signed out of the service.</p>
       {% endif %}
 
       <div class="govuk-button-group">
         <a class="govuk-button" href="{{ signInHref }}">Sign in again</a>
-        <a class="govuk-link" href="{{ secondaryHref }}">{% if roundTwo %}Return to research rounds{% else %}Return to research start{% endif %}</a>
+        <a class="govuk-link" href="{{ secondaryHref }}">Return to start</a>
       </div>
     </div>
   </div>

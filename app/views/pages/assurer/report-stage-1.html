@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
   <h1 class="govuk-heading-l">IIP Stage 1: Assurer report</h1>
   <p class="govuk-body">Record recommendations, risk levels and control types for each contributing outcome.</p>
@@ -101,4 +103,6 @@
       <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="stage1Action" value="finalise">Finalise Stage 1 report</button>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

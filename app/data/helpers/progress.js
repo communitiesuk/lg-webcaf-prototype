@@ -85,10 +85,12 @@ function countEvidenceRefs(evidenceRefs) {
   return evidenceRefs.filter((r) => {
     if (!r) return false;
     return Boolean(
+      (r.title && String(r.title).trim()) ||
+      (r.type && String(r.type).trim()) ||
+      (r.link && String(r.link).trim()) ||
+      (r.description && String(r.description).trim()) ||
       (r.refId && String(r.refId).trim()) ||
-        (r.type && String(r.type).trim()) ||
-        (r.link && String(r.link).trim()) ||
-        (r.note && String(r.note).trim())
+      (r.note && String(r.note).trim())
     );
   }).length;
 }
@@ -123,7 +125,13 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
   const dueDateDisplay = row.dueDate ? formatDateShort(row.dueDate) : "";
 
   const evidenceCount = countEvidenceRefs(row.evidenceRefs);
-  const isMissingEvidence = evidenceCount === 0;
+  const evidenceExpectedStatuses = new Set([
+    "complete",
+    "ready_for_review",
+    "feedback_received",
+    "updated_after_feedback",
+  ]);
+  const isMissingEvidence = evidenceCount === 0 && evidenceExpectedStatuses.has(row.status);
   const isNeedsAttentionWithEvidence = Boolean(isNeedsAttention || isMissingEvidence);
 
   return {

@@ -1,0 +1,13 @@
+{% macro appGuidanceBox(params) %}
+  {% set heading = params.heading or "On this page" %}
+  {% set headingId = params.headingId or "guidance-box-heading" %}
+  {% set items = params.items or [] %}
+  <section class="app-guidance-box govuk-!-margin-bottom-6" role="note" aria-labelledby="{{ headingId }}">
+    <h2 class="govuk-heading-s govuk-!-margin-bottom-2" id="{{ headingId }}">{{ heading }}</h2>
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      {% for item in items %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endmacro %}

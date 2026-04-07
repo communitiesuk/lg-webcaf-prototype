@@ -3,6 +3,8 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
@@ -106,26 +108,21 @@
 
   <h2 class="govuk-heading-m">{{ labels.assurer.outcome.evidenceHeading }}</h2>
   {% if row.evidenceRefs and row.evidenceRefs.length > 0 %}
-    <table class="govuk-table">
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          <th class="govuk-table__header" scope="col">Reference ID</th>
-          <th class="govuk-table__header" scope="col">Type</th>
-          <th class="govuk-table__header" scope="col">Link</th>
-          <th class="govuk-table__header" scope="col">Note</th>
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        {% for ref in row.evidenceRefs %}
-          <tr class="govuk-table__row">
-            <td class="govuk-table__cell">{{ ref.refId }}</td>
-            <td class="govuk-table__cell">{{ ref.type }}</td>
-            <td class="govuk-table__cell">{{ ref.link }}</td>
-            <td class="govuk-table__cell">{{ ref.note }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <p class="govuk-body govuk-hint">Evidence is referenced by link only. WebCAF does not store the files themselves.</p>
+    {% for ref in row.evidenceRefs %}
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{ ref.title or "Untitled evidence" }}</strong></p>
+        {% if ref.type %}
+          <p class="govuk-body govuk-!-margin-bottom-1">Type: {{ ref.type }}</p>
+        {% endif %}
+        {% if ref.link %}
+          <p class="govuk-body govuk-!-margin-bottom-1"><a class="govuk-link" href="{{ ref.link }}">{{ ref.link }}</a></p>
+        {% endif %}
+        {% if ref.description %}
+          <p class="govuk-body govuk-!-margin-bottom-0">{{ ref.description }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
   {% else %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
       <div class="govuk-notification-banner__header">
@@ -218,5 +215,7 @@
       <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/outcomes/{{ nextReady }}">Next ready outcome</a>
     {% endif %}
     <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

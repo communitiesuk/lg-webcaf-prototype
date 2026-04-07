@@ -1,0 +1,31 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-caption-l">Sign-in complete</p>
+      <h1 class="govuk-heading-l">Checking your council details</h1>
+      {% if currentUser %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-1"><strong>Signed in as:</strong> {{ currentUser.name }}</p>
+          <p class="govuk-body govuk-!-margin-bottom-0"><strong>Email:</strong> {{ currentUser.email }}</p>
+        </div>
+      {% endif %}
+      <p class="govuk-body">We are checking whether this browser already has your council details saved.</p>
+      <p class="govuk-body">If they are already saved, you will go straight to the right next step. If not, we will ask you to set up your council details once.</p>
+
+      <form
+        method="post"
+        action="/council-context/restore"
+        data-council-restore-form
+        data-council-email="{{ restoreEmail }}"
+        data-council-setup-path="/council-setup"
+      >
+        <input type="hidden" name="councilContextName" value="">
+        <noscript>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+        </noscript>
+      </form>
+    </div>
+  </div>
+{% endblock %}

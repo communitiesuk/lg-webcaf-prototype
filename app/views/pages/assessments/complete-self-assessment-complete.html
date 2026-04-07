@@ -1,15 +1,24 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="/assessments/current/complete-self-assessment">Back</a>
+
   <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Self-assessment complete</h1>
-  <p class="govuk-body">Your self-assessment is now ready to be sent for independent review.</p>
+  <h1 class="govuk-heading-l">Self-assessment submitted for review</h1>
+  <p class="govuk-body">The draft has been submitted and is now in review.</p>
 
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Marked complete</dt>
-      <dd class="govuk-summary-list__value">{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
-      <dd class="govuk-summary-list__actions">{{ reviewState.completedBy }}</dd>
+      <dt class="govuk-summary-list__key">Workflow status</dt>
+      <dd class="govuk-summary-list__value"><strong class="govuk-tag {{ collaborationState.statusTagClass }}">{{ collaborationState.statusLabel }}</strong></dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submitted for review</dt>
+      <dd class="govuk-summary-list__value">{{ collaborationState.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__actions">{{ collaborationState.submittedBy }}</dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Selected systems</dt>
@@ -27,11 +36,14 @@
   </dl>
 
   <div class="govuk-inset-text">
-    Next, you can return to the task list or download the self-assessment summary before sending it for independent review.
+    Next, the reviewer can check the summary and either send it back for edits or move it to approval.
   </div>
 
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
-    <a class="govuk-link" href="/assessments/current/complete-self-assessment/download">Download self-assessment summary</a>
+    <a class="govuk-link" href="/assessments/current/review-self-assessment">Open review page</a>
+    <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

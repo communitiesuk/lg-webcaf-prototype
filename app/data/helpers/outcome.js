@@ -29,19 +29,19 @@ function normaliseEvidenceRef(ref) {
   if (!ref || typeof ref !== "object") return blankEvidenceRef();
 
   return {
-    refId: (ref.refId || "").toString().trim(),
+    title: (ref.title || ref.refId || "").toString().trim(),
     type: (ref.type || "").toString().trim(),
     link: (ref.link || "").toString().trim(),
-    note: (ref.note || "").toString().trim(),
+    description: (ref.description || ref.note || "").toString().trim(),
   };
 }
 
 function blankEvidenceRef() {
-  return { refId: "", type: "", link: "", note: "" };
+  return { title: "", type: "", link: "", description: "" };
 }
 
 function hasAnyEvidenceValue(ref) {
-  return Boolean(ref.refId || ref.type || ref.link || ref.note);
+  return Boolean(ref.title || ref.type || ref.link || ref.description || ref.refId || ref.note);
 }
 
 function ensureAtLeastOneEvidenceRow(evidenceRefs) {

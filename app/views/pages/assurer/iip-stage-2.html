@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
   <h1 class="govuk-heading-l">IIP Stage 2 queue</h1>
   <p class="govuk-body">Review submitted Stage 2 IIP, schedule the session, and record outcome.</p>
@@ -74,4 +76,6 @@
     </div>
     <button class="govuk-button" type="submit">Save outcome</button>
   </form>
+    </div>
+  </div>
 {% endblock %}

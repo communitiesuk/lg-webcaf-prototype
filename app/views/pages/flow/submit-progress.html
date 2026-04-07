@@ -2,13 +2,14 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/improvement-plan/review">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.submit.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.submit.intro }}</p>
-  <div class="govuk-inset-text">Prototype only: no submission is sent from this service.</div>
   <div class="govuk-inset-text">
-    Formal submission should include the latest scope pack snapshot.
+    Include the latest scope summary snapshot in the submission pack.
     {% if submission.scopePackSnapshotAt %}
       Last updated: {{ submission.scopePackSnapshotAt | replace("T", " ") | replace("Z", "") }}.
     {% endif %}
@@ -133,7 +134,7 @@
 
     <div class="govuk-form-group">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Include latest scope pack snapshot in formal submission?</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Does the submission pack include the latest scope summary snapshot?</legend>
         <div class="govuk-radios">
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="scopePackIncluded-yes" name="scopePackIncluded" type="radio" value="yes" {% if submission.scopePackIncluded != false %}checked{% endif %}>
@@ -157,5 +158,7 @@
       <a class="govuk-button govuk-button--disabled" aria-disabled="true">Finish submission</a>
     {% endif %}
     <a class="govuk-link" href="/entry">Return to entry</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

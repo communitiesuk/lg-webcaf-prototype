@@ -1,6 +1,9 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
   {% if error %}
@@ -18,14 +21,17 @@
     </div>
   {% endif %}
 
-  <h1 class="govuk-heading-l">Readiness checks</h1>
-  <p class="govuk-body">
-    {% if researchRound == "round-2" %}
-      Confirm these checks after annual setup and before starting A and D and B and C assessment work.
-    {% else %}
-      Confirm these checks before starting A and D and B and C assessment work.
-    {% endif %}
-  </p>
+  {{ appPageHeader({
+    caption: "Self-assessment",
+    title: "Readiness checks",
+    guidanceHeadingId: "readiness-checks-guidance",
+    guidanceItems: [
+      "Use this page to confirm the practical checks needed before the self-assessment starts.",
+      "You need to complete every check before moving on.",
+      "After this, you can start the self-assessment work."
+    ],
+    intro: "Confirm these checks before starting A and D and B and C assessment work." if researchRound != "round-2" else "Confirm these checks after annual setup and before starting A and D and B and C assessment work."
+  }) }}
 
   <form method="post" action="/assessments/current/start-self-assessment">
     <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
@@ -46,19 +52,19 @@
           <div class="govuk-checkboxes__item">
             <input class="govuk-checkboxes__input" id="selfAssessStartChecks-checkInBooked" name="selfAssessStartChecks" type="checkbox" value="checkInBooked" {% if form.checkInBooked %}checked{% endif %}>
             <label class="govuk-label govuk-checkboxes__label" for="selfAssessStartChecks-checkInBooked">
-              Assurer check-in call is booked
+              An assurer check-in call is booked
             </label>
           </div>
           <div class="govuk-checkboxes__item">
             <input class="govuk-checkboxes__input" id="selfAssessStartChecks-outcomesReviewed" name="selfAssessStartChecks" type="checkbox" value="outcomesReviewed" {% if form.outcomesReviewed %}checked{% endif %}>
             <label class="govuk-label govuk-checkboxes__label" for="selfAssessStartChecks-outcomesReviewed">
-              Contributing outcomes and IGPs have been reviewed collectively
+              The contributing outcomes and IGPs have been reviewed together
             </label>
           </div>
           <div class="govuk-checkboxes__item">
             <input class="govuk-checkboxes__input" id="selfAssessStartChecks-evidencePrepared" name="selfAssessStartChecks" type="checkbox" value="evidencePrepared" {% if form.evidencePrepared %}checked{% endif %}>
             <label class="govuk-label govuk-checkboxes__label" for="selfAssessStartChecks-evidencePrepared">
-              Documents for evidence have been identified and collated
+              The evidence documents have been identified and gathered
             </label>
           </div>
         </div>
@@ -66,8 +72,10 @@
     </div>
 
     <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Start assessment</button>
+      <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
   </form>
+    </div>
+  </div>
 {% endblock %}

@@ -5,6 +5,12 @@ const labels = require("../data/content/labels");
 const statuses = require("../data/content/statuses");
 const users = require("../data/seed/users");
 const { CAF_CURRENT_VERSION, getOutcomesForVersion } = require("../data/helpers/caf-version");
+const {
+  buildPhaseProgress,
+  buildRoundTwoSetupProgress,
+  hasRoundTwoScopeSummaryComplete,
+  isRoundTwoOnboardingComplete,
+} = require("../data/helpers/phase-progress");
 
 const {
   requireSignedIn,
@@ -29,6 +35,13 @@ const {
   blankEvidenceRef,
   ensureAtLeastOneEvidenceRow,
 } = require("../data/helpers/outcome");
+const {
+  PERMISSIONS,
+  getActiveRole,
+  getRoleLabel,
+  userHasPermission,
+} = require("../data/helpers/roles");
+const { getAssurerAccessContext } = require("../data/helpers/assurer-access");
 
 const PROTOTYPE_OUTCOME_LIMITS = {
   AD: 2,
@@ -40,6 +53,17 @@ module.exports = function (router) {
   router.use("/assessments", (req, res, next) => {
     if (!requireSignedIn(req, res)) return;
     if (!ensureAssessment(req)) return res.redirect("/entry");
+    const allowPreOnboardingRoutes =
+      req.path === "/current/journey" ||
+      req.path === "/current/review-scope" ||
+      req.path.startsWith("/current/annual-setup");
+    if (
+      isRoundTwoRequest(req) &&
+      !isRoundTwoOnboardingComplete(req.session.data.assessment) &&
+      !allowPreOnboardingRoutes
+    ) {
+      return res.redirect("/onboarding");
+    }
     next();
   });
 
@@ -110,29 +134,28 @@ module.exports = function (router) {
     if (roundTwo) {
       ensureAnnualSetupData(assessment);
       ensureSectionReviewData(assessment);
+      ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
       ensureAssessmentDates(assessment);
     }
     const { ad, bc } = getOutcomesForVersion(assessment);
     const prepareSummary = buildPrepareJourneySummary(assessment, { roundTwo });
-    const onboardingPreparationSummary = roundTwo
-      ? buildOnboardingPreparationSummary(assessment)
-      : null;
-    const onboardingRolesSummary = roundTwo ? buildOnboardingRolesSummary(assessment) : null;
     const scopeSummary = buildScopeJourneySummary(assessment, { roundTwo });
-    const scopeContextSummary = roundTwo ? buildScopeContextSummary(assessment) : null;
-    const essentialServicesSummary = roundTwo ? buildEssentialServicesSummary(assessment) : null;
-    const criticalSystemsScopeSummary = roundTwo ? buildCriticalSystemsScopeSummary(assessment) : null;
     const annualSetupSummary = roundTwo
       ? buildAnnualSetupSummary(assessment, req.session.data.user || null)
       : null;
+    const currentUser = req.session.data.user || null;
+    const canEdit = userHasPermission(currentUser, PERMISSIONS.EDIT_CONTENT);
+    const canReview = userHasPermission(currentUser, PERMISSIONS.REVIEW_CONTENT);
+    const canApprove = userHasPermission(currentUser, PERMISSIONS.APPROVE_CONTENT);
+    const canManageRoles = userHasPermission(currentUser, PERMISSIONS.MANAGE_ROLES);
     const whoInvolvedSummary = buildWhoInvolvedSummary(assessment, req.session.data.user || null);
-    const annualSetupComplete = roundTwo ? annualSetupSummary.statusText === "Completed" : false;
-    const whoInvolvedComplete = roundTwo ? false : whoInvolvedSummary.statusText === "Completed";
+    const annualSetupComplete = roundTwo ? annualSetupSummary.statusText === "Complete" : false;
+    const whoInvolvedComplete = roundTwo ? false : whoInvolvedSummary.statusText === "Complete";
     const selfAssessStartSummary = buildSelfAssessStartSummary(assessment);
     const selfAssessStartReady = roundTwo ? annualSetupComplete : whoInvolvedComplete;
     const selfAssessStartComplete = roundTwo
       ? annualSetupComplete
-      : selfAssessStartSummary.statusText === "Completed";
+      : selfAssessStartSummary.statusText === "Complete";
     const iipSummary = buildIIPJourneySummary(assessment, { roundTwo });
     const internalSignOffSummary = buildInternalSignOffSummary(assessment);
     const submitAssurerSummary = buildSubmitAssurerSummary(assessment);
@@ -144,73 +167,91 @@ module.exports = function (router) {
     const adLocked =
       !selfAssessStartComplete &&
       adLensSummary.statusText !== "In progress" &&
-      adLensSummary.statusText !== "Completed";
+      adLensSummary.statusText !== "Complete";
     const bcLocked =
       !selfAssessStartComplete &&
       bcLensSummary.statusText !== "In progress" &&
-      bcLensSummary.statusText !== "Completed";
+      bcLensSummary.statusText !== "Complete";
 
+    const roundTwoSetupSection = roundTwo
+      ? {
+          heading: "Complete setup",
+          body: "Complete these setup steps before you begin this year's annual assessment.",
+          items: [
+            journeyItem("Set up council roles", buildOnboardingRolesSummary(assessment), {
+              locked: !canManageRoles,
+              lockedHint: "Your current role cannot change council roles.",
+            }),
+            journeyItem("Review and update your scope summary", buildScopeReviewSummary(assessment), {
+              locked: !canEdit,
+              lockedHint: "Your current role cannot update the scope summary.",
+            }),
+          ],
+        }
+      : null;
+    const roundTwoAssessmentSection = roundTwo
+      ? {
+          heading: "Complete annual assessment",
+          body: "Once setup is complete, use this task list to work through this year's assessment.",
+          items: [
+            journeyItem("Set up this year's assessment", annualSetupSummary, {
+              locked: !canEdit,
+              lockedHint: "Your current role cannot edit annual assessment setup.",
+            }),
+            journeyItem(
+              "Assign people to assessment outcomes",
+              !annualSetupComplete
+                ? {
+                    ...whoInvolvedSummary,
+                    statusText: "Not started",
+                    statusClass: "govuk-tag--grey",
+                  }
+                : whoInvolvedSummary,
+              {
+                locked: !canEdit || !annualSetupComplete,
+                lockedHint: !canEdit
+                  ? "Your current role cannot assign people to outcomes."
+                  : "Complete annual setup first.",
+              }
+            ),
+            journeyItem("Complete the A and D self-assessment", adLensSummary, {
+              locked: !canEdit || adLocked,
+              lockedHint: !canEdit
+                ? "Your current role cannot edit the self-assessment."
+                : "Complete annual setup first.",
+            }),
+            journeyItem("Complete the B and C self-assessment", bcLensSummary, {
+              locked: !canEdit || bcLocked,
+              lockedHint: !canEdit
+                ? "Your current role cannot edit the self-assessment."
+                : "Complete annual setup first.",
+            }),
+            journeyItem("Send the self-assessment for review", completeSelfAssessmentSummary, {
+              locked:
+                !canEdit ||
+                (completeSelfAssessmentSummary.statusText === "Not started" &&
+                  completeSelfAssessmentSummary.locked),
+              lockedHint: !canEdit
+                ? "Your current role cannot submit the self-assessment for review."
+                : "Complete the full self-assessment.",
+            }),
+            journeyItem("Review the submitted self-assessment", buildReviewSelfAssessmentSummary(assessment), {
+              locked: !canReview || buildReviewSelfAssessmentSummary(assessment).locked,
+              lockedHint: !canReview
+                ? "Your current role cannot review the self-assessment."
+                : "Submit the self-assessment for review first.",
+            }),
+            journeyItem("Approve the reviewed self-assessment", buildApproveSelfAssessmentSummary(assessment), {
+              locked: !canApprove || buildApproveSelfAssessmentSummary(assessment).locked,
+              lockedHint: !canApprove
+                ? "Your current role cannot approve the self-assessment."
+                : "Complete the review step first.",
+            }),
+          ],
+        }
+      : null;
     const journeySections = roundTwo
-      ? [
-          {
-            heading: "Get started",
-            items: [
-              journeyItem("Prepare for CAF", onboardingPreparationSummary, { locked: false }),
-              journeyItem("Set up key roles", onboardingRolesSummary, { locked: false }),
-            ],
-          },
-          {
-            heading: "Set your CAF scope",
-            items: [
-              journeyItem("Provide organisation strategic context", scopeContextSummary, {
-                locked: false,
-              }),
-              journeyItem("Identify essential services", essentialServicesSummary, {
-                locked: false,
-              }),
-              journeyItem("Identify and prioritise critical systems", criticalSystemsScopeSummary, {
-                locked: false,
-              }),
-            ],
-          },
-          {
-            heading: "Set up this year's assessment",
-            items: [
-              journeyItem("Set up this year's assessment", annualSetupSummary, { locked: false }),
-            ],
-          },
-          {
-            heading: "Complete your self-assessment",
-            items: [
-              journeyItem(
-                "Who is involved",
-                !annualSetupComplete
-                  ? {
-                      ...whoInvolvedSummary,
-                      statusText: "Cannot start yet",
-                      statusClass: "govuk-tag--grey",
-                    }
-                  : whoInvolvedSummary,
-                {
-                locked: !annualSetupComplete,
-                lockedHint: "Complete annual setup first.",
-                }
-              ),
-              journeyItem("Complete A and D self-assessment", adLensSummary, {
-                locked: adLocked,
-                lockedHint: "Complete annual setup first.",
-              }),
-              journeyItem("Complete B and C self-assessment", bcLensSummary, {
-                locked: bcLocked,
-                lockedHint: "Complete annual setup first.",
-              }),
-              journeyItem("Complete your self-assessment", completeSelfAssessmentSummary, {
-                locked: completeSelfAssessmentSummary.statusText === "Cannot start yet",
-                lockedHint: "Complete the full self-assessment.",
-              }),
-            ],
-          },
-        ]
+      ? []
       : [
           {
             heading: "Start and setup",
@@ -256,14 +297,24 @@ module.exports = function (router) {
           },
         ];
 
-    const allItems = journeySections.flatMap((section) => section.items);
-    const nextAction = findNextRecommendedAction(allItems);
-    const roundTwoProgress = roundTwo
-      ? buildRoundTwoTaskListProgress(assessment, req.session.data.user || null)
+    const allItems = roundTwo
+      ? [
+          ...(roundTwoSetupSection ? roundTwoSetupSection.items : []),
+          ...(roundTwoAssessmentSection ? roundTwoAssessmentSection.items : []),
+        ]
+      : journeySections.flatMap((section) => section.items);
+    const nextAction = findNextRecommendedAction(
+      roundTwo && roundTwoAssessmentSection ? roundTwoAssessmentSection.items : allItems
+    );
+    const roundTwoSetupProgress = roundTwo
+      ? buildRoundTwoSetupProgress(assessment)
       : null;
-    if (roundTwo && roundTwoProgress && nextAction) {
-      roundTwoProgress.nextActionText = nextAction.text;
-      roundTwoProgress.nextActionHref = nextAction.href;
+    const roundTwoAssessmentProgress = roundTwo
+      ? buildRoundTwoAssessmentProgress(assessment)
+      : null;
+    if (roundTwo && roundTwoAssessmentProgress && nextAction) {
+      roundTwoAssessmentProgress.nextActionText = nextAction.text;
+      roundTwoAssessmentProgress.nextActionHref = nextAction.href;
     }
 
     res.render("pages/assessments/journey", {
@@ -271,6 +322,8 @@ module.exports = function (router) {
       labels,
       assessment,
       journeySections,
+      roundTwoSetupSection,
+      roundTwoAssessmentSection,
       nextAction,
       prepareSummary,
       scopeSummary,
@@ -278,7 +331,10 @@ module.exports = function (router) {
       roundTwo,
       assessmentStartedAtDisplay: roundTwo ? formatDateTimeDisplay(assessment.createdAt) : "",
       assessmentDueAtDisplay: roundTwo ? formatDateTimeDisplay(assessment.dueAt) : "",
-      roundTwoProgress,
+      roundTwoSetupProgress,
+      roundTwoAssessmentProgress,
+      collaborationState: roundTwo ? getCollaborationWorkflowState(assessment, req.session.data.user || null) : null,
+      roleActionSummary: roundTwo ? buildRoleActionSummary(req.session.data.user || null) : null,
     });
   });
 
@@ -286,12 +342,32 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!assessment.scopeReview.completed) {
+    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
+      return res.redirect("/assessments/current/review-scope");
+    }
+    return res.render("pages/assessments/annual-setup-start", {
+      pageTitle: "Set up this year's assessment",
+      assessment,
+    });
+  });
+
+  router.post("/assessments/current/annual-setup", (req, res) => {
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureAnnualSetupData(assessment);
+    ensureScopeReviewState(assessment);
+    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
       return res.redirect("/assessments/current/review-scope");
     }
     return res.redirect(getAnnualSetupNextStep(assessment));
@@ -301,20 +377,20 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!assessment.scopeReview.completed) {
+    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
       return res.redirect("/assessments/current/review-scope");
     }
 
     const scope = assessment.scope || {};
     const hasPreviousAdAssessment = Boolean(assessment.hasPreviousAdAssessment);
     const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-    const inScopeSystems = systems
-      .filter((system) => Boolean(system && system.inScope))
+    const availableSystems = systems
       .map((system) => {
         const mapping = getMapping(scope, system.id);
         const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
@@ -329,13 +405,19 @@ module.exports = function (router) {
         };
       });
 
+    const resolvedSystemIds = getResolvedBCSystemIds(assessment);
+
     return res.render("pages/assessments/annual-setup-assessment", {
       pageTitle: "Set up this year's assessment",
       labels,
       assessment,
-      systems: inScopeSystems,
+      systems: availableSystems,
       form: {
         ...assessment.annualSetup,
+        systemIds:
+          Array.isArray(assessment.annualSetup.systemIds) && assessment.annualSetup.systemIds.length > 0
+            ? assessment.annualSetup.systemIds
+            : resolvedSystemIds,
         adAssessmentStatus: hasPreviousAdAssessment ? assessment.annualSetup.adAssessmentStatus : "new_assessment",
       },
       hasPreviousAdAssessment,
@@ -347,6 +429,7 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -355,8 +438,7 @@ module.exports = function (router) {
     const scope = assessment.scope || {};
     const hasPreviousAdAssessment = Boolean(assessment.hasPreviousAdAssessment);
     const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-    const inScopeSystems = systems
-      .filter((system) => Boolean(system && system.inScope))
+    const availableSystems = systems
       .map((system) => {
         const mapping = getMapping(scope, system.id);
         const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
@@ -370,7 +452,7 @@ module.exports = function (router) {
           priorityLabel: priority && priority.level ? priority.level : "",
         };
       });
-    const allowedSystemIds = new Set(inScopeSystems.map((system) => system.id));
+    const allowedSystemIds = new Set(availableSystems.map((system) => system.id));
     const requestedSystemIds = coerceArray(req.session.data.annualSystemIds).filter(Boolean);
     const selectedSystemIds = requestedSystemIds
       .filter((systemId) => allowedSystemIds.has(systemId))
@@ -397,7 +479,7 @@ module.exports = function (router) {
       errors.push({ field: "annualSystemIds", text: "Select no more than 3 critical systems for this year’s B and C assessment." });
     }
     if (requestedSystemIds.some((systemId) => !allowedSystemIds.has(systemId))) {
-      errors.push({ field: "annualSystemIds", text: "Select critical systems from the current in-scope systems list." });
+      errors.push({ field: "annualSystemIds", text: "Select critical systems from your current critical systems list." });
     }
 
     if (errors.length > 0) {
@@ -406,7 +488,7 @@ module.exports = function (router) {
         pageTitle: "Set up this year's assessment",
         labels,
         assessment,
-        systems: inScopeSystems,
+        systems: availableSystems,
         form: {
           ...assessment.annualSetup,
           adAssessmentStatus: hasPreviousAdAssessment ? assessment.annualSetup.adAssessmentStatus : "new_assessment",
@@ -428,12 +510,13 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!assessment.scopeReview.completed) {
+    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
       return res.redirect("/assessments/current/review-scope");
     }
     if (!isAnnualSetupAssessmentStepComplete(assessment)) {
@@ -447,6 +530,7 @@ module.exports = function (router) {
       labels,
       assessment,
       form: annualRolesForm,
+      currentUserCanManageRoles: userHasPermission(req.session.data.user || null, PERMISSIONS.MANAGE_ROLES),
       rolesAudit: buildRolesAudit(
         assessment.annualSetup.annualRolesMeta,
         assessment.annualSetup.annualRolesHistory
@@ -459,6 +543,7 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -491,6 +576,7 @@ module.exports = function (router) {
         labels,
         assessment,
         form: assessment.annualSetup,
+        currentUserCanManageRoles: userHasPermission(req.session.data.user || null, PERMISSIONS.MANAGE_ROLES),
         rolesAudit: buildRolesAudit(
           assessment.annualSetup.annualRolesMeta,
           assessment.annualSetup.annualRolesHistory
@@ -515,12 +601,13 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!assessment.scopeReview.completed) {
+    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
       return res.redirect("/assessments/current/review-scope");
     }
     if (!isAnnualSetupAssessmentStepComplete(assessment)) {
@@ -543,6 +630,7 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -592,7 +680,6 @@ module.exports = function (router) {
 
     nextState.completed = true;
     assessment.annualSetup = nextState;
-    assessment.scope.priorityShortlist = Array.isArray(nextState.systemIds) ? nextState.systemIds : [];
     assessment.updatedAt = new Date().toISOString();
 
     delete req.session.data.assurerContact;
@@ -638,10 +725,12 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/dashboard?lens=ad&view=all");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     ensureAnnualSetupData(assessment);
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     if (!assessment.annualSetup.completed) {
       return res.redirect("/assessments/current/journey");
     }
@@ -653,9 +742,10 @@ module.exports = function (router) {
       const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
       const carriedForward = Boolean(saved.carriedForward);
       const reviewRequired = Boolean(saved.reviewRequired);
+      const started = hasStartedIgpAssessmentRow(saved);
       return {
         ...outcome,
-        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "In progress" : "Not started",
+        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "Complete" : started ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
         actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
         carriedForward,
@@ -663,7 +753,7 @@ module.exports = function (router) {
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "ad", rows);
     rows.forEach((row) => {
-      row.frameworkFlag = frameworkChange.updatedIds.includes(row.id) ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
+      row.frameworkFlag = "";
     });
     const carriedForwardReviewCount = rows.filter((row) => row.carriedForward).length;
     const primaryOutcome = rows[0] || null;
@@ -681,6 +771,7 @@ module.exports = function (router) {
       adPageStatus,
       adAssessmentStatus: assessment.annualSetup.adAssessmentStatus || "",
       reviewState,
+      collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
       readyToComplete,
       frameworkChange,
       carriedForwardReviewCount,
@@ -694,10 +785,12 @@ module.exports = function (router) {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
     if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     ensureAnnualSetupData(assessment);
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
 
     const { ad } = getOutcomesForVersion(assessment);
     const outcomes = flattenOutcomes(ad);
@@ -707,9 +800,10 @@ module.exports = function (router) {
       const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
       const carriedForward = Boolean(saved.carriedForward);
       const reviewRequired = Boolean(saved.reviewRequired);
+      const started = hasStartedIgpAssessmentRow(saved);
       return {
         ...outcome,
-        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "In progress" : "Not started",
+        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "Complete" : started ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
         actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
         carriedForward,
@@ -717,7 +811,7 @@ module.exports = function (router) {
     });
     const frameworkChange = buildFrameworkChangeSummary(assessment, "ad", rows);
     rows.forEach((row) => {
-      row.frameworkFlag = frameworkChange.updatedIds.includes(row.id) ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
+      row.frameworkFlag = "";
     });
     const carriedForwardReviewCount = rows.filter((row) => row.carriedForward).length;
     const primaryOutcome = rows[0] || null;
@@ -741,6 +835,7 @@ module.exports = function (router) {
         adPageStatus,
         adAssessmentStatus: assessment.annualSetup.adAssessmentStatus || "",
         reviewState,
+        collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
         readyToComplete,
         frameworkChange,
         carriedForwardReviewCount,
@@ -779,12 +874,19 @@ module.exports = function (router) {
 
     const { ad } = getOutcomesForVersion(assessment);
     const outcomes = flattenOutcomes(ad);
+    const bcReviewState = getBCReviewState(assessment);
 
     return res.render("pages/assessments/self-assessment-ad-complete", {
       pageTitle: "A and D complete",
       assessment,
       reviewState,
       outcomes,
+      nextActionHref: bcReviewState.completed
+        ? "/assessments/current/complete-self-assessment"
+        : "/assessments/current/self-assessment/bc",
+      nextActionText: bcReviewState.completed
+        ? "Continue to self-assessment summary"
+        : "Continue to B and C self-assessment",
     });
   });
 
@@ -794,70 +896,49 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     ensureAnnualSetupData(assessment);
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     if (!assessment.annualSetup.completed) {
       return res.redirect("/assessments/current/journey");
     }
     const { bc } = getOutcomesForVersion(assessment);
-    const selectedSystems = getPrototypeBCSystems(assessment.scope || {}, assessment);
-    const prototypeBcOutcomeIds = flattenOutcomes(bc).map((outcome) => outcome.id);
-    const totalPerSystem = prototypeBcOutcomeIds.length;
-    const systems = selectedSystems.map((system) => {
-      const systemData =
-        assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
-          ? assessment.selfAssess.bc[system.id]
-          : { outcomes: {} };
-      const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
-      const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
-      const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
-      const mapping = getMapping(assessment.scope || {}, system.id);
-      const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
-        .map((serviceId) => findService(assessment.scope || {}, serviceId))
-        .filter(Boolean)
-        .map((service) => service.name);
-      const priority = getPriority(assessment.scope || {}, system.id);
-      const status = primarySaved.carriedForward && primarySaved.reviewRequired
-        ? "Carried forward - review needed"
-        : judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
-      return {
-        ...system,
-        judged,
-        total: totalPerSystem,
-        refsCount,
-        mappedServices,
-        mappedCount: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds.length : 0,
-        priorityLevel: priority && priority.level ? priority.level : "",
-        status,
-        carriedForward: Boolean(primarySaved.carriedForward && primarySaved.reviewRequired),
-      };
-    });
-    const frameworkChange = buildFrameworkChangeSummary(assessment, "bc", systems.length > 0 ? [{ id: "B1a" }] : []);
-    systems.forEach((system) => {
-      system.frameworkFlag = frameworkChange.updatedIds.includes("B1a") ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
-    });
-    const carriedForwardReviewCount = systems.filter((system) => system.carriedForward).length;
-    const bcPageStatus = systems.length === 0
+    const allSystems = buildBCSystemList(assessment, bc);
+    const filterState = buildBCSystemFilterState(allSystems, req.query.view);
+    const systems = filterState.visibleSystems;
+    const totalPerSystem = filterState.totalPerSystem;
+    const bcPageStatus = allSystems.length === 0
       ? "Not started"
-      : systems.every((system) => system.status === "Complete")
+      : allSystems.every((system) => system.status === "Complete")
         ? "Complete"
-        : systems.some((system) => system.judged > 0)
+        : allSystems.some((system) => system.judged > 0)
           ? "In progress"
           : "Not started";
     const primarySystem = systems[0] || null;
     const primaryActionHref = primarySystem
       ? `/self-assess/bc/${primarySystem.id}`
-      : "/assessments/current/annual-setup/assessment";
-    const primaryActionText = "Open selected system";
+      : filterState.showEmptyHighPriorityState
+        ? "/assessments/current/self-assessment/bc?view=all"
+        : "/assessments/current/annual-setup/assessment";
+    const primaryActionText = primarySystem
+      ? "Open selected system"
+      : filterState.showEmptyHighPriorityState
+        ? "View all systems"
+        : "Return to annual setup";
     const reviewState = getBCReviewState(assessment);
-    const readyToComplete = totalPerSystem > 0 && systems.length > 0 && systems.every((system) => system.judged >= totalPerSystem);
+    const readyToComplete = totalPerSystem > 0 && allSystems.length > 0 && allSystems.every((system) => system.judged >= totalPerSystem);
 
     return res.render("pages/assessments/self-assessment-bc", {
       pageTitle: "Complete B and C self-assessment",
       assessment,
       systems,
+      allSystemsCount: allSystems.length,
+      highPrioritySystemsCount: filterState.highPrioritySystemsCount,
+      activeFilter: filterState.activeFilter,
+      showEmptyHighPriorityState: filterState.showEmptyHighPriorityState,
       bcPageStatus,
       primaryActionHref,
       primaryActionText,
@@ -865,9 +946,10 @@ module.exports = function (router) {
       assuranceWindow: assessment.annualSetup.assuranceWindow || "",
       checkInNotes: assessment.annualSetup.checkInNotes || "",
       reviewState,
+      collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
       readyToComplete,
-      frameworkChange,
-      carriedForwardReviewCount,
+      frameworkChange: filterState.frameworkChange,
+      carriedForwardReviewCount: filterState.carriedForwardReviewCount,
       saved: (req.query.saved || "").toString(),
       savedName: (req.query.name || "").toString(),
       error: null,
@@ -878,63 +960,38 @@ module.exports = function (router) {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
     if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     ensureAnnualSetupData(assessment);
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
 
     const { bc } = getOutcomesForVersion(assessment);
-    const selectedSystems = getPrototypeBCSystems(assessment.scope || {}, assessment);
-    const prototypeBcOutcomeIds = flattenOutcomes(bc).map((outcome) => outcome.id);
-    const totalPerSystem = prototypeBcOutcomeIds.length;
-    const systems = selectedSystems.map((system) => {
-      const systemData =
-        assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
-          ? assessment.selfAssess.bc[system.id]
-          : { outcomes: {} };
-      const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
-      const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
-      const refsCount = Array.isArray(system.diagramRefs) ? system.diagramRefs.filter(Boolean).length : 0;
-      const mapping = getMapping(assessment.scope || {}, system.id);
-      const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
-        .map((serviceId) => findService(assessment.scope || {}, serviceId))
-        .filter(Boolean)
-        .map((service) => service.name);
-      const priority = getPriority(assessment.scope || {}, system.id);
-      const status = primarySaved.carriedForward && primarySaved.reviewRequired
-        ? "Carried forward - review needed"
-        : judged === 0 ? "Not started" : judged >= totalPerSystem ? "Complete" : "In progress";
-      return {
-        ...system,
-        judged,
-        total: totalPerSystem,
-        refsCount,
-        mappedServices,
-        mappedCount: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds.length : 0,
-        priorityLevel: priority && priority.level ? priority.level : "",
-        status,
-        carriedForward: Boolean(primarySaved.carriedForward && primarySaved.reviewRequired),
-      };
-    });
-    const frameworkChange = buildFrameworkChangeSummary(assessment, "bc", systems.length > 0 ? [{ id: "B1a" }] : []);
-    systems.forEach((system) => {
-      system.frameworkFlag = frameworkChange.updatedIds.includes("B1a") ? `Updated in CAF ${frameworkChange.currentVersion}` : "";
-    });
-    const carriedForwardReviewCount = systems.filter((system) => system.carriedForward).length;
-    const bcPageStatus = systems.length === 0
+    const allSystems = buildBCSystemList(assessment, bc);
+    const filterState = buildBCSystemFilterState(allSystems, req.body.view);
+    const systems = filterState.visibleSystems;
+    const totalPerSystem = filterState.totalPerSystem;
+    const bcPageStatus = allSystems.length === 0
       ? "Not started"
-      : systems.every((system) => system.status === "Complete")
+      : allSystems.every((system) => system.status === "Complete")
         ? "Complete"
-        : systems.some((system) => system.judged > 0)
+        : allSystems.some((system) => system.judged > 0)
           ? "In progress"
           : "Not started";
     const primarySystem = systems[0] || null;
     const primaryActionHref = primarySystem
       ? `/self-assess/bc/${primarySystem.id}`
-      : "/assessments/current/annual-setup/assessment";
-    const primaryActionText = "Open selected system";
+      : filterState.showEmptyHighPriorityState
+        ? "/assessments/current/self-assessment/bc?view=all"
+        : "/assessments/current/annual-setup/assessment";
+    const primaryActionText = primarySystem
+      ? "Open selected system"
+      : filterState.showEmptyHighPriorityState
+        ? "View all systems"
+        : "Return to annual setup";
     const reviewState = getBCReviewState(assessment);
-    const readyToComplete = totalPerSystem > 0 && systems.length > 0 && systems.every((system) => system.judged >= totalPerSystem);
+    const readyToComplete = totalPerSystem > 0 && allSystems.length > 0 && allSystems.every((system) => system.judged >= totalPerSystem);
     const decision = (req.session.data.completeBcAssessment || "").toString();
 
     if (!readyToComplete) {
@@ -946,6 +1003,10 @@ module.exports = function (router) {
         pageTitle: "Complete B and C self-assessment",
         assessment,
         systems,
+        allSystemsCount: allSystems.length,
+        highPrioritySystemsCount: filterState.highPrioritySystemsCount,
+        activeFilter: filterState.activeFilter,
+        showEmptyHighPriorityState: filterState.showEmptyHighPriorityState,
         bcPageStatus,
         primaryActionHref,
         primaryActionText,
@@ -953,9 +1014,10 @@ module.exports = function (router) {
         assuranceWindow: assessment.annualSetup.assuranceWindow || "",
         checkInNotes: assessment.annualSetup.checkInNotes || "",
         reviewState,
+        collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
         readyToComplete,
-        frameworkChange,
-        carriedForwardReviewCount,
+        frameworkChange: filterState.frameworkChange,
+        carriedForwardReviewCount: filterState.carriedForwardReviewCount,
         saved: "",
         savedName: "",
         error: { items: [{ field: "completeBcAssessment", text: "Select whether B and C is complete." }] },
@@ -990,12 +1052,19 @@ module.exports = function (router) {
     }
 
     const systems = getSelectedAnnualSystems(assessment);
+    const adReviewState = getADReviewState(assessment);
 
     return res.render("pages/assessments/self-assessment-bc-complete", {
       pageTitle: "B and C complete",
       assessment,
       reviewState,
       systems,
+      nextActionHref: adReviewState.completed
+        ? "/assessments/current/complete-self-assessment"
+        : "/assessments/current/self-assessment/ad",
+      nextActionText: adReviewState.completed
+        ? "Continue to self-assessment summary"
+        : "Continue to A and D self-assessment",
     });
   });
 
@@ -1005,8 +1074,12 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (assessment.assurerSubmission && assessment.assurerSubmission.submitted) {
+      return res.redirect("/assessments/current/submit-assessment/complete");
+    }
 
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     const completion = getAssessmentCompletionState(assessment);
     const reviewState = getSelfAssessmentReviewState(assessment);
     const adReviewState = getADReviewState(assessment);
@@ -1015,16 +1088,25 @@ module.exports = function (router) {
       return res.redirect("/assessments/current/journey");
     }
     const selectedSystems = getSelectedAnnualSystems(assessment);
+    const user = req.session.data.user || null;
+    const canEdit = userHasPermission(user, PERMISSIONS.EDIT_CONTENT);
+    const canReview = userHasPermission(user, PERMISSIONS.REVIEW_CONTENT);
+    const canApprove = userHasPermission(user, PERMISSIONS.APPROVE_CONTENT);
 
     return res.render("pages/assessments/complete-self-assessment", {
       pageTitle: "Complete your self-assessment",
       assessment,
       completion,
+      collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
       reviewState,
       adReviewState,
       bcReviewState,
       selectedSystems,
+      canEdit,
+      canReview,
+      canApprove,
       error: null,
+      saved: (req.query.saved || "").toString(),
     });
   });
 
@@ -1034,21 +1116,71 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    return res.redirect("/assessments/current/export-assessment");
+  });
 
-    ensureSectionReviewData(assessment);
-    const completion = getAssessmentCompletionState(assessment);
-    if (!getADReviewState(assessment).completed || !getBCReviewState(assessment).completed) {
+  router.get("/assessments/current/export-assessment", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
 
-    const selectedSystems = getSelectedAnnualSystems(assessment);
-    res.setHeader("Content-Disposition", 'attachment; filename="webcaf-self-assessment-summary.html"');
-    return res.render("pages/assessments/download-self-assessment-summary", {
-      pageTitle: "Self-assessment summary",
+    const exportOptions = buildAssessmentExportOptions(assessment);
+    const selection = getAssessmentExportSelection(req.query, exportOptions);
+
+    return res.render("pages/assessments/export-assessment", {
+      pageTitle: "Export assessment",
       assessment,
-      completion,
-      reviewState: getSelfAssessmentReviewState(assessment),
-      selectedSystems,
+      selection,
+      exportOptions,
+      error: null,
+    });
+  });
+
+  router.get("/assessments/current/export-assessment/print", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+
+    const exportOptions = buildAssessmentExportOptions(assessment);
+    const selection = getAssessmentExportSelection(req.query, exportOptions);
+    const validationErrors = validateAssessmentExportSelection(selection, exportOptions);
+
+    if (validationErrors.length > 0) {
+      return res.render("pages/assessments/export-assessment", {
+        pageTitle: "Export assessment",
+        assessment,
+        selection,
+        exportOptions,
+        error: { items: validationErrors },
+      });
+    }
+
+    const exportSummary = buildAssessmentExportSummary(assessment, selection, exportOptions);
+    if (exportSummary.outcomeCount === 0) {
+      return res.render("pages/assessments/export-assessment", {
+        pageTitle: "Export assessment",
+        assessment,
+        selection,
+        exportOptions,
+        error: {
+          items: [
+            {
+              field: selection.scopeType === "section" ? "sectionId" : "outcomeId",
+              text: "No saved assessment content matches that export selection yet.",
+            },
+          ],
+        },
+      });
+    }
+    return res.render("pages/assessments/download-self-assessment-summary", {
+      pageTitle: `${exportSummary.title} - printable summary`,
+      assessment,
+      exportSummary,
+      printGeneratedAt: formatDateTimeDisplay(new Date().toISOString()),
     });
   });
 
@@ -1059,38 +1191,72 @@ module.exports = function (router) {
       return res.redirect("/assessments/current/journey");
     }
 
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     const completion = getAssessmentCompletionState(assessment);
-    const confirm = (req.session.data.completeSelfAssessment || "").toString();
+    const reviewerName = (req.session.data.collaborationReviewerName || "").toString().trim();
+    const approverName = (req.session.data.collaborationApproverName || "").toString().trim();
     const adReviewState = getADReviewState(assessment);
     const bcReviewState = getBCReviewState(assessment);
     if (!adReviewState.completed || !bcReviewState.completed) {
       return res.redirect("/assessments/current/journey");
     }
-    if (!confirm) {
+    const errors = [];
+    if (!reviewerName) {
+      errors.push({ field: "collaborationReviewerName", text: "Enter the reviewer for this self-assessment." });
+    }
+    if (!approverName) {
+      errors.push({ field: "collaborationApproverName", text: "Enter the approver for this self-assessment." });
+    }
+    if (errors.length > 0) {
       return res.render("pages/assessments/complete-self-assessment", {
         pageTitle: "Complete your self-assessment",
         assessment,
         completion,
+        collaborationState: {
+          ...getCollaborationWorkflowState(assessment, req.session.data.user || null),
+          reviewerName,
+          approverName,
+        },
         reviewState: getSelfAssessmentReviewState(assessment),
         adReviewState,
         bcReviewState,
         selectedSystems: getSelectedAnnualSystems(assessment),
-        error: { items: [{ field: "completeSelfAssessment", text: "Confirm that your self-assessment is complete." }] },
+        canEdit: true,
+        canReview: userHasPermission(req.session.data.user || null, PERMISSIONS.REVIEW_CONTENT),
+        canApprove: userHasPermission(req.session.data.user || null, PERMISSIONS.APPROVE_CONTENT),
+        error: { items: errors },
+        saved: "",
       });
     }
-    if (confirm === "no") {
-      delete req.session.data.completeSelfAssessment;
-      return res.redirect("/assessments/current/journey");
-    }
 
+    const nowIso = new Date().toISOString();
+    const actor = getAuditActor(req.session.data.user || null);
     assessment.selfAssessmentReview = {
       completed: true,
-      completedAt: new Date().toISOString(),
-      completedBy: getAuditActor(req.session.data.user || null),
+      completedAt: nowIso,
+      completedBy: actor,
     };
-    assessment.updatedAt = new Date().toISOString();
-    delete req.session.data.completeSelfAssessment;
+    assessment.collaborationWorkflow = {
+      ...assessment.collaborationWorkflow,
+      status: "in_review",
+      reviewerName,
+      approverName,
+      submittedAt: nowIso,
+      submittedBy: actor,
+      reviewDecision: "",
+      reviewNotes: "",
+      reviewedAt: "",
+      reviewedBy: "",
+      approvedAt: "",
+      approvedBy: "",
+      lastEditedAt: assessment.collaborationWorkflow.lastEditedAt || nowIso,
+      lastEditedBy: assessment.collaborationWorkflow.lastEditedBy || actor,
+    };
+    assessment.updatedAt = nowIso;
+    delete req.session.data.collaborationReviewerName;
+    delete req.session.data.collaborationApproverName;
     return res.redirect("/assessments/current/complete-self-assessment/complete");
   });
 
@@ -1100,25 +1266,223 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
 
     ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     const reviewState = getSelfAssessmentReviewState(assessment);
     const adReviewState = getADReviewState(assessment);
     const bcReviewState = getBCReviewState(assessment);
-    if (!reviewState.completed || !adReviewState.completed || !bcReviewState.completed) {
+    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
+    if (
+      !reviewState.completed ||
+      !adReviewState.completed ||
+      !bcReviewState.completed ||
+      collaborationState.status !== "in_review"
+    ) {
       return res.redirect("/assessments/current/complete-self-assessment");
     }
 
     return res.render("pages/assessments/complete-self-assessment-complete", {
-      pageTitle: "Self-assessment complete",
+      pageTitle: "Self-assessment submitted for review",
       assessment,
+      collaborationState,
       reviewState,
       selectedSystems: getSelectedAnnualSystems(assessment),
     });
+  });
+
+  router.get("/assessments/current/review-self-assessment", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+    if (assessment.assurerSubmission && assessment.assurerSubmission.submitted) {
+      return res.redirect("/assessments/current/submit-assessment/complete");
+    }
+
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.REVIEW_CONTENT)) return;
+    ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
+    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
+    if (collaborationState.status === "draft") {
+      return res.redirect("/assessments/current/complete-self-assessment");
+    }
+
+    return res.render("pages/assessments/review-self-assessment", {
+      pageTitle: "Review the self-assessment",
+      assessment,
+      backHref: "/assessments/current/complete-self-assessment",
+      completion: getAssessmentCompletionState(assessment),
+      collaborationState,
+      adReviewState: getADReviewState(assessment),
+      bcReviewState: getBCReviewState(assessment),
+      selectedSystems: getSelectedAnnualSystems(assessment),
+      error: null,
+      saved: (req.query.saved || "").toString(),
+    });
+  });
+
+  router.post("/assessments/current/review-self-assessment", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.REVIEW_CONTENT)) return;
+    ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
+    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
+    if (collaborationState.status === "draft") {
+      return res.redirect("/assessments/current/complete-self-assessment");
+    }
+
+    const decision = (req.session.data.reviewAssessmentDecision || "").toString();
+    const notes = (req.session.data.reviewAssessmentNotes || "").toString().trim();
+    const errors = [];
+
+    if (!decision) {
+      errors.push({ field: "reviewAssessmentDecision", text: "Select whether to send this back for changes or send it for approval." });
+    }
+    if (decision === "needs_changes" && !notes) {
+      errors.push({ field: "reviewAssessmentNotes", text: "Enter what needs changing before it can be reviewed again." });
+    }
+
+    if (errors.length > 0) {
+      return res.render("pages/assessments/review-self-assessment", {
+        pageTitle: "Review the self-assessment",
+        assessment,
+        backHref: "/assessments/current/complete-self-assessment",
+        completion: getAssessmentCompletionState(assessment),
+        collaborationState: {
+          ...collaborationState,
+          reviewDecision: decision,
+          reviewNotes: notes,
+        },
+        adReviewState: getADReviewState(assessment),
+        bcReviewState: getBCReviewState(assessment),
+        selectedSystems: getSelectedAnnualSystems(assessment),
+        error: { items: errors },
+        saved: "",
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    const actor = getAuditActor(req.session.data.user || null);
+    const nextStatus = decision === "needs_changes" ? "needs_changes" : "ready_for_approval";
+    assessment.collaborationWorkflow = {
+      ...assessment.collaborationWorkflow,
+      status: nextStatus,
+      reviewDecision: decision,
+      reviewNotes: notes,
+      reviewedAt: nowIso,
+      reviewedBy: actor,
+      approvedAt: nextStatus === "ready_for_approval" ? "" : assessment.collaborationWorkflow.approvedAt,
+      approvedBy: nextStatus === "ready_for_approval" ? "" : assessment.collaborationWorkflow.approvedBy,
+    };
+    if (decision === "needs_changes") {
+      assessment.selfAssessmentReview = {
+        completed: false,
+        completedAt: "",
+        completedBy: "",
+      };
+    }
+    assessment.updatedAt = nowIso;
+
+    delete req.session.data.reviewAssessmentDecision;
+    delete req.session.data.reviewAssessmentNotes;
+
+    if (nextStatus === "needs_changes") {
+      return res.redirect("/assessments/current/complete-self-assessment?saved=changes-requested");
+    }
+    return res.redirect("/assessments/current/approve-self-assessment?saved=review-complete");
+  });
+
+  router.get("/assessments/current/approve-self-assessment", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+    if (assessment.assurerSubmission && assessment.assurerSubmission.submitted) {
+      return res.redirect("/assessments/current/submit-assessment/complete");
+    }
+
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.APPROVE_CONTENT)) return;
+    ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
+    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
+    if (collaborationState.status !== "ready_for_approval" && collaborationState.status !== "approved") {
+      return res.redirect("/assessments/current/complete-self-assessment");
+    }
+
+    return res.render("pages/assessments/approve-self-assessment", {
+      pageTitle: "Approve the self-assessment",
+      assessment,
+      backHref: "/assessments/current/review-self-assessment",
+      completion: getAssessmentCompletionState(assessment),
+      collaborationState,
+      selectedSystems: getSelectedAnnualSystems(assessment),
+      error: null,
+      saved: (req.query.saved || "").toString(),
+    });
+  });
+
+  router.post("/assessments/current/approve-self-assessment", (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
+
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.APPROVE_CONTENT)) return;
+    ensureSectionReviewData(assessment);
+    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
+    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
+    if (collaborationState.status !== "ready_for_approval" && collaborationState.status !== "approved") {
+      return res.redirect("/assessments/current/complete-self-assessment");
+    }
+
+    const confirm = (req.session.data.approveSelfAssessmentConfirm || "").toString();
+    if (confirm !== "yes") {
+      return res.render("pages/assessments/approve-self-assessment", {
+        pageTitle: "Approve the self-assessment",
+        assessment,
+        backHref: "/assessments/current/review-self-assessment",
+        completion: getAssessmentCompletionState(assessment),
+        collaborationState,
+        selectedSystems: getSelectedAnnualSystems(assessment),
+        error: { items: [{ field: "approveSelfAssessmentConfirm", text: "Confirm that you approve this self-assessment." }] },
+        saved: "",
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    const actor = getAuditActor(req.session.data.user || null);
+    assessment.collaborationWorkflow = {
+      ...assessment.collaborationWorkflow,
+      status: "approved",
+      approvedAt: nowIso,
+      approvedBy: actor,
+    };
+    assessment.assurerSubmission = {
+      submitted: true,
+      submittedAt: nowIso,
+      submittedBy: actor,
+      workshopDate: "",
+      submitByDate: "",
+      metTimingRule: true,
+    };
+    assessment.updatedAt = nowIso;
+    delete req.session.data.approveSelfAssessmentConfirm;
+
+    return res.redirect("/assessments/current/submit-assessment/complete");
   });
 
   router.get("/assessments/current/review-scope", (req, res) => {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -1144,6 +1508,7 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req)) {
       return res.redirect("/assessments/current/journey");
     }
+    if (!requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -1421,9 +1786,6 @@ module.exports = function (router) {
   });
 
   router.get("/assessments/current/submit-assessment/complete", (req, res) => {
-    if (isRoundTwoRequest(req)) {
-      return res.redirect("/assessments/current/journey");
-    }
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
 
@@ -1441,6 +1803,7 @@ module.exports = function (router) {
       submitted,
       signOff,
       submissionWindow,
+      roundTwo: isRoundTwoRequest(req),
     });
   });
 
@@ -1755,6 +2118,7 @@ module.exports = function (router) {
   router.get("/assessments/current/start-self-assessment/people", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     const currentUser = req.session.data.user || null;
     const contributors = ensureSelfAssessContributors(assessment, currentUser).map((person) => ({
@@ -1780,6 +2144,7 @@ module.exports = function (router) {
   router.post("/assessments/current/start-self-assessment/people", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     const currentUser = req.session.data.user || null;
     const contributors = ensureSelfAssessContributors(assessment, currentUser);
@@ -1826,6 +2191,7 @@ module.exports = function (router) {
   router.post("/assessments/current/start-self-assessment/people/:personId/remove", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     const currentUser = req.session.data.user || null;
     const contributors = ensureSelfAssessContributors(assessment, currentUser);
@@ -1867,6 +2233,7 @@ module.exports = function (router) {
   router.get("/assessments/current/start-self-assessment/assignments", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     const currentUser = req.session.data.user || null;
@@ -1915,6 +2282,7 @@ module.exports = function (router) {
   router.get("/assessments/current/start-self-assessment/assignments/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     const row = getAssignableRowById(assessment, req.params.outcomeId);
@@ -1938,6 +2306,7 @@ module.exports = function (router) {
   router.post("/assessments/current/start-self-assessment/assignments/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    if (isRoundTwoRequest(req) && !requireAssessmentPermission(req, res, PERMISSIONS.EDIT_CONTENT)) return;
 
     ensureProgressTrackerForStart(assessment);
     const row = getAssignableRowById(assessment, req.params.outcomeId);
@@ -1998,16 +2367,14 @@ module.exports = function (router) {
     ensureAssuranceStageData(assessment);
     ensureIipStage2Data(assessment);
     const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo) {
-      const requestedLens = (req.query.lens || "").toString();
-      if (requestedLens === "ad") {
-        return res.redirect("/assessments/current/self-assessment/ad");
-      }
-      if (requestedLens === "bc") {
-        return res.redirect("/assessments/current/self-assessment/bc");
-      }
+    const currentUser = req.session.data.user || null;
+    const assurerAccess = getAssurerAccessContext(currentUser, assessment);
+    const isAssurerView = assurerAccess.isAssurer;
+    if (isAssurerView && !assurerAccess.isAssignedAssessment) {
+      return res.status(403).render("pages/errors/restricted", {
+        pageTitle: "Access restricted",
+      });
     }
-
     const { ad, bc } = getOutcomesForVersion(assessment);
     const prototypeAdIds = flattenOutcomes(ad).map((outcome) => outcome.id);
 
@@ -2053,8 +2420,14 @@ module.exports = function (router) {
       .map((row) => ({
         ...deriveRowFlags(row, statuses, { currentUserId }),
         lens: "ad",
-        linkUrl: roundTwo ? `/self-assess/ad/${row.outcomeId}` : `/assessments/current/outcomes/${row.outcomeId}`,
-        selfAssessUrl: `/self-assess/ad/${row.outcomeId}`,
+        linkUrl:
+          roundTwo && !isAssurerView
+            ? `/self-assess/ad/${row.outcomeId}`
+            : `/assessments/current/outcomes/${row.outcomeId}`,
+        selfAssessUrl:
+          isAssurerView
+            ? `/assessments/current/outcomes/${row.outcomeId}`
+            : `/self-assess/ad/${row.outcomeId}`,
         systemName: "",
         carriedForwardFlag:
           Boolean(
@@ -2072,7 +2445,8 @@ module.exports = function (router) {
 
     const bcRows = buildBCOutcomeRows(assessment, bc).map((row) => ({
       ...row,
-      linkUrl: roundTwo ? row.selfAssessUrl : row.linkUrl,
+      linkUrl: roundTwo && !isAssurerView ? row.selfAssessUrl : row.linkUrl,
+      selfAssessUrl: isAssurerView ? row.linkUrl : row.selfAssessUrl,
       carriedForwardFlag: Boolean(row.carriedForward && row.reviewRequired),
       ownerName: getParticipantName(assessment, row.ownerId, req.session.data.user) || "Unassigned",
       collaboratorCount:
@@ -2091,36 +2465,16 @@ module.exports = function (router) {
     });
     const adFrameworkChange = roundTwo ? buildFrameworkChangeSummary(assessment, "ad", allRowsAd) : null;
     allRowsAd.forEach((row) => {
-      row.frameworkFlag = adFrameworkChange && adFrameworkChange.updatedIds.includes(row.outcomeId)
-        ? `Updated in CAF ${adFrameworkChange.currentVersion}`
-        : "";
+      row.frameworkFlag = "";
     });
 
     const bcFrameworkChange = roundTwo ? buildFrameworkChangeSummary(assessment, "bc", bcRows) : null;
     bcRows.forEach((row) => {
-      row.frameworkFlag = bcFrameworkChange && bcFrameworkChange.updatedIds.includes(row.outcomeId)
-        ? `Updated in CAF ${bcFrameworkChange.currentVersion}`
-        : "";
+      row.frameworkFlag = "";
     });
 
     const allRows = allRowsAd.concat(bcRows);
-    const dashboardFrameworkChange = roundTwo && (adFrameworkChange || bcFrameworkChange)
-      ? {
-          changed: Boolean(
-            (adFrameworkChange && adFrameworkChange.changed) ||
-            (bcFrameworkChange && bcFrameworkChange.changed)
-          ),
-          assessmentVersion: (adFrameworkChange || bcFrameworkChange).assessmentVersion,
-          currentVersion: (adFrameworkChange || bcFrameworkChange).currentVersion,
-          updatedCount:
-            ((adFrameworkChange && adFrameworkChange.updatedIds.length) || 0) +
-            ((bcFrameworkChange && bcFrameworkChange.updatedIds.length) || 0),
-          newOutcomes: [
-            ...((adFrameworkChange && adFrameworkChange.newOutcomes) || []).map((row) => ({ ...row, lens: "A and D" })),
-            ...((bcFrameworkChange && bcFrameworkChange.newOutcomes) || []).map((row) => ({ ...row, lens: "B and C" })),
-          ].slice(0, 4),
-        }
-      : null;
+    const dashboardFrameworkChange = null;
     const notifications = buildFeedbackNotifications(allRows);
 
     const filteredRows = applyDashboardFilters(allRows, query, { currentUserId });
@@ -2135,12 +2489,83 @@ module.exports = function (router) {
     const summaryAll = computeSummary(allRows);
     const summaryFiltered = computeSummary(filteredRows);
     const roundTwoWorkQueues = isRoundTwoRequest(req)
-      ? buildRoundTwoWorkQueues(allRows)
+      ? buildRoundTwoWorkQueues(allRows, { isAssurerView })
       : null;
-
     const cycleStartedAt = assessment.cycle ? formatTimestamp(assessment.cycle.startedAt) : "";
     const assuranceSummary = buildAssuranceSummary(assessment);
     const iipStage2Summary = buildIipStage2Summary(assessment);
+    const dashboardHref = (overrides = {}) => {
+      const qs = buildQueryString({
+        lens: query.lens !== "all" ? query.lens : "",
+        ...overrides,
+      });
+      return `/assessments/current/dashboard${qs ? `?${qs}` : ""}`;
+    };
+    const summaryCards = [
+      {
+        label: "Needs attention",
+        value: summaryAll.needsAttention,
+        meta: `Overdue ${summaryAll.overdue}, Blocked ${summaryAll.blocked}, Missing evidence ${summaryAll.missingEvidence}`,
+        href: roundTwo
+          ? dashboardHref({ workStatus: "needs_attention" })
+          : dashboardHref({ view: "attention" }),
+        actionText: "View outcomes",
+      },
+      {
+        label: isAssurerView ? "Ready for your review" : "My work",
+        value: isAssurerView ? summaryAll.readyForReview : summaryAll.mine,
+        meta: isAssurerView ? "Shared with assurer" : "Assigned to you",
+        href: isAssurerView
+          ? dashboardHref({ status: "ready_for_review" })
+          : roundTwo
+            ? dashboardHref({ assigned: "me" })
+            : dashboardHref({ view: "my" }),
+        actionText: isAssurerView ? "Open review list" : "Open your work",
+      },
+      {
+        label: "Complete",
+        value: summaryAll.complete,
+        meta: "Outcomes finished",
+        href: roundTwo
+          ? dashboardHref({ workStatus: "completed" })
+          : dashboardHref({ status: "complete" }),
+        actionText: "View completed outcomes",
+      },
+    ];
+
+    if (!roundTwo) {
+      summaryCards.push(
+        {
+          label: "Assurance report",
+          value: assuranceSummary.reportStatus,
+          meta: `Record of Audit: ${assuranceSummary.recordStatus}`,
+          href: "/assessments/current/assurance-report",
+          actionText: "Open assurance report",
+        },
+        {
+          label: "IIP Stage 2",
+          value: iipStage2Summary.statusLabel,
+          meta: iipStage2Summary.expectedByDisplay
+            ? `Offline drafting target: ${iipStage2Summary.expectedByDisplay}`
+            : "No target date yet",
+          href: iipStage2Summary.nextActionHref,
+          actionText: "Open IIP Stage 2",
+        },
+        {
+          label: "Evidence requests",
+          value: assuranceSummary.openEvidenceRequests,
+          meta: "Open evidence clarification requests",
+          href: "/assessments/current/evidence-requests",
+          actionText: "Open requests",
+        }
+      );
+    }
+    const collaborationState = isRoundTwoRequest(req)
+      ? getCollaborationWorkflowState(assessment, req.session.data.user || null)
+      : null;
+    const dashboardNextAction = roundTwo && !isAssurerView
+      ? buildDashboardNextAction(collaborationState, req.session.data.user || null)
+      : null;
 
     const bcSystems = buildBCSystemRows(assessment, bc);
     res.render("pages/assessments/dashboard", {
@@ -2152,6 +2577,7 @@ module.exports = function (router) {
       cycleStartedAt,
       query,
       grouped,
+      summaryCards,
       summaryAll,
       summaryFiltered,
       bcSystems,
@@ -2160,6 +2586,10 @@ module.exports = function (router) {
       iipStage2Summary,
       roundTwoWorkQueues,
       dashboardFrameworkChange,
+      collaborationState,
+      dashboardNextAction,
+      assurerAccess,
+      isAssurerView,
       currentUserId,
       buildQueryString,
     });
@@ -2198,6 +2628,13 @@ module.exports = function (router) {
   router.get("/assessments/current/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    const currentUser = req.session.data.user || null;
+    const assurerAccess = getAssurerAccessContext(currentUser, assessment);
+    if (assurerAccess.isAssurer && !assurerAccess.isAssignedAssessment) {
+      return res.status(403).render("pages/errors/restricted", {
+        pageTitle: "Access restricted",
+      });
+    }
 
     const outcomeId = req.params.outcomeId;
     const row = assessment.progressTracker && assessment.progressTracker[outcomeId];
@@ -2226,51 +2663,9 @@ module.exports = function (router) {
       });
     }
 
-    // Ensure newer fields exist (backwards-safe)
-    const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(outcomeRow.evidenceRefs));
-    const history = Array.isArray(outcomeRow.history) ? outcomeRow.history : [];
-    const statusMeta = getStatusMeta(statuses, outcomeRow.status);
-    const assignment = buildAssignmentDisplay(
-      buildAssignmentUsers(assessment, req.session.data.user || null),
-      outcomeRow.ownerId,
-      outcomeRow.collaboratorIds,
-      outcomeRow.additionalCollaborators
-    );
-    const latestUpdate = getLatestHistoryEntry(history);
-
-    const query = normaliseQuery(req.query);
-    const selfAssessSummary = buildSelfAssessSummary(assessment, outcomeId);
-    const outcomeGuidance = buildOutcomeGuidance(outcomeRow.outcomeCode);
-    const selfAssessUrl = buildSelfAssessUrl(outcomeRow);
-    ensureAssuranceStageData(assessment);
-    const openEvidenceRequestCount = countOpenEvidenceRequestsForOutcome(
-      assessment.assurance.evidenceRequests || [],
-      outcomeRow.outcomeId
-    );
-
-    res.render("pages/assessments/outcome", {
-      pageTitle: `${labels.outcome.pageTitlePrefix} ${outcomeRow.outcomeCode}`,
-      labels,
-      statuses,
-      users: buildAssignmentUsers(assessment, req.session.data.user || null),
-      row: {
-        ...outcomeRow,
-        dueDateInput: formatDateForInput(outcomeRow.dueDate),
-        evidenceRefs,
-        history: formatHistoryEntries(history), // newest first
-      },
-      statusMeta,
-      ownerName: assignment.ownerName,
-      collaboratorNames: assignment.collaboratorNames,
-      additionalCollaboratorNames: assignment.additionalCollaboratorNames,
-      lastUpdatedAt: latestUpdate ? formatTimestamp(latestUpdate.at) : "",
-      lastUpdatedBy: latestUpdate ? latestUpdate.by : "",
-      query,
-      selfAssessSummary,
-      outcomeGuidance,
-      selfAssessUrl,
-      openEvidenceRequestCount,
-      error: null,
+    return renderAssessmentOutcomePage(req, res, assessment, outcomeRow, {
+      query: normaliseQuery(req.query),
+      savedAssurance: (req.query.saved || "").toString() === "assurance",
     });
   });
 
@@ -2278,10 +2673,20 @@ module.exports = function (router) {
   router.post("/assessments/current/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
+    const currentUser = req.session.data.user || null;
+    const assurerAccess = getAssurerAccessContext(currentUser, assessment);
+    if (assurerAccess.isAssurer && !assurerAccess.isAssignedAssessment) {
+      return res.status(403).render("pages/errors/restricted", {
+        pageTitle: "Access restricted",
+      });
+    }
 
     const outcomeId = req.params.outcomeId;
-    const existing = assessment.progressTracker && assessment.progressTracker[outcomeId];
-    if (!existing && parseBCOutcomeId(outcomeId)) {
+    const existingAd = assessment.progressTracker && assessment.progressTracker[outcomeId];
+    const { bc } = getOutcomesForVersion(assessment);
+    const existingBc = getBCOverviewRow(assessment, bc, outcomeId);
+    const existing = existingAd || existingBc;
+    if (!assurerAccess.isAssurer && !existingAd && parseBCOutcomeId(outcomeId)) {
       const qs = buildQueryString(normaliseQuery(req.query));
       return res.redirect(`${buildSelfAssessUrl({ outcomeId })}${qs ? `?${qs}` : ""}`);
     }
@@ -2295,6 +2700,42 @@ module.exports = function (router) {
     }
 
     const query = normaliseQuery(req.query);
+    if (assurerAccess.isAssurer) {
+      const decision = (req.session.data.assurerDecision || "").toString();
+      const rationale = (req.session.data.assurerRationale || "").toString().trim();
+      const errors = [];
+
+      if (!decision) {
+        errors.push({ field: "assurerDecision", text: labels.assurer.errors.decisionRequired });
+      }
+      if (!rationale) {
+        errors.push({ field: "assurerRationale", text: labels.assurer.errors.rationaleRequired });
+      }
+
+      if (errors.length > 0) {
+        return renderAssessmentOutcomePage(req, res, assessment, existing, {
+          query,
+          error: { items: errors },
+          review: {
+            ...(existing.assurerReview || {}),
+            decision,
+            rationale,
+          },
+        });
+      }
+
+      saveAssurerOutcomeReview(assessment, outcomeId, existing, currentUser, {
+        decision,
+        rationale,
+      });
+      delete req.session.data.assurerDecision;
+      delete req.session.data.assurerRationale;
+
+      return res.redirect(
+        `/assessments/current/outcomes/${encodeURIComponent(outcomeId)}?saved=assurance`
+      );
+    }
+
     const action = (req.session.data.action || "").toString();
 
     // Pull form data from session (Prototype Kit convention)
@@ -2806,7 +3247,7 @@ function getStatusLabel(statusesDef, value) {
 
 function hasAnyEvidenceValue(ref) {
   if (!ref) return false;
-  return Boolean(ref.refId || ref.type || ref.link || ref.note);
+  return Boolean(ref.title || ref.type || ref.link || ref.description || ref.refId || ref.note);
 }
 
 function validateEvidenceRefs(evidenceRefs, labels) {
@@ -2816,10 +3257,9 @@ function validateEvidenceRefs(evidenceRefs, labels) {
 
   for (const ref of evidenceRefs) {
     if (!ref) continue;
-    const hasIdOrLink = Boolean(ref.refId || ref.link);
-    if (!hasIdOrLink) {
-      return labels.errors.evidenceRequired;
-    }
+    if (!(ref.title || "").toString().trim()) return "Enter an evidence title for each evidence reference.";
+    if (!(ref.link || "").toString().trim()) return "Enter a link for each evidence reference.";
+    if (!(ref.description || "").toString().trim()) return "Enter a description for each evidence reference.";
   }
 
   return "";
@@ -2959,10 +3399,7 @@ function buildFrameworkChangeSummary(assessment, lens, visibleRows) {
 function buildBCSystemRows(assessment, outcomesTree) {
   const scope = assessment.scope || {};
   const systems = getPrototypeBCSystems(scope, assessment);
-  const annualSelected = assessment && assessment.annualSetup && Array.isArray(assessment.annualSetup.systemIds)
-    ? assessment.annualSetup.systemIds
-    : [];
-  const shortlist = annualSelected.length > 0 ? annualSelected : Array.isArray(scope.priorityShortlist) ? scope.priorityShortlist : [];
+  const shortlist = getResolvedBCSystemIds(assessment);
   const outcomeList = flattenOutcomes(outcomesTree);
   const totalOutcomes = outcomeList.length;
 
@@ -3023,16 +3460,19 @@ function buildBCOutcomeRows(assessment, outcomesTree) {
 
     for (const outcome of outcomeList) {
       const saved = outcomeData[outcome.id] || {};
+      const evidenceRefs = Array.isArray(saved.evidenceRefs) ? saved.evidenceRefs : [];
+      const history = Array.isArray(saved.history) ? saved.history : [];
       const evidenceCount = Array.isArray(saved.evidenceRefs)
         ? saved.evidenceRefs.filter(hasAnyEvidenceValue).length
         : 0;
       const hasContent = Boolean(saved.igpResponse || saved.rationale || evidenceCount > 0);
+      const hasStatementContent = hasStartedIgpAssessmentRow(saved);
       const statusValue = (saved.status || "").toString() || (
         saved.blocker
           ? "blocked"
           : saved.judgement
           ? "complete"
-          : hasContent
+          : hasContent || hasStatementContent
           ? "in_progress"
           : "not_started"
       );
@@ -3057,7 +3497,10 @@ function buildBCOutcomeRows(assessment, outcomesTree) {
         statusTagClass: statusMeta ? statusMeta.tagClass : "govuk-tag--grey",
         dueDate: "",
         dueDateDisplay: "",
-        nextStep: "",
+        nextStep: (saved.nextStep || "").toString(),
+        evidenceRefs,
+        history,
+        assurerReview: saved.assurerReview || null,
         evidenceCount,
         carriedForward: Boolean(saved.carriedForward),
         reviewRequired: Boolean(saved.reviewRequired),
@@ -3080,17 +3523,94 @@ function buildBCOutcomeRows(assessment, outcomesTree) {
 
 function getPrototypeBCSystems(scope, assessment) {
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const selectedIds = assessment && assessment.annualSetup && Array.isArray(assessment.annualSetup.systemIds)
-    ? assessment.annualSetup.systemIds
-    : [];
+  const selectedIds = getResolvedBCSystemIds(assessment);
 
   if (selectedIds.length > 0) {
     return systems.filter((system) => selectedIds.includes(system.id)).slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
   }
 
-  const inScopeSystems = systems.filter((system) => Boolean(system && system.inScope));
-  const source = inScopeSystems.length > 0 ? inScopeSystems : systems;
-  return source.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
+  return systems.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
+}
+
+function buildBCSystemList(assessment, outcomesTree) {
+  const scope = assessment.scope || {};
+  const selectedSystems = getPrototypeBCSystems(scope, assessment);
+  const prototypeBcOutcomeIds = flattenOutcomes(outcomesTree).map((outcome) => outcome.id);
+  const totalPerSystem = prototypeBcOutcomeIds.length;
+  const systems = selectedSystems.map((system) => {
+    const systemData =
+      assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
+        ? assessment.selfAssess.bc[system.id]
+        : { outcomes: {} };
+    const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
+    const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
+    const mapping = getMapping(scope, system.id);
+    const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
+      .map((serviceId) => findService(scope, serviceId))
+      .filter(Boolean)
+      .map((service) => service.name);
+    const priority = getPriority(scope, system.id);
+    const priorityLevel = priority && priority.level ? priority.level : "";
+    const started = hasStartedIgpAssessmentRow(primarySaved);
+    const status = primarySaved.carriedForward && primarySaved.reviewRequired
+      ? "Carried forward - review needed"
+      : judged >= totalPerSystem ? "Complete" : judged > 0 || started ? "In progress" : "Not started";
+
+    return {
+      ...system,
+      judged,
+      total: totalPerSystem,
+      mappedServices,
+      mappedCount: mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds.length : 0,
+      priorityLevel,
+      priorityText: formatPriorityLabel(priorityLevel),
+      priorityTagClass: getPriorityTagClass(priorityLevel),
+      status,
+      carriedForward: Boolean(primarySaved.carriedForward && primarySaved.reviewRequired),
+    };
+  });
+  const frameworkChange = buildFrameworkChangeSummary(assessment, "bc", systems.length > 0 ? [{ id: "B1a" }] : []);
+  systems.forEach((system) => {
+    system.frameworkFlag = "";
+  });
+
+  systems.totalPerSystem = totalPerSystem;
+  systems.frameworkChange = frameworkChange;
+  return systems;
+}
+
+function buildBCSystemFilterState(allSystems, rawView) {
+  const activeFilter = normaliseBCSystemFilter(rawView);
+  const highPrioritySystems = allSystems.filter((system) => system.priorityLevel === "high");
+  const visibleSystems = activeFilter === "all" ? allSystems : highPrioritySystems;
+
+  return {
+    activeFilter,
+    visibleSystems,
+    highPrioritySystemsCount: highPrioritySystems.length,
+    showEmptyHighPriorityState: activeFilter === "high" && highPrioritySystems.length === 0 && allSystems.length > 0,
+    carriedForwardReviewCount: allSystems.filter((system) => system.carriedForward).length,
+    frameworkChange: allSystems.frameworkChange,
+    totalPerSystem: allSystems.totalPerSystem || 0,
+  };
+}
+
+function normaliseBCSystemFilter(value) {
+  return value === "all" ? "all" : "high";
+}
+
+function formatPriorityLabel(level) {
+  if (level === "not_sure") return "Not sure yet";
+  if (!level) return "Not set";
+  return level.charAt(0).toUpperCase() + level.slice(1);
+}
+
+function getPriorityTagClass(level) {
+  if (level === "high") return "govuk-tag--red";
+  if (level === "medium") return "govuk-tag--blue";
+  if (level === "low") return "govuk-tag--green";
+  if (level === "not_sure") return "govuk-tag--yellow";
+  return "govuk-tag--grey";
 }
 
 function ensureAssessmentData(assessment) {
@@ -3286,10 +3806,10 @@ function normaliseEvidenceForCompare(refs) {
   return refs
     .filter((ref) => ref && hasAnyEvidenceValue(ref))
     .map((ref) => ({
-      refId: (ref.refId || "").toString().trim(),
+      title: (ref.title || ref.refId || "").toString().trim(),
       type: (ref.type || "").toString().trim(),
       link: (ref.link || "").toString().trim(),
-      note: (ref.note || "").toString().trim(),
+      description: (ref.description || ref.note || "").toString().trim(),
     }));
 }
 
@@ -3386,6 +3906,130 @@ function formatHistoryEntries(history) {
     }));
 }
 
+function renderAssessmentOutcomePage(req, res, assessment, outcomeRow, options = {}) {
+  const currentUser = req.session.data.user || null;
+  const rowForView = outcomeRow || {};
+  const outcomeId = options.outcomeId || rowForView.outcomeId;
+  const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(rowForView.evidenceRefs));
+  const history = Array.isArray(rowForView.history) ? rowForView.history : [];
+  const statusMeta = getStatusMeta(statuses, rowForView.status);
+  const assignment = buildAssignmentDisplay(
+    buildAssignmentUsers(assessment, currentUser),
+    rowForView.ownerId,
+    rowForView.collaboratorIds,
+    rowForView.additionalCollaborators
+  );
+  const latestUpdate = getLatestHistoryEntry(history);
+  const query = options.query || normaliseQuery(req.query);
+  const selfAssessSummary = buildSelfAssessSummary(assessment, outcomeId);
+  const outcomeGuidance = buildOutcomeGuidance(rowForView.outcomeCode);
+  const selfAssessUrl = buildSelfAssessUrl(rowForView);
+  const assurerAccess = getAssurerAccessContext(currentUser, assessment);
+
+  ensureAssuranceStageData(assessment);
+
+  return res.render("pages/assessments/outcome", {
+    pageTitle: `${labels.outcome.pageTitlePrefix} ${rowForView.outcomeCode}`,
+    labels,
+    statuses,
+    users: buildAssignmentUsers(assessment, currentUser),
+    row: {
+      ...rowForView,
+      dueDateInput: formatDateForInput(rowForView.dueDate),
+      evidenceRefs,
+      history: formatHistoryEntries(history),
+    },
+    statusMeta,
+    ownerName: assignment.ownerName,
+    collaboratorNames: assignment.collaboratorNames,
+    additionalCollaboratorNames: assignment.additionalCollaboratorNames,
+    lastUpdatedAt: latestUpdate ? formatTimestamp(latestUpdate.at) : "",
+    lastUpdatedBy: latestUpdate ? latestUpdate.by : "",
+    query,
+    selfAssessSummary,
+    outcomeGuidance,
+    selfAssessUrl,
+    openEvidenceRequestCount: countOpenEvidenceRequestsForOutcome(
+      assessment.assurance.evidenceRequests || [],
+      rowForView.outcomeId
+    ),
+    assurerAccess,
+    isAssurerView: assurerAccess.isAssurer,
+    review: options.review || rowForView.assurerReview || {},
+    savedAssurance: Boolean(options.savedAssurance),
+    error: options.error || null,
+  });
+}
+
+function saveAssurerOutcomeReview(assessment, outcomeId, existing, currentUser, review) {
+  const actor = currentUser && currentUser.name ? currentUser.name : "Assurer";
+  const nowIso = new Date().toISOString();
+  const nextReview = {
+    decision: review.decision,
+    rationale: review.rationale,
+    by: actor,
+    at: nowIso,
+  };
+  const nextHistory = Array.isArray(existing.history) ? existing.history.slice() : [];
+  nextHistory.push({
+    at: nowIso,
+    by: actor,
+    summary: `Assurer decision: ${review.decision}`,
+    status: "feedback_received",
+    statusLabel: getStatusLabel(statuses, "feedback_received"),
+    dueDate: existing.dueDate || "",
+    blocker: existing.blocker || "",
+    nextStep: "Council to review and update",
+    kind: "assurer_review",
+    rationale: review.rationale,
+  });
+
+  const nextRow = {
+    ...existing,
+    assurerReview: nextReview,
+    status: "feedback_received",
+    nextStep: "Council to review and update",
+    history: nextHistory,
+    updatedAt: nowIso,
+  };
+
+  if (!assessment.selfAssess) assessment.selfAssess = { ad: {}, bc: {} };
+  if (!assessment.selfAssess.ad) assessment.selfAssess.ad = {};
+  if (!assessment.selfAssess.bc) assessment.selfAssess.bc = {};
+
+  const bcParts = parseBCOutcomeId(outcomeId);
+  if (bcParts) {
+    if (!assessment.selfAssess.bc[bcParts.systemId]) {
+      assessment.selfAssess.bc[bcParts.systemId] = { outcomes: {} };
+    }
+    if (!assessment.selfAssess.bc[bcParts.systemId].outcomes) {
+      assessment.selfAssess.bc[bcParts.systemId].outcomes = {};
+    }
+    const target = assessment.selfAssess.bc[bcParts.systemId].outcomes[bcParts.outcomeKey] || {};
+    assessment.selfAssess.bc[bcParts.systemId].outcomes[bcParts.outcomeKey] = {
+      ...target,
+      assurerReview: nextReview,
+      status: nextRow.status,
+      nextStep: nextRow.nextStep,
+      history: nextHistory,
+      updatedAt: nowIso,
+    };
+  } else {
+    assessment.progressTracker[outcomeId] = nextRow;
+    const target = assessment.selfAssess.ad[outcomeId] || {};
+    assessment.selfAssess.ad[outcomeId] = {
+      ...target,
+      assurerReview: nextReview,
+      status: nextRow.status,
+      nextStep: nextRow.nextStep,
+      history: nextHistory,
+      updatedAt: nowIso,
+    };
+  }
+
+  assessment.updatedAt = nowIso;
+}
+
 function buildSelfAssessSummary(assessment, outcomeId) {
   if (!assessment || !assessment.selfAssess) {
     return null;
@@ -3425,13 +4069,13 @@ function buildScopeJourneySummary(assessment, { roundTwo = false } = {}) {
   const scope = assessment.scope || {};
   const services = Array.isArray(scope.essentialServices) ? scope.essentialServices : [];
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const inScopeSystems = systems.filter((system) => Boolean(system.inScope));
   const mappedCount = systems.filter((system) => {
     const mapping = Array.isArray(scope.mappings)
       ? scope.mappings.find((m) => m.systemId === system.id)
       : null;
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
   }).length;
+  const priorityCount = getPriorityCount(scope);
   const isComplete = roundTwo
     ? isRoundTwoScopeComplete(assessment)
     : Boolean(assessment.stage && assessment.stage.prepareScopeComplete);
@@ -3439,8 +4083,8 @@ function buildScopeJourneySummary(assessment, { roundTwo = false } = {}) {
   const rolesComplete = Boolean(scope.rolesConfirmed);
   const servicesComplete = Boolean(scope.servicesConfirmed);
   const systemsComplete = roundTwo
-    ? systems.length > 0 && inScopeSystems.length > 0 && mappedCount === systems.length
-    : systems.length >= 3 && inScopeSystems.length >= 3 && mappedCount === systems.length;
+    ? systems.length > 0 && mappedCount === systems.length && priorityCount === systems.length
+    : systems.length >= 3 && mappedCount === systems.length && areNonRoundTwoPrioritiesComplete(scope);
   const completedSteps = roundTwo
     ? (contextComplete ? 1 : 0) + (servicesComplete ? 1 : 0) + (systemsComplete ? 1 : 0)
     : (contextComplete && rolesComplete ? 1 : 0) +
@@ -3451,7 +4095,7 @@ function buildScopeJourneySummary(assessment, { roundTwo = false } = {}) {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (isComplete) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (services.length > 0 || systems.length > 0 || (scope.context && scope.context.completed)) {
     statusText = "In progress";
@@ -3459,11 +4103,11 @@ function buildScopeJourneySummary(assessment, { roundTwo = false } = {}) {
   }
 
   return {
-    href: roundTwo ? "/assessments/current/journey" : "/stages/2/scope",
+    href: roundTwo ? "/onboarding/scope" : "/stages/2/scope",
     statusText,
     statusClass,
     hint: roundTwo
-      ? `${completedSteps} of 3 complete: context, essential services, critical systems. This register is maintained over time and reused each year.`
+      ? `${completedSteps} of 3 complete: context, essential services, critical systems. This scope summary is maintained over time and reused each year.`
       : `${completedSteps} of 4 complete: strategic context, essential services, priority systems, share with assurers.`,
   };
 }
@@ -3485,7 +4129,7 @@ function buildPrepareJourneySummary(assessment, { roundTwo = false } = {}) {
     prepare.onboardingLead || prepare.onboardingApprover || prepare.onboardingContributors
   );
   const isComplete = roundTwo
-    ? Boolean(prepare.onboardingUnderstandingComplete && prepare.onboardingRolesComplete && prepare.guidanceRead)
+    ? Boolean(prepare.onboardingRolesComplete && prepare.guidanceRead)
     : Boolean(prepare.guidanceRead) || selectedCount === checks.length;
 
   let statusText = "Not started";
@@ -3495,12 +4139,12 @@ function buildPrepareJourneySummary(assessment, { roundTwo = false } = {}) {
     statusClass = "govuk-tag--blue";
   }
   if (isComplete) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   }
 
   return {
-    href: "/prepare",
+    href: roundTwo ? "/prepare/roles?returnTo=journey" : "/prepare",
     statusText,
     statusClass,
     hint: roundTwo
@@ -3510,32 +4154,6 @@ function buildPrepareJourneySummary(assessment, { roundTwo = false } = {}) {
       : isComplete
         ? "Preparation checklist completed."
         : "Confirm readiness, governance and support before starting scope.",
-  };
-}
-
-function buildOnboardingPreparationSummary(assessment) {
-  const prepare = assessment.prepare || {};
-  const checks = ["understandService", "hasStakeholderSupport"];
-  const selectedCount = checks.filter((field) => Boolean(prepare[field])).length;
-  const isComplete = Boolean(prepare.onboardingUnderstandingComplete);
-
-  let statusText = "Not started";
-  let statusClass = "govuk-tag--grey";
-  if (isComplete) {
-    statusText = "Completed";
-    statusClass = "govuk-tag--green";
-  } else if (selectedCount > 0) {
-    statusText = "In progress";
-    statusClass = "govuk-tag--blue";
-  }
-
-  return {
-    href: "/prepare",
-    statusText,
-    statusClass,
-    hint: isComplete
-      ? "Preparation complete."
-      : "Confirm understanding and internal support.",
   };
 }
 
@@ -3549,7 +4167,7 @@ function buildOnboardingRolesSummary(assessment) {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (isComplete) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (hasStarted) {
     statusText = "In progress";
@@ -3583,7 +4201,7 @@ function buildScopeContextSummary(assessment) {
 
   return {
     href: "/stages/2/scope/context",
-    statusText: contextComplete ? "Completed" : hasStarted ? "In progress" : "Not started",
+    statusText: contextComplete ? "Complete" : hasStarted ? "In progress" : "Not started",
     statusClass: contextComplete
       ? "govuk-tag--green"
       : hasStarted
@@ -3617,7 +4235,7 @@ function buildCriticalSystemsScopeSummary(assessment) {
     const mapping = getMapping(scope, system.id);
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
   }).length;
-  const hasStarted = Boolean(systems.length > 0 || mappedCount > 0);
+  const hasStarted = Boolean(systems.length > 0 || mappedCount > 0 || getPriorityCount(scope) > 0);
 
   const href = systems.length > 0 ? "/stages/2/scope/systems/review" : "/stages/2/scope/systems/add";
 
@@ -3646,6 +4264,21 @@ function getPriority(scope, systemId) {
   return scope.priority.find((priority) => priority && priority.systemId === systemId) || null;
 }
 
+function getPriorityCount(scope) {
+  const systems = scope && Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
+  return systems.filter((system) => {
+    const priority = getPriority(scope, system.id);
+    return Boolean(priority && priority.level);
+  }).length;
+}
+
+function areNonRoundTwoPrioritiesComplete(scope) {
+  return getPriorityCount(scope) >= 3 &&
+    Array.isArray(scope.priorityShortlist) &&
+    scope.priorityShortlist.length > 0 &&
+    Boolean(scope.priorityDetailsComplete);
+}
+
 function scopeContextCompleted(scope) {
   return Boolean(scope && scope.context && scope.context.completed);
 }
@@ -3654,7 +4287,6 @@ function isRoundTwoScopeComplete(assessment) {
   if (!assessment || !assessment.scope) return false;
   const scope = assessment.scope;
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const inScopeSystems = systems.filter((system) => Boolean(system && system.inScope));
   const mappedCount = systems.filter((system) => {
     const mapping = getMapping(scope, system.id);
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
@@ -3667,7 +4299,6 @@ function isRoundTwoScopeComplete(assessment) {
   return Boolean(scope.context && scope.context.completed) &&
     Boolean(scope.servicesConfirmed) &&
     systems.length > 0 &&
-    inScopeSystems.length > 0 &&
     mappedCount === systems.length &&
     prioritisedCount === systems.length;
 }
@@ -3685,20 +4316,19 @@ function ensureScopeReviewState(assessment) {
   if (typeof assessment.scopeReview.updatedAt !== "string") assessment.scopeReview.updatedAt = "";
 }
 
-function buildRoundTwoTaskListProgress(assessment, currentUser) {
+function buildRoundTwoAssessmentProgress(assessment) {
   ensureSectionReviewData(assessment);
+  ensureCollaborationWorkflowData(assessment);
   ensureScopeReviewState(assessment);
-  const prepare = assessment && assessment.prepare ? assessment.prepare : {};
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const scopeReview = assessment && assessment.scopeReview ? assessment.scopeReview : {};
   const annualSetup = assessment && assessment.annualSetup ? assessment.annualSetup : {};
   const adReview = getADReviewState(assessment);
   const bcReview = getBCReviewState(assessment);
-  const reviewState = getSelfAssessmentReviewState(assessment);
+  const collaborationState = getCollaborationWorkflowState(assessment);
   const assignmentStatus = getAssignmentStatus(assessment);
 
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const inScopeSystems = systems.filter((system) => Boolean(system && system.inScope));
   const mappedCount = systems.filter((system) => {
     const mapping = getMapping(scope, system.id);
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
@@ -3708,38 +4338,37 @@ function buildRoundTwoTaskListProgress(assessment, currentUser) {
     return Boolean(priority && priority.level);
   }).length;
 
-  const getStartedComplete =
-    Boolean(prepare.onboardingUnderstandingComplete) && Boolean(prepare.onboardingRolesComplete);
   const scopeComplete =
     Boolean(scopeReview.completed) &&
     scopeContextCompleted(scope) &&
     Array.isArray(scope.essentialServices) &&
     scope.essentialServices.length > 0 &&
     systems.length > 0 &&
-    inScopeSystems.length > 0 &&
     mappedCount === systems.length &&
     prioritisedCount === systems.length;
   const annualSetupComplete = scopeComplete && Boolean(annualSetup.completed);
   const whoInvolvedComplete = annualSetupComplete && assignmentStatus.allAssigned;
   const adComplete = whoInvolvedComplete && adReview.completed;
   const bcComplete = whoInvolvedComplete && bcReview.completed;
-  const readyForIndependentReview = adComplete && bcComplete && reviewState.completed;
+  const submittedForReview =
+    adComplete &&
+    bcComplete &&
+    (collaborationState.status === "in_review" ||
+      collaborationState.status === "needs_changes" ||
+      collaborationState.status === "ready_for_approval" ||
+      collaborationState.status === "approved");
+  const reviewed =
+    collaborationState.status === "ready_for_approval" ||
+    collaborationState.status === "approved";
+  const approved = collaborationState.status === "approved";
 
-  const milestones = [
-    {
-      label: "Get started",
-      completed: getStartedComplete,
-    },
-    {
-      label: "Set CAF scope",
-      completed: scopeComplete,
-    },
+  return buildPhaseProgress([
     {
       label: "Set up this year's assessment",
       completed: annualSetupComplete,
     },
     {
-      label: "Set up who is involved",
+      label: "Assign people to assessment outcomes",
       completed: whoInvolvedComplete,
     },
     {
@@ -3751,27 +4380,18 @@ function buildRoundTwoTaskListProgress(assessment, currentUser) {
       completed: bcComplete,
     },
     {
-      label: "Ready for independent review",
-      completed: readyForIndependentReview,
+      label: "Send the self-assessment for review",
+      completed: submittedForReview,
     },
-  ];
-
-  const total = milestones.length;
-  const completed = milestones.filter((milestone) => milestone.completed).length;
-  const currentIndex = milestones.findIndex((milestone) => !milestone.completed);
-  const nextMilestone = currentIndex >= 0 ? milestones[currentIndex] : null;
-
-  const milestonesWithState = milestones.map((milestone, index) => ({
-    ...milestone,
-    state: milestone.completed ? "completed" : index === currentIndex ? "current" : "not_yet",
-  }));
-
-  return {
-    completed,
-    total,
-    milestones: milestonesWithState,
-    nextMilestoneLabel: nextMilestone ? nextMilestone.label : "",
-  };
+    {
+      label: "Review the submitted self-assessment",
+      completed: reviewed,
+    },
+    {
+      label: "Approve the reviewed self-assessment",
+      completed: approved,
+    },
+  ]);
 }
 
 function buildAnnualSetupSummary(assessment, currentUser) {
@@ -3791,10 +4411,10 @@ function buildAnnualSetupSummary(assessment, currentUser) {
 
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
-  let href = scopeReview.completed ? getAnnualSetupNextStep(assessment) : "/assessments/current/review-scope";
+  let href = scopeReview.completed ? "/assessments/current/annual-setup" : "/assessments/current/review-scope";
   let hint = `${selectedSystems} of 3 systems selected.`;
   if (state.completed) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
     href = "/assessments/current/annual-setup/complete";
     hint = "Review or update this year's setup.";
@@ -3808,6 +4428,24 @@ function buildAnnualSetupSummary(assessment, currentUser) {
     statusText,
     statusClass,
     hint,
+  };
+}
+
+function buildScopeReviewSummary(assessment) {
+  const scopeReview = assessment && assessment.scopeReview ? assessment.scopeReview : {};
+  const completed = Boolean(scopeReview.completed);
+  const started = Boolean(scopeReview.decision);
+  const changed = started && scopeReview.decision !== "no_change";
+
+  return {
+    href: "/assessments/current/review-scope",
+    statusText: completed ? "Complete" : started ? "In progress" : "Not started",
+    statusClass: completed ? "govuk-tag--green" : started ? "govuk-tag--blue" : "govuk-tag--grey",
+    hint: completed
+      ? changed
+        ? "This year's scope has been updated and confirmed."
+        : "This year's scope has been reviewed and confirmed without changes."
+      : "Review the council scope summary before you set up this year's assessment.",
   };
 }
 
@@ -3907,9 +4545,6 @@ function buildMappingJourneySummary(assessment) {
   const scope = assessment.scope || {};
   const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
   const mappings = Array.isArray(scope.mappings) ? scope.mappings : [];
-  const refsCount = systems.filter(
-    (system) => Array.isArray(system.diagramRefs) && system.diagramRefs.length > 0
-  ).length;
   const mappedCount = systems.filter((system) => {
     const mapping = mappings.find((m) => m.systemId === system.id);
     return mapping && Array.isArray(mapping.serviceIds) && mapping.serviceIds.length > 0;
@@ -3920,8 +4555,8 @@ function buildMappingJourneySummary(assessment) {
   const href = "/stages/2/scope/systems/review";
 
   if (systems.length > 0) {
-    if (mappedCount === systems.length && refsCount === systems.length) {
-      statusText = "Completed";
+    if (mappedCount === systems.length) {
+      statusText = "Complete";
       statusClass = "govuk-tag--green";
     } else {
       statusText = "In progress";
@@ -3933,7 +4568,7 @@ function buildMappingJourneySummary(assessment) {
     href,
     statusText,
     statusClass,
-    hint: `${refsCount} of ${systems.length} systems have architecture references recorded and ${mappedCount} are mapped. This is completed offline and recorded here for B and C.`,
+    hint: `${mappedCount} of ${systems.length} systems are mapped to essential services.`,
   };
 }
 
@@ -3946,17 +4581,14 @@ function buildADJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     ? Boolean(assessment && assessment.annualSetup && assessment.annualSetup.completed)
     : Boolean(assessment.stage && assessment.stage.prepareScopeComplete);
 
-  let statusText = "Cannot start yet";
+  let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (ready) {
     if (reviewState.completed) {
-      statusText = "Completed";
+      statusText = "Complete";
       statusClass = "govuk-tag--green";
     } else if (judged > 0) {
       statusText = "In progress";
-      statusClass = "govuk-tag--blue";
-    } else {
-      statusText = "Ready to start";
       statusClass = "govuk-tag--blue";
     }
   }
@@ -3985,17 +4617,14 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     ? Boolean(assessment && assessment.annualSetup && assessment.annualSetup.completed)
     : Boolean(assessment.stage && assessment.stage.prepareScopeComplete);
 
-  let statusText = "Cannot start yet";
+  let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (ready && systems.length > 0) {
     if (reviewState.completed) {
-      statusText = "Completed";
+      statusText = "Complete";
       statusClass = "govuk-tag--green";
     } else if (judged > 0) {
       statusText = "In progress";
-      statusClass = "govuk-tag--blue";
-    } else {
-      statusText = "Ready to start";
       statusClass = "govuk-tag--blue";
     }
   }
@@ -4011,14 +4640,87 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
   };
 }
 
-function buildRoundTwoWorkQueues(rows) {
+function buildRoundTwoWorkQueueRow(row, { isAssurerView = false } = {}) {
+  const actionHref = row && row.selfAssessUrl ? row.selfAssessUrl : row.linkUrl || "";
+  const defaultActionText = isAssurerView ? "Review outcome" : "Open outcome";
+
+  if (!row) {
+    return {
+      issueText: "",
+      actionText: defaultActionText,
+      actionHref,
+    };
+  }
+
+  if (row.isBlocked) {
+    return {
+      ...row,
+      issueText: "Blocked by a saved blocker",
+      actionText: "Resolve blocker",
+      actionHref,
+    };
+  }
+
+  if (row.carriedForwardFlag) {
+    return {
+      ...row,
+      issueText: "Carried-forward outcome needs review",
+      actionText: "Review carried-forward outcome",
+      actionHref,
+    };
+  }
+
+  if (row.isMissingEvidence) {
+    return {
+      ...row,
+      issueText: "Evidence references missing",
+      actionText: "Add evidence references",
+      actionHref,
+    };
+  }
+
+  if (row.status === "feedback_received") {
+    return {
+      ...row,
+      issueText: "Changes requested",
+      actionText: "Update outcome",
+      actionHref,
+    };
+  }
+
+  if (row.status === "ready_for_review") {
+    return {
+      ...row,
+      issueText: isAssurerView ? "Ready for assurance review" : "Ready for review",
+      actionText: isAssurerView ? "Review outcome" : "Open outcome",
+      actionHref,
+    };
+  }
+
+  if (row.status === "updated_after_feedback") {
+    return {
+      ...row,
+      issueText: "Updated after feedback",
+      actionText: isAssurerView ? "Review updated outcome" : "Open updated outcome",
+      actionHref,
+    };
+  }
+
+  return {
+    ...row,
+    issueText: "Needs review",
+    actionText: defaultActionText,
+    actionHref,
+  };
+}
+
+function buildRoundTwoWorkQueues(rows, options = {}) {
   const list = Array.isArray(rows) ? rows : [];
-  const carriedForwardReview = list.filter((row) => row && row.carriedForwardFlag);
   const frameworkUpdates = list.filter(
     (row) => row && row.frameworkFlag && !row.carriedForwardFlag
   );
   const needsAttention = list.filter(
-    (row) => row && row.isNeedsAttention && !row.carriedForwardFlag && !row.frameworkFlag
+    (row) => row && row.isNeedsAttention && !row.frameworkFlag
   );
   const inProgress = list.filter(
     (row) =>
@@ -4042,10 +4744,9 @@ function buildRoundTwoWorkQueues(rows) {
     });
 
   return {
-    carriedForwardReview: sortRows(carriedForwardReview).slice(0, 6),
     frameworkUpdates: sortRows(frameworkUpdates).slice(0, 6),
-    needsAttention: sortRows(needsAttention).slice(0, 6),
-    inProgress: sortRows(inProgress).slice(0, 6),
+    needsAttention: sortRows(needsAttention).slice(0, 6).map((row) => buildRoundTwoWorkQueueRow(row, options)),
+    inProgress: sortRows(inProgress).slice(0, 6).map((row) => buildRoundTwoWorkQueueRow(row, options)),
   };
 }
 
@@ -4059,16 +4760,13 @@ function buildIIPJourneySummary(assessment, { roundTwo = false } = {}) {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (status === "submitted_to_mhclg") {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (
     status &&
     status !== "not_started"
   ) {
     statusText = "In progress";
-    statusClass = "govuk-tag--blue";
-  } else if (assuranceSummary.reportFinalised) {
-    statusText = "Ready to start";
     statusClass = "govuk-tag--blue";
   }
 
@@ -4091,7 +4789,7 @@ function buildAssuranceReportJourneySummary(assessment, { roundTwo = false } = {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (summary.reportFinalised) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (summary.reportDraftShared || summary.recordSubmitted) {
     statusText = "In progress";
@@ -4109,35 +4807,228 @@ function buildAssuranceReportJourneySummary(assessment, { roundTwo = false } = {
 
 function buildCompleteSelfAssessmentSummary(assessment) {
   ensureSectionReviewData(assessment);
-  const reviewState = getSelfAssessmentReviewState(assessment);
+  ensureCollaborationWorkflowData(assessment);
   const adReview = getADReviewState(assessment);
   const bcReview = getBCReviewState(assessment);
+  const collaborationState = getCollaborationWorkflowState(assessment);
+  const submission = assessment && assessment.assurerSubmission ? assessment.assurerSubmission : {};
 
-  let statusText = "Cannot start yet";
+  let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
-  if (reviewState.completed) {
-    statusText = "Completed";
-    statusClass = "govuk-tag--green";
-  } else if (adReview.completed && bcReview.completed) {
-    statusText = "Ready to start";
-    statusClass = "govuk-tag--blue";
+  let hint = "Check the summary, make edits if needed, and submit the draft for review.";
+  let locked = true;
+  if (adReview.completed && bcReview.completed) {
+    locked = false;
+    if (submission.submitted) {
+      statusText = "Complete";
+      statusClass = "govuk-tag--green";
+      hint = "The assessment has been sent to the assurer for review.";
+    } else if (collaborationState.status === "in_review") {
+      statusText = "Complete";
+      statusClass = "govuk-tag--green";
+      hint = "The self-assessment has been submitted and is waiting for review.";
+    } else if (collaborationState.status === "ready_for_approval") {
+      statusText = "Complete";
+      statusClass = "govuk-tag--green";
+      hint = "The review is complete and this is ready for approval.";
+    } else if (collaborationState.status === "approved") {
+      statusText = "Complete";
+      statusClass = "govuk-tag--green";
+      hint = "The self-assessment has been approved.";
+    } else if (collaborationState.status === "needs_changes") {
+      statusText = "In progress";
+      statusClass = "govuk-tag--blue";
+      hint = "Changes were requested. Update the draft and submit it again.";
+    } else {
+      hint = "Check the summary, make edits if needed, and submit the draft for review.";
+    }
   }
 
   return {
-    href: "/assessments/current/complete-self-assessment",
+    href: submission.submitted ? "/assessments/current/submit-assessment/complete" : "/assessments/current/complete-self-assessment",
     statusText,
     statusClass,
-    hint: "Review and complete the self-assessment for this year.",
+    hint,
+    locked,
+  };
+}
+
+function buildReviewSelfAssessmentSummary(assessment) {
+  ensureCollaborationWorkflowData(assessment);
+  const collaborationState = getCollaborationWorkflowState(assessment);
+  const submission = assessment && assessment.assurerSubmission ? assessment.assurerSubmission : {};
+
+  if (submission.submitted) {
+    return {
+      href: "/assessments/current/submit-assessment/complete",
+      statusText: "Complete",
+      statusClass: "govuk-tag--green",
+      hint: "The assessment has been sent to the assurer for review.",
+      locked: false,
+    };
+  }
+
+  if (collaborationState.status === "approved" || collaborationState.status === "ready_for_approval") {
+    return {
+      href: "/assessments/current/review-self-assessment",
+      statusText: "Complete",
+      statusClass: "govuk-tag--green",
+      hint: collaborationState.reviewedAt
+        ? `Reviewed ${formatDateTimeDisplay(collaborationState.reviewedAt)}.`
+        : "The review step is complete.",
+      locked: false,
+    };
+  }
+  if (collaborationState.status === "in_review") {
+    return {
+      href: "/assessments/current/review-self-assessment",
+      statusText: "In progress",
+      statusClass: "govuk-tag--blue",
+      hint: "Review the draft and either send it back for edits or move it to approval.",
+      locked: false,
+    };
+  }
+  if (collaborationState.status === "needs_changes") {
+    return {
+      href: "/assessments/current/review-self-assessment",
+      statusText: "In progress",
+      statusClass: "govuk-tag--blue",
+      hint: "Changes were requested after review. The drafter needs to update and resubmit this self-assessment.",
+      locked: false,
+    };
+  }
+
+  return {
+    href: "/assessments/current/review-self-assessment",
+    statusText: "Not started",
+    statusClass: "govuk-tag--grey",
+    hint: "Submit the self-assessment for review first.",
+    locked: true,
+  };
+}
+
+function buildApproveSelfAssessmentSummary(assessment) {
+  ensureCollaborationWorkflowData(assessment);
+  const collaborationState = getCollaborationWorkflowState(assessment);
+  const submission = assessment && assessment.assurerSubmission ? assessment.assurerSubmission : {};
+
+  if (submission.submitted) {
+    return {
+      href: "/assessments/current/submit-assessment/complete",
+      statusText: "Complete",
+      statusClass: "govuk-tag--green",
+      hint: submission.submittedAt
+        ? `Submitted to assurer ${formatDateTimeDisplay(submission.submittedAt)}.`
+        : "The assessment has been sent to the assurer for review.",
+      locked: false,
+    };
+  }
+
+  if (collaborationState.status === "approved") {
+    return {
+      href: "/assessments/current/approve-self-assessment",
+      statusText: "Complete",
+      statusClass: "govuk-tag--green",
+      hint: collaborationState.approvedAt
+        ? `Approved ${formatDateTimeDisplay(collaborationState.approvedAt)}.`
+        : "The self-assessment has been approved.",
+      locked: false,
+    };
+  }
+  if (collaborationState.status === "ready_for_approval") {
+    return {
+      href: "/assessments/current/approve-self-assessment",
+      statusText: "Not started",
+      statusClass: "govuk-tag--grey",
+      hint: "The approver can now review and approve this self-assessment.",
+      locked: false,
+    };
+  }
+
+  return {
+    href: "/assessments/current/approve-self-assessment",
+    statusText: "Not started",
+    statusClass: "govuk-tag--grey",
+    hint: "Complete the review step first.",
+    locked: true,
   };
 }
 
 function getSelfAssessmentReviewState(assessment) {
+  ensureCollaborationWorkflowData(assessment);
   const state = assessment && assessment.selfAssessmentReview ? assessment.selfAssessmentReview : {};
+  const workflow = assessment && assessment.collaborationWorkflow ? assessment.collaborationWorkflow : {};
   return {
-    completed: Boolean(state.completed),
-    completedAt: (state.completedAt || "").toString(),
-    completedBy: (state.completedBy || "").toString(),
+    completed:
+      Boolean(state.completed) ||
+      workflow.status === "in_review" ||
+      workflow.status === "ready_for_approval" ||
+      workflow.status === "approved",
+    completedAt: (state.completedAt || workflow.submittedAt || "").toString(),
+    completedBy: (state.completedBy || workflow.submittedBy || "").toString(),
   };
+}
+
+function buildRoleActionSummary(user) {
+  const activeRole = getActiveRole(user);
+  if (!activeRole) return null;
+  return {
+    activeRole,
+    activeRoleLabel: getRoleLabel(activeRole),
+    canEdit: userHasPermission(user, PERMISSIONS.EDIT_CONTENT),
+    canReview: userHasPermission(user, PERMISSIONS.REVIEW_CONTENT),
+    canApprove: userHasPermission(user, PERMISSIONS.APPROVE_CONTENT),
+    canAssure: userHasPermission(user, PERMISSIONS.ASSURE_CONTENT),
+    canQa: userHasPermission(user, PERMISSIONS.QA_CONTENT),
+    canManageRoles: userHasPermission(user, PERMISSIONS.MANAGE_ROLES),
+  };
+}
+
+function buildDashboardNextAction(collaborationState, user) {
+  const state = collaborationState && collaborationState.status ? collaborationState.status : "draft";
+  const submission = collaborationState && collaborationState.assurerSubmitted;
+
+  if (submission) {
+    return {
+      href: "/assessments/current/submit-assessment/complete",
+      text: "View assurer submission",
+    };
+  }
+
+  if (state === "approved") {
+    return {
+      href: "/assessments/current/approve-self-assessment",
+      text: "View approved self-assessment",
+    };
+  }
+
+  if (state === "ready_for_approval" && userHasPermission(user, PERMISSIONS.APPROVE_CONTENT)) {
+    return {
+      href: "/assessments/current/approve-self-assessment",
+      text: "Approve the self-assessment",
+    };
+  }
+
+  if ((state === "in_review" || state === "needs_changes") && userHasPermission(user, PERMISSIONS.REVIEW_CONTENT)) {
+    return {
+      href: "/assessments/current/review-self-assessment",
+      text: "Review the self-assessment",
+    };
+  }
+
+  return {
+    href: "/assessments/current/complete-self-assessment",
+    text: "Continue the self-assessment",
+  };
+}
+
+function requireAssessmentPermission(req, res, permission) {
+  const user = req && req.session && req.session.data ? req.session.data.user : null;
+  if (userHasPermission(user, permission)) return true;
+  res.status(403).render("pages/errors/restricted", {
+    pageTitle: "Access restricted",
+  });
+  return false;
 }
 
 function getADReviewState(assessment) {
@@ -4164,14 +5055,11 @@ function buildInternalSignOffSummary(assessment) {
   const completion = getAssessmentCompletionState(assessment);
   const signOff = getInternalSignOffState(assessment);
 
-  let statusText = "Cannot start yet";
+  let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (signOff.completed) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
-  } else if (completion.readyForSignOff) {
-    statusText = "Ready to start";
-    statusClass = "govuk-tag--blue";
   }
 
   return {
@@ -4188,14 +5076,11 @@ function buildSubmitAssurerSummary(assessment) {
   const submission = assessment.assurerSubmission || {};
   const submissionWindow = getSubmissionWindowState(assessment);
 
-  let statusText = "Cannot start yet";
+  let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (submission.submitted) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
-  } else if (signOff.completed) {
-    statusText = "Ready to start";
-    statusClass = "govuk-tag--blue";
   }
 
   return {
@@ -4221,7 +5106,7 @@ function buildSelfAssessStartSummary(assessment) {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (state.completed) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (completedCount > 0) {
     statusText = "In progress";
@@ -4303,6 +5188,74 @@ function ensureSectionReviewData(assessment) {
   }
 }
 
+function ensureCollaborationWorkflowData(assessment, currentUser) {
+  if (!assessment) return;
+  if (!assessment.collaborationWorkflow || typeof assessment.collaborationWorkflow !== "object") {
+    assessment.collaborationWorkflow = {
+      status: "draft",
+      reviewerName: "",
+      approverName: "",
+      submittedAt: "",
+      submittedBy: "",
+      reviewDecision: "",
+      reviewNotes: "",
+      reviewedAt: "",
+      reviewedBy: "",
+      approvedAt: "",
+      approvedBy: "",
+      lastEditedAt: "",
+      lastEditedBy: "",
+    };
+  }
+  if (!assessment.collaborationWorkflow.approverName) {
+    assessment.collaborationWorkflow.approverName =
+      (assessment.annualSetup && assessment.annualSetup.annualApprover) ||
+      (assessment.prepare && assessment.prepare.onboardingApprover) ||
+      "";
+  }
+  if (!assessment.collaborationWorkflow.lastEditedBy && currentUser) {
+    assessment.collaborationWorkflow.lastEditedBy = getAuditActor(currentUser);
+  }
+}
+
+function getCollaborationWorkflowState(assessment, currentUser) {
+  ensureCollaborationWorkflowData(assessment, currentUser);
+  const state = assessment && assessment.collaborationWorkflow ? assessment.collaborationWorkflow : {};
+  const submission = assessment && assessment.assurerSubmission ? assessment.assurerSubmission : {};
+  const drafterName =
+    (assessment && assessment.annualSetup && assessment.annualSetup.annualLead) ||
+    (assessment && assessment.prepare && assessment.prepare.onboardingLead) ||
+    (currentUser && currentUser.name) ||
+    "CAF lead";
+  const meta = {
+    draft: { label: "Draft", tagClass: "govuk-tag--grey" },
+    in_review: { label: "In review", tagClass: "govuk-tag--blue" },
+    needs_changes: { label: "Needs changes", tagClass: "govuk-tag--yellow" },
+    ready_for_approval: { label: "Ready for approval", tagClass: "govuk-tag--blue" },
+    approved: { label: "Approved", tagClass: "govuk-tag--green" },
+  }[state.status || "draft"] || { label: "Draft", tagClass: "govuk-tag--grey" };
+
+  return {
+    status: (state.status || "draft").toString(),
+    statusLabel: meta.label,
+    statusTagClass: meta.tagClass,
+    drafterName,
+    reviewerName: (state.reviewerName || "").toString(),
+    approverName: (state.approverName || "").toString(),
+    submittedAt: (state.submittedAt || "").toString(),
+    submittedBy: (state.submittedBy || "").toString(),
+    reviewDecision: (state.reviewDecision || "").toString(),
+    reviewNotes: (state.reviewNotes || "").toString(),
+    reviewedAt: (state.reviewedAt || "").toString(),
+    reviewedBy: (state.reviewedBy || "").toString(),
+    approvedAt: (state.approvedAt || "").toString(),
+    approvedBy: (state.approvedBy || "").toString(),
+    lastEditedAt: (state.lastEditedAt || "").toString(),
+    lastEditedBy: (state.lastEditedBy || "").toString(),
+    assurerSubmitted: Boolean(submission.submitted),
+  };
+}
+
 function isRoundTwoRequest(req) {
   return Boolean(
     req &&
@@ -4363,10 +5316,324 @@ function getAssessmentCompletionState(assessment) {
 function getSelectedAnnualSystems(assessment) {
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const allSystems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
-  const selectedIds = assessment && assessment.annualSetup && Array.isArray(assessment.annualSetup.systemIds)
-    ? assessment.annualSetup.systemIds
-    : [];
+  const selectedIds = getResolvedBCSystemIds(assessment);
   return allSystems.filter((system) => selectedIds.includes(system.id));
+}
+
+function getResolvedBCSystemIds(assessment) {
+  const scope = assessment && assessment.scope ? assessment.scope : {};
+  const validIds = new Set(
+    Array.isArray(scope.criticalSystems) ? scope.criticalSystems.map((system) => system.id) : []
+  );
+  const shortlistIds = Array.isArray(scope.priorityShortlist)
+    ? scope.priorityShortlist.filter((systemId) => validIds.has(systemId))
+    : [];
+  const annualIds =
+    assessment && assessment.annualSetup && Array.isArray(assessment.annualSetup.systemIds)
+      ? assessment.annualSetup.systemIds.filter((systemId) => validIds.has(systemId))
+      : [];
+
+  if (shortlistIds.length > 0) return shortlistIds.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
+  if (annualIds.length > 0) return annualIds.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
+  return [];
+}
+
+function buildAssessmentExportOptions(assessment) {
+  const { ad, bc } = getOutcomesForVersion(assessment);
+  const adOutcomes = flattenOutcomes(ad);
+  const bcOutcomes = flattenOutcomes(bc);
+  const selectedSystems = getSelectedAnnualSystems(assessment);
+  const bcSystems = selectedSystems.length > 0 ? selectedSystems : getPrototypeBCSystems(assessment.scope || {}, assessment);
+
+  const sections = [
+    {
+      id: "ad",
+      text: "A and D",
+      description: "Organisation outcomes",
+      outcomeCount: adOutcomes.length,
+    },
+    {
+      id: "bc",
+      text: "B and C",
+      description: bcSystems.length > 0 ? `Critical systems outcomes across ${bcSystems.length} system${bcSystems.length === 1 ? "" : "s"}` : "Critical systems outcomes",
+      outcomeCount: bcOutcomes.length * bcSystems.length,
+    },
+  ];
+
+  const outcomes = [];
+
+  adOutcomes.forEach((outcome) => {
+    outcomes.push({
+      id: outcome.id,
+      sectionId: "ad",
+      text: `${outcome.code} ${outcome.title}`,
+      hint: "A and D",
+    });
+  });
+
+  bcSystems.forEach((system) => {
+    bcOutcomes.forEach((outcome) => {
+      outcomes.push({
+        id: `${system.id}:${outcome.id}`,
+        sectionId: "bc",
+        text: `${outcome.code} ${outcome.title}`,
+        hint: system.name,
+      });
+    });
+  });
+
+  return {
+    sections,
+    outcomes,
+    selectedSystems: bcSystems,
+  };
+}
+
+function getAssessmentExportSelection(source, exportOptions) {
+  const query = source || {};
+  const defaultSection = exportOptions.sections[0] ? exportOptions.sections[0].id : "ad";
+  const defaultOutcome = exportOptions.outcomes[0] ? exportOptions.outcomes[0].id : "";
+
+  return {
+    scopeType: ((query.scopeType || query.scope || "full").toString() || "full"),
+    sectionId: ((query.sectionId || defaultSection).toString() || defaultSection),
+    outcomeId: ((query.outcomeId || defaultOutcome).toString() || defaultOutcome),
+  };
+}
+
+function validateAssessmentExportSelection(selection, exportOptions) {
+  const errors = [];
+  const scopeType = (selection.scopeType || "").toString();
+  const validScopes = new Set(["full", "section", "outcome"]);
+  const sectionIds = new Set((exportOptions.sections || []).map((section) => section.id));
+  const outcomeIds = new Set((exportOptions.outcomes || []).map((outcome) => outcome.id));
+
+  if (!validScopes.has(scopeType)) {
+    errors.push({ field: "scopeType", text: "Select what you want to include in the summary." });
+    return errors;
+  }
+
+  if (scopeType === "section" && !sectionIds.has(selection.sectionId)) {
+    errors.push({ field: "sectionId", text: "Select a section to export." });
+  }
+
+  if (scopeType === "outcome" && !outcomeIds.has(selection.outcomeId)) {
+    errors.push({ field: "outcomeId", text: "Select an outcome to export." });
+  }
+
+  return errors;
+}
+
+function buildAssessmentExportSummary(assessment, selection, exportOptions) {
+  const { ad, bc } = getOutcomesForVersion(assessment);
+  const adOutcomeMap = new Map(flattenOutcomes(ad).map((outcome) => [outcome.id, outcome]));
+  const bcOutcomeMap = new Map(flattenOutcomes(bc).map((outcome) => [outcome.id, outcome]));
+  const sections = [];
+  const selectedSectionIds = selection.scopeType === "section"
+    ? [selection.sectionId]
+    : selection.scopeType === "full"
+      ? ["ad", "bc"]
+      : [];
+  const bcScope = selection.scopeType === "outcome" ? parseBCOutcomeId(selection.outcomeId) : null;
+
+  if (selection.scopeType === "full" || selection.scopeType === "section" || (selection.scopeType === "outcome" && adOutcomeMap.has(selection.outcomeId))) {
+    const includeAllAd = selection.scopeType !== "outcome";
+    const adOutcomes = [];
+
+    adOutcomeMap.forEach((outcome) => {
+      if (!includeAllAd && outcome.id !== selection.outcomeId) return;
+      const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
+      adOutcomes.push(buildAssessmentExportOutcome({
+        sectionId: "ad",
+        outcome,
+        saved,
+        systemName: "",
+        outcomeId: outcome.id,
+      }));
+    });
+
+    if ((selectedSectionIds.includes("ad") || selection.scopeType === "outcome") && adOutcomes.length > 0) {
+      sections.push({
+        id: "ad",
+        title: "A and D",
+        subtitle: "Organisation outcomes",
+        outcomes: adOutcomes,
+      });
+    }
+  }
+
+  if (selection.scopeType === "full" || selection.scopeType === "section" || bcScope) {
+    const includeAllBc = selection.scopeType !== "outcome";
+    const bcOutcomes = [];
+
+    exportOptions.selectedSystems.forEach((system) => {
+      const systemRows =
+        assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
+          ? assessment.selfAssess.bc[system.id].outcomes || {}
+          : {};
+
+      bcOutcomeMap.forEach((outcome) => {
+        if (!includeAllBc && (!bcScope || bcScope.systemId !== system.id || bcScope.outcomeKey !== outcome.id)) {
+          return;
+        }
+        const saved = systemRows[outcome.id] || {};
+        bcOutcomes.push(buildAssessmentExportOutcome({
+          sectionId: "bc",
+          outcome,
+          saved,
+          systemName: system.name,
+          outcomeId: `${system.id}:${outcome.id}`,
+        }));
+      });
+    });
+
+    if ((selectedSectionIds.includes("bc") || bcScope) && bcOutcomes.length > 0) {
+      sections.push({
+        id: "bc",
+        title: "B and C",
+        subtitle: "Critical systems outcomes",
+        outcomes: bcOutcomes,
+      });
+    }
+  }
+
+  const scopeLabel = buildAssessmentExportScopeLabel(selection, exportOptions);
+
+  return {
+    title: "Assessment summary",
+    scopeLabel,
+    sections,
+    outcomeCount: sections.reduce((total, section) => total + section.outcomes.length, 0),
+    completion: getAssessmentCompletionState(assessment),
+    collaborationState: getCollaborationWorkflowState(assessment, null),
+    selectedSystems: getSelectedAnnualSystems(assessment),
+  };
+}
+
+function buildAssessmentExportScopeLabel(selection, exportOptions) {
+  if (selection.scopeType === "full") return "Entire assessment";
+  if (selection.scopeType === "section") {
+    const section = (exportOptions.sections || []).find((item) => item.id === selection.sectionId);
+    return section ? `${section.text} section` : "Selected section";
+  }
+  const outcome = (exportOptions.outcomes || []).find((item) => item.id === selection.outcomeId);
+  return outcome ? `Single outcome: ${outcome.text}${outcome.hint ? ` (${outcome.hint})` : ""}` : "Single outcome";
+}
+
+function buildAssessmentExportOutcome({ sectionId, outcome, saved, systemName, outcomeId }) {
+  const igpAssessments = buildAssessmentExportIgpAssessments(saved.igpAssessments, outcome);
+  const evidenceRefs = normaliseEvidenceRefs(saved.evidenceRefs).filter(hasAnyEvidenceValue);
+
+  return {
+    id: outcomeId,
+    sectionId,
+    code: outcome.code,
+    title: outcome.title,
+    description: outcome.description || "",
+    systemName,
+    judgement: (saved.judgement || "").toString(),
+    rationale: (saved.rationale || "").toString(),
+    evidenceRefs,
+    igpAssessments,
+    updatedAt: saved.updatedAt ? formatDateTimeDisplay(saved.updatedAt) : "",
+  };
+}
+
+function buildAssessmentExportIgpAssessments(saved, outcome) {
+  const existing = Array.isArray(saved) ? saved : [];
+  return getPrototypeIgpStatements(outcome).map((statement, idx) => {
+    const prior = existing[idx] || {};
+    const response = (prior.response || "").toString();
+    return {
+      statement: statement.statement,
+      maturity: (prior.maturity || mapLegacyIgpResponseToMaturity(response) || "").toString(),
+      rationale: (prior.rationale || "").toString(),
+      evidenceNote: (prior.evidenceNote || "").toString(),
+      confidence: (prior.confidence || "").toString(),
+    };
+  });
+}
+
+function getPrototypeIgpStatements(outcome) {
+  const byOutcome = {
+    A1a: [
+      {
+        statement:
+          "The security of network and information systems related to the operation of essential function(s) is not discussed or reported on regularly at board-level.",
+      },
+      {
+        statement:
+          "Board-level discussions on the security of network and information systems are based on partial or out-of-date information, without the benefit of expert guidance.",
+      },
+      {
+        statement:
+          "The security of network and information systems supporting your essential function(s) are not driven effectively by the direction set at board-level.",
+      },
+      {
+        statement:
+          "Senior management or other pockets of the organisation consider themselves exempt from some policies or expect special accommodations to be made.",
+      },
+      {
+        statement:
+          "Your organisation's approach and policy relating to the security of network and information systems supporting the operation of essential function(s) are owned and managed at board-level. These are communicated, in a meaningful way, to risk management decision-makers across the organisation.",
+      },
+      {
+        statement:
+          "Regular board-level discussions on the security of network and information systems supporting the operation of your essential function(s) take place, based on timely and accurate information and informed by expert guidance.",
+      },
+      {
+        statement:
+          "There is a board-level individual who has overall accountability for the security of network and information systems and drives regular discussion at board-level.",
+      },
+      {
+        statement:
+          "Direction set at board-level is translated into effective organisational practices that direct and control the security of the network and information systems supporting your essential functions(s).",
+      },
+      {
+        statement:
+          "The board has the information and understanding needed in order to effectively discuss how the security and resilience of network and information systems contributes to the delivery of essential function(s) and what the potential impact from compromise of those systems would be.",
+      },
+      {
+        statement:
+          "Security is recognised as an important enabler for the resilience of your essential function(s) and considered in all relevant discussions.",
+      },
+    ],
+    B1a: [
+      { statement: "Security policies and procedures exist for this critical system." },
+      { statement: "Those policies and procedures are kept up to date." },
+      { statement: "People supporting this system understand how the policies apply in practice." },
+    ],
+    C1b: [
+      { statement: "Monitoring is in place to detect security events affecting this system." },
+      { statement: "Alerts are reviewed and acted on in a timely way." },
+      { statement: "Coverage includes the most important integrations and access points." },
+    ],
+  };
+
+  if (outcome && byOutcome[outcome.id]) return byOutcome[outcome.id];
+
+  const code = outcome && outcome.code ? String(outcome.code).charAt(0) : "";
+  if (code === "A" || code === "D") {
+    return [
+      { statement: "Roles, policies or plans are defined and understood." },
+      { statement: "This outcome is applied consistently across the council." },
+      { statement: "Weaknesses are reviewed and acted on over time." },
+    ];
+  }
+
+  return [
+    { statement: "Controls are in place for this critical system." },
+    { statement: "Those controls are used consistently in practice." },
+    { statement: "Gaps are identified and addressed when they are found." },
+  ];
+}
+
+function mapLegacyIgpResponseToMaturity(response) {
+  if (response === "Yes") return "Fully in place";
+  if (response === "Alternative control in place") return "Mostly in place";
+  if (response === "Not applicable") return "Partially in place";
+  if (response === "No") return "Not in place";
+  return "";
 }
 
 function getAllOutcomeRowsForFeedback(assessment) {
@@ -4386,13 +5653,13 @@ function buildFeedbackNotifications(rows) {
     if (row.status === "feedback_received") {
       list.push({
         type: "feedback",
-        text: `Feedback received: ${row.outcomeCode} ${row.title}`,
+        text: `Changes requested: ${row.outcomeCode} ${row.title}`,
         href: row.linkUrl || "",
       });
     } else if (row.status === "ready_for_review") {
       list.push({
         type: "awaiting",
-        text: `Awaiting assurer feedback: ${row.outcomeCode} ${row.title}`,
+        text: `Ready for review: ${row.outcomeCode} ${row.title}`,
         href: row.linkUrl || "",
       });
     }
@@ -4697,7 +5964,7 @@ function buildWhoInvolvedSummary(assessment, currentUser) {
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   if (assignmentStatus.allAssigned) {
-    statusText = "Completed";
+    statusText = "Complete";
     statusClass = "govuk-tag--green";
   } else if (contributors.length > 0 || assignmentStatus.assigned > 0) {
     statusText = "In progress";
@@ -4705,7 +5972,10 @@ function buildWhoInvolvedSummary(assessment, currentUser) {
   }
 
   return {
-    href: "/assessments/current/start-self-assessment/people",
+    href:
+      contributors.length > 0 || assignmentStatus.assigned > 0
+        ? "/assessments/current/start-self-assessment/assignments"
+        : "/assessments/current/start-self-assessment/people",
     statusText,
     statusClass,
     hint: `${contributors.length} people added.`,
@@ -4757,6 +6027,20 @@ function countOutcomesInTree(tree) {
   return flattenOutcomes(tree).length;
 }
 
+function hasStartedIgpAssessmentRow(row) {
+  if (!row || !Array.isArray(row.igpAssessments)) {
+    return Boolean(row && (row.igpResponse || row.rationale));
+  }
+  return row.igpAssessments.some((item) =>
+    Boolean(
+      (item.maturity || "").toString().trim() ||
+      (item.rationale || "").toString().trim() ||
+      (item.evidenceNote || "").toString().trim() ||
+      (item.confidence || "").toString().trim()
+    )
+  );
+}
+
 function countADJudged(assessment) {
   const ad = assessment && assessment.selfAssess && assessment.selfAssess.ad ? assessment.selfAssess.ad : {};
   let count = 0;
@@ -4790,10 +6074,10 @@ function journeyItem(title, summary, options) {
   const locked = Boolean(options && options.locked);
   const lockHint = (options && options.lockedHint) || "Complete the previous step first.";
   const hint = locked
-    ? `${summary.hint} ${lockHint}`.trim()
-    : summary.hint;
-  const statusText = summary.statusText;
-  const statusClass = summary.statusClass;
+    ? `${summary.hint || ""} ${lockHint}`.trim()
+    : (summary.hint || "");
+  const statusText = locked ? "Not started" : summary.statusText;
+  const statusClass = locked ? "govuk-tag--grey" : summary.statusClass;
   const href = locked ? "" : summary.href;
 
   return {
@@ -4806,7 +6090,7 @@ function journeyItem(title, summary, options) {
 
 function findNextRecommendedAction(items) {
   if (!Array.isArray(items) || items.length === 0) return null;
-  const next = items.find((item) => item.href && item.status && item.status.tag && item.status.tag.text !== "Completed");
+  const next = items.find((item) => item.href && item.status && item.status.tag && item.status.tag.text !== "Complete");
   if (!next) return null;
   return {
     text: next.title.text,

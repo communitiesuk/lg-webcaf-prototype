@@ -1,4 +1,6 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/status-summary.njk" import appStatusSummary %}
 
 {% block content %}
   {% set adCompletionText = "Not completed" %}
@@ -10,6 +12,25 @@
     {% set bcCompletionText = "Completed" %}
   {% endif %}
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
+  {% set roleSummaryText = "This role can view the summary only." %}
+  {% if canEdit %}
+    {% set roleSummaryText = "This role can edit the draft and submit it for review." %}
+  {% elif canReview %}
+    {% set roleSummaryText = "This role can review the draft but cannot edit it." %}
+  {% elif canApprove %}
+    {% set roleSummaryText = "This role can view the draft summary and approve it once review is complete." %}
+  {% endif %}
+
+  {% if saved == "changes-requested" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="changes-requested-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="changes-requested-title">Update</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">The reviewer sent this back for edits.</p>
+      </div>
+    </div>
+  {% endif %}
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -26,14 +47,55 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Complete your self-assessment</h1>
-  <p class="govuk-body">Review this year’s self-assessment before marking it complete.</p>
-  <p class="govuk-body">Completing the self-assessment confirms it is ready to be sent to the assurer for independent review.</p>
-  <p class="govuk-hint">Next, confirm both sections are complete and then mark the full self-assessment ready for independent review.</p>
+  {{ appPageHeader({
+    caption: "Self-assessment",
+    title: "Complete your self-assessment",
+    intro: "Review this year’s self-assessment, check what needs editing, and submit the draft for review when it is ready.",
+    hint: "This is the summary page for the collaboration flow. Use the links below to edit the assessment before review and approval."
+  }) }}
+
+  {% set assessmentStatusRows = [
+    {
+      key: { text: "Active role" },
+      value: { text: activeRoleLabel }
+    },
+    {
+      key: { text: "What this role can do" },
+      value: { text: roleSummaryText }
+    },
+    {
+      key: { text: "Status" },
+      value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+    },
+    {
+      key: { text: "Drafted by" },
+      value: { text: collaborationState.drafterName }
+    },
+    {
+      key: { text: "Reviewer" },
+      value: { text: collaborationState.reviewerName or "Not set" }
+    },
+    {
+      key: { text: "Approver" },
+      value: { text: collaborationState.approverName or "Not set" }
+    }
+  ] %}
+  {% if collaborationState.reviewNotes %}
+    {% set assessmentStatusRows = (assessmentStatusRows.push({
+      key: { text: "Latest review note" },
+      value: { text: collaborationState.reviewNotes }
+    }), assessmentStatusRows) %}
+  {% endif %}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {{ appStatusSummary({
+        id: "assessment-status",
+        heading: "Assessment roles and status",
+        rows: assessmentStatusRows
+      }) }}
+
+      <h2 class="govuk-heading-m">Assessment summary</h2>
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">A and D</dt>
@@ -42,7 +104,7 @@
             <br>
             <strong>{{ adCompletionText }}</strong>
           </dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/ad">Review<span class="govuk-visually-hidden"> A and D self-assessment</span></a></dd>
+          <dd class="govuk-summary-list__actions">{% if canEdit %}<a class="govuk-link" href="/assessments/current/self-assessment/ad">Review<span class="govuk-visually-hidden"> A and D self-assessment</span></a>{% else %}<span class="govuk-hint">View only in this role</span>{% endif %}</dd>
         </div>
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">B and C</dt>
@@ -51,7 +113,7 @@
             <br>
             <strong>{{ bcCompletionText }}</strong>
           </dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/bc">Review<span class="govuk-visually-hidden"> B and C self-assessment</span></a></dd>
+          <dd class="govuk-summary-list__actions">{% if canEdit %}<a class="govuk-link" href="/assessments/current/self-assessment/bc">Review<span class="govuk-visually-hidden"> B and C self-assessment</span></a>{% else %}<span class="govuk-hint">View only in this role</span>{% endif %}</dd>
         </div>
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Selected systems this year</dt>
@@ -64,53 +126,113 @@
               None selected
             {% endif %}
           </dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/annual-setup/complete">Review<span class="govuk-visually-hidden"> annual setup</span></a></dd>
+          <dd class="govuk-summary-list__actions">{% if canEdit %}<a class="govuk-link" href="/assessments/current/annual-setup/complete">Review<span class="govuk-visually-hidden"> annual setup</span></a>{% else %}<span class="govuk-hint">View only in this role</span>{% endif %}</dd>
         </div>
-        {% if reviewState.completed %}
+        {% if collaborationState.submittedAt %}
           <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Marked complete</dt>
-            <dd class="govuk-summary-list__value">{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
-            <dd class="govuk-summary-list__actions">{{ reviewState.completedBy }}</dd>
+            <dt class="govuk-summary-list__key">Submitted for review</dt>
+            <dd class="govuk-summary-list__value">{{ collaborationState.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+            <dd class="govuk-summary-list__actions">{{ collaborationState.submittedBy }}</dd>
           </div>
         {% endif %}
       </dl>
 
-      <form method="post" action="/assessments/current/complete-self-assessment">
-        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %} aria-describedby="completeSelfAssessment-error"{% endif %}>
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is this self-assessment ready to be sent for independent review?</legend>
-            {% if error and (error.items | selectattr('field','equalto','completeSelfAssessment') | list | length) > 0 %}
-              <p id="completeSelfAssessment-error" class="govuk-error-message">
-                <span class="govuk-visually-hidden">Error:</span>
-                {{ (error.items | selectattr('field','equalto','completeSelfAssessment') | list | first).text }}
-              </p>
-            {% endif %}
-            <div class="govuk-radios">
-              <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="completeSelfAssessment-yes" name="completeSelfAssessment" type="radio" value="yes">
-                <label class="govuk-label govuk-radios__label" for="completeSelfAssessment-yes">Yes, it is ready</label>
-              </div>
-              <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="completeSelfAssessment-no" name="completeSelfAssessment" type="radio" value="no">
-                <label class="govuk-label govuk-radios__label" for="completeSelfAssessment-no">No, I need to make changes</label>
-              </div>
-            </div>
-          </fieldset>
+      {% if collaborationState.status == "in_review" %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          This draft is with the reviewer. You can still use the edit links above if changes are needed.
         </div>
-
         <div class="govuk-button-group">
-          <button class="govuk-button" data-module="govuk-button" type="submit">Complete self-assessment</button>
-          <a class="govuk-link" href="/assessments/current/complete-self-assessment/download">Download self-assessment summary</a>
+          <a class="govuk-button" href="/assessments/current/review-self-assessment">Open review page</a>
+          <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
-      </form>
+      {% elif collaborationState.status == "ready_for_approval" %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          The review is complete. This self-assessment is ready for approval.
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/assessments/current/approve-self-assessment">Open approval page</a>
+          <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      {% elif collaborationState.status == "approved" %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          This self-assessment has been approved.
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/assessments/current/approve-self-assessment">View approval</a>
+          <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      {% elif canEdit %}
+        <h2 class="govuk-heading-m">Submit for review</h2>
+        <form method="post" action="/assessments/current/complete-self-assessment">
+          <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','collaborationReviewerName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="collaborationReviewerName">Reviewer</label>
+            {% if error and (error.items | selectattr('field','equalto','collaborationReviewerName') | list | length) > 0 %}
+              <p id="collaborationReviewerName-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','collaborationReviewerName') | list | first).text }}
+              </p>
+            {% endif %}
+            <input class="govuk-input govuk-!-width-two-thirds" id="collaborationReviewerName" name="collaborationReviewerName" type="text" value="{{ collaborationState.reviewerName }}">
+          </div>
+
+          <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','collaborationApproverName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="collaborationApproverName">Approver</label>
+            {% if error and (error.items | selectattr('field','equalto','collaborationApproverName') | list | length) > 0 %}
+              <p id="collaborationApproverName-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','collaborationApproverName') | list | first).text }}
+              </p>
+            {% endif %}
+            <input class="govuk-input govuk-!-width-two-thirds" id="collaborationApproverName" name="collaborationApproverName" type="text" value="{{ collaborationState.approverName }}">
+          </div>
+
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" type="submit">Submit for review</button>
+            <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+            <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+          </div>
+        </form>
+      {% elif canReview %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          Switch to a drafting role if you need to edit or resubmit this self-assessment. You can continue to the review page when the draft has been submitted.
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/assessments/current/review-self-assessment">Open review page</a>
+          <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      {% elif canApprove %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          This role cannot edit the draft. Use the approval page after review is complete.
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/assessments/current/approve-self-assessment">Open approval page</a>
+          <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      {% else %}
+        <h2 class="govuk-heading-m">Next step</h2>
+        <div class="govuk-inset-text">
+          Switch to another role to continue this self-assessment.
+        </div>
+        <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+      {% endif %}
     </div>
 
     <div class="govuk-grid-column-one-third">
       <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">What completion means</h2>
-        <p class="govuk-body">Marking the self-assessment complete confirms that this year’s A and D and B and C work has both been completed and the full package is ready for independent review.</p>
-        <p class="govuk-body govuk-!-margin-bottom-0">You can still return to the task list and update the assessment later if needed.</p>
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">How collaboration works</h2>
+        <p class="govuk-body">Draft work stays editable until you submit it for review.</p>
+        <p class="govuk-body">The reviewer can either send it back for edits or move it to approval.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">Final approval is a separate step after review.</p>
       </aside>
     </div>
   </div>

@@ -2,13 +2,9 @@
 
 {% block content %}
   {% set backHref = "/self-assess/bc/select-system" %}
-  {% set refsStatus = "Not added yet" %}
   {% set priorityText = "Not set" %}
   {% if roundTwo %}
     {% set backHref = "/assessments/current/self-assessment/bc" %}
-  {% endif %}
-  {% if refsCount > 0 %}
-    {% set refsStatus = "Added" %}
   {% endif %}
   {% if priorityLevel %}
     {% set priorityText = priorityLevel | capitalize %}
@@ -23,7 +19,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-body">Review the contributing outcome for this selected critical system.</p>
-      <p class="govuk-hint">Complete the outcome below for this system, then return to the selected systems page.</p>
+      <p class="govuk-hint">Work through one IGP statement per page, then confirm the outcome on the check your answers page before returning to selected systems.</p>
 
       {% if saved == "outcome" %}
         <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="bc-system-saved-title" data-module="govuk-notification-banner">
@@ -95,7 +91,6 @@
           {% if mappedServices and mappedServices.length > 0 %}
             <p class="govuk-body">Supports: <strong>{{ mappedServices | join(", ") }}</strong></p>
           {% endif %}
-          <p class="govuk-body">Architecture link: <strong>{{ refsStatus }}</strong></p>
           <p class="govuk-body govuk-!-margin-bottom-0">Priority: <strong>{{ priorityText }}</strong></p>
         </aside>
 

@@ -1,0 +1,143 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/status-summary.njk" import appStatusSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="{{ backHref or '/assessments/current/journey' }}">Back</a>
+
+  {% if saved == "approved" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="approved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="approved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">The self-assessment has been approved.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {{ appPageHeader({
+    caption: "Self-assessment approval",
+    title: "Approve the self-assessment",
+    intro: "This is the final approval step after review. Use the summary to sense-check the assessment before you approve it."
+  }) }}
+
+  {% set approvalStatusRows = [
+    {
+      key: { text: "Active role" },
+      value: { text: activeRoleLabel }
+    },
+    {
+      key: { text: "What this role can do" },
+      value: { text: "Approve content after review is complete." }
+    },
+    {
+      key: { text: "Status" },
+      value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+    },
+    {
+      key: { text: "Reviewer" },
+      value: { text: collaborationState.reviewerName or "Not set" }
+    },
+    {
+      key: { text: "Approver" },
+      value: { text: collaborationState.approverName or "Not set" }
+    }
+  ] %}
+  {% if collaborationState.reviewNotes %}
+    {% set approvalStatusRows = (approvalStatusRows.push({
+      key: { text: "Latest review note" },
+      value: { text: collaborationState.reviewNotes }
+    }), approvalStatusRows) %}
+  {% endif %}
+
+  {{ appStatusSummary({
+    id: "approval-status",
+    heading: "Assessment roles and status",
+    rows: approvalStatusRows
+  }) }}
+
+  <h2 class="govuk-heading-m">Assessment summary</h2>
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">A and D</dt>
+      <dd class="govuk-summary-list__value">{{ completion.adJudged }} of {{ completion.adTotal }} outcomes judged</dd>
+      <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/ad">Edit</a></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">B and C</dt>
+      <dd class="govuk-summary-list__value">{{ completion.bcJudged }} of {{ completion.bcTotal }} outcomes judged</dd>
+      <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/assessments/current/self-assessment/bc">Edit</a></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Selected critical systems</dt>
+      <dd class="govuk-summary-list__value">
+        {% if selectedSystems.length > 0 %}
+          {% for system in selectedSystems %}
+            {{ system.name }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        {% else %}
+          None selected
+        {% endif %}
+      </dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+  </dl>
+
+  {% if collaborationState.status == "approved" %}
+    <h2 class="govuk-heading-m">Approval outcome</h2>
+    <div class="govuk-inset-text">
+      Approved {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }} by {{ collaborationState.approvedBy }}.
+    </div>
+    <div class="govuk-button-group">
+      <a class="govuk-button" href="/assessments/current/journey">Return to task list</a>
+      <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+    </div>
+  {% else %}
+    <h2 class="govuk-heading-m">Approval decision</h2>
+    <form method="post" action="/assessments/current/approve-self-assessment">
+      <div id="approveSelfAssessmentConfirm" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you approve this self-assessment?</legend>
+          {% if error and (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-radios">
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="approveSelfAssessmentConfirm-yes" name="approveSelfAssessmentConfirm" type="radio" value="yes">
+              <label class="govuk-label govuk-radios__label" for="approveSelfAssessmentConfirm-yes">Yes, approve this self-assessment</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-button-group">
+        <button class="govuk-button" data-module="govuk-button" type="submit">Approve and continue</button>
+        <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
+        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+      </div>
+    </form>
+  {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,5 +1,6 @@
 {# app/views/pages/stages/scope-complete.html #}
 {% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
 
 {% block beforeContent %}
   {% set backHref = "/stages/2/scope" %}
@@ -12,14 +13,12 @@
 {% endblock %}
 
 {% block content %}
-  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
-  <p class="govuk-body">
-    {% if researchRound == "round-2" %}
-      You have completed the initial CAF scope register.
-    {% else %}
-      You have completed scope setup for this assessment period.
-    {% endif %}
-  </p>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  {{ appConfirmationPanel({
+    title: pageTitle,
+    body: "You have completed the initial CAF scope register." if researchRound == "round-2" else "You have completed scope setup for this assessment period."
+  }) }}
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
       You can now move into annual setup and yearly assessment planning.
@@ -32,4 +31,6 @@
     <a class="govuk-button" href="{{ continueHref }}">{{ continueText }}</a>
   </p>
 
+    </div>
+  </div>
 {% endblock %}

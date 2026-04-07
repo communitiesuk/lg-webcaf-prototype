@@ -1,0 +1,209 @@
+{% extends "layouts/main.html" %}
+{% from "govuk/components/accordion/macro.njk" import govukAccordion %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+  <a class="govuk-back-link" href="{{ backHref or '/entry' }}">Back</a>
+
+  <p class="govuk-caption-l">{{ councilDisplayName }}</p>
+  <h1 class="govuk-heading-l">Manage users and roles</h1>
+  <p class="govuk-body">Use this page to see who has access to this council account and change roles where needed.</p>
+  {% if addUserSuccess %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="manage-users-success-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="manage-users-success-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">User added to the council account.</p>
+      </div>
+    </div>
+  {% endif %}
+  {% if roleUpdateSuccess %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="manage-users-update-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="manage-users-update-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">User roles updated.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if currentUser and currentUser.roles and currentUser.roles.length > 0 %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Signed in as:</strong> {{ currentUser.name }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Email:</strong> {{ currentUser.email }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Active role:</strong> {{ currentUser.roleTitle }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Your assigned roles:</strong> {{ currentUser.roleLabels | join(", ") }}</p>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Council</dt>
+      <dd class="govuk-summary-list__value">{{ account.councilName or councilDisplayName }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Users with access</dt>
+      <dd class="govuk-summary-list__value">{{ account.users.length }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">CAF lead</dt>
+      <dd class="govuk-summary-list__value">{{ cafLead.name }}</dd>
+    </div>
+  </dl>
+
+  {% if canManageUsers %}
+    <div class="govuk-button-group govuk-!-margin-bottom-6">
+      <a class="govuk-button" data-module="govuk-button" href="#add-user">Add user</a>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Users with access</h2>
+  <table class="govuk-table">
+    <caption class="govuk-visually-hidden">Users with access to this council account</caption>
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">User</th>
+        <th scope="col" class="govuk-table__header">Roles</th>
+        <th scope="col" class="govuk-table__header">Status</th>
+        <th scope="col" class="govuk-table__header">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for member in account.users %}
+        <tr class="govuk-table__row">
+          <th scope="row" class="govuk-table__header">
+            <div class="app-manage-users__person">
+              <span class="app-manage-users__name">{{ member.name }}</span>
+              <span class="govuk-hint govuk-!-margin-bottom-0">{{ member.email }}</span>
+              {% if member.orgName %}
+                <span class="govuk-hint govuk-!-margin-bottom-0">{{ member.orgName }}</span>
+              {% endif %}
+            </div>
+          </th>
+          <td class="govuk-table__cell">
+            <ul class="app-tag-list" aria-label="Roles for {{ member.name }}">
+              {% for roleLabel in member.roleLabels %}
+                <li class="app-tag-list__item">
+                  <strong class="govuk-tag govuk-tag--grey">{{ roleLabel }}</strong>
+                </li>
+              {% endfor %}
+            </ul>
+            <span class="govuk-hint govuk-!-margin-bottom-0">Default role: {{ member.roleTitle }}</span>
+          </td>
+          <td class="govuk-table__cell">
+            <strong class="govuk-tag {% if member.status == 'active' %}govuk-tag--green{% else %}govuk-tag--grey{% endif %}">{{ member.status | capitalize }}</strong>
+          </td>
+          <td class="govuk-table__cell app-manage-users__actions">
+            {% if canManageUsers %}
+              <a class="govuk-link" href="/manage-users/{{ member.id }}">Edit roles</a>
+            {% else %}
+              <span class="govuk-hint">View only</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if canManageUsers %}
+    {% if addUserError %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <h2 class="govuk-error-summary__title">There is a problem</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for item in addUserError.items %}
+                <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% set roleGuideHtml %}
+      <p class="govuk-body">Use this guide when you add a user or change their roles.</p>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+        {% for role in rolePermissionRows %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ role.label }}</dt>
+            <dd class="govuk-summary-list__value">{{ role.description }}</dd>
+          </div>
+        {% endfor %}
+      </dl>
+    {% endset %}
+
+    {{ govukAccordion({
+      id: "manage-users-role-guide",
+      items: [
+        {
+          heading: {
+            text: "What each role can do"
+          },
+          content: {
+            html: roleGuideHtml
+          }
+        }
+      ]
+    }) }}
+
+    <h2 id="add-user" class="govuk-heading-m">Add a user</h2>
+    <form method="post" action="/manage-users" class="govuk-!-margin-bottom-7">
+      <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="manageUserName">Name</label>
+        {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserName') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (addUserError.items | selectattr('field','equalto','manageUserName') | list | first).text }}
+          </p>
+        {% endif %}
+        <input class="govuk-input govuk-!-width-two-thirds" id="manageUserName" name="manageUserName" type="text" value="{{ addUserDefaults.name }}">
+      </div>
+
+      <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="manageUserEmail">Email address</label>
+        <div class="govuk-hint">Use your council email domain: {{ councilEmailDomain }}</div>
+        {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | first).text }}
+          </p>
+        {% endif %}
+        <input class="govuk-input govuk-!-width-two-thirds" id="manageUserEmail" name="manageUserEmail" type="email" value="{{ addUserDefaults.email }}">
+      </div>
+
+      <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Roles for this user</legend>
+          <div class="govuk-hint">Select every role this user needs. The first role becomes their default role when they sign in.</div>
+          {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            {% for role in roleOptions %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="manageUserRoles-{{ role.id }}" name="manageUserRoles" type="checkbox" value="{{ role.id }}" {% if role.id in addUserDefaults.roles %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="manageUserRoles-{{ role.id }}">{{ role.label }}</label>
+                <div class="govuk-hint govuk-checkboxes__hint">{{ role.description }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <button class="govuk-button" data-module="govuk-button" type="submit">Add user</button>
+    </form>
+  {% else %}
+    <div class="govuk-inset-text">
+      Only the CAF lead or a central admin can add users or change council setup permissions.
+    </div>
+  {% endif %}
+    </div>
+  </div>
+{% endblock %}

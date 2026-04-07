@@ -1,18 +1,15 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/research-rounds">Back</a>
 
-  <span class="govuk-caption-l">Round 2</span>
   <h1 class="govuk-heading-l">CAF for Local Government</h1>
 
   <p class="govuk-body-l">
-    Use this service to help your council understand CAF, set up key roles, maintain scope, and complete this year’s assessment work.
+    Use this service to help your council complete one-off onboarding and council setup, then carry out the annual CAF assessment.
   </p>
-
-  <div class="govuk-inset-text">
-    This is the current Round 2 prototype journey for research and testing.
-  </div>
 
   <p class="govuk-body">
     CAF helps organisations assess and improve cyber resilience. For local government, it supports a structured view of organisational resilience and critical systems.
@@ -20,16 +17,41 @@
 
   <h2 class="govuk-heading-m">What this service helps you do</h2>
   <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
-    <li>understand the CAF journey for local government</li>
-    <li>set up ownership and key roles</li>
+    <li>complete controlled council onboarding and setup</li>
+    <li>assign the initial CAF lead and authorised users</li>
     <li>define and maintain CAF scope over time</li>
-    <li>complete this year’s self-assessment</li>
+    <li>complete this year’s self-assessment after onboarding is done</li>
   </ul>
 
+  <div class="govuk-inset-text">
+    There is one webCAF account per council. If your council already uses webCAF, ask to join that account instead of creating another one.
+  </div>
+
+  <h2 class="govuk-heading-m">Before you begin</h2>
+  <p class="govuk-body">You only need enough information to start council onboarding. Detailed guidance stays outside this page.</p>
+  <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
+    <li>make sure you are using your approved council or civil service email address</li>
+    <li>know who should act as CAF lead and who needs access first</li>
+    <li><a class="govuk-link" href="https://www.ncsc.gov.uk/collection/caf/cyber-assessment-framework" rel="noreferrer noopener" target="_blank">read the NCSC Cyber Assessment Framework overview</a> if you need background</li>
+  </ul>
+
+  <h2 class="govuk-heading-m">Choose how to continue</h2>
   <a class="govuk-button govuk-button--start" href="/round-2/sign-in" role="button" data-module="govuk-button">
     Sign in
     <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false">
       <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z" />
     </svg>
   </a>
+  <ul class="govuk-list">
+    <li class="govuk-!-margin-bottom-4">
+      <a class="govuk-link govuk-link--no-visited-state" href="/round-2/register?path=join-existing">Join your council</a><br>
+      <span class="govuk-hint">Use this if your council already uses webCAF and you need access.</span>
+    </li>
+    <li>
+      <a class="govuk-link govuk-link--no-visited-state" href="/round-2/register?path=request-new">Request access</a><br>
+      <span class="govuk-hint">Use this if your council is not set up yet and needs its first webCAF account.</span>
+    </li>
+  </ul>
+    </div>
+  </div>
 {% endblock %}

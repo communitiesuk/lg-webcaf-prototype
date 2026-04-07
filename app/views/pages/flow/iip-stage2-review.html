@@ -1,6 +1,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
   <h1 class="govuk-heading-l">Review IIP Stage 2</h1>
   <p class="govuk-body">Complete each row before internal sign-off.</p>
@@ -37,5 +39,7 @@
   <div class="govuk-button-group">
     <a class="govuk-button {% if not allComplete %}govuk-button--secondary{% endif %}" href="/improvement-plan/stage-2/internal-sign-off">Continue to internal sign-off</a>
     <a class="govuk-link" href="/improvement-plan/stage-2/setup">Set owners and deadlines</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

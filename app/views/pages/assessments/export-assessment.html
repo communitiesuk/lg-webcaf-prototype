@@ -1,0 +1,108 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for item in error.items %}
+                  <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Self-assessment",
+        title: "Export assessment",
+        intro: "Choose what to include, then open a print-friendly summary you can print or save as a PDF.",
+        hint: "The summary uses the latest saved assessment data and groups content by section, outcome and IGP statement."
+      }) }}
+
+      <form method="get" action="/assessments/current/export-assessment/print">
+        <div id="scopeType" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeType') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" aria-describedby="scopeType-hint">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What do you want to include?</legend>
+            <div id="scopeType-hint" class="govuk-hint">Select a single outcome, one full section, or the whole assessment.</div>
+            {% if error and (error.items | selectattr('field','equalto','scopeType') | list | length) > 0 %}
+              <p class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','scopeType') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeType-full" name="scopeType" type="radio" value="full" data-aria-controls="scopeType-conditional-full" {% if selection.scopeType == "full" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeType-full">Entire assessment</label>
+              </div>
+              <div class="govuk-radios__conditional {% if selection.scopeType != 'full' %}govuk-radios__conditional--hidden{% endif %}" id="scopeType-conditional-full">
+                <p class="govuk-body govuk-!-margin-bottom-0">Includes A and D plus B and C for all selected systems.</p>
+              </div>
+
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeType-section" name="scopeType" type="radio" value="section" data-aria-controls="scopeType-conditional-section" {% if selection.scopeType == "section" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeType-section">A full section</label>
+              </div>
+              <div class="govuk-radios__conditional {% if selection.scopeType != 'section' %}govuk-radios__conditional--hidden{% endif %}" id="scopeType-conditional-section">
+                <div id="sectionId" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','sectionId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+                  <label class="govuk-label" for="sectionId-select">Section</label>
+                  {% if error and (error.items | selectattr('field','equalto','sectionId') | list | length) > 0 %}
+                    <p class="govuk-error-message">
+                      <span class="govuk-visually-hidden">Error:</span>
+                      {{ (error.items | selectattr('field','equalto','sectionId') | list | first).text }}
+                    </p>
+                  {% endif %}
+                  <select class="govuk-select" id="sectionId-select" name="sectionId">
+                    {% for section in exportOptions.sections %}
+                      <option value="{{ section.id }}" {% if selection.sectionId == section.id %}selected{% endif %}>{{ section.text }}{% if section.description %} - {{ section.description }}{% endif %}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeType-outcome" name="scopeType" type="radio" value="outcome" data-aria-controls="scopeType-conditional-outcome" {% if selection.scopeType == "outcome" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeType-outcome">A single outcome</label>
+              </div>
+              <div class="govuk-radios__conditional {% if selection.scopeType != 'outcome' %}govuk-radios__conditional--hidden{% endif %}" id="scopeType-conditional-outcome">
+                <div id="outcomeId" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','outcomeId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+                  <label class="govuk-label" for="outcomeId-select">Outcome</label>
+                  <div class="govuk-hint">For B and C outcomes, the selected critical system is shown in brackets.</div>
+                  {% if error and (error.items | selectattr('field','equalto','outcomeId') | list | length) > 0 %}
+                    <p class="govuk-error-message">
+                      <span class="govuk-visually-hidden">Error:</span>
+                      {{ (error.items | selectattr('field','equalto','outcomeId') | list | first).text }}
+                    </p>
+                  {% endif %}
+                  <select class="govuk-select" id="outcomeId-select" name="outcomeId">
+                    {% for outcome in exportOptions.outcomes %}
+                      <option value="{{ outcome.id }}" {% if selection.outcomeId == outcome.id %}selected{% endif %}>{{ outcome.text }}{% if outcome.hint %} ({{ outcome.hint }}){% endif %}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-inset-text">
+          The export includes outcome titles, IGP statements, selected maturity levels, rationale, evidence and confidence where they have been captured.
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Download summary</button>
+          <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

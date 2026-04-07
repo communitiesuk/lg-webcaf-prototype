@@ -1,10 +1,18 @@
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
-  <span class="govuk-caption-l">Assessment setup</span>
-  <h1 class="govuk-heading-l">Annual setup complete</h1>
-  <p class="govuk-body">You have finished setting up this assessment year.</p>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="/assessments/current/annual-setup/planning">Back</a>
 
+  {{ appPageHeader({
+    caption: "Assessment setup",
+    title: "Annual setup complete",
+    intro: "You have finished setting up this year's assessment."
+  }) }}
+
+  <h2 class="govuk-heading-m">Setup summary</h2>
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">A and D approach</dt>
@@ -21,7 +29,7 @@
       </dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Selected systems for this year</dt>
+      <dt class="govuk-summary-list__key">Selected critical systems for this year</dt>
       <dd class="govuk-summary-list__value">
         {% if selectedSystems.length > 0 %}
           {% for system in selectedSystems %}
@@ -41,12 +49,14 @@
       <dd class="govuk-summary-list__value">{{ assessment.annualSetup.annualApprover or "—" }}</dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Expected assurance support</dt>
+      <dt class="govuk-summary-list__key">Expected assurer support</dt>
       <dd class="govuk-summary-list__value">{{ assessment.annualSetup.assuranceWindow or "—" }}</dd>
     </div>
   </dl>
 
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

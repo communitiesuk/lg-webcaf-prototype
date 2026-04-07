@@ -1,45 +1,55 @@
 {# app/views/pages/stages/scope-services-review.html #}
 {% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
 
 {% block content %}
-  {% set backHref = "/stages/2/scope" %}
-  {% set successMessage = "Services updated." %}
-  {% if roundTwo %}
-    {% set backHref = "/assessments/current/journey" %}
-  {% endif %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+  {% set successMessage = "Your changes to the essential services register have been saved." %}
   {% if saved == "service-added" %}
-    {% set successMessage = "Service added." %}
+    {% set successMessage = "You have added this service to the essential services register." %}
     {% if savedName %}
-      {% set successMessage = savedName + " added." %}
+      {% set successMessage = "You have added " + savedName + " to the essential services register." %}
     {% endif %}
   {% elif saved == "service-updated" %}
-    {% set successMessage = "Service updated." %}
+    {% set successMessage = "Your changes to this service have been saved." %}
     {% if savedName %}
-      {% set successMessage = savedName + " updated." %}
+      {% set successMessage = "You have updated " + savedName + "." %}
     {% endif %}
   {% elif saved == "service-removed" %}
-    {% set successMessage = "Service removed." %}
+    {% set successMessage = "This service has been removed from the essential services register." %}
     {% if savedName %}
-      {% set successMessage = savedName + " removed." %}
+      {% set successMessage = "You have removed " + savedName + " from the essential services register." %}
     {% endif %}
   {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+  <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
   {% if saved %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="services-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="services-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
-      </div>
-    </div>
+    {{ appNotificationBanner({
+      type: "success",
+      titleId: "services-saved-title",
+      heading: successMessage
+    }) }}
   {% endif %}
 
   {% if roundTwo %}
   <span class="govuk-caption-l">Essential services register</span>
   <h1 class="govuk-heading-l">Manage services</h1>
-    <p class="govuk-body">Add and maintain the full list of services your council needs to keep running within CAF scope.</p>
+    <p class="govuk-body">Add and review the essential services your council needs to keep running. When you are ready, continue to the critical systems register.</p>
+    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">Help with this step</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          <li>Make sure the list reflects the services your council needs to keep running.</li>
+          <li>You can return later to update this register if something changes.</li>
+        </ul>
+      </div>
+    </details>
+    <p class="govuk-body">
+      <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">Add service</a>
+    </p>
     {% if services.length > 0 %}
       <div class="govuk-inset-text">
         <p class="govuk-body"><strong>Register summary</strong></p>
@@ -48,6 +58,17 @@
     {% endif %}
   {% else %}
     <h1 class="govuk-heading-l">{{ labels.stages.scope.services.reviewTitle }}</h1>
+    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">Help with this step</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          <li>Check the list and confirm which services should stay in scope.</li>
+          <li>When you continue, you can confirm this register and move to the next step.</li>
+        </ul>
+      </div>
+    </details>
   {% endif %}
 
   {% if services.length > 0 %}
@@ -99,19 +120,24 @@
   {% endif %}
 
   <div class="govuk-button-group">
-    <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">
-      Add service
-    </a>
     {% if roundTwo %}
+      <a class="govuk-button" href="/stages/2/scope/systems/review">
+        Continue to critical systems
+      </a>
       <form method="post" action="/stages/2/scope/services/review" class="govuk-button-group__item">
-        <button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button" type="submit">
+        <button class="govuk-link app-link-button" type="submit">
           Save and return to task list
         </button>
       </form>
     {% else %}
+      <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">
+        Add service
+      </a>
       <a class="govuk-button" href="/stages/2/scope/services/confirm">
         {{ labels.stages.scope.services.continueButton }}
       </a>
     {% endif %}
+  </div>
+    </div>
   </div>
 {% endblock %}

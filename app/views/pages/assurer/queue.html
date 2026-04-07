@@ -4,6 +4,8 @@
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
@@ -232,5 +234,7 @@
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/report-stage-1">Open Stage 1 report</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/iip-stage-2">Open IIP Stage 2</a>
     <a class="govuk-link" href="/assurer/overview">Back to overview</a>
+  </div>
+    </div>
   </div>
 {% endblock %}

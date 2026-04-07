@@ -2,12 +2,13 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/improvement-plan/generate">Back</a>
 
   <h1 class="govuk-heading-l">{{ labels.flow.improvement.signOff.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.improvement.signOff.intro }}</p>
   <p class="govuk-hint">{{ labels.flow.improvement.signOff.roleHint }}</p>
-  <div class="govuk-inset-text">Prototype only: sign-off is recorded for research and not a real approval.</div>
 
   {% if saved %}
     <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
@@ -75,4 +76,6 @@
       <a class="govuk-link" href="/assessments/current/dashboard">Return to dashboard</a>
     </div>
   {% endif %}
+    </div>
+  </div>
 {% endblock %}

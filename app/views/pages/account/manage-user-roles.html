@@ -1,0 +1,107 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+  <a class="govuk-back-link" href="{{ backHref or '/manage-users' }}">Back</a>
+  <p class="govuk-caption-l">{{ councilDisplayName }}</p>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">Change roles for {{ member.name }}</h1>
+  <p class="govuk-body">Use this page to change this user's WebCAF roles and choose which role opens by default when they sign in.</p>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Email</dt>
+      <dd class="govuk-summary-list__value">{{ member.email }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Current roles</dt>
+      <dd class="govuk-summary-list__value">{{ member.roleLabels | join(", ") }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Current default role</dt>
+      <dd class="govuk-summary-list__value">{{ member.roleTitle }}</dd>
+    </div>
+  </dl>
+
+  <form method="post" action="/manage-users/{{ member.id }}">
+    <div id="editUserRoles" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','editUserRoles') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Roles for this user</legend>
+        <div class="govuk-hint">Select every role this user should hold.</div>
+        {% if error and (error.items | selectattr('field','equalto','editUserRoles') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','editUserRoles') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          {% for role in roleOptions %}
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="editUserRoles-{{ role.id }}" name="editUserRoles" type="checkbox" value="{{ role.id }}" {% if role.id in form.roles %}checked{% endif %}>
+              <label class="govuk-label govuk-checkboxes__label" for="editUserRoles-{{ role.id }}">{{ role.label }}</label>
+              <div class="govuk-hint govuk-checkboxes__hint">{{ role.description }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div id="editUserActiveRole" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','editUserActiveRole') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="editUserActiveRoleSelect">Default role when they sign in</label>
+      <div class="govuk-hint">This is the role the user starts in. They can switch later if they hold more than one role.</div>
+      {% if error and (error.items | selectattr('field','equalto','editUserActiveRole') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','editUserActiveRole') | list | first).text }}
+        </p>
+      {% endif %}
+      <select class="govuk-select govuk-!-width-two-thirds" id="editUserActiveRoleSelect" name="editUserActiveRole">
+        {% for role in roleOptions %}
+          {% if role.id in form.roles %}
+            <option value="{{ role.id }}" {% if role.id == form.activeRole %}selected{% endif %}>{{ role.label }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save role changes</button>
+  </form>
+
+  <h2 class="govuk-heading-m">What each role can do</h2>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">Role</th>
+        <th scope="col" class="govuk-table__header">Meaning</th>
+        <th scope="col" class="govuk-table__header">Available actions</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for role in rolePermissionRows %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell"><strong>{{ role.label }}</strong></td>
+          <td class="govuk-table__cell">{{ role.description }}</td>
+          <td class="govuk-table__cell">{{ role.permissionLabels | join(", ") }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    </div>
+  </div>
+{% endblock %}

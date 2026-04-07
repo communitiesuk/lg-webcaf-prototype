@@ -1,0 +1,33 @@
+{% extends "layouts/main.html" %}
+{% from "components/section-start.njk" import appSectionStart %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {{ appSectionStart({
+    caption: "Strategic context",
+    title: "Provide organisation strategic context",
+    intro: "Add the strategic context that will shape your CAF scope.",
+    showSaveReassurance: true,
+    guidanceHeading: "Help with this step",
+    guidanceItems: [
+      "Keep each answer short and specific to your council.",
+      "You can save each answer as you move through the section.",
+      "At the end, you will check the full strategic context before continuing."
+    ],
+    needToKnowTitle: "What you will need",
+    needToKnowItems: [
+      "A short summary of your mission, objectives and priorities.",
+      "How the organisation is set up and how services operate.",
+      "Your current threat landscape and cyber risk appetite."
+    ],
+    action: "/stages/2/scope/context",
+    buttonText: "Continue",
+    secondaryHref: backHref,
+    secondaryText: returnText
+  }) }}
+    </div>
+  </div>
+{% endblock %}

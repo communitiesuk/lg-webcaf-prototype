@@ -1,56 +1,85 @@
 {# app/views/pages/assessments/journey.html #}
 {% extends "layouts/main.html" %}
 {% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/milestone-summary.njk" import appMilestoneSummary %}
 
 {% block content %}
   {% if researchRound == "round-2" %}
-    <span class="govuk-caption-l">Self-assessment</span>
-    <h1 class="govuk-heading-l">Complete your WebCAF self-assessment</h1>
-    <div class="app-milestone-summary govuk-!-margin-bottom-6" aria-label="Assessment milestones">
-      <p class="govuk-body app-milestone-summary__summary">
-        {{ roundTwoProgress.completed }} of {{ roundTwoProgress.total }} yearly milestones completed
-      </p>
-      <ul class="govuk-list app-milestone-summary__list">
-        {% for milestone in roundTwoProgress.milestones %}
-          {% set milestoneTagClass = '' %}
-          {% set milestoneTagText = '' %}
-          {% if milestone.state == 'completed' %}
-            {% set milestoneTagClass = 'govuk-tag--green' %}
-            {% set milestoneTagText = 'Completed' %}
-          {% elif milestone.state == 'current' %}
-            {% set milestoneTagClass = 'govuk-tag--blue' %}
-            {% set milestoneTagText = 'Current step' %}
-          {% endif %}
-          <li class="app-milestone-summary__item app-milestone-summary__item--{{ milestone.state }}">
-            {% if milestoneTagText %}
-              <strong class="govuk-tag {{ milestoneTagClass }}">
-                {{ milestoneTagText }}
-              </strong>
-            {% endif %}
-            <span class="app-milestone-summary__label">{{ milestone.label }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-      {% if roundTwoProgress.nextActionText and roundTwoProgress.nextActionHref %}
-        <p class="govuk-body app-milestone-summary__next">
-          <strong>Next:</strong>
-          <a class="govuk-link govuk-link--no-visited-state" href="{{ roundTwoProgress.nextActionHref }}">
-            {{ roundTwoProgress.nextActionText }}
-          </a>
+    {{ appPageHeader({
+      caption: "Annual assessment",
+      title: "Complete this year's WebCAF assessment",
+      intro: "Use this task list to continue the annual assessment.",
+      showSaveReassurance: true
+    }) }}
+    <section class="govuk-grid-row" aria-labelledby="journey-progress-heading">
+      <h2 class="govuk-visually-hidden" id="journey-progress-heading">Assessment progress</h2>
+      <div class="govuk-grid-column-one-half">
+        {{ appMilestoneSummary({
+          id: "setup-progress",
+          title: "Setup progress",
+          summaryText: roundTwoSetupProgress.completed ~ " of " ~ roundTwoSetupProgress.total ~ " setup milestones completed",
+          progress: roundTwoSetupProgress,
+          nextHref: "/onboarding" if roundTwoSetupProgress.completed < roundTwoSetupProgress.total else "",
+          nextText: "Open council onboarding and setup" if roundTwoSetupProgress.completed < roundTwoSetupProgress.total else "",
+          nextLabel: roundTwoSetupProgress.nextMilestoneLabel,
+          showNext: false
+        }) }}
+      </div>
+      <div class="govuk-grid-column-one-half">
+        {{ appMilestoneSummary({
+          id: "annual-assessment-progress",
+          title: "Annual assessment progress",
+          summaryText: roundTwoAssessmentProgress.completed ~ " of " ~ roundTwoAssessmentProgress.total ~ " annual assessment milestones completed",
+          progress: roundTwoAssessmentProgress,
+          nextHref: roundTwoAssessmentProgress.nextActionHref or "",
+          nextText: roundTwoAssessmentProgress.nextActionText or "",
+          nextLabel: roundTwoAssessmentProgress.nextMilestoneLabel,
+          showNext: false
+        }) }}
+      </div>
+    </section>
+    {% if nextAction %}
+      <section class="govuk-!-margin-bottom-6" aria-labelledby="next-step-heading">
+        <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="next-step-heading">Next step</h2>
+        <p class="govuk-body"><strong>Current step:</strong> {{ nextAction.text }}.</p>
+        <a class="govuk-button" data-module="govuk-button" href="{{ nextAction.href }}">Start next step</a>
+      </section>
+    {% endif %}
+    {% if collaborationState %}
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1">
+          <strong>Collaboration status:</strong>
+          <strong class="govuk-tag {{ collaborationState.statusTagClass }}">{{ collaborationState.statusLabel }}</strong>
         </p>
-      {% elif roundTwoProgress.nextMilestoneLabel %}
-        <p class="govuk-body app-milestone-summary__next">
-          <strong>Next:</strong> {{ roundTwoProgress.nextMilestoneLabel }}
-        </p>
-      {% endif %}
-    </div>
-    <div class="govuk-inset-text">
-      You started this self-assessment on <strong>{{ assessmentStartedAtDisplay }}</strong>. You need to complete it by <strong>{{ assessmentDueAtDisplay }}</strong>.
-    </div>
-    <p class="govuk-body govuk-hint">Use the task list to track yearly progress and complete major stages. Use the dashboard for day-to-day assessment work.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">Drafted by {{ collaborationState.drafterName }}{% if collaborationState.reviewerName %}, reviewer {{ collaborationState.reviewerName }}{% endif %}{% if collaborationState.approverName %}, approver {{ collaborationState.approverName }}{% endif %}.</p>
+      </div>
+    {% endif %}
+    {% if roleActionSummary %}
+      <section class="app-outcome-page__sidebar-card govuk-!-margin-bottom-6" aria-labelledby="current-role-actions-heading">
+        <h2 class="govuk-heading-m" id="current-role-actions-heading">What you can do in this role</h2>
+        <p class="govuk-body">You are using the <strong>{{ roleActionSummary.activeRoleLabel }}</strong> role.</p>
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          {% if roleActionSummary.canEdit %}<li>Edit draft setup and self-assessment content.</li>{% endif %}
+          {% if roleActionSummary.canReview %}<li>Review draft content and send it back or move it forward.</li>{% endif %}
+          {% if roleActionSummary.canApprove %}<li>Approve the self-assessment after review.</li>{% endif %}
+          {% if roleActionSummary.canAssure %}<li>Use the assurer workspace for independent review activity.</li>{% endif %}
+          {% if roleActionSummary.canQa %}<li>Carry out QA checks on draft content.</li>{% endif %}
+          {% if roleActionSummary.canManageRoles %}<li>Manage users and assign roles for the council account.</li>{% endif %}
+        </ul>
+      </section>
+    {% endif %}
   {% else %}
-    <h1 class="govuk-heading-l">CAF journey</h1>
-    <p class="govuk-body">Use this task list to move through the full CAF process.</p>
+    {{ appPageHeader({
+      title: "Assessment journey",
+      guidanceHeadingId: "caf-journey-guidance",
+      guidanceItems: [
+        "You are moving through the main CAF process from setup to review.",
+        "Complete the next available task on the list and return here to track progress.",
+        "When all tasks are done, your assessment is ready for the next review step."
+      ],
+      intro: "Use this task list to move through the full CAF process."
+    }) }}
   {% endif %}
 
   {% if nextAction and researchRound != "round-2" %}
@@ -64,10 +93,29 @@
     </div>
   {% endif %}
 
-  {% for section in journeySections %}
-    <h2 class="govuk-heading-m">{{ section.heading }}</h2>
-    {{ govukTaskList({
-      items: section.items
-    }) }}
-  {% endfor %}
+  {% if researchRound == "round-2" and roundTwoSetupSection and roundTwoAssessmentSection %}
+    <section class="govuk-!-margin-bottom-7" aria-labelledby="before-you-start-heading">
+      <h2 class="govuk-heading-m" id="before-you-start-heading">Setup</h2>
+      {{ govukTaskList({
+        items: roundTwoSetupSection.items
+      }) }}
+    </section>
+
+    <section aria-labelledby="complete-caf-assessment-heading">
+      <h2 class="govuk-heading-m" id="complete-caf-assessment-heading">Assessment</h2>
+      {{ govukTaskList({
+        items: roundTwoAssessmentSection.items
+      }) }}
+    </section>
+    <div class="govuk-inset-text govuk-!-margin-top-6">
+      You started this self-assessment on <strong>{{ assessmentStartedAtDisplay }}</strong>. You need to complete it by <strong>{{ assessmentDueAtDisplay }}</strong>.
+    </div>
+  {% else %}
+    {% for section in journeySections %}
+      <h2 class="govuk-heading-m">{{ section.heading }}</h2>
+      {{ govukTaskList({
+        items: section.items
+      }) }}
+    {% endfor %}
+  {% endif %}
 {% endblock %}

@@ -2,6 +2,8 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
   <h1 class="govuk-heading-l">{{ labels.flow.improvement.awaiting.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.improvement.awaiting.intro }}</p>
 
@@ -10,5 +12,7 @@
       {{ labels.flow.improvement.awaiting.linkText }}
     </a>
     <a class="govuk-link" href="/research-start">Change role</a>
+  </div>
+    </div>
   </div>
 {% endblock %}
