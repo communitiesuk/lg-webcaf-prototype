@@ -1,6 +1,9 @@
 // app/routes/research-rounds.js
 // Landing page + helpers for selecting user-research round context.
 const { clearAllAssessments } = require("../data/helpers/round-two-account-store");
+const {
+  initialiseRoundTwoPostSetupResearch,
+} = require("../data/helpers/research-ready");
 
 module.exports = function (router) {
   router.get("/research-rounds", (req, res) => {
@@ -16,6 +19,14 @@ module.exports = function (router) {
 
   router.get("/research-rounds/round-2", (req, res) => {
     return res.redirect("/round-2/start");
+  });
+
+  router.get("/research-rounds/round-2-post-setup", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+
+    initialiseRoundTwoPostSetupResearch(req.session.data);
+    return res.redirect("/assessments/current/journey");
   });
 
   router.get("/research-rounds/reset-prototype", (req, res) => {

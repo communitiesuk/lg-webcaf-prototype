@@ -29,6 +29,7 @@ const {
 } = require("./data/helpers/roles");
 const { getAssurerAccessContext } = require("./data/helpers/assurer-access");
 const { isRoundTwoOnboardingComplete } = require("./data/helpers/phase-progress");
+const { isResearchReadyVariant } = require("./data/helpers/research-ready");
 const {
   applyCouncilContext,
   getCouncilDisplayName,
@@ -81,6 +82,7 @@ router.use((req, res, next) => {
   res.on("finish", () => {
     const sessionData = req.session && req.session.data ? req.session.data : null;
     if (!sessionData || sessionData.researchRound !== "round-2") return;
+    if (isResearchReadyVariant(sessionData)) return;
     const email = sessionData.user && sessionData.user.email ? sessionData.user.email : "";
     if (!email) return;
     if (sessionData.assessment && sessionData.assessment.id) {
