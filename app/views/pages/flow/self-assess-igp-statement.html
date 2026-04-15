@@ -2,22 +2,35 @@
 
 {% block content %}
   {% set maturityError = error and (error.items | selectattr('field', 'equalto', 'statement-maturity') | list | first) %}
-  {% set rationaleError = error and (error.items | selectattr('field', 'equalto', 'statement-rationale') | list | first) %}
+  {% set reasonError = error and (error.items | selectattr('field', 'equalto', 'statement-rationale') | list | first) %}
   {% set evidenceError = error and (error.items | selectattr('field', 'equalto', 'statement-evidence-note') | list | first) %}
-  {% set confidenceError = error and (error.items | selectattr('field', 'equalto', 'statement-confidence-low') | list | first) %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   {% if context.caption %}
     <span class="govuk-caption-l">{{ context.caption }}</span>
   {% endif %}
   <h1 class="govuk-heading-l">{{ context.heading }}</h1>
-  {% if context.progressText %}
-    <p class="govuk-body govuk-hint">{{ context.progressText }}</p>
-  {% endif %}
   {% if context.systemName %}
     <p class="govuk-body"><strong>Critical system:</strong> {{ context.systemName }}</p>
   {% endif %}
   <p class="govuk-body">{{ context.intro }}</p>
+  {% if context.progressText or form.totalStatements %}
+    <section class="app-task-progress govuk-!-margin-bottom-6" aria-labelledby="task-progress-heading">
+      <h2 class="govuk-visually-hidden" id="task-progress-heading">Progress</h2>
+      <ul class="app-task-progress__list govuk-list">
+        {% if context.progressText %}
+          <li class="app-task-progress__item">
+            <span class="app-task-progress__kicker">Outcome</span>
+            <strong class="app-task-progress__value">{{ context.progressText }}</strong>
+          </li>
+        {% endif %}
+        <li class="app-task-progress__item">
+          <span class="app-task-progress__kicker">Statement</span>
+          <strong class="app-task-progress__value">{{ form.currentStatementNumber }} of {{ form.totalStatements }}</strong>
+        </li>
+      </ul>
+    </section>
+  {% endif %}
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -42,8 +55,7 @@
         {% endif %}
         <div class="govuk-form-group {% if maturityError %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" {% if maturityError %}aria-describedby="statement-maturity-error"{% endif %}>
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-              <span class="govuk-caption-m">IGP statement {{ form.currentStatementNumber }} of {{ form.totalStatements }}</span>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
               {{ form.statement.statement }}
             </legend>
             <div class="govuk-hint">{{ form.statement.guidance }}</div>
@@ -69,25 +81,25 @@
           </fieldset>
         </div>
 
-        <div class="govuk-form-group {% if rationaleError %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="statement-rationale">Rationale</label>
+        <div class="govuk-form-group {% if reasonError %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--m" for="statement-rationale">Reason</label>
           <div class="govuk-hint">Summarise why this level reflects the current position.</div>
-          {% if rationaleError %}
+          {% if reasonError %}
             <p class="govuk-error-message" id="statement-rationale-error">
               <span class="govuk-visually-hidden">Error:</span>
-              {{ rationaleError.text }}
+              {{ reasonError.text }}
             </p>
           {% endif %}
           <textarea class="govuk-textarea"
                     id="statement-rationale"
                     name="igpAssessments[{{ form.currentStatementNumber - 1 }}][rationale]"
-                    {% if rationaleError %}aria-describedby="statement-rationale-error"{% endif %}
+                    {% if reasonError %}aria-describedby="statement-rationale-error"{% endif %}
                     rows="5">{{ form.statement.rationale }}</textarea>
         </div>
 
         <div class="govuk-form-group {% if evidenceError %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="statement-evidence-note">Evidence note</label>
-          <div class="govuk-hint">Record a short evidence reference or note. Do not paste sensitive content.</div>
+          <label class="govuk-label govuk-label--m" for="statement-evidence-note">Evidence link or note</label>
+          <div class="govuk-hint">Add a link or reference to the evidence, such as a SharePoint location, secure internal folder, or document name. Do not paste sensitive content.</div>
           {% if evidenceError %}
             <p class="govuk-error-message" id="statement-evidence-note-error">
               <span class="govuk-visually-hidden">Error:</span>
@@ -101,50 +113,11 @@
                     rows="3">{{ form.statement.evidenceNote }}</textarea>
         </div>
 
-        <div class="govuk-form-group {% if confidenceError %}govuk-form-group--error{% endif %}">
-          <fieldset class="govuk-fieldset" {% if confidenceError %}aria-describedby="statement-confidence-error"{% endif %}>
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Confidence level</legend>
-            <div class="govuk-hint">Record how confident you are in this statement assessment.</div>
-            {% if confidenceError %}
-              <p class="govuk-error-message" id="statement-confidence-error">
-                <span class="govuk-visually-hidden">Error:</span>
-                {{ confidenceError.text }}
-              </p>
-            {% endif %}
-            <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
-              {% for option in form.confidenceOptions %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input"
-                         id="{% if loop.first %}statement-confidence-low{% else %}statement-confidence-{{ loop.index }}{% endif %}"
-                         name="igpAssessments[{{ form.currentStatementNumber - 1 }}][confidence]"
-                         type="radio"
-                         value="{{ option.value }}"
-                         {% if form.statement.confidence == option.value %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="{% if loop.first %}statement-confidence-low{% else %}statement-confidence-{{ loop.index }}{% endif %}">{{ option.text }}</label>
-                </div>
-              {% endfor %}
-            </div>
-          </fieldset>
-        </div>
-
         <div class="govuk-button-group">
           <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
           <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="saveReturn">Save and return</button>
         </div>
       </form>
-    </div>
-
-    <div class="govuk-grid-column-one-third">
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Assessment summary</h2>
-        <p class="govuk-body">Target level: <strong>{{ form.targetLevel }}</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-0">{{ form.statementSummary or "No statement answers saved yet." }}</p>
-      </aside>
-
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Next step</h2>
-        <p class="govuk-body govuk-!-margin-bottom-0">Complete each statement, then review the section on the check your answers page.</p>
-      </aside>
     </div>
   </div>
 {% endblock %}

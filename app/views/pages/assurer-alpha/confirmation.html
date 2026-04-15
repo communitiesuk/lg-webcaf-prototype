@@ -1,0 +1,55 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/dashboard">Back</a>
+
+  <div class="govuk-panel govuk-panel--confirmation govuk-!-margin-bottom-6">
+    <h1 class="govuk-panel__title">Assurance complete</h1>
+    <div class="govuk-panel__body">{{ assessment.councilName }}</div>
+  </div>
+
+  <p class="govuk-body">The assurance step has been completed for this full CAF submission.</p>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Total outcomes reviewed</dt>
+      <dd class="govuk-summary-list__value">{{ summary.reviewed }} of {{ assessment.contributingOutcomeCount }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Outcomes agreed</dt>
+      <dd class="govuk-summary-list__value">{{ summary.agreed }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Outcomes where judgement may need changing</dt>
+      <dd class="govuk-summary-list__value">{{ summary.judgementMayNeedChanging }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Missing evidence items</dt>
+      <dd class="govuk-summary-list__value">{{ summary.insufficientEvidence }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submission status</dt>
+      <dd class="govuk-summary-list__value">
+        {% if assessment.submission.status == "submitted_by_assurer" %}
+          Submitted by assurer on {{ assessment.submission.submittedAt }}
+        {% elif assessment.submission.status == "ready_for_submission" %}
+          Ready for submission
+        {% else %}
+          Council needs to act before submission
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">What happens next</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in nextSteps %}
+      <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="/assurer-alpha/dashboard">Return to assurance queue</a>
+    <a class="govuk-link" href="/research-rounds">Back to research rounds</a>
+  </div>
+{% endblock %}

@@ -26,7 +26,7 @@ const ROLE_PRIORITY = [
 const ROLE_DEFINITIONS = {
   [ROLE_IDS.CAF_LEAD]: {
     id: ROLE_IDS.CAF_LEAD,
-    label: "CAF lead",
+    label: "CAF Lead",
     description:
       "Leads the council's WebCAF work, coordinates the team, and can assign or change roles for the council account.",
     permissions: [

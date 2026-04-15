@@ -56,6 +56,13 @@
   margin-bottom: 0;
 }
 
+.app-onboarding-hero {
+  border: 1px solid #b1b4b6;
+  border-left: 6px solid #00703c;
+  background: #f3fdf7;
+  padding: 20px;
+}
+
 .app-milestone-summary__summary {
   margin-bottom: 12px;
 }
@@ -468,6 +475,51 @@
   color: #505a5f;
   font-size: 16px;
   margin-top: 12px;
+}
+
+.app-igp-progress-label {
+  display: block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border: 1px solid #b1b4b6;
+  border-left: 4px solid #1d70b8;
+  background: #f8fbff;
+  color: #0b0c0c;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.app-task-progress {
+  border: 1px solid #b1b4b6;
+  border-left: 4px solid #1d70b8;
+  background: #f8fbff;
+  padding: 12px 14px;
+}
+
+.app-task-progress__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.app-task-progress__item {
+  margin: 0;
+  min-width: 180px;
+}
+
+.app-task-progress__kicker {
+  color: #505a5f;
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.app-task-progress__value {
+  display: block;
+  font-size: 19px;
+  line-height: 1.2;
 }
 
 .app-rounds-grid > [class*="govuk-grid-column"] {

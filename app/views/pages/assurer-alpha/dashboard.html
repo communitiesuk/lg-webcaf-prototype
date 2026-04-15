@@ -1,0 +1,52 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha">Back</a>
+
+  <span class="govuk-caption-l">Assurer journey</span>
+  <h1 class="govuk-heading-l">Assessments submitted for assurance</h1>
+  <p class="govuk-body">{{ awaitingCount }} submissions are in the queue or in progress.</p>
+
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Council</th>
+        <th class="govuk-table__header" scope="col">Submission</th>
+        <th class="govuk-table__header" scope="col">Status</th>
+        <th class="govuk-table__header" scope="col">What is included</th>
+        <th class="govuk-table__header" scope="col">Action</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for assessment in assessments %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">
+            <strong>{{ assessment.councilName }}</strong>
+            <div class="govuk-hint">{{ assessment.submittedBy }}</div>
+          </td>
+          <td class="govuk-table__cell">
+            {{ assessment.cycleLabel }}
+            <div class="govuk-hint">Submitted {{ assessment.submittedAt }}</div>
+          </td>
+          <td class="govuk-table__cell">
+            <strong class="govuk-tag {{ assessment.statusTagClass }}">{{ assessment.overallStatus }}</strong>
+          </td>
+          <td class="govuk-table__cell">
+            Review due {{ assessment.reviewDueAt }}
+            <div class="govuk-hint">{{ assessment.dueState }}</div>
+            <div class="govuk-hint">
+              A&amp;D complete {% if assessment.submissionSummary.organisationComplete %}&#10003;{% endif %}<br>
+              B&amp;C complete {% if assessment.submissionSummary.criticalSystemsComplete %}&#10003;{% endif %}<br>
+              IIP included {% if assessment.submissionSummary.iipIncluded %}&#10003;{% endif %}
+            </div>
+          </td>
+          <td class="govuk-table__cell">
+            <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}">
+              Review submission
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

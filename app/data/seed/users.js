@@ -9,7 +9,7 @@ module.exports = [
     roles: ["caf-lead", "approver"],
     activeRole: "caf-lead",
     orgName: "West Marchshire Council",
-    roleTitle: "CAF lead",
+    roleTitle: "CAF Lead",
     email: "morgan.ellis@west-marchshire.gov.uk",
   },
   {

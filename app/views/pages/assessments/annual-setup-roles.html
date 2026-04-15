@@ -40,7 +40,7 @@
       {% if currentUserCanManageRoles %}
         <p class="govuk-body govuk-!-margin-bottom-6"><a class="govuk-link" href="/prepare/roles?returnTo=journey">Change council roles</a> if the starting names are not right.</p>
       {% else %}
-        <p class="govuk-body govuk-!-margin-bottom-6">If the starting names are not right, ask the CAF lead to update the council roles.</p>
+        <p class="govuk-body govuk-!-margin-bottom-6">If the starting names are not right, ask the CAF Lead to update the council roles.</p>
       {% endif %}
 
       {% if rolesAudit.history and rolesAudit.history.length > 0 %}
@@ -51,7 +51,7 @@
           <div class="govuk-details__text">
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
               {% for entry in rolesAudit.history | reverse %}
-                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
+                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF Lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
               {% endfor %}
             </ul>
           </div>
@@ -60,7 +60,7 @@
 
       <form method="post" action="/assessments/current/annual-setup/roles">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualLead') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="annualLead">CAF lead for this year</label>
+          <label class="govuk-label" for="annualLead">CAF Lead for this year</label>
           {% if error and (error.items | selectattr('field','equalto','annualLead') | list | length) > 0 %}
             <p id="annualLead-error" class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>

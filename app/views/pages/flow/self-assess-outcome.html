@@ -4,14 +4,21 @@
 {% block content %}
   <div class="app-outcome-page">
   <a class="govuk-back-link" href="{{ context.backLink }}">Back</a>
+  {% if context.cafJudgementPage %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+  {% endif %}
 
   {% if context.roundTwo and context.caption %}
     <span class="govuk-caption-l">{{ context.caption }}</span>
   {% endif %}
-  <h1 class="govuk-heading-l">{{ context.heading }}</h1>
-  {% if context.roundTwo and context.progressText %}
-    <p class="govuk-body govuk-hint">{{ context.progressText }}</p>
+  {% if context.roundTwo and context.sectionCaption %}
+    <p class="govuk-body govuk-hint govuk-!-margin-bottom-2">{{ context.sectionCaption }}</p>
   {% endif %}
+  {% if context.roundTwo and context.progressText %}
+    <p class="govuk-body govuk-!-margin-bottom-2"><strong>Progress:</strong> {{ context.progressText | lower }}</p>
+  {% endif %}
+  <h1 class="govuk-heading-l">{{ context.heading }}</h1>
   {% if context.roundTwo and context.systemName %}
     <p class="govuk-body"><strong>Critical system:</strong> {{ context.systemName }}</p>
   {% elif context.subHeading %}
@@ -24,7 +31,7 @@
   {% endif %}
   {% if form.statusLabel %}
     <p class="govuk-body">
-      <strong class="govuk-tag">{{ form.statusLabel }}</strong>
+      <strong class="govuk-tag govuk-tag--grey">{{ form.statusLabel }}</strong>
     </p>
   {% endif %}
   {% if context.roundTwo and form.previousAssessment and form.previousAssessment.carriedForward %}
@@ -63,12 +70,76 @@
   {% endif %}
 
   <form method="post" action="">
-    {% if context.roundTwo %}
+    {% if context.roundTwo and not context.cafJudgementPage %}
       <div class="govuk-grid-row">
         <div class="govuk-grid-column-two-thirds">
     {% endif %}
 
-    {% if context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
+    {% if context.cafJudgementPage %}
+      <div class="govuk-inset-text">
+        Indicators of good practice inform your judgement. They do not determine it.
+      </div>
+
+      <div id="igpAssessments" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <h2 class="govuk-heading-m">Signals from indicators of good practice</h2>
+        <p class="govuk-body">Review each signal and record how far it reflects the current position.</p>
+        {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','igpAssessments') | list | first).text }}
+          </p>
+        {% endif %}
+
+        {% for item in form.igpAssessments %}
+          <div class="govuk-form-group">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                {{ loop.index }}. {{ item.statement }}
+              </legend>
+              <div class="govuk-radios govuk-radios--small" data-module="govuk-radios">
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input js-igp-signal"
+                         id="{{ item.id }}-fully-reflects"
+                         name="igpAssessments[{{ loop.index0 }}][signalResponse]"
+                         type="radio"
+                         value="Fully reflects"
+                         data-igp-group="{{ item.group }}"
+                         {% if item.signalResponse == "Fully reflects" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="{{ item.id }}-fully-reflects">Fully reflects</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input js-igp-signal"
+                         id="{{ item.id }}-partially-reflects"
+                         name="igpAssessments[{{ loop.index0 }}][signalResponse]"
+                         type="radio"
+                         value="Partially reflects"
+                         data-igp-group="{{ item.group }}"
+                         {% if item.signalResponse == "Partially reflects" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="{{ item.id }}-partially-reflects">Partially reflects</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input js-igp-signal"
+                         id="{{ item.id }}-does-not-reflect"
+                         name="igpAssessments[{{ loop.index0 }}][signalResponse]"
+                         type="radio"
+                         value="Does not reflect"
+                         data-igp-group="{{ item.group }}"
+                         {% if item.signalResponse == "Does not reflect" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="{{ item.id }}-does-not-reflect">Does not reflect</label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        {% endfor %}
+
+        <p class="govuk-hint govuk-!-margin-top-4" id="igp-signal-summary">
+          Current pattern: {{ form.signalSummary.fullyReflects }} fully reflect, {{ form.signalSummary.partiallyReflects }} partially reflect, {{ form.signalSummary.doesNotReflect }} do not reflect.
+        </p>
+        <p class="govuk-hint govuk-!-margin-bottom-0" id="igp-judgement-hint-text">
+          {% if form.igpJudgementHint %}{{ form.igpJudgementHint.text }}{% else %}Complete the signals to build a balanced view before making the judgement.{% endif %}
+        </p>
+      </div>
+    {% elif context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
       {% set negativeStatements = form.igpAssessments | selectattr("group", "equalto", "notAchieved") | list %}
       {% set achievedStatements = form.igpAssessments | selectattr("group", "equalto", "achieved") | list %}
       {% set usesCriteriaSelection = (achievedStatements | length) > 0 or (negativeStatements | length) > 0 %}
@@ -251,15 +322,23 @@
       </div>
     {% endif %}
 
-    <div class="govuk-form-group">
-      {% if context.roundTwo %}
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','igpResponse') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      {% if context.roundTwo and not context.cafJudgementPage %}
         <h2 class="govuk-heading-m">2. Add notes on the statements (optional)</h2>
         <p class="govuk-body govuk-hint">Use this to capture any extra context before you record the overall judgement.</p>
-      {% else %}
+      {% elif not context.cafJudgementPage %}
         <label class="govuk-label" for="igpResponse">{{ labels.flow.selfAssessOutcome.igpResponse }}</label>
         <p class="govuk-hint">{{ labels.flow.selfAssessOutcome.igpHint }}</p>
       {% endif %}
-      <textarea class="govuk-textarea" id="igpResponse" name="igpResponse" rows="5">{{ form.igpResponse }}</textarea>
+      {% if not context.cafJudgementPage and error and (error.items | selectattr('field','equalto','igpResponse') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field','equalto','igpResponse') | list | first).text }}
+        </p>
+      {% endif %}
+      {% if not context.cafJudgementPage %}
+        <textarea class="govuk-textarea" id="igpResponse" name="igpResponse" rows="5">{{ form.igpResponse }}</textarea>
+      {% endif %}
     </div>
 
     {% if context.roundTwo and form.previousAssessment and form.previousAssessment.carriedForward %}
@@ -290,8 +369,17 @@
     <div id="judgement" class="govuk-form-group app-outcome-page__judgement {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
         <legend class="govuk-fieldset__legend {% if context.roundTwo %}govuk-fieldset__legend--m{% else %}govuk-fieldset__legend--s{% endif %}">
-          {% if context.roundTwo %}3. Choose the overall judgement{% else %}{{ labels.flow.selfAssessOutcome.judgement }}{% endif %}
+          {% if context.cafJudgementPage %}
+            Final judgement
+          {% elif context.roundTwo %}
+            3. Choose the overall judgement
+          {% else %}
+            {{ labels.flow.selfAssessOutcome.judgement }}
+          {% endif %}
         </legend>
+        {% if context.cafJudgementPage %}
+          <div class="govuk-hint">Use the signals and evidence to inform your judgement, then decide the contributing outcome overall.</div>
+        {% endif %}
         {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -317,10 +405,10 @@
           <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
           <strong class="govuk-warning-text__text">
             <span class="govuk-warning-text__assistive">Warning</span>
-            Your judgement differs from the evidence
+            {% if context.cafJudgementPage %}Your judgement differs from what the signals suggest{% else %}Your judgement differs from the evidence{% endif %}
           </strong>
         </div>
-        <label class="govuk-label" for="mismatchReason">Explain why</label>
+        <label class="govuk-label" for="mismatchReason">{% if context.cafJudgementPage %}Explain why your judgement differs from the signals{% else %}Explain why{% endif %}</label>
         {% if error and (error.items | selectattr('field','equalto','mismatchReason') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -332,11 +420,25 @@
     {% endif %}
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      {% if context.roundTwo %}
+      {% if context.cafJudgementPage %}
+        <h2 class="govuk-heading-m">Reason</h2>
+      {% elif context.roundTwo %}
         <h2 class="govuk-heading-m">4. Explain the judgement</h2>
       {% endif %}
-      <label class="govuk-label" for="rationale">{% if context.roundTwo %}Reason for judgement{% else %}{{ labels.flow.selfAssessOutcome.rationale }}{% endif %}</label>
-      {% if context.roundTwo %}
+      <label class="govuk-label" for="rationale">
+        {% if context.cafJudgementPage %}
+          Explain your judgement
+        {% elif context.roundTwo %}
+          Reason for judgement
+        {% else %}
+          {{ labels.flow.selfAssessOutcome.rationale }}
+        {% endif %}
+      </label>
+      {% if context.cafJudgementPage %}
+        <div class="govuk-hint">
+          Bring the signals and evidence together. Explain why this judgement is reasonable, including the key evidence, important limitations and why the outcome is achieved, partially achieved or not achieved.
+        </div>
+      {% elif context.roundTwo %}
         <div class="govuk-hint">
           This is required. Include why you selected this judgement and any important gaps, alternative controls or evidence limits.
         </div>
@@ -367,7 +469,7 @@
 
     {% if context.roundTwo and form.evidenceRefs %}
       <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-        <h2 class="govuk-heading-m">5. Add evidence links</h2>
+        <h2 class="govuk-heading-m">{% if context.cafJudgementPage %}Supporting evidence links{% else %}5. Add evidence links{% endif %}</h2>
         <p class="govuk-body govuk-hint">Add links to evidence stored outside WebCAF, such as a SharePoint document, policy, process note or architecture diagram. Describe what each item shows and why it matters. Assurers will need access to the linked evidence.</p>
         {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
           <p id="evidenceRefs" class="govuk-error-message">
@@ -383,15 +485,15 @@
                 Evidence reference {{ loop.index }}
               </legend>
 
-              <div class="govuk-grid-row">
-                <div class="govuk-grid-column-one-third">
+              {% if context.cafJudgementPage %}
+                <div class="govuk-form-group">
                   <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-title">Evidence title</label>
-                  <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-title" name="evidenceRefs[{{ loop.index0 }}][title]" type="text" value="{{ ref.title }}">
+                  <input class="govuk-input govuk-!-width-two-thirds" id="evidenceRefs-{{ loop.index0 }}-title" name="evidenceRefs[{{ loop.index0 }}][title]" type="text" value="{{ ref.title }}">
                 </div>
 
-                <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group">
                   <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Evidence type (optional)</label>
-                  <select class="govuk-select" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]">
+                  <select class="govuk-select govuk-!-width-two-thirds" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]">
                     <option value="" {% if not ref.type %}selected{% endif %}>Select evidence type</option>
                     <option value="Policy" {% if ref.type == "Policy" %}selected{% endif %}>Policy</option>
                     <option value="Process" {% if ref.type == "Process" %}selected{% endif %}>Process</option>
@@ -403,11 +505,37 @@
                   </select>
                 </div>
 
-                <div class="govuk-grid-column-one-third">
+                <div class="govuk-form-group">
                   <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Evidence link</label>
                   <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
                 </div>
-              </div>
+              {% else %}
+                <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-one-third">
+                    <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-title">Evidence title</label>
+                    <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-title" name="evidenceRefs[{{ loop.index0 }}][title]" type="text" value="{{ ref.title }}">
+                  </div>
+
+                  <div class="govuk-grid-column-one-third">
+                    <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-type">Evidence type (optional)</label>
+                    <select class="govuk-select" id="evidenceRefs-{{ loop.index0 }}-type" name="evidenceRefs[{{ loop.index0 }}][type]">
+                      <option value="" {% if not ref.type %}selected{% endif %}>Select evidence type</option>
+                      <option value="Policy" {% if ref.type == "Policy" %}selected{% endif %}>Policy</option>
+                      <option value="Process" {% if ref.type == "Process" %}selected{% endif %}>Process</option>
+                      <option value="Report" {% if ref.type == "Report" %}selected{% endif %}>Report</option>
+                      <option value="Architecture diagram" {% if ref.type == "Architecture diagram" %}selected{% endif %}>Architecture diagram</option>
+                      <option value="Meeting paper" {% if ref.type == "Meeting paper" %}selected{% endif %}>Meeting paper</option>
+                      <option value="Procedure" {% if ref.type == "Procedure" %}selected{% endif %}>Procedure</option>
+                      <option value="Other" {% if ref.type == "Other" %}selected{% endif %}>Other</option>
+                    </select>
+                  </div>
+
+                  <div class="govuk-grid-column-one-third">
+                    <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-link">Evidence link</label>
+                    <input class="govuk-input" id="evidenceRefs-{{ loop.index0 }}-link" name="evidenceRefs[{{ loop.index0 }}][link]" type="text" value="{{ ref.link }}">
+                  </div>
+                </div>
+              {% endif %}
 
               <div class="govuk-form-group govuk-!-margin-top-3">
                 <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-description">Description</label>
@@ -434,7 +562,7 @@
       </div>
     {% endif %}
 
-    {% if context.roundTwo %}
+    {% if context.roundTwo and not context.cafJudgementPage %}
         </div>
         <div class="govuk-grid-column-one-third">
           <div class="app-outcome-page__sidebar-card">
@@ -534,8 +662,121 @@
       {% endif %}
     </div>
   </form>
+  {% if context.cafJudgementPage %}
+      </div>
+    </div>
+  {% endif %}
 
-  {% if context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
+  {% if context.cafJudgementPage and form.igpAssessments and (form.igpAssessments | length) > 0 %}
+    <script>
+      (function () {
+        var radios = document.querySelectorAll('.js-igp-signal');
+        var summary = document.getElementById("igp-signal-summary");
+        var hintText = document.getElementById("igp-judgement-hint-text");
+        var mismatchGroup = document.getElementById("mismatch-reason-group");
+        var judgementInputs = document.querySelectorAll('input[name="judgement"]');
+        if (!radios.length || !summary || !hintText) return;
+
+        function getState() {
+          var grouped = {};
+          radios.forEach(function (radio) {
+            if (!radio.checked) return;
+            grouped[radio.name] = {
+              group: radio.getAttribute("data-igp-group") || "standard",
+              response: radio.value
+            };
+          });
+
+          var rows = Object.keys(grouped).map(function (key) { return grouped[key]; });
+          if (!rows.length) return null;
+
+          var totalRowCount = new Set(Array.prototype.map.call(radios, function (radio) { return radio.name; })).size;
+          if (rows.length < totalRowCount) {
+            return {
+              state: "incomplete",
+              strengths: rows.filter(function (item) { return item.response === "Fully reflects"; }).length,
+              partials: rows.filter(function (item) { return item.response === "Partially reflects"; }).length,
+              criticalGaps: rows.filter(function (item) { return item.response === "Does not reflect"; }).length,
+              text: "Record how each signal reflects the current position before finalising the judgement."
+            };
+          }
+
+          var achievedRows = rows.filter(function (item) { return item.group === "achieved"; });
+          var notAchievedRows = rows.filter(function (item) { return item.group === "notAchieved"; });
+          var strengths = rows.filter(function (item) { return item.response === "Fully reflects"; }).length;
+          var partials = rows.filter(function (item) { return item.response === "Partially reflects"; }).length;
+          var criticalGaps = rows.filter(function (item) { return item.response === "Does not reflect"; }).length;
+          var achievedAllYes = achievedRows.length > 0 && achievedRows.every(function (item) { return item.response === "Fully reflects"; });
+          var achievedHasGap = achievedRows.some(function (item) { return item.response === "Does not reflect"; });
+          var negativeTriggered = notAchievedRows.some(function (item) { return item.response === "Fully reflects"; });
+          var negativeMixed = notAchievedRows.some(function (item) { return item.response === "Partially reflects"; });
+
+          if (achievedAllYes && !negativeTriggered && !negativeMixed) {
+            return {
+              state: "met",
+              strengths: strengths,
+              partials: partials,
+              criticalGaps: criticalGaps,
+              text: "Positive signals reflect the current position and the negative signals do not. Use your evidence and judgement before deciding the outcome."
+            };
+          }
+
+          if (achievedHasGap || negativeTriggered) {
+            return {
+              state: "not-met",
+              strengths: strengths,
+              partials: partials,
+              criticalGaps: criticalGaps,
+              text: "One or more negative signals still reflects the current position, or a positive signal does not. Review the evidence before finalising the judgement."
+            };
+          }
+
+          return {
+            state: "mixed",
+            strengths: strengths,
+            partials: partials,
+            criticalGaps: criticalGaps,
+            text: "The signals do not point clearly to a single judgement. Use the synthesis and rationale to explain how you reached your decision."
+          };
+        }
+
+        function updateMismatch(state) {
+          if (!mismatchGroup || !judgementInputs.length) return;
+          var selectedJudgement = document.querySelector('input[name="judgement"]:checked');
+          var judgement = selectedJudgement ? selectedJudgement.value : "";
+          var mismatch = false;
+          if (state === "met" && judgement && judgement !== "Achieved") mismatch = true;
+          if (state === "not-met" && judgement === "Achieved") mismatch = true;
+          mismatchGroup.hidden = !mismatch;
+        }
+
+        function renderState(result) {
+          if (!result) return;
+          summary.textContent =
+            'Current pattern: ' +
+            result.strengths + ' fully reflect, ' +
+            result.partials + ' partially reflect, ' +
+            result.criticalGaps + ' do not reflect.';
+          hintText.textContent = result.text;
+
+          updateMismatch(result.state);
+        }
+
+        radios.forEach(function (input) {
+          input.addEventListener("change", function () {
+            renderState(getState());
+          });
+        });
+
+        judgementInputs.forEach(function (input) {
+          input.addEventListener("change", function () {
+            var current = getState();
+            if (current) updateMismatch(current.state);
+          });
+        });
+      })();
+    </script>
+  {% elif context.roundTwo and form.igpAssessments and (form.igpAssessments | length) > 0 %}
     <script>
       (function () {
         var panel = document.getElementById("igp-judgement-hint");

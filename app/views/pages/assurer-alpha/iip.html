@@ -1,0 +1,187 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}">Back</a>
+  {% set errorItems = error.items if error else [] %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in errorItems %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ assessment.councilName }}</span>
+  <h1 class="govuk-heading-l">Review improvement and implementation plan</h1>
+  <p class="govuk-body">Use the improvement and implementation plan to check whether the council has responded to issues raised across the full CAF submission.</p>
+
+  <p class="govuk-body govuk-hint">Your role is to form an independent position on whether the plan is sufficient, not to edit the plan on the council’s behalf.</p>
+
+  {% if issueRows.length > 0 %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        {{ issueRows.length }} outcome issues have been raised. Use this page to check whether the plan responds to them.
+      </strong>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Plan status</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.iip.status }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Plan owner</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.iip.owner }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Last updated</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.iip.lastUpdated }}</dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Plan summary</h2>
+  <table class="govuk-table govuk-!-margin-bottom-6">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header" scope="col">Priority</th>
+        <th class="govuk-table__header" scope="col">Owner</th>
+        <th class="govuk-table__header" scope="col">Timescale</th>
+        <th class="govuk-table__header" scope="col">Success measure</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for priority in assessment.iip.priorities %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">{{ priority.title }}</td>
+          <td class="govuk-table__cell">{{ priority.owner }}</td>
+          <td class="govuk-table__cell">{{ priority.timescale }}</td>
+          <td class="govuk-table__cell">{{ priority.successMeasure }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="/assurer-alpha/assessment/{{ assessment.id }}/iip">
+    {% if issueRows.length > 0 %}
+      <h2 class="govuk-heading-m">Issues raised</h2>
+      {% for issue in issueRows %}
+        <section class="govuk-!-margin-bottom-6">
+          <h3 class="govuk-heading-s"><strong>{{ issue.code }}</strong> {{ issue.title }}</h3>
+          <p class="govuk-body govuk-!-margin-bottom-2"><strong class="govuk-tag {{ issue.scopeTagClass }}">{{ issue.scopeLabel }}</strong></p>
+          <p class="govuk-body"><strong>Issue raised:</strong> {{ issue.detail }}</p>
+          <p class="govuk-body"><strong>Suggested council action:</strong> {{ issue.actionRequested or "No action recorded" }}</p>
+          <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipIssue-' + issue.code) | list | length %} govuk-form-group--error{% endif %}">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Is this addressed in the plan?</legend>
+              {% for item in errorItems if item.field == 'assurerIipIssue-' + issue.code %}
+                <p class="govuk-error-message" id="assurerIipIssue-{{ issue.code }}">
+                  <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+                </p>
+              {% endfor %}
+              <div class="govuk-radios govuk-radios--small">
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="assurerIipIssue-{{ issue.code }}-1" name="assurerIipIssue-{{ issue.code }}" type="radio" value="addressed" {% if values.issueResponses[issue.code] == "addressed" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="assurerIipIssue-{{ issue.code }}-1">Addressed</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="assurerIipIssue-{{ issue.code }}-2" name="assurerIipIssue-{{ issue.code }}" type="radio" value="partly_addressed" {% if values.issueResponses[issue.code] == "partly_addressed" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="assurerIipIssue-{{ issue.code }}-2">Partly addressed</label>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="assurerIipIssue-{{ issue.code }}-3" name="assurerIipIssue-{{ issue.code }}" type="radio" value="not_addressed" {% if values.issueResponses[issue.code] == "not_addressed" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="assurerIipIssue-{{ issue.code }}-3">Not addressed</label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </section>
+      {% endfor %}
+    {% endif %}
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipCrossCuttingDecision') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Does the plan address cross-cutting issues?</legend>
+        {% for item in errorItems if item.field == "assurerIipCrossCuttingDecision" %}
+          <p class="govuk-error-message" id="assurerIipCrossCuttingDecision">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-1" name="assurerIipCrossCuttingDecision" type="radio" value="yes" {% if values.crossCuttingDecision == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-1">Yes, organisation-level actions address system-level gaps</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-2" name="assurerIipCrossCuttingDecision" type="radio" value="partly" {% if values.crossCuttingDecision == "partly" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-2">Partly</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-3" name="assurerIipCrossCuttingDecision" type="radio" value="no" {% if values.crossCuttingDecision == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-3">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerIipCrossCuttingExplanation">Explain your view on cross-cutting issues (optional)</label>
+      <textarea class="govuk-textarea" id="assurerIipCrossCuttingExplanation" name="assurerIipCrossCuttingExplanation" rows="4">{{ values.crossCuttingExplanation }}</textarea>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipDecision') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Your IIP assessment position</legend>
+        {% for item in errorItems if item.field == "assurerIipDecision" %}
+          <p class="govuk-error-message" id="assurerIipDecision">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipDecision" name="assurerIipDecision" type="radio" value="agree_sufficient" {% if values.decision == "agree_sufficient" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipDecision">IIP is sufficient</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipDecision-2" name="assurerIipDecision" type="radio" value="request_changes" {% if values.decision == "request_changes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipDecision-2">IIP is not sufficient</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerIipDecision-3" name="assurerIipDecision" type="radio" value="priority_gaps" {% if values.decision == "priority_gaps" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerIipDecision-3">IIP shows priority gaps</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipRationale') | list | length %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerIipRationale">Reason for this decision</label>
+      {% for item in errorItems if item.field == "assurerIipRationale" %}
+        <p class="govuk-error-message" id="assurerIipRationale">
+          <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+        </p>
+      {% endfor %}
+      <textarea class="govuk-textarea" id="assurerIipRationale" name="assurerIipRationale" rows="6">{{ values.rationale }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerIipPriorityGaps">Priority gaps to note (optional)</label>
+      <textarea class="govuk-textarea" id="assurerIipPriorityGaps" name="assurerIipPriorityGaps" rows="4">{{ values.priorityGaps }}</textarea>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}/summary">View submission summary</a>
+    </div>
+  </form>
+{% endblock %}

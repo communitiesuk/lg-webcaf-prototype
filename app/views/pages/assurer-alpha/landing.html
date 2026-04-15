@@ -1,0 +1,64 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/research-rounds">Back</a>
+
+  <span class="govuk-caption-l">CAF for Local Government alpha</span>
+  <h1 class="govuk-heading-l">Assurer journey</h1>
+  <p class="govuk-body">Use this prototype to review full CAF submissions from councils and complete the assurance step.</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">This alpha route explores structured assurance at contributing outcome level.</p>
+  </div>
+
+  <h2 class="govuk-heading-m">What you can do</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    <li>see which submissions have been sent for assurance</li>
+    <li>review organisation outcomes and critical systems outcomes in one submission</li>
+    <li>review council judgement, rationale and evidence references</li>
+    <li>review the improvement and implementation plan</li>
+    <li>complete assurance and, if needed, explore submission to MHCLG</li>
+  </ul>
+
+  <p class="govuk-body">There are currently <strong>{{ queueCount }}</strong> submissions in the assurance queue.</p>
+
+  {% if featuredAssessment %}
+    <h2 class="govuk-heading-m">Featured submission</h2>
+    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Council</dt>
+        <dd class="govuk-summary-list__value">{{ featuredAssessment.councilName }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Submission</dt>
+        <dd class="govuk-summary-list__value">{{ featuredAssessment.cycleLabel }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Review due</dt>
+        <dd class="govuk-summary-list__value">{{ featuredAssessment.reviewDueAt }}<br><span class="govuk-hint">{{ featuredAssessment.dueState }}</span></dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Includes</dt>
+        <dd class="govuk-summary-list__value">Organisation outcomes, critical systems outcomes and an IIP</dd>
+      </div>
+    </dl>
+  {% endif %}
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="/assurer-alpha/dashboard">View submissions</a>
+    <a class="govuk-link" href="/research-rounds">Return to research rounds</a>
+  </div>
+
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">View alpha assumptions</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        {% for assumption in assumptions %}
+          <li>{{ assumption }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </details>
+{% endblock %}

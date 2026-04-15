@@ -15,14 +15,14 @@
   <h2 class="govuk-heading-m">Setup summary</h2>
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">A and D approach</dt>
+      <dt class="govuk-summary-list__key">Organisation self-assessment approach</dt>
       <dd class="govuk-summary-list__value">
         {% if assessment.annualSetup.adAssessmentStatus == "update_existing" %}
-          Update our existing A and D assessment
+          Update our existing organisation self-assessment
         {% elif assessment.annualSetup.adAssessmentStatus == "reuse_current" %}
-          Keep our current A and D position with a light review
+          Keep our current organisation self-assessment position with a light review
         {% elif assessment.annualSetup.adAssessmentStatus == "new_assessment" %}
-          Start a new A and D assessment
+          Start a new organisation self-assessment
         {% else %}
           —
         {% endif %}
@@ -41,7 +41,7 @@
       </dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">CAF lead</dt>
+      <dt class="govuk-summary-list__key">CAF Lead</dt>
       <dd class="govuk-summary-list__value">{{ assessment.annualSetup.annualLead or "—" }}</dd>
     </div>
     <div class="govuk-summary-list__row">
@@ -49,8 +49,32 @@
       <dd class="govuk-summary-list__value">{{ assessment.annualSetup.annualApprover or "—" }}</dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Expected assurer support</dt>
+      <dt class="govuk-summary-list__key">Expected assurance support date</dt>
       <dd class="govuk-summary-list__value">{{ assessment.annualSetup.assuranceWindow or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">CAF Lead completing the CAF for the first time</dt>
+      <dd class="govuk-summary-list__value">
+        {% if assessment.annualSetup.firstTimeCAF == "yes" %}
+          Yes
+        {% elif assessment.annualSetup.firstTimeCAF == "no" %}
+          No
+        {% else %}
+          —
+        {% endif %}
+      </dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Early assurer check-in</dt>
+      <dd class="govuk-summary-list__value">
+        {% if assessment.annualSetup.checkInPlan == "planned" %}
+          Yes
+        {% elif assessment.annualSetup.checkInPlan == "not_planned" %}
+          No
+        {% else %}
+          —
+        {% endif %}
+      </dd>
     </div>
   </dl>
 

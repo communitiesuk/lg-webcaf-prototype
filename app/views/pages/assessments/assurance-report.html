@@ -9,6 +9,14 @@
   <p class="govuk-body govuk-!-margin-bottom-6">
     <a class="govuk-link" href="/assessments/current/evidence-requests">View evidence requests</a>
   </p>
+  <div class="govuk-inset-text">
+    <p class="govuk-body"><strong>How to use this report</strong></p>
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      <li>The record of audit shows how the assurer reviewed and tested your assessment.</li>
+      <li>The report highlights where the assurer needs changes, clarification or follow-up.</li>
+      <li>Use amendments to correct or clarify the council's position, not to reopen settled areas without reason.</li>
+    </ul>
+  </div>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -168,7 +176,7 @@
   <form method="post" action="/assessments/current/assurance-report/amendments">
     <div class="govuk-form-group {% if error and ((error.items | selectattr('field','equalto','assuranceAmendments') | list | length) > 0 or (error.items | selectattr('field','equalto','assuranceAmendmentsNotes') | list | length) > 0) %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="assuranceAmendmentsNotes">Amendment notes</label>
-      <div class="govuk-hint">Add requested changes or clarifications for the assurer.</div>
+      <div class="govuk-hint">Add the changes or clarifications the council wants the assurer to consider, with enough detail for them to understand what has changed and why.</div>
       {% if error and (error.items | selectattr('field','equalto','assuranceAmendmentsNotes') | list | length) > 0 %}
         <p id="assuranceAmendmentsNotes-error" class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>

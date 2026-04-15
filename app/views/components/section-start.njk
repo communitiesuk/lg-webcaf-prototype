@@ -19,6 +19,11 @@
             <li>{{ item }}</li>
           {% endfor %}
         </ul>
+        {% if params.guidanceLinkHref %}
+          <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0">
+            <a class="govuk-link" href="{{ params.guidanceLinkHref }}">{{ params.guidanceLinkText or "Read the guidance" }}</a>
+          </p>
+        {% endif %}
       </div>
     </details>
   {% endif %}

@@ -2,7 +2,6 @@
 {% extends "layouts/main.html" %}
 {% from "govuk/components/task-list/macro.njk" import govukTaskList %}
 {% from "components/page-header.njk" import appPageHeader %}
-{% from "components/milestone-summary.njk" import appMilestoneSummary %}
 
 {% block content %}
   {% if researchRound == "round-2" %}
@@ -12,61 +11,11 @@
       intro: "Use this task list to continue the annual assessment.",
       showSaveReassurance: true
     }) }}
-    <section class="govuk-grid-row" aria-labelledby="journey-progress-heading">
-      <h2 class="govuk-visually-hidden" id="journey-progress-heading">Assessment progress</h2>
-      <div class="govuk-grid-column-one-half">
-        {{ appMilestoneSummary({
-          id: "setup-progress",
-          title: "Setup progress",
-          summaryText: roundTwoSetupProgress.completed ~ " of " ~ roundTwoSetupProgress.total ~ " setup milestones completed",
-          progress: roundTwoSetupProgress,
-          nextHref: "/onboarding" if roundTwoSetupProgress.completed < roundTwoSetupProgress.total else "",
-          nextText: "Open council onboarding and setup" if roundTwoSetupProgress.completed < roundTwoSetupProgress.total else "",
-          nextLabel: roundTwoSetupProgress.nextMilestoneLabel,
-          showNext: false
-        }) }}
-      </div>
-      <div class="govuk-grid-column-one-half">
-        {{ appMilestoneSummary({
-          id: "annual-assessment-progress",
-          title: "Annual assessment progress",
-          summaryText: roundTwoAssessmentProgress.completed ~ " of " ~ roundTwoAssessmentProgress.total ~ " annual assessment milestones completed",
-          progress: roundTwoAssessmentProgress,
-          nextHref: roundTwoAssessmentProgress.nextActionHref or "",
-          nextText: roundTwoAssessmentProgress.nextActionText or "",
-          nextLabel: roundTwoAssessmentProgress.nextMilestoneLabel,
-          showNext: false
-        }) }}
-      </div>
-    </section>
     {% if nextAction %}
       <section class="govuk-!-margin-bottom-6" aria-labelledby="next-step-heading">
         <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="next-step-heading">Next step</h2>
         <p class="govuk-body"><strong>Current step:</strong> {{ nextAction.text }}.</p>
         <a class="govuk-button" data-module="govuk-button" href="{{ nextAction.href }}">Start next step</a>
-      </section>
-    {% endif %}
-    {% if collaborationState %}
-      <div class="govuk-inset-text">
-        <p class="govuk-body govuk-!-margin-bottom-1">
-          <strong>Collaboration status:</strong>
-          <strong class="govuk-tag {{ collaborationState.statusTagClass }}">{{ collaborationState.statusLabel }}</strong>
-        </p>
-        <p class="govuk-body govuk-!-margin-bottom-0">Drafted by {{ collaborationState.drafterName }}{% if collaborationState.reviewerName %}, reviewer {{ collaborationState.reviewerName }}{% endif %}{% if collaborationState.approverName %}, approver {{ collaborationState.approverName }}{% endif %}.</p>
-      </div>
-    {% endif %}
-    {% if roleActionSummary %}
-      <section class="app-outcome-page__sidebar-card govuk-!-margin-bottom-6" aria-labelledby="current-role-actions-heading">
-        <h2 class="govuk-heading-m" id="current-role-actions-heading">What you can do in this role</h2>
-        <p class="govuk-body">You are using the <strong>{{ roleActionSummary.activeRoleLabel }}</strong> role.</p>
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          {% if roleActionSummary.canEdit %}<li>Edit draft setup and self-assessment content.</li>{% endif %}
-          {% if roleActionSummary.canReview %}<li>Review draft content and send it back or move it forward.</li>{% endif %}
-          {% if roleActionSummary.canApprove %}<li>Approve the self-assessment after review.</li>{% endif %}
-          {% if roleActionSummary.canAssure %}<li>Use the assurer workspace for independent review activity.</li>{% endif %}
-          {% if roleActionSummary.canQa %}<li>Carry out QA checks on draft content.</li>{% endif %}
-          {% if roleActionSummary.canManageRoles %}<li>Manage users and assign roles for the council account.</li>{% endif %}
-        </ul>
       </section>
     {% endif %}
   {% else %}

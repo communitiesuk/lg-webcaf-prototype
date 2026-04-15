@@ -261,6 +261,7 @@ require("./routes/assessments")(router);
 require("./routes/council-context")(router);
 require("./routes/onboarding")(router);
 require("./routes/assurer")(router);
+require("./routes/assurer-alpha")(router);
 require("./routes/mhclg")(router);
 require("./routes/engagement")(router);
 require("./routes/cycles")(router);

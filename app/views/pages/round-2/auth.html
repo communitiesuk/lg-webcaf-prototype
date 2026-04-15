@@ -82,7 +82,7 @@
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="round2AuthName">Name</label>
       {% if mode == "sign-in" %}
-        <div class="govuk-hint">Enter your full name as you would want it shown in the service.</div>
+        <div class="govuk-hint">Enter your full name as you want it to appear.</div>
       {% endif %}
       {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}
         <p class="govuk-error-message">

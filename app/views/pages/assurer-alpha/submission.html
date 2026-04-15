@@ -1,0 +1,113 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/summary">Back</a>
+  {% set errorItems = error.items if error else [] %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in errorItems %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ assessment.councilName }}</span>
+  <h1 class="govuk-heading-l">Submission route exploration</h1>
+  <p class="govuk-body">This page explores an alpha option for submitting the full CAF submission to MHCLG.</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">In the standard model, the council submits the CAF assessment after assurance. This prototype explores an alternative where the assurer submits on the council’s behalf, while keeping the assurer’s independent position separate from the council submission.</p>
+  </div>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assurance step</dt>
+      <dd class="govuk-summary-list__value">Completed</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submission route</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.submission.routeLabel }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submission readiness</dt>
+      <dd class="govuk-summary-list__value">
+        {% if completionState.readyForSubmission %}
+          Ready for submission
+        {% else %}
+          Not ready for submission
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  {% if not completionState.readyForSubmission %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        This assessment still has challenged judgements, missing evidence, or an IIP issue. It should not be marked as ready for submission yet.
+      </strong>
+    </div>
+  {% endif %}
+
+  <details class="govuk-details govuk-!-margin-bottom-6">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">View prototype definitions</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li><strong>Review complete</strong> means every contributing outcome and the IIP have been reviewed by the assurer.</li>
+        <li><strong>Ready for submission</strong> means the assurance review is complete and there are no outstanding blockers.</li>
+        <li><strong>Submitted</strong> means the assurer has completed the optional MHCLG submission step in this alpha route.</li>
+      </ul>
+    </div>
+  </details>
+
+  <form method="post" action="/assurer-alpha/assessment/{{ assessment.id }}/submission">
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSubmissionDecision') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What should happen next?</legend>
+        {% for item in errorItems if item.field == "assurerSubmissionDecision" %}
+          <p class="govuk-error-message" id="assurerSubmissionDecision">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerSubmissionDecision" name="assurerSubmissionDecision" type="radio" value="ready_for_submission" {% if values.decision == "ready_for_submission" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerSubmissionDecision">Submission ready, but not submitted in this step</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerSubmissionDecision-2" name="assurerSubmissionDecision" type="radio" value="submitted_by_assurer" {% if values.decision == "submitted_by_assurer" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerSubmissionDecision-2">Submitted by assurer to MHCLG</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerSubmissionDecision-3" name="assurerSubmissionDecision" type="radio" value="council_changes_needed" {% if values.decision == "council_changes_needed" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerSubmissionDecision-3">Not ready, council needs to act</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSubmissionDate') | list | length %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerSubmissionDate">Submission date</label>
+      <div class="govuk-hint">Only complete this if the assurer is making the submission to MHCLG.</div>
+      {% for item in errorItems if item.field == "assurerSubmissionDate" %}
+        <p class="govuk-error-message" id="assurerSubmissionDate">
+          <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+        </p>
+      {% endfor %}
+      <input class="govuk-input govuk-!-width-one-third" id="assurerSubmissionDate" name="assurerSubmissionDate" type="text" value="{{ values.submissionDate }}">
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Complete assurance step</button>
+  </form>
+{% endblock %}

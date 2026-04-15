@@ -24,7 +24,7 @@
   {{ appPageHeader({
     caption: "Assessment setup",
     title: "Plan assurance support",
-    intro: "Tell us when you expect to need assurance support."
+    intro: "Tell us when support is likely to be needed and whether earlier assurance input may help."
   }) }}
   <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
     <summary class="govuk-details__summary">
@@ -33,8 +33,9 @@
     <div class="govuk-details__text">
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         <li>This helps planning only and does not book assurance.</li>
-        <li>If A and D and B and C will be ready at different times, use the earliest date.</li>
-        <li>After this, you will review and finish annual setup.</li>
+        <li>If the organisation self-assessment and critical systems self-assessment will be ready at different times, use the earliest date.</li>
+        <li>Tell us whether the CAF Lead is completing the CAF for the first time.</li>
+        <li>If the CAF Lead is new to the CAF, you can also tell us whether an early assurer check-in would help.</li>
       </ul>
     </div>
   </details>
@@ -72,33 +73,64 @@
       </fieldset>
     </div>
 
-    <div class="govuk-form-group">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you want an early assurer check-in this year?</legend>
-        <div class="govuk-hint">An early check-in can help you stay on track during self-assessment.</div>
-        <div class="govuk-radios">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','firstTimeCAF') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" aria-describedby="firstTimeCAF-hint{% if error and (error.items | selectattr('field','equalto','firstTimeCAF') | list | length) > 0 %} firstTimeCAF-error{% endif %}">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Are you completing the CAF for the first time?</legend>
+        <div id="firstTimeCAF-hint" class="govuk-hint">This helps us understand whether earlier assurance support may be useful.</div>
+        {% if error and (error.items | selectattr('field','equalto','firstTimeCAF') | list | length) > 0 %}
+          <p id="firstTimeCAF-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field','equalto','firstTimeCAF') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="checkInPlan-planned" name="checkInPlan" type="radio" value="planned" {% if form.checkInPlan == "planned" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="checkInPlan-planned">Yes</label>
+            <input class="govuk-radios__input" id="firstTimeCAF-yes" name="firstTimeCAF" type="radio" value="yes" data-aria-controls="conditional-firstTimeCAF" {% if form.firstTimeCAF == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="firstTimeCAF-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__conditional {% if form.firstTimeCAF != 'yes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-firstTimeCAF">
+            <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','checkInPlan') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+              <fieldset class="govuk-fieldset" aria-describedby="checkInPlan-hint{% if error and (error.items | selectattr('field','equalto','checkInPlan') | list | length) > 0 %} checkInPlan-error{% endif %}">
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Would an early assurer check-in be helpful?</legend>
+                <div id="checkInPlan-hint" class="govuk-hint">An early check-in can help a new CAF Lead stay on track during self-assessment.</div>
+                {% if error and (error.items | selectattr('field','equalto','checkInPlan') | list | length) > 0 %}
+                  <p id="checkInPlan-error" class="govuk-error-message">
+                    <span class="govuk-visually-hidden">Error:</span>
+                    {{ (error.items | selectattr('field','equalto','checkInPlan') | list | first).text }}
+                  </p>
+                {% endif %}
+                <div class="govuk-radios">
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="checkInPlan-planned" name="checkInPlan" type="radio" value="planned" data-aria-controls="conditional-checkInPlan" {% if form.checkInPlan == "planned" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="checkInPlan-planned">Yes</label>
+                  </div>
+                  <div class="govuk-radios__conditional {% if form.checkInPlan != 'planned' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-checkInPlan">
+                    <div class="govuk-form-group">
+                      <label class="govuk-label" for="assurerContact">Assurer contact or organisation (optional)</label>
+                      <div class="govuk-hint">Only add this if you already know who your assurer is likely to be.</div>
+                      <input class="govuk-input govuk-!-width-two-thirds" id="assurerContact" name="assurerContact" type="text" value="{{ form.assurerContact or '' }}">
+                    </div>
+
+                    <div class="govuk-form-group">
+                      <label class="govuk-label" for="checkInNotes">Anything else we should know? (optional)</label>
+                      <div class="govuk-hint">Include known dependencies or timing constraints.</div>
+                      <textarea class="govuk-textarea" id="checkInNotes" name="checkInNotes" rows="4">{{ form.checkInNotes or '' }}</textarea>
+                    </div>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="checkInPlan-not-planned" name="checkInPlan" type="radio" value="not_planned" {% if form.checkInPlan == "not_planned" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="checkInPlan-not-planned">No</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
           </div>
           <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="checkInPlan-not-planned" name="checkInPlan" type="radio" value="not_planned" {% if form.checkInPlan == "not_planned" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="checkInPlan-not-planned">No</label>
+            <input class="govuk-radios__input" id="firstTimeCAF-no" name="firstTimeCAF" type="radio" value="no" {% if form.firstTimeCAF == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="firstTimeCAF-no">No</label>
           </div>
         </div>
       </fieldset>
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="assurerContact">Assurer contact or organisation (optional)</label>
-      <div class="govuk-hint">Only add this if you already know who your assurer is likely to be.</div>
-      <input class="govuk-input govuk-!-width-two-thirds" id="assurerContact" name="assurerContact" type="text" value="{{ form.assurerContact or '' }}">
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="checkInNotes">Anything else we should know? (optional)</label>
-      <div class="govuk-hint">Include known dependencies or timing constraints.</div>
-      <textarea class="govuk-textarea" id="checkInNotes" name="checkInNotes" rows="4">{{ form.checkInNotes or '' }}</textarea>
     </div>
 
     <div class="govuk-button-group">

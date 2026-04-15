@@ -21,9 +21,33 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Critical systems register</span>
+  <span class="govuk-caption-l">Critical systems list</span>
   <h1 class="govuk-heading-l">Set the priority for {{ system.name }}</h1>
   <p class="govuk-body">Choose the priority for this system.</p>
+
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Help with this step</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Prioritise systems that would have the biggest impact on the council if disrupted by a cyber attack.</li>
+        <li>Use your team's expertise to decide this, including service leads, system owners, and IT or cyber colleagues where needed.</li>
+        <li>Be ready to explain the rationale for the priority you choose to your assurer.</li>
+      </ul>
+      <p class="govuk-body govuk-!-margin-top-3">Base the decision on service impact, dependency and recoverability, not just cost or profile.</p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li><strong>High:</strong> major disruption to critical or statutory services, little workaround, high operational or resident impact.</li>
+        <li><strong>Medium:</strong> important impact, but workarounds or slower recovery may be possible.</li>
+        <li><strong>Low:</strong> more limited impact or easier recovery.</li>
+        <li><strong>Not sure yet:</strong> use this only if you genuinely need more input from service or system owners.</li>
+      </ul>
+      <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0"><strong>Example:</strong> a platform supporting benefits payments may be high priority if disruption would quickly affect vulnerable residents and there is no practical fallback.</p>
+      <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0">
+        <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/prioritise-critical-systems/">Read the CAF guidance on prioritising critical systems</a>
+      </p>
+    </div>
+  </details>
 
   {% if mappedServices and mappedServices.length > 0 %}
     <div class="govuk-inset-text">

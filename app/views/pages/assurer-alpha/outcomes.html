@@ -1,0 +1,148 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  {% if sectionType == "organisation" %}
+    <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}">Back</a>
+  {% else %}
+    <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/organisation-outcomes">Back</a>
+  {% endif %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="outcome-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="outcome-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Assurance decision saved.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ pageCaption }}</span>
+  <h1 class="govuk-heading-l">{{ sectionTitle }}</h1>
+  <p class="govuk-body">{{ sectionDescription }}</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">These outcomes are part of the same council submission.</p>
+  </div>
+
+  {% if sectionType == "critical-systems" and organisationContext %}
+    <h2 class="govuk-heading-m">Organisation context</h2>
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-0">{{ organisationContext }}</p>
+    </div>
+  {% endif %}
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Agree with council judgement</dt>
+      <dd class="govuk-summary-list__value">{{ summary.agreed }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Different judgement required</dt>
+      <dd class="govuk-summary-list__value">{{ summary.judgementMayNeedChanging }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Cannot assess</dt>
+      <dd class="govuk-summary-list__value">{{ summary.insufficientEvidence }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Not reviewed</dt>
+      <dd class="govuk-summary-list__value">{{ summary.notReviewed }}</dd>
+    </div>
+  </dl>
+
+  {% if sectionType == "organisation" %}
+    <table class="govuk-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th class="govuk-table__header" scope="col">Organisation outcome</th>
+          <th class="govuk-table__header" scope="col">Council judgement</th>
+          <th class="govuk-table__header" scope="col">Decision</th>
+          <th class="govuk-table__header" scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for outcome in outcomes %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <strong>{{ outcome.code }}</strong> {{ outcome.title }}
+              <div class="govuk-hint">{{ outcome.description }}</div>
+            </td>
+            <td class="govuk-table__cell">{{ outcome.councilJudgement }}</td>
+            <td class="govuk-table__cell">
+              {% if outcome.assurerReview %}
+                <strong class="govuk-tag {{ outcome.assurerReview.statusTagClass }}">{{ outcome.assurerReview.statusLabel }}</strong>
+                {% if outcome.issue and outcome.issue.detail %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">Issue recorded</strong></div>
+                {% endif %}
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">Not reviewed</strong>
+                {% if outcome.issue and outcome.issue.detail %}
+                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">Issue recorded</strong></div>
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}">
+                {% if outcome.assurerReview %}Change decision{% else %}Review outcome{% endif %}
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    {% for group in criticalSystemGroups %}
+      <h2 class="govuk-heading-m">{{ group.systemName }}</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Critical systems outcome</th>
+            <th class="govuk-table__header" scope="col">Council judgement</th>
+            <th class="govuk-table__header" scope="col">Decision</th>
+            <th class="govuk-table__header" scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for outcome in group.outcomes %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <strong>{{ outcome.code }}</strong> {{ outcome.title }}
+                <div class="govuk-hint">{{ outcome.description }}</div>
+              </td>
+              <td class="govuk-table__cell">{{ outcome.councilJudgement }}</td>
+              <td class="govuk-table__cell">
+                {% if outcome.assurerReview %}
+                  <strong class="govuk-tag {{ outcome.assurerReview.statusTagClass }}">{{ outcome.assurerReview.statusLabel }}</strong>
+                  {% if outcome.issue and outcome.issue.detail %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">Issue recorded</strong></div>
+                  {% endif %}
+                {% else %}
+                  <strong class="govuk-tag govuk-tag--grey">Not reviewed</strong>
+                  {% if outcome.issue and outcome.issue.detail %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">Issue recorded</strong></div>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">
+                <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}">
+                  {% if outcome.assurerReview %}Change decision{% else %}Review outcome{% endif %}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% endif %}
+
+  <div class="govuk-button-group">
+    {% if sectionType == "organisation" %}
+      <a class="govuk-button" href="/assurer-alpha/assessment/{{ assessment.id }}/critical-systems">Review critical systems outcomes</a>
+    {% else %}
+      <a class="govuk-button" href="/assurer-alpha/assessment/{{ assessment.id }}/iip">Review IIP</a>
+    {% endif %}
+    <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}/summary">View assurance summary</a>
+  </div>
+{% endblock %}

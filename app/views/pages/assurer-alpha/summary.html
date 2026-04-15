@@ -1,0 +1,239 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/iip">Back</a>
+  {% set errorItems = error.items if error else [] %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in errorItems %}
+              <li><a href="#review-complete">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ assessment.councilName }}</span>
+  <h1 class="govuk-heading-l">Assurer position on submission</h1>
+  <p class="govuk-body">Check the independent assurer position on the full CAF submission before you complete the step.</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">As an assurer, you are providing an independent view of this submission on behalf of MHCLG. The council may need to respond to this position or revise parts of the submission.</p>
+  </div>
+
+  {% if missingReviewCount > 0 %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        {{ missingReviewCount }} contributing outcomes still do not have an assurer decision.
+      </strong>
+    </div>
+  {% endif %}
+
+  {% if not completionState.iipReviewed %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        The IIP has not been reviewed yet.
+      </strong>
+    </div>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Assurer position on submission</h2>
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Total outcomes reviewed</dt>
+      <dd class="govuk-summary-list__value">{{ summary.reviewed }} of {{ assessment.contributingOutcomeCount }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Agree with council judgement</dt>
+      <dd class="govuk-summary-list__value">{{ summary.agreed }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Different judgement required</dt>
+      <dd class="govuk-summary-list__value">{{ summary.judgementMayNeedChanging }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Cannot assess</dt>
+      <dd class="govuk-summary-list__value">{{ summary.insufficientEvidence }}</dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">Key assurance findings</h2>
+  <div class="govuk-inset-text">
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      <li>Major gaps or issues raised: {{ issueRows.length }}</li>
+      <li>Outcomes that could not be assessed because evidence was insufficient: {{ summary.insufficientEvidence }}</li>
+      <li>Areas consistent across A&amp;D and B&amp;C: {% if alignmentSummary.consistentAreas.length > 0 %}{{ alignmentSummary.consistentAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
+      <li>Areas where systems contradict organisation-level claims: {% if alignmentSummary.gapAreas.length > 0 %}{{ alignmentSummary.gapAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
+      {% if alignmentSummary.alignmentNotes.length > 0 %}
+        <li>{{ alignmentSummary.alignmentNotes[0] }}</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <details class="govuk-details govuk-!-margin-bottom-6">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">View outcome-by-outcome decisions</span>
+    </summary>
+    <div class="govuk-details__text">
+      <table class="govuk-table govuk-!-margin-bottom-0">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Outcome</th>
+            <th class="govuk-table__header" scope="col">Council judgement</th>
+            <th class="govuk-table__header" scope="col">Assurer decision</th>
+            <th class="govuk-table__header" scope="col">Next action</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for outcome in assessment.outcomes %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell"><strong>{{ outcome.code }}</strong> {{ outcome.title }}</td>
+              <td class="govuk-table__cell">{{ outcome.councilJudgement }}</td>
+              <td class="govuk-table__cell">
+                {% if outcome.assurerReview %}
+                  {{ outcome.assurerReview.statusLabel }}
+                  {% if outcome.assurerReview.suggestedJudgement %}
+                    <div class="govuk-hint">Suggested judgement: {{ outcome.assurerReview.suggestedJudgement }}</div>
+                  {% endif %}
+                {% else %}
+                  Not reviewed
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">{{ outcome.assurerReview.nextAction if outcome.assurerReview and outcome.assurerReview.nextAction else "None recorded" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <h2 class="govuk-heading-m">Missing evidence and issues</h2>
+  {% if issueRows.length > 0 %}
+    <details class="govuk-details govuk-!-margin-bottom-6">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">View issues raised</span>
+      </summary>
+      <div class="govuk-details__text">
+        <table class="govuk-table govuk-!-margin-bottom-0">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th class="govuk-table__header" scope="col">Outcome</th>
+              <th class="govuk-table__header" scope="col">Issue</th>
+              <th class="govuk-table__header" scope="col">Scope</th>
+              <th class="govuk-table__header" scope="col">Requested action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for issue in issueRows %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell"><strong>{{ issue.code }}</strong> {{ issue.title }}</td>
+                <td class="govuk-table__cell">{{ issue.detail }}</td>
+                <td class="govuk-table__cell"><strong class="govuk-tag {{ issue.scopeTagClass }}">{{ issue.scopeLabel }}</strong></td>
+                <td class="govuk-table__cell">{{ issue.actionRequested or "No action recorded" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  {% else %}
+    <p class="govuk-body">No missing evidence or issue records have been added.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">IIP assessment</h2>
+  {% if assessment.iip.assurerReview %}
+    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">IIP assessment</dt>
+        <dd class="govuk-summary-list__value">
+          {% if assessment.iip.assurerReview.decision == "agree_sufficient" %}Sufficient{% endif %}
+          {% if assessment.iip.assurerReview.decision == "request_changes" %}Not sufficient{% endif %}
+          {% if assessment.iip.assurerReview.decision == "priority_gaps" %}Priority gaps identified{% endif %}
+        </dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Rationale</dt>
+        <dd class="govuk-summary-list__value">{{ assessment.iip.assurerReview.rationale }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Priority gaps</dt>
+        <dd class="govuk-summary-list__value">{{ assessment.iip.assurerReview.priorityGaps or "None recorded" }}</dd>
+      </div>
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">Cross-cutting issues</dt>
+        <dd class="govuk-summary-list__value">
+          {% if assessment.iip.assurerReview.crossCuttingDecision == "yes" %}Addressed{% endif %}
+          {% if assessment.iip.assurerReview.crossCuttingDecision == "partly" %}Partly addressed{% endif %}
+          {% if assessment.iip.assurerReview.crossCuttingDecision == "no" %}Not addressed{% endif %}
+          {% if assessment.iip.assurerReview.crossCuttingExplanation %}
+            <div class="govuk-hint">{{ assessment.iip.assurerReview.crossCuttingExplanation }}</div>
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+  {% else %}
+    <p class="govuk-body">The IIP has not been reviewed yet.</p>
+  {% endif %}
+
+  <p class="govuk-body">This combines organisation outcomes, critical systems outcomes and the IIP into one independent assurer position for the submission.</p>
+
+  <h2 class="govuk-heading-m" id="review-complete">Complete assurance</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    <li>Every contributing outcome must have an assurer decision.</li>
+    <li>The IIP must have an assurer review outcome.</li>
+    <li>Completing assurance does not mean the assessment is ready for submission.</li>
+  </ul>
+
+  <form method="post" action="/assurer-alpha/assessment/{{ assessment.id }}/summary">
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSummaryDeclaration') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Before you continue</legend>
+        {% for item in errorItems if item.field == "assurerSummaryDeclaration" %}
+          <p class="govuk-error-message" id="assurerSummaryDeclaration">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="assurerSummaryDeclaration-check" name="assurerSummaryDeclaration" type="checkbox" value="yes" {% if values.declarationChecked %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="assurerSummaryDeclaration-check">I have reviewed each contributing outcome and the evidence provided</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    {% set rationaleTooShort = values.completionRationale and values.completionRationale | length < 25 %}
+    {% if rationaleTooShort %}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          Please provide more detail explaining your decision.
+        </strong>
+      </div>
+    {% endif %}
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSummaryRationale') | list | length %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerSummaryRationale">Assurer rationale</label>
+      <div class="govuk-hint">Summarise the overall assurance position and any remaining action the council needs to take.</div>
+      {% for item in errorItems if item.field == "assurerSummaryRationale" %}
+        <p class="govuk-error-message" id="assurerSummaryRationale">
+          <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+        </p>
+      {% endfor %}
+      <textarea class="govuk-textarea" id="assurerSummaryRationale" name="assurerSummaryRationale" rows="5">{{ values.completionRationale }}</textarea>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Confirm assurance position</button>
+  </form>
+{% endblock %}

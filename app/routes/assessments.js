@@ -214,13 +214,13 @@ module.exports = function (router) {
                   : "Complete annual setup first.",
               }
             ),
-            journeyItem("Complete the A and D self-assessment", adLensSummary, {
+            journeyItem("Complete the organisation self-assessment (Objectives A and D)", adLensSummary, {
               locked: !canEdit || adLocked,
               lockedHint: !canEdit
                 ? "Your current role cannot edit the self-assessment."
                 : "Complete annual setup first.",
             }),
-            journeyItem("Complete the B and C self-assessment", bcLensSummary, {
+            journeyItem("Complete the critical systems self-assessment (Objectives B and C)", bcLensSummary, {
               locked: !canEdit || bcLocked,
               lockedHint: !canEdit
                 ? "Your current role cannot edit the self-assessment."
@@ -268,11 +268,11 @@ module.exports = function (router) {
                 locked: !selfAssessStartReady,
                 lockedHint: "Complete Who is involved first.",
               }),
-              journeyItem("A and D self-assessment (organisational)", adLensSummary, {
+              journeyItem("Organisation self-assessment (Objectives A and D)", adLensSummary, {
                 locked: adLocked,
                 lockedHint: "Complete Readiness checks first.",
               }),
-              journeyItem("B and C self-assessment (critical systems)", bcLensSummary, {
+              journeyItem("Critical systems self-assessment (Objectives B and C)", bcLensSummary, {
                 locked: bcLocked,
                 lockedHint: "Complete Readiness checks first.",
               }),
@@ -563,7 +563,7 @@ module.exports = function (router) {
 
     const errors = [];
     if (!nextState.annualLead) {
-      errors.push({ field: "annualLead", text: "Enter the CAF lead for this assessment year." });
+      errors.push({ field: "annualLead", text: "Enter the CAF Lead for this assessment year." });
     }
     if (!nextState.annualApprover) {
       errors.push({ field: "annualApprover", text: "Enter the approver for this assessment year." });
@@ -649,10 +649,11 @@ module.exports = function (router) {
 
     const nextState = {
       ...assessment.annualSetup,
-      assurerContact: (req.session.data.assurerContact || "").toString().trim(),
       assuranceMonth,
       assuranceYear,
       assuranceWindow,
+      firstTimeCAF: (req.session.data.firstTimeCAF || "").toString(),
+      assurerContact: (req.session.data.assurerContact || "").toString().trim(),
       checkInPlan: (req.session.data.checkInPlan || "").toString(),
       checkInNotes: (req.session.data.checkInNotes || "").toString().trim(),
       completed: false,
@@ -665,6 +666,20 @@ module.exports = function (router) {
     }
     if (!assuranceYear) {
       errors.push({ field: "assuranceYear", text: "Enter the year you expect to need assurer support." });
+    }
+    if (!nextState.firstTimeCAF) {
+      errors.push({ field: "firstTimeCAF", text: "Select whether the CAF Lead is completing the CAF for the first time." });
+    }
+    if (nextState.firstTimeCAF === "yes" && !nextState.checkInPlan) {
+      errors.push({ field: "checkInPlan", text: "Select whether an early assurer check-in would be helpful." });
+    }
+
+    if (nextState.firstTimeCAF !== "yes") {
+      nextState.checkInPlan = "not_planned";
+    }
+    if (nextState.checkInPlan !== "planned") {
+      nextState.assurerContact = "";
+      nextState.checkInNotes = "";
     }
 
     if (errors.length > 0) {
@@ -682,10 +697,11 @@ module.exports = function (router) {
     assessment.annualSetup = nextState;
     assessment.updatedAt = new Date().toISOString();
 
-    delete req.session.data.assurerContact;
     delete req.session.data.assuranceMonth;
     delete req.session.data.assuranceYear;
     delete req.session.data.assuranceWindow;
+    delete req.session.data.firstTimeCAF;
+    delete req.session.data.assurerContact;
     delete req.session.data.checkInPlan;
     delete req.session.data.checkInNotes;
 
@@ -747,7 +763,7 @@ module.exports = function (router) {
         ...outcome,
         status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "Complete" : started ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
-        actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
+        actionText: carriedForward && reviewRequired ? "Review" : saved.judgement ? "Review" : started ? "Continue" : "Start",
         carriedForward,
       };
     });
@@ -805,7 +821,7 @@ module.exports = function (router) {
         ...outcome,
         status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "Complete" : started ? "In progress" : "Not started",
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
-        actionText: carriedForward && reviewRequired ? "Review carried-forward outcome" : saved.judgement ? "Review outcome" : "Start outcome",
+        actionText: carriedForward && reviewRequired ? "Review" : saved.judgement ? "Review" : started ? "Continue" : "Start",
         carriedForward,
       };
     });
@@ -3103,13 +3119,13 @@ function ensureSelfAssessContributors(assessment, currentUser) {
   const annualSetup = assessment.annualSetup || {};
 
   if (prepare.onboardingLead) {
-    upsertContributor(list, buildNamedContributor("onboarding-lead", prepare.onboardingLead, "CAF lead"));
+    upsertContributor(list, buildNamedContributor("onboarding-lead", prepare.onboardingLead, "CAF Lead"));
   }
   if (prepare.onboardingApprover) {
     upsertContributor(list, buildNamedContributor("onboarding-approver", prepare.onboardingApprover, "Approver"));
   }
   if (annualSetup.annualLead) {
-    upsertContributor(list, buildNamedContributor("annual-lead", annualSetup.annualLead, "CAF lead"));
+    upsertContributor(list, buildNamedContributor("annual-lead", annualSetup.annualLead, "CAF Lead"));
   }
   if (annualSetup.annualApprover) {
     upsertContributor(list, buildNamedContributor("annual-approver", annualSetup.annualApprover, "Approver"));
@@ -4180,7 +4196,7 @@ function buildOnboardingRolesSummary(assessment) {
     statusClass,
     hint: isComplete
       ? "Key roles added."
-      : "Add the CAF lead and approver.",
+      : "Add the CAF Lead and approver.",
   };
 }
 
@@ -4372,11 +4388,11 @@ function buildRoundTwoAssessmentProgress(assessment) {
       completed: whoInvolvedComplete,
     },
     {
-      label: "Complete A and D",
+      label: "Complete organisation self-assessment",
       completed: adComplete,
     },
     {
-      label: "Complete B and C",
+      label: "Complete critical systems self-assessment",
       completed: bcComplete,
     },
     {
@@ -4406,18 +4422,19 @@ function buildAnnualSetupSummary(assessment, currentUser) {
     state.annualLead,
     state.annualApprover,
     state.assuranceWindow,
+    state.checkInPlan,
   ];
   const completedCount = requiredChecks.filter(Boolean).length + (selectedSystems > 0 ? 1 : 0);
 
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
   let href = scopeReview.completed ? "/assessments/current/annual-setup" : "/assessments/current/review-scope";
-  let hint = `${selectedSystems} of 3 systems selected.`;
+  let hint = "Choose systems, leads and timing.";
   if (state.completed) {
     statusText = "Complete";
     statusClass = "govuk-tag--green";
     href = "/assessments/current/annual-setup/complete";
-    hint = "Review or update this year's setup.";
+    hint = "Review or update the annual setup.";
   } else if (completedCount > 0 || contributors.length > 0) {
     statusText = "In progress";
     statusClass = "govuk-tag--blue";
@@ -4445,7 +4462,7 @@ function buildScopeReviewSummary(assessment) {
       ? changed
         ? "This year's scope has been updated and confirmed."
         : "This year's scope has been reviewed and confirmed without changes."
-      : "Review the council scope summary before you set up this year's assessment.",
+      : "Review and confirm the scope summary.",
   };
 }
 
@@ -4462,6 +4479,11 @@ function isAnnualSetupAssessmentStepComplete(assessment) {
 function isAnnualSetupRolesStepComplete(assessment) {
   const state = assessment && assessment.annualSetup ? assessment.annualSetup : {};
   return Boolean(state.annualLead && state.annualApprover);
+}
+
+function isAnnualSetupPlanningStepComplete(assessment) {
+  const state = assessment && assessment.annualSetup ? assessment.annualSetup : {};
+  return Boolean(state.assuranceMonth && state.assuranceYear);
 }
 
 function getAnnualSetupNextStep(assessment) {
@@ -4597,9 +4619,7 @@ function buildADJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     href: roundTwo ? "/assessments/current/self-assessment/ad" : "/assessments/current/dashboard?lens=ad&view=all",
     statusText,
     statusClass,
-    hint: reviewState.completed
-      ? "Review or update the completed A and D self-assessment."
-      : `${judged} of ${total} A and D outcomes judged.`,
+    hint: "Assess Objectives A and D.",
     judged,
   };
 }
@@ -4633,9 +4653,7 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     href: roundTwo ? "/assessments/current/self-assessment/bc" : "/assessments/current/dashboard?lens=bc&view=all",
     statusText,
     statusClass,
-    hint: reviewState.completed
-      ? "Review or update the completed B and C self-assessment."
-      : `${judged} of ${total} B and C outcomes judged.`,
+    hint: "Assess Objectives B and C.",
     judged,
   };
 }
@@ -4815,7 +4833,7 @@ function buildCompleteSelfAssessmentSummary(assessment) {
 
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
-  let hint = "Check the summary, make edits if needed, and submit the draft for review.";
+  let hint = "Review the draft and submit it.";
   let locked = true;
   if (adReview.completed && bcReview.completed) {
     locked = false;
@@ -4840,7 +4858,7 @@ function buildCompleteSelfAssessmentSummary(assessment) {
       statusClass = "govuk-tag--blue";
       hint = "Changes were requested. Update the draft and submit it again.";
     } else {
-      hint = "Check the summary, make edits if needed, and submit the draft for review.";
+      hint = "Review the draft and submit it.";
     }
   }
 
@@ -4873,9 +4891,7 @@ function buildReviewSelfAssessmentSummary(assessment) {
       href: "/assessments/current/review-self-assessment",
       statusText: "Complete",
       statusClass: "govuk-tag--green",
-      hint: collaborationState.reviewedAt
-        ? `Reviewed ${formatDateTimeDisplay(collaborationState.reviewedAt)}.`
-        : "The review step is complete.",
+      hint: "Review the submitted assessment.",
       locked: false,
     };
   }
@@ -4884,7 +4900,7 @@ function buildReviewSelfAssessmentSummary(assessment) {
       href: "/assessments/current/review-self-assessment",
       statusText: "In progress",
       statusClass: "govuk-tag--blue",
-      hint: "Review the draft and either send it back for edits or move it to approval.",
+      hint: "Review the draft and return or approve it.",
       locked: false,
     };
   }
@@ -4893,7 +4909,7 @@ function buildReviewSelfAssessmentSummary(assessment) {
       href: "/assessments/current/review-self-assessment",
       statusText: "In progress",
       statusClass: "govuk-tag--blue",
-      hint: "Changes were requested after review. The drafter needs to update and resubmit this self-assessment.",
+      hint: "Review the updated draft after changes.",
       locked: false,
     };
   }
@@ -5155,6 +5171,7 @@ function ensureAnnualSetupData(assessment) {
       assuranceMonth: "",
       assuranceYear: "",
       assuranceWindow: "",
+      firstTimeCAF: "",
       checkInPlan: "",
       checkInNotes: "",
       systemIds: [],
@@ -5226,7 +5243,7 @@ function getCollaborationWorkflowState(assessment, currentUser) {
     (assessment && assessment.annualSetup && assessment.annualSetup.annualLead) ||
     (assessment && assessment.prepare && assessment.prepare.onboardingLead) ||
     (currentUser && currentUser.name) ||
-    "CAF lead";
+    "CAF Lead";
   const meta = {
     draft: { label: "Draft", tagClass: "govuk-tag--grey" },
     in_review: { label: "In review", tagClass: "govuk-tag--blue" },
@@ -5978,7 +5995,7 @@ function buildWhoInvolvedSummary(assessment, currentUser) {
         : "/assessments/current/start-self-assessment/people",
     statusText,
     statusClass,
-    hint: `${contributors.length} people added.`,
+    hint: "Assign owners to each outcome.",
   };
 }
 
@@ -6072,10 +6089,7 @@ function countBCJudgedForSystems(assessment, systemIds, allowedOutcomeIds = null
 
 function journeyItem(title, summary, options) {
   const locked = Boolean(options && options.locked);
-  const lockHint = (options && options.lockedHint) || "Complete the previous step first.";
-  const hint = locked
-    ? `${summary.hint || ""} ${lockHint}`.trim()
-    : (summary.hint || "");
+  const hint = summary.hint || "";
   const statusText = locked ? "Not started" : summary.statusText;
   const statusClass = locked ? "govuk-tag--grey" : summary.statusClass;
   const href = locked ? "" : summary.href;

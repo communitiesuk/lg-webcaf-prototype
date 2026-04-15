@@ -16,6 +16,9 @@
       Describe the priority critical systems you will assess. Complete the details for up to 3 systems.
     {% endif %}
   </p>
+  <div class="govuk-inset-text">
+    Keep these notes practical. Write what the system supports, what it does, and why loss or compromise would matter to the council.
+  </div>
 
   <form method="post" action="/stages/2/scope/priority/describe">
     {% for system in systems %}
@@ -23,16 +26,19 @@
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="priorityFunction-{{ system.id }}">What essential service and function does this support?</label>
+        <div class="govuk-hint">Name the service and the key business function it enables. For example, "Supports housing support by managing referrals and case updates".</div>
         <textarea class="govuk-textarea" id="priorityFunction-{{ system.id }}" name="priorityFunction_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].functionSummary or '' }}</textarea>
       </div>
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="prioritySupport-{{ system.id }}">What does the system do?</label>
+        <div class="govuk-hint">Summarise the main job the system does for users, staff or service delivery.</div>
         <textarea class="govuk-textarea" id="prioritySupport-{{ system.id }}" name="prioritySupport_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].supportSummary or '' }}</textarea>
       </div>
 
       <div class="govuk-form-group">
         <label class="govuk-label" for="priorityScope-{{ system.id }}">Why do you consider it in scope for CAF?</label>
+        <div class="govuk-hint">Explain the service impact if the system was unavailable, degraded or compromised.</div>
         <textarea class="govuk-textarea" id="priorityScope-{{ system.id }}" name="priorityScope_{{ system.id }}" rows="3">{{ assessment.scope.priorityDetails[system.id].scopeRationale or '' }}</textarea>
       </div>
     {% endfor %}

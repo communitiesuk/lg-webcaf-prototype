@@ -31,7 +31,7 @@
 
   <span class="govuk-caption-l">Onboarding</span>
   <h1 class="govuk-heading-l">Set up council roles</h1>
-  <p class="govuk-body">Add the people responsible for leading and approving the CAF work.</p>
+  <p class="govuk-body">Add the people responsible for leading and approving the CAF work. <br/>This can be changed later.</p>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -44,7 +44,7 @@
           <div class="govuk-details__text">
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
               {% for entry in rolesAudit.history | reverse %}
-                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
+                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF Lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
               {% endfor %}
             </ul>
           </div>
@@ -53,7 +53,7 @@
 
       <form method="post" action="/prepare/roles?returnTo={{ returnTo }}">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="onboardingLead">CAF lead</label>
+          <label class="govuk-label" for="onboardingLead">CAF Lead</label>
           {% if error and (error.items | selectattr('field','equalto','onboardingLead') | list | length) > 0 %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
@@ -93,7 +93,7 @@
         <p class="govuk-body-s app-roles-sidebar__intro">This summary updates as you add or change the key roles.</p>
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 app-roles-sidebar__summary">
           <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">CAF lead</dt>
+            <dt class="govuk-summary-list__key">CAF Lead</dt>
             <dd class="govuk-summary-list__value" id="currentOnboardingLead">{{ defaults.onboardingLead or "Not added yet" }}</dd>
           </div>
           <div class="govuk-summary-list__row">

@@ -1,0 +1,92 @@
+{% extends "layouts/main.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/decision/{{ assessment.id }}">Back</a>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="assurer-feedback-sent-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="assurer-feedback-sent-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Feedback has been sent back to the council in this prototype flow.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">Step 5 of 5</span>
+  <h1 class="govuk-heading-l">Feedback summary</h1>
+  <p class="govuk-body">This page shows what the council would receive back from the assurer after review.</p>
+
+  {% if assessment.decision.status == "needs_changes" %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        This submission should be returned to the council. At least one issue still needs clarification before it can move on.
+      </strong>
+    </div>
+  {% endif %}
+
+  {{ govukSummaryList({
+    rows: [
+      {
+        key: { text: "Council" },
+        value: { text: assessment.councilName }
+      },
+      {
+        key: { text: "Assurer outcome" },
+        value: { text: decisionLabel }
+      },
+      {
+        key: { text: "Summary reason" },
+        value: { text: assessment.decision.reason or "Submission can move forward without further council changes." }
+      },
+      {
+        key: { text: "Issues to resolve" },
+        value: { text: issueCount }
+      },
+      {
+        key: { text: "What the council sees next" },
+        value: { text: assessment.councilReturnState.nextStep }
+      }
+    ]
+  }) }}
+
+  <h2 class="govuk-heading-m">Feedback to return to council</h2>
+  {% if groupedComments.length > 0 %}
+    {% for response in groupedComments %}
+      <section class="govuk-!-margin-bottom-5">
+        <h3 class="govuk-heading-s">{{ response.code }}: {{ response.title }}</h3>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for comment in response.comments %}
+            <li>{{ comment.type }}: {{ comment.text }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endfor %}
+  {% else %}
+    <p class="govuk-body">No line-by-line comments were added. The council would only receive the overall decision summary.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Council return state</h2>
+  <p class="govuk-body"><strong>{{ assessment.councilReturnState.status }}</strong></p>
+  <p class="govuk-body">{{ assessment.councilReturnState.nextStep }}</p>
+
+  <h2 class="govuk-heading-m">Why this is enough for alpha</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for assumption in assumptions %}
+      <li>{{ assumption }}</li>
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="/assurer-alpha/feedback/{{ assessment.id }}">
+    <div class="govuk-button-group">
+      {% if not assessment.decision.feedbackSent %}
+        <button class="govuk-button" type="submit">Send feedback</button>
+      {% endif %}
+      <a class="govuk-link" href="/assurer-alpha">Return to submitted assessments</a>
+    </div>
+  </form>
+{% endblock %}

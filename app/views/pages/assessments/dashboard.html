@@ -68,21 +68,6 @@
     </div>
   </section>
 
-  {% if researchRound == "round-2" and not isAssurerView %}
-    <section aria-labelledby="dashboard-registers-heading">
-      <h2 class="govuk-heading-m" id="dashboard-registers-heading">Scope lists</h2>
-      <p class="govuk-body">Use these lists to keep your council's essential services and critical systems up to date throughout the year.</p>
-      <ul class="govuk-list govuk-list--spaced govuk-!-margin-bottom-6">
-        <li>
-          <a class="govuk-link" href="/stages/2/scope/services/review">Essential services list</a>
-        </li>
-        <li>
-          <a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems list</a>
-        </li>
-      </ul>
-    </section>
-  {% endif %}
-
   {% if researchRound == "round-2" and roundTwoWorkQueues %}
     <section aria-labelledby="dashboard-next-actions-heading">
       <h2 class="govuk-heading-m" id="dashboard-next-actions-heading">Next actions</h2>
@@ -148,7 +133,7 @@
                     <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
                   {% endif %}
                 </td>
-                <td class="govuk-table__cell">{% if r.lens == "ad" %}A and D{% else %}B and C{% endif %}</td>
+                <td class="govuk-table__cell">{% if r.lens == "ad" %}Organisation self-assessment{% else %}Critical systems self-assessment{% endif %}</td>
                 <td class="govuk-table__cell"><strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong></td>
                 <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.actionHref }}">{{ r.actionText }}</a></td>
               </tr>
@@ -157,46 +142,6 @@
         </table>
       {% endif %}
     </section>
-  {% endif %}
-
-  {% if researchRound == "round-2" and not isAssurerView %}
-    <p class="govuk-hint">Some CAF work stays outside WebCAF, such as secure evidence storage, architecture mapping and offline drafting.</p>
-  {% endif %}
-
-  {% if researchRound == "round-2" and collaborationState and not isAssurerView %}
-    {% set collaborationRows = [
-      {
-        key: { text: "Status" },
-        value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
-      },
-      {
-        key: { text: "Drafted by" },
-        value: { text: collaborationState.drafterName }
-      },
-      {
-        key: { text: "Reviewer" },
-        value: { text: collaborationState.reviewerName or "Not set" }
-      },
-      {
-        key: { text: "Approver" },
-        value: { text: collaborationState.approverName or "Not set" }
-      }
-    ] %}
-    {% if collaborationState.reviewNotes %}
-      {% set collaborationRows = (collaborationRows.push({
-        key: { text: "Latest review note" },
-        value: { text: collaborationState.reviewNotes }
-      }), collaborationRows) %}
-    {% endif %}
-    {% set collaborationRows = (collaborationRows.push({
-      key: { text: "Next step" },
-      value: { html: '<a class="govuk-link" href="' ~ dashboardNextAction.href ~ '">' ~ dashboardNextAction.text ~ '</a>' }
-    }), collaborationRows) %}
-    {{ appStatusSummary({
-      id: "collaboration-status",
-      heading: "Assessment roles and status",
-      rows: collaborationRows
-    }) }}
   {% endif %}
 
   {% if notifications and notifications.length %}
@@ -300,8 +245,8 @@
               <label class="govuk-label" for="lens">Assessment area</label>
               <select class="govuk-select" id="lens" name="lens">
                 <option value="all" {% if query.lens == "all" %}selected{% endif %}>All</option>
-                <option value="ad" {% if query.lens == "ad" %}selected{% endif %}>A and D</option>
-                <option value="bc" {% if query.lens == "bc" %}selected{% endif %}>B and C</option>
+                <option value="ad" {% if query.lens == "ad" %}selected{% endif %}>Organisation self-assessment (Objectives A and D)</option>
+                <option value="bc" {% if query.lens == "bc" %}selected{% endif %}>Critical systems self-assessment (Objectives B and C)</option>
               </select>
             </div>
           </div>
@@ -356,10 +301,10 @@
         All
       </a>
       <a class="govuk-button {% if query.lens != 'ad' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'ad', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-        Organisational assessment (A and D)
+        Organisation self-assessment (Objectives A and D)
       </a>
       <a class="govuk-button {% if query.lens != 'bc' %}govuk-button--secondary{% endif %}" href="/assessments/current/dashboard?{{ buildQueryString({ lens: 'bc', view: query.view, objective: query.objective, principle: query.principle, status: query.status, owner: query.owner, overdueOnly: query.overdueOnly }) }}">
-        Critical systems assessment (B and C)
+        Critical systems self-assessment (Objectives B and C)
       </a>
     </div>
 
@@ -451,7 +396,7 @@
     </details>
   {% endif %}
 
-  <h2 class="govuk-heading-m">{{ labels.dashboard.resultsHeading }}</h2>
+  <h2 class="govuk-heading-m">All assessment outcomes</h2>
 
   <p class="govuk-body">
     Showing <strong>{{ summaryFiltered.total }}</strong> outcomes.
@@ -510,4 +455,55 @@
       </table>
     {% endfor %}
   {% endfor %}
+
+  {% if researchRound == "round-2" and not isAssurerView %}
+    <section aria-labelledby="dashboard-registers-heading">
+      <h2 class="govuk-heading-m" id="dashboard-registers-heading">Scope lists</h2>
+      <p class="govuk-body">Use these lists to keep your council's essential services and critical systems up to date throughout the year.</p>
+      <ul class="govuk-list govuk-list--spaced govuk-!-margin-bottom-6">
+        <li>
+          <a class="govuk-link" href="/stages/2/scope/services/review">Essential services list</a>
+        </li>
+        <li>
+          <a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems list</a>
+        </li>
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if researchRound == "round-2" and collaborationState and not isAssurerView %}
+    {% set collaborationRows = [
+      {
+        key: { text: "Status" },
+        value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+      },
+      {
+        key: { text: "Drafted by" },
+        value: { text: collaborationState.drafterName }
+      },
+      {
+        key: { text: "Reviewer" },
+        value: { text: collaborationState.reviewerName or "Not set" }
+      },
+      {
+        key: { text: "Approver" },
+        value: { text: collaborationState.approverName or "Not set" }
+      }
+    ] %}
+    {% if collaborationState.reviewNotes %}
+      {% set collaborationRows = (collaborationRows.push({
+        key: { text: "Latest review note" },
+        value: { text: collaborationState.reviewNotes }
+      }), collaborationRows) %}
+    {% endif %}
+    {% set collaborationRows = (collaborationRows.push({
+      key: { text: "Next step" },
+      value: { html: '<a class="govuk-link" href="' ~ dashboardNextAction.href ~ '">' ~ dashboardNextAction.text ~ '</a>' }
+    }), collaborationRows) %}
+    {{ appStatusSummary({
+      id: "collaboration-status",
+      heading: "Assessment roles and status",
+      rows: collaborationRows
+    }) }}
+  {% endif %}
 {% endblock %}

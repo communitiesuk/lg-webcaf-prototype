@@ -1,0 +1,63 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/review/{{ assessment.id }}">Back</a>
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">Step 4 of 5</span>
+  <h1 class="govuk-heading-l">Make a review decision</h1>
+  <p class="govuk-body">Choose whether this submission can move forward as it is or whether it should be returned to the council with changes requested.</p>
+
+  <form method="post" action="/assurer-alpha/decision/{{ assessment.id }}">
+    <div id="assurerAlphaDecisionStatus" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaDecisionStatus') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Review outcome</legend>
+        {% if error and (error.items | selectattr('field','equalto','assurerAlphaDecisionStatus') | list | length) > 0 %}
+          <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaDecisionStatus') | list | first).text }}</p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlphaDecisionStatus-approved" name="assurerAlphaDecisionStatus" type="radio" value="approved" data-aria-controls="conditional-approved" {% if values.status == "approved" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlphaDecisionStatus-approved">Approved</label>
+          </div>
+          <div class="govuk-radios__conditional {% if values.status != 'approved' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-approved">
+            <p class="govuk-body">Use this when the assurer is satisfied the submission is understandable, evidenced, and can move on without another council edit cycle.</p>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlphaDecisionStatus-needs-changes" name="assurerAlphaDecisionStatus" type="radio" value="needs_changes" data-aria-controls="conditional-needs-changes" {% if values.status == "needs_changes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlphaDecisionStatus-needs-changes">Needs changes</label>
+          </div>
+          <div class="govuk-radios__conditional {% if values.status != 'needs_changes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-needs-changes">
+            <div id="assurerAlphaDecisionReason" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaDecisionReason') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+              <label class="govuk-label" for="assurerAlphaDecisionReason">Reason for changes</label>
+              <div class="govuk-hint">Summarise the main point the council must address before resubmitting.</div>
+              {% if error and (error.items | selectattr('field','equalto','assurerAlphaDecisionReason') | list | length) > 0 %}
+                <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaDecisionReason') | list | first).text }}</p>
+              {% endif %}
+              <textarea class="govuk-textarea" id="assurerAlphaDecisionReason" name="assurerAlphaDecisionReason" rows="4">{{ values.reason }}</textarea>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit">Continue to feedback summary</button>
+      <a class="govuk-link" href="/assurer-alpha/review/{{ assessment.id }}">Return to review</a>
+    </div>
+  </form>
+{% endblock %}

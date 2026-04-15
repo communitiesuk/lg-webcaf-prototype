@@ -53,6 +53,16 @@
       </a>
     </p>
   {% endif %}
+  {% if not isAssurerView %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body"><strong>How to use this page</strong></p>
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        <li>Use the IGPs to test your current position, not to produce a perfect answer.</li>
+        <li>Record what is true now, where it happens, and where practice is inconsistent.</li>
+        <li>Reference existing evidence that shows why your judgement is reasonable.</li>
+      </ul>
+    </div>
+  {% endif %}
   {% if openEvidenceRequestCount and openEvidenceRequestCount > 0 %}
     <div class="govuk-inset-text">
       {{ openEvidenceRequestCount }} open evidence request{% if openEvidenceRequestCount != 1 %}s{% endif %} for this outcome.
@@ -322,6 +332,19 @@
 
     <h2 class="govuk-heading-m">{{ labels.outcome.sections.evidence }}</h2>
     <div class="govuk-hint">{{ labels.outcome.hints.evidence }}</div>
+    <details class="govuk-details govuk-!-margin-bottom-4" data-module="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">Help writing evidence references</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet">
+          <li>Use existing documents, records or links. Do not create new artefacts just for CAF.</li>
+          <li>Choose evidence that is relevant and reasonably up to date.</li>
+          <li>Explain what the evidence shows for this outcome, not just what the document is called.</li>
+        </ul>
+        <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> "Board minutes from March 2026 showing cyber risk review, agreed actions and named owners" is stronger than "Board minutes".</p>
+      </div>
+    </details>
     {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
       <p id="evidenceRefs" class="govuk-error-message">
         <span class="govuk-visually-hidden">Error:</span>
@@ -355,7 +378,7 @@
 
           <div class="govuk-form-group">
             <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-description">{{ labels.outcome.fields.evidenceDescription }}</label>
-            <div class="govuk-hint">Explain what the linked evidence shows and why it is relevant. Assurers will need access to it outside WebCAF.</div>
+            <div class="govuk-hint">Explain what the linked evidence shows, why it is relevant to this outcome, and any important limits or context. Assurers will need access to it outside WebCAF.</div>
             <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-description" name="evidenceRefs[{{ loop.index0 }}][description]" rows="3">{{ ref.description }}</textarea>
           </div>
 

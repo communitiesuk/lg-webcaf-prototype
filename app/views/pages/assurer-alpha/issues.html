@@ -1,0 +1,70 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}">Back</a>
+  {% set errorItems = error.items if error else [] %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in errorItems %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}</span>
+  <h1 class="govuk-heading-l">Record missing evidence or issue</h1>
+  <p class="govuk-body">Use this page to say what is missing or unclear so feedback is consistent and easy for the council to act on.</p>
+
+  <form method="post" action="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}/issues">
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIssueCategory') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What is missing or unclear?</legend>
+        {% for item in errorItems if item.field == "assurerIssueCategory" %}
+          <p class="govuk-error-message" id="assurerIssueCategory">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          {% set categoryOptions = [
+            "Evidence reference missing",
+            "Evidence link is too general",
+            "Rationale is unclear",
+            "Judgement does not match the evidence",
+            "Action or ownership is unclear"
+          ] %}
+          {% for option in categoryOptions %}
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="assurerIssueCategory-{{ loop.index }}" name="assurerIssueCategory" type="checkbox" value="{{ option }}" {% if option in values.categories %}checked{% endif %}>
+              <label class="govuk-label govuk-checkboxes__label" for="assurerIssueCategory-{{ loop.index }}">{{ option }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIssueDetail') | list | length %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerIssueDetail">What does the council need to clarify?</label>
+      {% for item in errorItems if item.field == "assurerIssueDetail" %}
+        <p class="govuk-error-message" id="assurerIssueDetail">
+          <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+        </p>
+      {% endfor %}
+      <textarea class="govuk-textarea" id="assurerIssueDetail" name="assurerIssueDetail" rows="6">{{ values.detail }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerIssueAction">Suggested council action (optional)</label>
+      <textarea class="govuk-textarea" id="assurerIssueAction" name="assurerIssueAction" rows="4">{{ values.actionRequested }}</textarea>
+    </div>
+
+    <button class="govuk-button" data-module="govuk-button" type="submit">Save issue</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}">Back</a>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="assurer-review-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="assurer-review-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Comment added to the review summary.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">Step 3 of 5</span>
+  <h1 class="govuk-heading-l">Review submitted responses</h1>
+  <p class="govuk-body">Read each response in a structured format, inspect the linked evidence, and capture feedback for the council.</p>
+
+  <div class="govuk-inset-text">
+    This submitted assessment has {{ assessment.assessmentSummary.evidenceLinks }} linked evidence references across {{ assessment.responses.length }} reviewed responses. {{ issueCount }} issue{% if issueCount != 1 %}s are{% else %} is{% endif %} currently blocking straightforward approval.
+  </div>
+
+  <h2 class="govuk-heading-m">Assurer review lens</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    {% for item in assessment.reviewChecklist %}
+      <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+
+  {% for group in groupedResponses %}
+    <section class="govuk-!-margin-bottom-7">
+      <h2 class="govuk-heading-m">{{ group.name }}</h2>
+      {% for response in group.responses %}
+        <section class="govuk-!-margin-bottom-6">
+          <h3 class="govuk-heading-s">{{ response.code }}: {{ response.title }}</h3>
+          <dl class="govuk-summary-list govuk-!-margin-bottom-4">
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Assessment area</dt>
+              <dd class="govuk-summary-list__value">
+                {{ response.theme }}{% if response.systemName %}<br>{{ response.systemName }}{% endif %}
+              </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Council judgement</dt>
+              <dd class="govuk-summary-list__value">{{ response.judgement }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Priority</dt>
+              <dd class="govuk-summary-list__value">{{ response.priority }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Response summary</dt>
+              <dd class="govuk-summary-list__value">{{ response.summary }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Decision made by council</dt>
+              <dd class="govuk-summary-list__value">{{ response.decisionMade }}</dd>
+            </div>
+          </dl>
+
+          <h4 class="govuk-heading-s">Evidence links</h4>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for item in response.evidence %}
+              <li>
+                <a class="govuk-link" href="{{ item.href }}">{{ item.title }}</a>
+                <span class="govuk-hint">{{ item.description }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+
+          <h4 class="govuk-heading-s">Comments and issues</h4>
+          {% if response.comments.length > 0 %}
+            <ul class="govuk-list">
+              {% for comment in response.comments %}
+                <li class="govuk-!-margin-bottom-2">
+                  <strong>{{ comment.type }}</strong>{% if comment.issue %} <strong class="govuk-tag govuk-tag--yellow">Needs clarification</strong>{% endif %}<br>
+                  {{ comment.text }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="govuk-body">No comments added yet.</p>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </section>
+  {% endfor %}
+
+  <form method="post" action="/assurer-alpha/review/{{ assessment.id }}">
+    <div id="assurerAlphaCommentTarget" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentTarget') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerAlphaCommentTarget">Which response are you commenting on?</label>
+      {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentTarget') | list | length) > 0 %}
+        <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaCommentTarget') | list | first).text }}</p>
+      {% endif %}
+      <select class="govuk-select" id="assurerAlphaCommentTarget" name="assurerAlphaCommentTarget">
+        <option value="">Select a response</option>
+        {% for response in assessment.responses %}
+          <option value="{{ response.id }}" {% if formValues.commentTarget == response.id %}selected{% endif %}>{{ response.code }} - {{ response.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div id="assurerAlphaCommentType" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentType') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Comment type</legend>
+        {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentType') | list | length) > 0 %}
+          <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaCommentType') | list | first).text }}</p>
+        {% endif %}
+        <div class="govuk-radios">
+          {% for type in ["Comment", "Needs clarification", "Evidence check"] %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="assurerAlphaCommentType-{{ loop.index }}" name="assurerAlphaCommentType" type="radio" value="{{ type }}" {% if formValues.commentType == type %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="assurerAlphaCommentType-{{ loop.index }}">{{ type }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div id="assurerAlphaCommentText" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentText') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerAlphaCommentText">Comment for the council</label>
+      <div class="govuk-hint">Use this to ask for clarification, point to a gap, or explain why the judgement is acceptable.</div>
+      {% if error and (error.items | selectattr('field','equalto','assurerAlphaCommentText') | list | length) > 0 %}
+        <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaCommentText') | list | first).text }}</p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="assurerAlphaCommentText" name="assurerAlphaCommentText" rows="4">{{ formValues.commentText }}</textarea>
+    </div>
+
+    <div id="assurerAlphaIssueFlag" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','assurerAlphaIssueFlag') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Does this raise an issue?</legend>
+        {% if error and (error.items | selectattr('field','equalto','assurerAlphaIssueFlag') | list | length) > 0 %}
+          <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ (error.items | selectattr('field','equalto','assurerAlphaIssueFlag') | list | first).text }}</p>
+        {% endif %}
+        <div class="govuk-radios govuk-radios--inline">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlphaIssueFlag-yes" name="assurerAlphaIssueFlag" type="radio" value="yes" {% if formValues.issueFlag == "yes" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlphaIssueFlag-yes">Yes</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlphaIssueFlag-no" name="assurerAlphaIssueFlag" type="radio" value="no" {% if formValues.issueFlag == "no" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlphaIssueFlag-no">No</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button govuk-button--secondary" type="submit" name="assurerAlphaReviewAction" value="add-comment">Add comment</button>
+      <button class="govuk-button" type="submit" name="assurerAlphaReviewAction" value="continue">Continue to decision</button>
+    </div>
+  </form>
+{% endblock %}

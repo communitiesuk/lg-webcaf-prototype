@@ -52,7 +52,7 @@ const COUNCIL_ACCOUNTS = [
         accessRole: ACCESS_ROLES.CAF_LEAD,
         roles: [ROLE_IDS.CAF_LEAD, ROLE_IDS.APPROVER],
         activeRole: ROLE_IDS.CAF_LEAD,
-        roleTitle: "CAF lead",
+        roleTitle: "CAF Lead",
         orgName: "",
         status: "active",
       },
@@ -88,7 +88,7 @@ const COUNCIL_ACCOUNTS = [
         accessRole: ACCESS_ROLES.CAF_LEAD,
         roles: [ROLE_IDS.CAF_LEAD, ROLE_IDS.COLLABORATOR],
         activeRole: ROLE_IDS.CAF_LEAD,
-        roleTitle: "CAF lead",
+        roleTitle: "CAF Lead",
         orgName: "Gloucestershire County Council",
         status: "active",
       },
@@ -210,7 +210,7 @@ function syncCouncilAccountContext(account, councilNameInput, options = {}) {
     account.users.find((user) => user.accessRole === ACCESS_ROLES.CAF_LEAD) ||
     account.users[0] ||
     null;
-  account.contactName = (cafLead && cafLead.name) || "CAF lead";
+  account.contactName = (cafLead && cafLead.name) || "CAF Lead";
   account.contactEmail = (cafLead && cafLead.email) || `caf-lead@${councilDomain}`;
   account.allowlistedEmails = account.users.map((user) => user.email);
 

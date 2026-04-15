@@ -1,0 +1,249 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ returnPath }}">Back</a>
+  {% set errorItems = error.items if error else [] %}
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="review-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="review-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Previous assurance decision saved. Continue with this outcome.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in errorItems %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ assessment.councilName }}</span>
+  <h1 class="govuk-heading-l">{{ outcome.code }} {{ outcome.title }}</h1>
+  {% if outcome.systemName %}
+    <p class="govuk-hint">{{ outcome.systemName }}</p>
+  {% endif %}
+  <p class="govuk-body">{{ outcome.description }}</p>
+
+  {% if outcome.assurerReview %}
+    <div class="govuk-inset-text">
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Latest assurer decision</strong></p>
+      <p class="govuk-body govuk-!-margin-bottom-1">{{ outcome.assurerReview.statusLabel }} on {{ outcome.assurerReview.reviewedAt }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-0">{{ outcome.assurerReview.rationale }}</p>
+    </div>
+  {% endif %}
+
+  {% if outcome.issue and outcome.issue.detail %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-warning-text__assistive">Warning</span>
+        Issue already recorded: {{ outcome.issue.detail }}
+      </strong>
+    </div>
+  {% endif %}
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">As an assurer, you are providing an independent view of this submission on behalf of MHCLG. Your position should be based on the evidence and indicators provided.</p>
+  </div>
+
+  <h2 class="govuk-heading-m">Council submission</h2>
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Council judgement</dt>
+      <dd class="govuk-summary-list__value">{{ outcome.councilJudgement }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Council rationale</dt>
+      <dd class="govuk-summary-list__value">{{ outcome.councilRationale }}</dd>
+    </div>
+  </dl>
+
+  <details class="govuk-details govuk-!-margin-bottom-4">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">View key IGP signals</span>
+    </summary>
+    <div class="govuk-details__text">
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+        {% for signal in outcome.igpSignals %}
+          <li>{{ signal }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </details>
+
+  <details class="govuk-details govuk-!-margin-bottom-6">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">View evidence references</span>
+    </summary>
+    <div class="govuk-details__text">
+      <table class="govuk-table govuk-!-margin-bottom-0">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th class="govuk-table__header" scope="col">Reference</th>
+            <th class="govuk-table__header" scope="col">Evidence</th>
+            <th class="govuk-table__header" scope="col">Why it matters</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for evidence in outcome.evidenceReferences %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ evidence.reference }}</td>
+              <td class="govuk-table__cell"><a class="govuk-link" href="{{ evidence.href }}">{{ evidence.title }}</a></td>
+              <td class="govuk-table__cell">{{ evidence.note }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <form method="post" action="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}">
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerDecision') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" aria-describedby="assurerDecision-hint">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What is your assessment position?</legend>
+        <div id="assurerDecision-hint" class="govuk-hint">Choose one structured position on the council judgement.</div>
+        {% for item in errorItems if item.field == "assurerDecision" %}
+          <p class="govuk-error-message" id="assurerDecision">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerDecision" name="assurerDecision" type="radio" value="agree_judgement" {% if values.decision == "agree_judgement" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerDecision">Agree with council judgement</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerDecision-2" name="assurerDecision" type="radio" value="judgement_may_need_changing" data-aria-controls="conditional-assurerSuggestedJudgement" {% if values.decision == "judgement_may_need_changing" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerDecision-2">Different judgement required</label>
+          </div>
+          <div class="govuk-radios__conditional {% if values.decision != 'judgement_may_need_changing' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-assurerSuggestedJudgement">
+            <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSuggestedJudgement') | list | length %} govuk-form-group--error{% endif %}">
+              <fieldset class="govuk-fieldset">
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Assurer judgement</legend>
+                {% for item in errorItems if item.field == "assurerSuggestedJudgement" %}
+                  <p class="govuk-error-message" id="assurerSuggestedJudgement">
+                    <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+                  </p>
+                {% endfor %}
+                <div class="govuk-radios govuk-radios--small">
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="assurerSuggestedJudgement" name="assurerSuggestedJudgement" type="radio" value="Achieved" {% if values.suggestedJudgement == "Achieved" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="assurerSuggestedJudgement">Achieved</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="assurerSuggestedJudgement-2" name="assurerSuggestedJudgement" type="radio" value="Partially achieved" {% if values.suggestedJudgement == "Partially achieved" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="assurerSuggestedJudgement-2">Partially achieved</label>
+                  </div>
+                  <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="assurerSuggestedJudgement-3" name="assurerSuggestedJudgement" type="radio" value="Not achieved" {% if values.suggestedJudgement == "Not achieved" %}checked{% endif %}>
+                    <label class="govuk-label govuk-radios__label" for="assurerSuggestedJudgement-3">Not achieved</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerDecision-3" name="assurerDecision" type="radio" value="cannot_judge_insufficient_evidence" {% if values.decision == "cannot_judge_insufficient_evidence" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerDecision-3">Cannot assess (insufficient evidence)</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerEvidenceFinding') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What did you find when reviewing the evidence?</legend>
+        {% for item in errorItems if item.field == "assurerEvidenceFinding" %}
+          <p class="govuk-error-message" id="assurerEvidenceFinding">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="assurerEvidenceFinding-1" name="assurerEvidenceFinding" type="checkbox" value="Evidence supports the judgement" {% if "Evidence supports the judgement" in values.evidenceFindings %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="assurerEvidenceFinding-1">Evidence supports the judgement</label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="assurerEvidenceFinding-2" name="assurerEvidenceFinding" type="checkbox" value="Evidence does not support the judgement" {% if "Evidence does not support the judgement" in values.evidenceFindings %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="assurerEvidenceFinding-2">Evidence does not support the judgement</label>
+          </div>
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="assurerEvidenceFinding-3" name="assurerEvidenceFinding" type="checkbox" value="Evidence is missing or unclear" {% if "Evidence is missing or unclear" in values.evidenceFindings %}checked{% endif %}>
+            <label class="govuk-label govuk-checkboxes__label" for="assurerEvidenceFinding-3">Evidence is missing or unclear</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerEvidenceReviewed">Which evidence did you review? (optional)</label>
+      <textarea class="govuk-textarea" id="assurerEvidenceReviewed" name="assurerEvidenceReviewed" rows="4">{{ values.evidenceReviewed }}</textarea>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerAlignmentDecision') | list | length %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Alignment with organisation-level assessment</legend>
+        <div class="govuk-hint">Use this to record whether the organisation-level story is reflected in this outcome.</div>
+        {% for item in errorItems if item.field == "assurerAlignmentDecision" %}
+          <p class="govuk-error-message" id="assurerAlignmentDecision">
+            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+          </p>
+        {% endfor %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlignmentDecision-1" name="assurerAlignmentDecision" type="radio" value="consistent_with_organisation_assessment" {% if values.alignmentDecision == "consistent_with_organisation_assessment" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-1">This is consistent with organisation-level assessment</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlignmentDecision-2" name="assurerAlignmentDecision" type="radio" value="gaps_in_organisation_controls" {% if values.alignmentDecision == "gaps_in_organisation_controls" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-2">This suggests gaps in organisation-level controls</label>
+          </div>
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="assurerAlignmentDecision-3" name="assurerAlignmentDecision" type="radio" value="not_enough_information_alignment" {% if values.alignmentDecision == "not_enough_information_alignment" %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-3">Not enough information to assess</label>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerAlignmentExplanation">Explain any misalignment (optional)</label>
+      <textarea class="govuk-textarea" id="assurerAlignmentExplanation" name="assurerAlignmentExplanation" rows="4">{{ values.alignmentExplanation }}</textarea>
+    </div>
+
+    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerRationale') | list | length %} govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="assurerRationale">Assurer rationale</label>
+      <div class="govuk-hint">Explain the evidence for your position briefly.</div>
+      {% for item in errorItems if item.field == "assurerRationale" %}
+        <p class="govuk-error-message" id="assurerRationale">
+          <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
+        </p>
+      {% endfor %}
+      <textarea class="govuk-textarea" id="assurerRationale" name="assurerRationale" rows="6">{{ values.rationale }}</textarea>
+    </div>
+
+    <div class="govuk-form-group">
+      <label class="govuk-label govuk-label--m" for="assurerNextAction">Suggested next action (optional)</label>
+      <div class="govuk-hint">For example, the council may need to add a clearer reference, tighten the rationale or revise the judgement.</div>
+      <textarea class="govuk-textarea" id="assurerNextAction" name="assurerNextAction" rows="4">{{ values.nextAction }}</textarea>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      <a class="govuk-link" href="/assurer-alpha/assessment/{{ assessment.id }}/outcomes/{{ outcome.id }}/issues">Record missing evidence or issue</a>
+    </div>
+  </form>
+{% endblock %}

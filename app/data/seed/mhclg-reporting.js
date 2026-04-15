@@ -65,7 +65,7 @@ module.exports = {
   ],
   bestPractice: [
     {
-      label: "Shared evidence register template for CAF leads",
+      label: "Shared evidence register template for CAF Leads",
       value: "Adopted by 3 councils",
     },
     {

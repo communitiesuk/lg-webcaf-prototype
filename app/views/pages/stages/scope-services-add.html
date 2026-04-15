@@ -6,7 +6,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  {% set headingText = "Add an essential service" %}
+  {% set headingText = "Add essential services" %}
   {% if isEdit %}
     {% set headingText = "Change an essential service" %}
   {% endif %}
@@ -15,22 +15,28 @@
   {{ appErrorSummary(error) }}
 
   {{ appPageHeader({
-    caption: "Essential services register" if researchRound == "round-2" else "",
+    caption: "Essential services list" if researchRound == "round-2" else "",
     title: headingText if researchRound == "round-2" else pageTitle,
-    intro: "Update the essential service details for your CAF scope register." if isEdit else ("Add a service your council needs to keep running. You can review and update this register over time." if researchRound == "round-2" else "Add an essential service to your CAF scope register."),
-    hint: "Essential services are the services your council needs to keep running." if researchRound == "round-2" else ""
+    intro: "Update the essential service details for your CAF scope register." if isEdit else ("Add the services that are essential to delivering your council's mission and day-to-day operations. You can review and update this list over time." if researchRound == "round-2" else "Add an essential service to your CAF scope register."),
+    guidanceHeading: "",
+    guidanceItems: []
   }) }}
 
-  {% if researchRound == "round-2" %}
-    <div class="govuk-inset-text">
-      <p class="govuk-body"><strong>What to include</strong></p>
-      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>Use the name people in the council would recognise for the service.</li>
-        <li>Only add services the council needs to keep running.</li>
-        <li>Critical systems will be mapped to these services later.</li>
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">What counts as an essential service</span>
+    </summary>
+    <div class="govuk-details__text">
+      <p class="govuk-body">An essential service is something residents, service users or the council rely on the authority to keep delivering.</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>Examples include waste collection, adult social care, benefits administration and housing support.</li>
+        <li>Use the service name people in the council would recognise.</li>
+        <li>Do not add teams, projects, software or infrastructure here.</li>
+        <li>If you are naming a platform, supplier or technology, add it later as a critical system instead.</li>
       </ul>
+      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> "Adult social care" is an essential service. "Liquidlogic" or "case management platform" is a critical system that supports that service.</p>
     </div>
-  {% endif %}
+  </details>
 
   <form method="post" action="{{ formAction or '/stages/2/scope/services/add' }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
@@ -41,13 +47,13 @@
           {{ (error.items | selectattr('field','equalto','serviceName') | list | first).text }}
         </p>
       {% endif %}
-      <div class="govuk-hint">Such as `Adult social care`, `Housing support` or `Waste collection`.</div>
+      <div class="govuk-hint">Such as Adult social care, Housing support or Waste collection.</div>
       <input class="govuk-input" id="serviceName" name="serviceName" type="text" value="{{ data.name }}">
     </div>
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="serviceDescription">What does this service do?</label>
-      <div class="govuk-hint">Include who it supports or what it enables the council to deliver.</div>
+      <div class="govuk-hint">Include who it supports, what it enables the council to deliver, and what would be affected if it stopped.</div>
       <textarea class="govuk-textarea" id="serviceDescription" name="serviceDescription" rows="3">{{ data.description }}</textarea>
     </div>
 

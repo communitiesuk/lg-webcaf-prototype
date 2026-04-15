@@ -293,11 +293,11 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
       value: annualSetupComplete ? "Completed" : "Not started",
     },
     {
-      key: "A and D",
+      key: "Organisation self-assessment (Objectives A and D)",
       value: adComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
     },
     {
-      key: "B and C",
+      key: "Critical systems self-assessment (Objectives B and C)",
       value: bcComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
     },
     {
@@ -467,7 +467,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
     seededOutcome.history = [
       {
         at: addDays(now, -5).toISOString(),
-        by: currentUser && currentUser.name ? currentUser.name : "CAF lead",
+        by: currentUser && currentUser.name ? currentUser.name : "CAF Lead",
         summary: "Drafted governance update and agreed next steps.",
         status: "in_progress",
         statusLabel: "In progress",
@@ -551,7 +551,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
         sourceId: "A1a",
         title: "Improve board reporting cadence for cyber risks",
         priority: "high",
-        owner: "CAF lead",
+        owner: "CAF Lead",
         dueDate: toISODate(addDays(now, 45)),
         expectedEvidence: "Board pack with quarterly cyber risk update",
         evidenceRef: "EVID-BOARD-01",
@@ -595,7 +595,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
         sourceId: "A1b",
         title: "Clarify ownership and responsibilities across teams",
         priority: "high",
-        owner: "CAF lead",
+        owner: "CAF Lead",
         dueDate: toISODate(addDays(now, 90)),
         expectedEvidence: "Updated accountability map and role sign-off",
         evidenceRef: "EVID-ROLE-04",
@@ -625,7 +625,7 @@ function seedPrototypeData(assessment, currentUser, options = {}) {
 
   if (!assessment.submission || !assessment.submission.submittedBy) {
     assessment.submission = {
-      submittedBy: "CAF lead",
+      submittedBy: "CAF Lead",
       submittedAt: toISODate(addDays(now, -1)),
       method: "portal",
       reference: "MHCLG-REF-102",

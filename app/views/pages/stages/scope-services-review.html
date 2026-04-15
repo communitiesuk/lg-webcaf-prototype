@@ -33,8 +33,8 @@
   {% endif %}
 
   {% if roundTwo %}
-  <span class="govuk-caption-l">Essential services register</span>
-  <h1 class="govuk-heading-l">Manage services</h1>
+  <span class="govuk-caption-l">Essential services list</span>
+  <h1 class="govuk-heading-l">Manage your essential services</h1>
     <p class="govuk-body">Add and review the essential services your council needs to keep running. When you are ready, continue to the critical systems register.</p>
     <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
       <summary class="govuk-details__summary">
@@ -52,8 +52,8 @@
     </p>
     {% if services.length > 0 %}
       <div class="govuk-inset-text">
-        <p class="govuk-body"><strong>Register summary</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-0">{{ services.length }} services listed in the register.</p>
+        <p class="govuk-body"><strong>List summary</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ services.length }} essential services listed.</p>
       </div>
     {% endif %}
   {% else %}

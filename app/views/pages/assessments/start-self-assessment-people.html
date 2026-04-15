@@ -48,6 +48,8 @@
     </div>
   {% endif %}
 
+  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">Step 1 of 2</p>
+
   {{ appPageHeader({
     caption: "Self-assessment",
     title: "Assign people to contributing outcomes",
@@ -73,15 +75,20 @@
       <tbody class="govuk-table__body">
         {% for person in contributors %}
           <tr class="govuk-table__row">
-            <td class="govuk-table__cell">{{ person.name }}</td>
+            <td class="govuk-table__cell">
+              {{ person.name }}
+              {% if person.isLead %}
+                <div class="govuk-!-margin-top-1">
+                  <strong class="govuk-tag govuk-tag--blue">CAF Lead</strong>
+                </div>
+              {% endif %}
+            </td>
             <td class="govuk-table__cell">{{ person.email }}</td>
             <td class="govuk-table__cell">
               {% if not person.isLead %}
                 <form method="post" action="/assessments/current/start-self-assessment/people/{{ person.id }}/remove" class="govuk-!-margin-bottom-0">
                   <button class="app-link-button" type="submit">Remove</button>
                 </form>
-              {% else %}
-                <strong class="govuk-tag govuk-tag--blue">CAF lead</strong>
               {% endif %}
             </td>
           </tr>

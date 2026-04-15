@@ -39,6 +39,10 @@
     intro: "Check the draft, use the links below to request edits where needed, then either send it back or move it to approval."
   }) }}
 
+  <div class="govuk-inset-text">
+    Review for substance, not just completeness. Check whether the judgement is evidence-based, consistent with the draft overall, and realistic for how the council actually operates.
+  </div>
+
   {{ appStatusSummary({
     id: "review-status",
     heading: "Assessment roles and status",
@@ -123,7 +127,7 @@
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','reviewAssessmentNotes') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <label class="govuk-label" for="reviewAssessmentNotes">Review note</label>
-      <div class="govuk-hint">Explain what needs changing if you are sending this back.</div>
+      <div class="govuk-hint">If you are sending this back, be specific about what needs to change, which outcome it affects, and what would make the draft ready.</div>
       {% if error and (error.items | selectattr('field','equalto','reviewAssessmentNotes') | list | length) > 0 %}
         <p class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>

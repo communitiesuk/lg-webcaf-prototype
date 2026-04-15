@@ -21,7 +21,7 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Critical systems register</span>
+  <span class="govuk-caption-l">Critical systems list</span>
   <h1 class="govuk-heading-l">Which essential services does {{ system.name }} support?</h1>
   <p class="govuk-body">Select one or more essential services to show what this system supports.</p>
   <p class="govuk-body-s govuk-hint">Last updated on {{ systemLastUpdatedDisplay }}</p>
@@ -33,7 +33,9 @@
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
         <li>Select every essential service that depends on this system.</li>
         <li>You will set the system's priority on the next page.</li>
+        <li>A system can support more than one service, and a service can depend on more than one system.</li>
       </ul>
+      <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0"><strong>Ask yourself:</strong> if this system failed or was compromised, which council services would residents or staff feel the impact in?</p>
     </div>
   </details>
 

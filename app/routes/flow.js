@@ -197,7 +197,7 @@ module.exports = function (router) {
     const onboardingContributors = (req.session.data.onboardingContributors || "").toString().trim();
     const errors = [];
     if (!onboardingLead) {
-      errors.push({ field: "onboardingLead", text: "Enter the CAF lead." });
+      errors.push({ field: "onboardingLead", text: "Enter the CAF Lead." });
     }
     if (!onboardingApprover) {
       errors.push({ field: "onboardingApprover", text: "Enter the approver." });
@@ -332,7 +332,7 @@ module.exports = function (router) {
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
     const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo) {
+    if (roundTwo && !usesCompactCafJudgementPage({ lens: "ad", outcome })) {
       const igpAssessments = buildIgpAssessmentForm(saved.igpAssessments, outcome);
       const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
       const destination = igpAssessments.every(hasCompletedIgpResponse)
@@ -352,8 +352,7 @@ module.exports = function (router) {
           progressLinkText: "Return to outcome overview",
         };
 
-    res.render("pages/flow/self-assess-outcome", {
-      pageTitle: roundTwo ? buildOutcomeWorkspaceTitle(outcome) : buildOutcomeOverviewTitle(outcome),
+    return renderSelfAssessOutcome(res, {
       labels,
       assessment,
       context,
@@ -362,7 +361,6 @@ module.exports = function (router) {
         targetLevel: getOutcomeTargetLevel(outcome),
         igpResponse: saved.igpResponse || "",
         igpAssessments: buildIgpAssessmentForm(saved.igpAssessments, outcome),
-        igpJudgementHint: buildIgpJudgementHint(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
         igpSynthesis: buildIgpSynthesis(buildIgpAssessmentForm(saved.igpAssessments, outcome)),
         judgement: saved.judgement || "",
         judgementOptions: roundTwo ? getRoundTwoJudgementOptions() : labels.flow.selfAssessOutcome.judgementOptions,
@@ -454,7 +452,6 @@ module.exports = function (router) {
     if (!statement.maturity) errors.push({ field: "statement-maturity", text: "Select the maturity level for this statement." });
     if (!statement.rationale.trim()) errors.push({ field: "statement-rationale", text: "Enter the rationale for this statement." });
     if (!statement.evidenceNote.trim()) errors.push({ field: "statement-evidence-note", text: "Enter an evidence note for this statement." });
-    if (!statement.confidence) errors.push({ field: "statement-confidence-low", text: "Select the confidence level for this statement." });
 
     if (errors.length > 0) {
       return renderRoundTwoIgpStatement(res, {
@@ -625,7 +622,7 @@ module.exports = function (router) {
 
     const action = (req.session.data.action || "").toString();
     const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo) {
+    if (roundTwo && !usesCompactCafJudgementPage({ lens: "ad", outcome })) {
       return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
     }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
@@ -802,6 +799,7 @@ module.exports = function (router) {
     }
 
     const errors = validateSelfAssess({
+      igpResponse,
       igpAssessments,
       judgement,
       mismatchReason,
@@ -1183,7 +1181,6 @@ module.exports = function (router) {
     if (!statement.maturity) errors.push({ field: "statement-maturity", text: "Select the maturity level for this statement." });
     if (!statement.rationale.trim()) errors.push({ field: "statement-rationale", text: "Enter the rationale for this statement." });
     if (!statement.evidenceNote.trim()) errors.push({ field: "statement-evidence-note", text: "Enter an evidence note for this statement." });
-    if (!statement.confidence) errors.push({ field: "statement-confidence-low", text: "Select the confidence level for this statement." });
 
     if (errors.length > 0) {
       return renderRoundTwoIgpStatement(res, {
@@ -1529,6 +1526,7 @@ module.exports = function (router) {
     }
 
     const errors = validateSelfAssess({
+      igpResponse,
       igpAssessments,
       judgement,
       mismatchReason,
@@ -1974,7 +1972,7 @@ module.exports = function (router) {
     }
 
     approvals.signedOffAt = new Date().toISOString();
-    approvals.signedOffBy = req.session.data.user ? req.session.data.user.name : "CAF lead";
+    approvals.signedOffBy = req.session.data.user ? req.session.data.user.name : "CAF Lead";
     assessment.improvementPlan.stage2.internalApprovals = approvals;
     assessment.improvementPlan.stage2.status =
       assessment.improvementPlan.stage2.status === "rework_in_progress"
@@ -2029,7 +2027,7 @@ module.exports = function (router) {
     }
 
     assessment.improvementPlan.stage2.assurerReview.submittedAt = new Date().toISOString();
-    assessment.improvementPlan.stage2.assurerReview.submittedBy = req.session.data.user ? req.session.data.user.name : "CAF lead";
+    assessment.improvementPlan.stage2.assurerReview.submittedBy = req.session.data.user ? req.session.data.user.name : "CAF Lead";
     assessment.improvementPlan.stage2.status = "submitted_to_assurer";
     assessment.improvementPlan.stage2.timeline.lastUpdatedAt = new Date().toISOString();
     assessment.updatedAt = new Date().toISOString();
@@ -2138,7 +2136,7 @@ module.exports = function (router) {
 
     assessment.improvementPlan.stage2.mhclgSubmission = {
       submittedAt: new Date().toISOString(),
-      submittedBy: req.session.data.user ? req.session.data.user.name : "CAF lead",
+      submittedBy: req.session.data.user ? req.session.data.user.name : "CAF Lead",
       reference,
       notes,
     };
@@ -2705,12 +2703,20 @@ function buildRoundTwoOutcomeContext({ lens, tree, outcome, system, nextOutcomeI
     systemName: bc && system ? system.name : "",
   });
   const returnContext = getRoundTwoOutcomeReturnContext(lens, bc && system ? system.id : "");
+  const cafJudgementPage = usesCompactCafJudgementPage({ lens, outcome });
   return {
     roundTwo: true,
+    cafJudgementPage,
     lens,
-    caption: bc ? "B and C self-assessment" : "A and D self-assessment",
+    caption: bc
+      ? "Critical systems self-assessment (Objectives B and C)"
+      : "Organisation self-assessment (Objectives A and D)",
+    sectionCaption: !bc && outcome && outcome.id === "A1a" ? "Objective A · Principle A1 Governance" : "",
     backLink: bc ? `/self-assess/bc/${encodeURIComponent(system.id)}` : "/assessments/current/self-assessment/ad",
-    heading: buildOutcomeWorkspaceTitle(outcome),
+    heading:
+      cafJudgementPage && outcome && outcome.id === "A1a"
+        ? "A1.a Board direction"
+        : buildOutcomeWorkspaceTitle(outcome),
     intro: outcome && outcome.description ? outcome.description : "",
     systemName: bc && system ? system.name : "",
     systemId: bc && system ? system.id : "",
@@ -2731,7 +2737,7 @@ function buildRoundTwoOutcomeProgressText(tree, outcome, options = {}) {
   if (options.systemName) {
     return `Outcome ${current} of ${total} for ${options.systemName}`;
   }
-  return `Outcome ${current} of ${total} in A and D`;
+  return `Outcome ${current} of ${total}`;
 }
 
 function getRoundTwoJudgementOptions() {
@@ -2740,6 +2746,10 @@ function getRoundTwoJudgementOptions() {
     { value: "Partially achieved", text: "Partially achieved" },
     { value: "Not achieved", text: "Not achieved" },
   ];
+}
+
+function usesCompactCafJudgementPage({ lens, outcome }) {
+  return lens === "ad" && outcome && outcome.id === "A1a";
 }
 
 function getRoundTwoMaturityOptions() {
@@ -2769,63 +2779,38 @@ function getPrototypeIgpStatements(outcome) {
     A1a: [
       {
         group: "notAchieved",
-        groupLabel: "Not achieved",
+        groupLabel: "Signals from indicators of good practice",
+        captureMode: "signal",
         statement:
-          "The security of network and information systems related to the operation of essential function(s) is not discussed or reported on regularly at board-level.",
+          "Security of network and information systems related to the operation of essential functions is not discussed or reported on regularly at board level.",
       },
       {
         group: "notAchieved",
-        groupLabel: "Not achieved",
+        groupLabel: "Signals from indicators of good practice",
+        captureMode: "signal",
         statement:
-          "Board-level discussions on the security of network and information systems are based on partial or out-of-date information, without the benefit of expert guidance.",
-      },
-      {
-        group: "notAchieved",
-        groupLabel: "Not achieved",
-        statement:
-          "The security of network and information systems supporting your essential function(s) are not driven effectively by the direction set at board-level.",
-      },
-      {
-        group: "notAchieved",
-        groupLabel: "Not achieved",
-        statement:
-          "Senior management or other pockets of the organisation consider themselves exempt from some policies or expect special accommodations to be made.",
+          "Board-level discussions on security are based on partial or out-of-date information, without expert guidance.",
       },
       {
         group: "achieved",
-        groupLabel: "Achieved",
+        groupLabel: "Signals from indicators of good practice",
+        captureMode: "signal",
         statement:
-          "Your organisation's approach and policy relating to the security of network and information systems supporting the operation of essential function(s) are owned and managed at board-level. These are communicated, in a meaningful way, to risk management decision-makers across the organisation.",
+          "There is a board-level individual with overall accountability for security of network and information systems.",
       },
       {
         group: "achieved",
-        groupLabel: "Achieved",
+        groupLabel: "Signals from indicators of good practice",
+        captureMode: "signal",
         statement:
-          "Regular board-level discussions on the security of network and information systems supporting the operation of your essential function(s) take place, based on timely and accurate information and informed by expert guidance.",
+          "Direction set at board level is translated into effective organisational practices.",
       },
       {
         group: "achieved",
-        groupLabel: "Achieved",
+        groupLabel: "Signals from indicators of good practice",
+        captureMode: "signal",
         statement:
-          "There is a board-level individual who has overall accountability for the security of network and information systems and drives regular discussion at board-level.",
-      },
-      {
-        group: "achieved",
-        groupLabel: "Achieved",
-        statement:
-          "Direction set at board-level is translated into effective organisational practices that direct and control the security of the network and information systems supporting your essential functions(s).",
-      },
-      {
-        group: "achieved",
-        groupLabel: "Achieved",
-        statement:
-          "The board has the information and understanding needed in order to effectively discuss how the security and resilience of network and information systems contributes to the delivery of essential function(s) and what the potential impact from compromise of those systems would be.",
-      },
-      {
-        group: "achieved",
-        groupLabel: "Achieved",
-        statement:
-          "Security is recognised as an important enabler for the resilience of your essential function(s) and considered in all relevant discussions.",
+          "Security is recognised as an important enabler for resilience of essential functions.",
       },
     ],
     B1a: [
@@ -2913,14 +2898,16 @@ function buildIgpAssessmentForm(saved, outcome) {
   return getPrototypeIgpStatements(outcome).map((statement, idx) => {
     const prior = existing[idx] || {};
     const response = (prior.response || "").toString();
+    const maturity = (prior.maturity || mapLegacyIgpResponseToMaturity(response) || "").toString();
     return {
       id: `igp-${idx + 1}`,
       statement: statement.statement,
       group: statement.group || "standard",
       groupLabel: statement.groupLabel || "Indicators of good practice",
+      captureMode: statement.captureMode || "statement",
       guidance: buildIgpStatementGuidance(statement),
-      maturity:
-        (prior.maturity || mapLegacyIgpResponseToMaturity(response) || "").toString(),
+      maturity,
+      signalResponse: mapMaturityToSignalResponse(maturity),
       rationale: (prior.rationale || "").toString(),
       evidenceNote: (prior.evidenceNote || "").toString(),
       confidence: (prior.confidence || "").toString(),
@@ -2929,6 +2916,9 @@ function buildIgpAssessmentForm(saved, outcome) {
 }
 
 function buildIgpStatementGuidance(statement) {
+  if (statement && statement.captureMode === "signal") {
+    return "Record how far this signal reflects the current position, based on the best evidence available now.";
+  }
   const group = statement && statement.group ? statement.group : "standard";
   if (group === "achieved") {
     return "Judge how consistently this expected practice is in place today, using current evidence rather than intent.";
@@ -2947,6 +2937,20 @@ function mapLegacyIgpResponseToMaturity(response) {
   return "";
 }
 
+function mapSignalResponseToMaturity(response) {
+  if (response === "Fully reflects") return "Fully in place";
+  if (response === "Partially reflects") return "Mostly in place";
+  if (response === "Does not reflect") return "Not in place";
+  return "";
+}
+
+function mapMaturityToSignalResponse(maturity) {
+  if (maturity === "Fully in place") return "Fully reflects";
+  if (maturity === "Mostly in place" || maturity === "Partially in place") return "Partially reflects";
+  if (maturity === "Not in place") return "Does not reflect";
+  return "";
+}
+
 function hasStartedIgpAssessment(item) {
   if (!item) return false;
   return Boolean(
@@ -2958,6 +2962,9 @@ function hasStartedIgpAssessment(item) {
 }
 
 function hasCompletedIgpResponse(item) {
+  if (item && item.captureMode === "signal") {
+    return Boolean(item.signalResponse && item.signalResponse.toString().trim());
+  }
   return Boolean(
     item &&
     item.maturity &&
@@ -2992,8 +2999,18 @@ function normaliseIgpAssessments(raw, existing, outcome) {
       statement: item.statement,
       group: item.group,
       groupLabel: item.groupLabel,
+      captureMode: item.captureMode,
       guidance: item.guidance,
-      maturity: ((incoming && incoming.maturity) || item.maturity || "").toString(),
+      maturity: (
+        mapSignalResponseToMaturity(((incoming && incoming.signalResponse) || "").toString()) ||
+        ((incoming && incoming.maturity) || item.maturity || "").toString()
+      ),
+      signalResponse: (
+        (incoming && incoming.signalResponse) ||
+        mapMaturityToSignalResponse(((incoming && incoming.maturity) || item.maturity || "").toString()) ||
+        item.signalResponse ||
+        ""
+      ).toString(),
       rationale: ((incoming && incoming.rationale) || item.rationale || "").toString(),
       evidenceNote: ((incoming && incoming.evidenceNote) || item.evidenceNote || "").toString(),
       confidence: ((incoming && incoming.confidence) || item.confidence || "").toString(),
@@ -3029,6 +3046,7 @@ function remapSingleStatementSubmission(raw, statementIndex) {
 function buildIgpJudgementHint(igpAssessments) {
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
   if (!items.length) return null;
+  const signalMode = items.some((item) => item.captureMode === "signal");
 
   const usesCriteriaSelection = items.some(
     (item) => item.group === "achieved" || item.group === "notAchieved"
@@ -3041,8 +3059,10 @@ function buildIgpJudgementHint(igpAssessments) {
   if (!allAnswered) {
     return {
       state: "incomplete",
-      title: "Complete the statement review first.",
-      text: "Answer every statement to see a reliable steer on the overall judgement.",
+      title: signalMode ? "Complete the signals first." : "Complete the statement review first.",
+      text: signalMode
+        ? "Record how each signal reflects the current position before finalising the judgement."
+        : "Answer every statement to see a reliable steer on the overall judgement.",
     };
   }
 
@@ -3065,23 +3085,29 @@ function buildIgpJudgementHint(igpAssessments) {
     if (achievedAllYes && !negativeTriggered && !negativeMixed) {
       return {
         state: "met",
-        title: "This pattern suggests the outcome may be met.",
-        text: "All achieved statements are in place and none of the not achieved statements appear to apply. You should still use your judgement and supporting evidence.",
+        title: signalMode ? "The signals support an achieved judgement." : "This pattern suggests the outcome may be met.",
+        text: signalMode
+          ? "Positive signals reflect the current position and the negative signals do not. Use your evidence and judgement before deciding the outcome."
+          : "All achieved statements are in place and none of the not achieved statements appear to apply. You should still use your judgement and supporting evidence.",
       };
     }
 
     if (achievedHasGap || negativeTriggered) {
       return {
         state: "not-met",
-        title: "This pattern suggests the outcome may not be met.",
-        text: "One or more achieved statements are not in place, or one or more not achieved statements still appears to apply. Review the evidence before finalising your judgement.",
+        title: signalMode ? "The signals point away from achieved." : "This pattern suggests the outcome may not be met.",
+        text: signalMode
+          ? "One or more negative signals still reflects the current position, or a positive signal does not. Review the evidence before finalising the judgement."
+          : "One or more achieved statements are not in place, or one or more not achieved statements still appears to apply. Review the evidence before finalising your judgement.",
       };
     }
 
     return {
       state: "mixed",
-      title: "The picture is mixed.",
-      text: "Some statements are marked as not applicable or use an alternative control. Use your rationale to explain the current position and why you selected the overall judgement.",
+      title: signalMode ? "The signals are mixed." : "The picture is mixed.",
+      text: signalMode
+        ? "The signals do not point clearly to a single judgement. Use the synthesis and rationale to explain how you reached your decision."
+        : "Some statements are marked as not applicable or use an alternative control. Use your rationale to explain the current position and why you selected the overall judgement.",
     };
   }
 
@@ -3125,6 +3151,15 @@ function buildIgpSynthesis(igpAssessments) {
   };
 }
 
+function buildSignalSummary(igpAssessments) {
+  const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  return {
+    fullyReflects: items.filter((item) => item.signalResponse === "Fully reflects").length,
+    partiallyReflects: items.filter((item) => item.signalResponse === "Partially reflects").length,
+    doesNotReflect: items.filter((item) => item.signalResponse === "Does not reflect").length,
+  };
+}
+
 function findFirstIncompleteIgpIndex(igpAssessments) {
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
   const index = items.findIndex((item) => !hasCompletedIgpResponse(item));
@@ -3134,8 +3169,9 @@ function findFirstIncompleteIgpIndex(igpAssessments) {
 function buildRoundTwoOutcomeJudgement(igpAssessments) {
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
   if (!items.length || items.some((item) => !hasCompletedIgpResponse(item))) return "";
-  if (items.every((item) => item.maturity === "Fully in place")) return "Achieved";
-  if (items.some((item) => item.maturity === "Not in place")) return "Not achieved";
+  const hint = buildIgpJudgementHint(items);
+  if (hint && hint.state === "met") return "Achieved";
+  if (hint && hint.state === "not-met") return "Not achieved";
   return "Partially achieved";
 }
 
@@ -3144,6 +3180,14 @@ function buildRoundTwoOutcomeSummary(igpAssessments) {
   const synthesis = buildIgpSynthesis(items);
   const total = items.length;
   if (!total) return "";
+  if (items.some((item) => item.captureMode === "signal")) {
+    const signalSummary = buildSignalSummary(items);
+    return [
+      `${signalSummary.fullyReflects} fully reflect`,
+      `${signalSummary.partiallyReflects} partially reflect`,
+      `${signalSummary.doesNotReflect} do not reflect`,
+    ].join(", ");
+  }
   return [
     `${synthesis.strengths} fully in place`,
     `${synthesis.partials} mostly in place`,
@@ -3427,7 +3471,7 @@ function getIipContributors(assessment, currentUser) {
   if (currentUser && currentUser.id && !list.find((p) => p.id === currentUser.id)) {
     list.unshift({
       id: currentUser.id,
-      name: currentUser.name || "CAF lead",
+      name: currentUser.name || "CAF Lead",
       email: currentUser.email || "",
       role: "council",
     });
@@ -3767,6 +3811,9 @@ function getCollaborationActor(user) {
 function renderSelfAssessOutcome(res, { labels, assessment, outcome, context, form, error }) {
   if (context && context.roundTwo && form && Array.isArray(form.igpAssessments)) {
     form.igpJudgementHint = buildIgpJudgementHint(form.igpAssessments);
+    if (context.cafJudgementPage) {
+      form.signalSummary = buildSignalSummary(form.igpAssessments);
+    }
   }
   if (context && context.roundTwo && form) {
     form.previousAssessment = buildPreviousAssessmentSummary(assessment, context, outcome);
@@ -3896,6 +3943,7 @@ function buildPreviousAssessmentSummary(assessment, context, outcome) {
 }
 
 function validateSelfAssess({
+  igpResponse,
   igpAssessments,
   judgement,
   mismatchReason,
@@ -3907,8 +3955,14 @@ function validateSelfAssess({
 }) {
   const errors = [];
   const items = Array.isArray(igpAssessments) ? igpAssessments : [];
+  const signalMode = items.some((item) => item.captureMode === "signal");
   if (items.length > 0 && items.some((item) => !hasCompletedIgpResponse(item))) {
-    errors.push({ field: "igpAssessments", text: "Complete the IGP responses before saving this outcome." });
+    errors.push({
+      field: "igpAssessments",
+      text: signalMode
+        ? "Select how each signal reflects the current position."
+        : "Complete the IGP responses before saving this outcome.",
+    });
   }
   if (requireReuseDecision && !reuseDecision) {
     errors.push({ field: "reuseDecision", text: "Choose how you want to use the previous assessment." });
@@ -3917,7 +3971,12 @@ function validateSelfAssess({
     errors.push({ field: "judgement", text: labels.flow.selfAssessOutcome.errors.judgementRequired });
   }
   if (mismatch && !mismatchReason) {
-    errors.push({ field: "mismatchReason", text: "Explain why your judgement differs from the evidence." });
+    errors.push({
+      field: "mismatchReason",
+      text: signalMode
+        ? "Explain why your judgement differs from what the signals suggest."
+        : "Explain why your judgement differs from the evidence.",
+    });
   }
   if (!rationale) {
     errors.push({ field: "rationale", text: labels.flow.selfAssessOutcome.errors.rationaleRequired });

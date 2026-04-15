@@ -9,6 +9,9 @@
   <p class="govuk-body govuk-!-margin-bottom-6">
     <a class="govuk-link" href="/assessments/current/assurance-report">Back to assurance report</a>
   </p>
+  <div class="govuk-inset-text">
+    Respond to the specific gap the assurer has raised. Clarify the evidence or rationale directly, rather than rewriting unrelated parts of the assessment.
+  </div>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -50,6 +53,7 @@
         <form method="post" action="/assessments/current/evidence-requests/{{ item.id }}/respond">
           <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
             <label class="govuk-label" for="evidenceResponseText-{{ item.id }}">Clarification response</label>
+            <div class="govuk-hint">Say what the evidence shows, where it can be found, and anything the assurer should understand about context or limitations.</div>
             <textarea class="govuk-textarea" id="evidenceResponseText-{{ item.id }}" name="evidenceResponseText" rows="4"></textarea>
           </div>
           <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">

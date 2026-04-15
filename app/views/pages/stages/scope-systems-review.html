@@ -43,8 +43,8 @@
   {% endif %}
 
   {% if researchRound == "round-2" %}
-  <span class="govuk-caption-l">Critical systems register</span>
-  <h1 class="govuk-heading-l">Manage systems</h1>
+  <span class="govuk-caption-l">Critical systems list</span>
+  <h1 class="govuk-heading-l">Manage your critical systems</h1>
     <p class="govuk-body">Add and maintain the full list of systems that support your essential services.</p>
     <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
     <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
@@ -73,9 +73,9 @@
     {% endfor %}
     {% if systems.length > 0 %}
       <div class="govuk-inset-text">
-        <p class="govuk-body"><strong>Register summary</strong></p>
+        <p class="govuk-body"><strong>List summary</strong></p>
         <p class="govuk-body govuk-!-margin-bottom-0">
-          {{ systems.length }} systems listed, {{ mappedCount }} mapped to services, {{ prioritisedCount }} with a priority set.
+          {{ systems.length }} critical system(s) listed, {{ mappedCount }} mapped to services, {{ prioritisedCount }} with a priority set.
         </p>
       </div>
     {% endif %}

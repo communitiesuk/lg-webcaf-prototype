@@ -352,7 +352,7 @@ function buildOnboardingTasks(assessment) {
     {
       title: "Set up council roles",
       href: "/prepare/roles?returnTo=journey",
-      hint: "Set the initial CAF lead, approver and supporting contributors.",
+      hint: "Set the initial CAF Lead, approver and supporting contributors.",
       status: rolesComplete
         ? "Complete"
         : rolesStarted

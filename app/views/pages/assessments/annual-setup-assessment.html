@@ -27,11 +27,19 @@
   }) }}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-inset-text">
+        Use this step to:
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          <li>decide whether to reuse, update or reassess your A and D position</li>
+          <li>choose up to 3 critical systems for this year's B and C assessment</li>
+        </ul>
+      </div>
+
       <form method="post" action="/assessments/current/annual-setup/assessment">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           {% if hasPreviousAdAssessment %}
             <fieldset class="govuk-fieldset" id="adAssessmentStatus"{% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %} aria-describedby="adAssessmentStatus-error"{% endif %}>
-              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you handle A and D this year?</legend>
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you approach the organisation self-assessment (Objectives A and D) this year?</legend>
               {% if error and (error.items | selectattr('field','equalto','adAssessmentStatus') | list | length) > 0 %}
                 <p id="adAssessmentStatus-error" class="govuk-error-message">
                   <span class="govuk-visually-hidden">Error:</span>
@@ -41,33 +49,30 @@
               <div class="govuk-radios">
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-update" name="adAssessmentStatus" type="radio" value="update_existing" {% if form.adAssessmentStatus == "update_existing" %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-update">Update our existing A and D assessment</label>
-                  <div class="govuk-hint govuk-radios__hint">Choose this if your council-wide position has changed and needs updating.</div>
+                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-update">Update our existing organisation self-assessment</label>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if the overall position is still usable, but some outcomes, evidence or judgements need updating.</div>
                 </div>
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-reuse" name="adAssessmentStatus" type="radio" value="reuse_current" {% if form.adAssessmentStatus == "reuse_current" %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-reuse">Keep our current A and D position with a light review</label>
-                  <div class="govuk-hint govuk-radios__hint">Choose this if only minor changes are needed this year.</div>
+                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-reuse">Keep our current organisation self-assessment position with a light review</label>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if the council-wide position is still broadly accurate and only minor checks are needed.</div>
                 </div>
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="adAssessmentStatus-new" name="adAssessmentStatus" type="radio" value="new_assessment" {% if form.adAssessmentStatus == "new_assessment" %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-new">Start a new A and D assessment</label>
-                  <div class="govuk-hint govuk-radios__hint">Choose this if a full reassessment is needed.</div>
+                  <label class="govuk-label govuk-radios__label" for="adAssessmentStatus-new">Start a new organisation self-assessment</label>
+                  <div class="govuk-hint govuk-radios__hint">Choose this if there has been major change in structure, risk, controls, service model or evidence.</div>
                 </div>
               </div>
             </fieldset>
           {% else %}
-            <h2 class="govuk-heading-m">Council-wide assessment (A and D)</h2>
-            <div class="govuk-inset-text govuk-!-margin-top-0">
-              You'll start your A and D assessment for this year.
-            </div>
+            <h2 class="govuk-heading-m">Organisation self-assessment (Objectives A and D)</h2>
           {% endif %}
         </div>
 
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint{% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %} annualSystemIds-error{% endif %}">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select up to 3 critical systems for this year’s B and C assessment</legend>
-            <div id="annualSystemIds-hint" class="govuk-hint">Select up to 3 critical systems to assess for B and C this year.</div>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select up to 3 critical systems for this year’s critical systems self-assessment (Objectives B and C)</legend>
+            <div id="annualSystemIds-hint" class="govuk-hint">Select the systems where cyber disruption would matter most this year. This does not remove the others from your wider scope.</div>
             {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}
               <p id="annualSystemIds-error" class="govuk-error-message">
                 <span class="govuk-visually-hidden">Error:</span>
@@ -93,7 +98,7 @@
               </div>
             {% else %}
               <div class="govuk-inset-text">
-                You need at least 1 critical system in your list before you can set up this year's B and C assessment.
+                You need at least 1 critical system in your list before you can set up this year's critical systems self-assessment.
                 <div class="govuk-!-margin-top-2">
                   <a class="govuk-link" href="/stages/2/scope/systems/review">Go to critical systems list</a>
                 </div>

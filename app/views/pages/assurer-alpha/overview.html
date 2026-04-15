@@ -1,0 +1,68 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurer-alpha/dashboard">Back</a>
+
+  <span class="govuk-caption-l">Submission overview</span>
+  <h1 class="govuk-heading-l">{{ assessment.councilName }} CAF assessment</h1>
+  <p class="govuk-body">{{ assessment.summary }}</p>
+
+  <div class="govuk-inset-text">
+    <p class="govuk-body govuk-!-margin-bottom-0">As an assurer, you are providing an independent view of this submission on behalf of MHCLG. Your position should be based on the evidence and indicators provided.</p>
+  </div>
+
+  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Organisation (A&amp;D)</dt>
+      <dd class="govuk-summary-list__value">Complete</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Critical systems (B&amp;C)</dt>
+      <dd class="govuk-summary-list__value">Complete</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Critical systems assessed</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.submissionSummary.criticalSystemsAssessed }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Date submitted</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.submittedAt }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Submitted by</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.submittedBy }}</dd>
+    </div>
+  </dl>
+
+  <h2 class="govuk-heading-m">What is included</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    <li>{{ assessment.submissionSummary.contributingOutcomesCompleted }} contributing outcomes completed</li>
+    <li>{{ evidenceReferenceCount }} evidence references included</li>
+    <li>IIP completed</li>
+  </ul>
+
+  <h2 class="govuk-heading-m">Cross-cutting signals</h2>
+  <div class="govuk-inset-text">
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      {% for signal in assessment.crossCuttingSignals %}
+        <li>{{ signal }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <h2 class="govuk-heading-m">What you need to do</h2>
+  <ul class="govuk-list govuk-list--bullet">
+    <li>assess organisation outcomes</li>
+    <li>assess critical systems outcomes</li>
+    <li>check rationale and evidence</li>
+    <li>identify gaps or inconsistencies</li>
+    <li>assess the IIP</li>
+    <li>record your independent assurance position</li>
+  </ul>
+
+  <p class="govuk-body govuk-hint">The council may need to respond to your position or revise parts of the submission before it can move on.</p>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="/assurer-alpha/assessment/{{ assessment.id }}/organisation-outcomes">Start assurance review</a>
+  </div>
+{% endblock %}

@@ -33,7 +33,7 @@
       <form method="post" action="/council-setup" data-council-setup-form data-council-email="{{ currentUser.email or '' }}">
         <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="councilSetupName">Council name</label>
-          <div class="govuk-hint">Enter the full council name, such as West Marchshire Council.</div>
+          <div class="govuk-hint">Enter the full council name, i.e. Dorset Council.</div>
           {% if error %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>

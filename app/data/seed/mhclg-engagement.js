@@ -123,7 +123,7 @@ module.exports = {
       nextAction: "Council to confirm evidence references for D1 outcomes.",
       owner: "Council",
       actionTaken: "Sent evidence referencing checklist.",
-      peerLearning: "Shared example evidence register with CAF lead network.",
+      peerLearning: "Shared example evidence register with CAF Lead network.",
       supportOutcome: "Ongoing",
     },
     {
