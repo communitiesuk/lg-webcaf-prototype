@@ -1,0 +1,51 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if error and error.items %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ context.caption }}</span>
+  <h1 class="govuk-heading-l">Final contributing outcome judgement</h1>
+  <p class="govuk-hint">Critical system: {{ context.systemName }}</p>
+  <p class="govuk-body">The indicative judgement suggests <strong>{{ summary.judgement }}</strong>, but you must decide the final judgement for this contributing outcome.</p>
+
+  <form method="post" action="{{ formAction }}">
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aFinalJudgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select the final judgement</legend>
+        {% if error and (error.items | selectattr('field', 'equalto', 'b2aFinalJudgement') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field', 'equalto', 'b2aFinalJudgement') | list | first).text }}
+          </p>
+        {% endif %}
+        <div class="govuk-radios" data-module="govuk-radios">
+          {% for option in ["Achieved", "Partially achieved", "Not achieved"] %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" id="b2aFinalJudgement-{{ loop.index }}" name="b2aFinalJudgement" type="radio" value="{{ option }}" {% if form.judgement == option %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="b2aFinalJudgement-{{ loop.index }}">{{ option }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit" data-module="govuk-button">Continue</button>
+    </div>
+  </form>
+{% endblock %}

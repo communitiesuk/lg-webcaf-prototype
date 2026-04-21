@@ -1,0 +1,62 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <span class="govuk-caption-l">{{ context.caption }}</span>
+  <h1 class="govuk-heading-l">Indicative judgement</h1>
+  <p class="govuk-body">Use this page to reflect on your responses before you record the final judgement.</p>
+
+  <div class="govuk-inset-text">
+    This is not the final judgement. It is a guide based on the responses you have given.
+  </div>
+
+  <p class="govuk-body-l">Based on your responses so far, this contributing outcome is likely to be: <strong>{{ summary.judgement }}</strong></p>
+
+  {% if summary.reflections and summary.reflections.length > 0 %}
+    <h2 class="govuk-heading-m">Points to reflect on</h2>
+    <p class="govuk-body">Your responses suggest:</p>
+    <ul class="govuk-list govuk-list--bullet">
+      {% for item in summary.reflections %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">What appears strong</h2>
+  {% if summary.strengths.length > 0 %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for item in summary.strengths %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">No clear strengths stand out from the responses so far.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">What appears weak</h2>
+  {% if summary.weaknesses.length > 0 %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for item in summary.weaknesses %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">No clear indicators of non-achievement stand out from the responses so far.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Gaps or uncertainty</h2>
+  {% if summary.uncertainties.length > 0 %}
+    <ul class="govuk-list govuk-list--bullet">
+      {% for item in summary.uncertainties %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body">No obvious gaps or uncertainty have been identified from the responses so far.</p>
+  {% endif %}
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="{{ nextHref }}">Continue</a>
+  </div>
+{% endblock %}

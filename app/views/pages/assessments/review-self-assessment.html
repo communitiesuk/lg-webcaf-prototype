@@ -56,8 +56,12 @@
         value: { text: "Review content and either send it back for edits or move it to approval." }
       },
       {
-        key: { text: "Status" },
+        key: { text: "Internal collaboration status" },
         value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+      },
+      {
+        key: { text: "Assessment status" },
+        value: { html: '<strong class="govuk-tag ' ~ assessmentWorkflowStatus.tagClass ~ '">' ~ assessmentWorkflowStatus.label ~ '</strong>' }
       },
       {
         key: { text: "Drafted by" },
@@ -75,6 +79,7 @@
   }) }}
 
   <h2 class="govuk-heading-m">Assessment summary</h2>
+  <p class="govuk-body">This is still the council’s internal review stage. Independent assurance starts only after approval and submission of the full assessment.</p>
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">A and D</dt>

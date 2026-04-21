@@ -5,11 +5,11 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-  {% set successMessage = "Your changes to the essential services register have been saved." %}
+  {% set successMessage = "Your changes to the essential services list have been saved." %}
   {% if saved == "service-added" %}
-    {% set successMessage = "You have added this service to the essential services register." %}
+    {% set successMessage = "You have added this service to the essential services list." %}
     {% if savedName %}
-      {% set successMessage = "You have added " + savedName + " to the essential services register." %}
+      {% set successMessage = "You have added " + savedName + " to the essential services list." %}
     {% endif %}
   {% elif saved == "service-updated" %}
     {% set successMessage = "Your changes to this service have been saved." %}
@@ -17,9 +17,9 @@
       {% set successMessage = "You have updated " + savedName + "." %}
     {% endif %}
   {% elif saved == "service-removed" %}
-    {% set successMessage = "This service has been removed from the essential services register." %}
+    {% set successMessage = "This service has been removed from the essential services list." %}
     {% if savedName %}
-      {% set successMessage = "You have removed " + savedName + " from the essential services register." %}
+      {% set successMessage = "You have removed " + savedName + " from the essential services list." %}
     {% endif %}
   {% endif %}
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
@@ -34,8 +34,8 @@
 
   {% if roundTwo %}
   <span class="govuk-caption-l">Essential services list</span>
-  <h1 class="govuk-heading-l">Manage your essential services</h1>
-    <p class="govuk-body">Add and review the essential services your council needs to keep running. When you are ready, continue to the critical systems register.</p>
+  <h1 class="govuk-heading-l">List your essential services</h1>
+    <p class="govuk-body">Add and review the essential services your council needs to keep running. When you are ready, continue to the critical systems list.</p>
     <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
       <summary class="govuk-details__summary">
         <span class="govuk-details__summary-text">Help with this step</span>
@@ -43,7 +43,7 @@
       <div class="govuk-details__text">
         <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
           <li>Make sure the list reflects the services your council needs to keep running.</li>
-          <li>You can return later to update this register if something changes.</li>
+          <li>You can return later to update this list if something changes.</li>
         </ul>
       </div>
     </details>
@@ -64,8 +64,8 @@
       </summary>
       <div class="govuk-details__text">
         <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Check the list and confirm which services should stay in scope.</li>
-          <li>When you continue, you can confirm this register and move to the next step.</li>
+          <li>Check the list and confirm which services should stay in this assessment.</li>
+          <li>When you continue, you can confirm this list and move to the next step.</li>
         </ul>
       </div>
     </details>

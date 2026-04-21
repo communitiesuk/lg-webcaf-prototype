@@ -651,7 +651,7 @@ function seedAssurerAssessment(sessionData, user) {
 
   const ready = assessment.progressTracker["A1a"];
   if (ready) {
-    ready.status = "ready_for_review";
+    ready.status = "ready_for_internal_review";
     ready.ownerId = user && user.id ? user.id : "u-1";
     ready.evidenceRefs = [
       { refId: "REF-100", type: "Policy", link: "", note: "Latest policy pack." },
@@ -660,12 +660,12 @@ function seedAssurerAssessment(sessionData, user) {
       {
         at: new Date().toISOString(),
         by: user && user.name ? user.name : "Council user",
-        summary: "Marked ready for assurance review.",
-        status: "ready_for_review",
-        statusLabel: "Ready for review",
+        summary: "Marked ready for internal review.",
+        status: "ready_for_internal_review",
+        statusLabel: "Ready for internal review",
         dueDate: "",
         blocker: "",
-        nextStep: "Assurer review",
+        nextStep: "Internal review",
       },
     ];
   }
@@ -679,7 +679,7 @@ function seedAssurerAssessment(sessionData, user) {
 
   const readyTwo = assessment.progressTracker["A2a"];
   if (readyTwo) {
-    readyTwo.status = "ready_for_review";
+    readyTwo.status = "ready_for_internal_review";
     readyTwo.ownerId = "u-3";
     readyTwo.evidenceRefs = [
       { refId: "RISK-200", type: "Risk assessment", link: "", note: "Latest risk review." },
@@ -688,12 +688,12 @@ function seedAssurerAssessment(sessionData, user) {
       {
         at: new Date().toISOString(),
         by: "Samira Khan",
-        summary: "Evidence pack prepared for review.",
-        status: "ready_for_review",
-        statusLabel: "Ready for review",
+        summary: "Evidence pack prepared for internal review.",
+        status: "ready_for_internal_review",
+        statusLabel: "Ready for internal review",
         dueDate: "",
         blocker: "",
-        nextStep: "Assurer review",
+        nextStep: "Internal review",
       },
     ];
   }

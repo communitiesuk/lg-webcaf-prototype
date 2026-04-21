@@ -8,15 +8,17 @@
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
-      { text: "Assurer queue", href: "/assurer/queue" },
+      { text: "Independent assurance queue", href: "/assurer/queue" },
+      { text: "Submitted assessment", href: "/assurer/submission" },
       { text: "Outcome review" }
     ]
   }) }}
 
-  <a class="govuk-back-link" href="/assurer/queue">Back to queue</a>
+  <a class="govuk-back-link" href="/assurer/submission">Back to submitted assessment</a>
 
   <h1 class="govuk-heading-l">{{ labels.assurer.outcome.headingPrefix }} {{ row.outcomeCode }}</h1>
   <p class="govuk-body">{{ row.title }}</p>
+  <p class="govuk-hint">This outcome is part of the submitted assessment you are reviewing in independent assurance.</p>
   {% if row.systemName %}
     <p class="govuk-hint">System: {{ row.systemName }}</p>
   {% endif %}
@@ -27,7 +29,7 @@
         <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Review saved</h2>
       </div>
       <div class="govuk-notification-banner__content">
-        <p class="govuk-body">The assurer review has been recorded.</p>
+        <p class="govuk-body">The independent assurance note has been recorded.</p>
       </div>
     </div>
   {% endif %}
@@ -210,7 +212,7 @@
   </form>
 
   <div class="govuk-button-group govuk-!-margin-top-6">
-    <a class="govuk-button" data-module="govuk-button" href="/assurer/queue">Back to queue</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assurer/submission">Back to submitted assessment</a>
     {% if nextReady %}
       <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/outcomes/{{ nextReady }}">Next ready outcome</a>
     {% endif %}

@@ -33,7 +33,7 @@
       {% endif %}
 
       {% if rows.length > 0 %}
-        <h2 class="govuk-heading-m">Current B and C outcome</h2>
+        <h2 class="govuk-heading-m">Current B and C outcomes</h2>
         <table class="govuk-table govuk-!-margin-bottom-6">
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
@@ -60,7 +60,7 @@
                   {% if row.carriedForward %}
                     {% set outcomeActionText = "Review" %}
                   {% endif %}
-                  <a class="govuk-link" href="/self-assess/bc/{{ system.id }}/outcomes/{{ row.id }}">
+                  <a class="govuk-link" href="{{ row.actionHref or ('/self-assess/bc/' ~ system.id ~ '/outcomes/' ~ row.id) }}">
                     {{ outcomeActionText }}
                   </a>
                 </td>
@@ -72,8 +72,8 @@
 
       <div class="govuk-button-group">
         {% if primaryOutcome %}
-          <a class="govuk-button" href="/self-assess/bc/{{ system.id }}/outcomes/{{ primaryOutcome.id }}">
-            Open current outcome
+          <a class="govuk-button" href="{{ primaryOutcome.actionHref or ('/self-assess/bc/' ~ system.id ~ '/outcomes/' ~ primaryOutcome.id) }}">
+            Open first outcome
           </a>
         {% endif %}
         {% if roundTwo %}

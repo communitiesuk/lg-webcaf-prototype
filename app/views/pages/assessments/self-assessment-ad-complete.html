@@ -6,7 +6,7 @@
   <a class="govuk-back-link" href="/assessments/current/self-assessment/ad">Back</a>
   <span class="govuk-caption-l">Self-assessment</span>
   <h1 class="govuk-heading-l">A and D complete</h1>
-  <p class="govuk-body">You have marked the organisational A and D self-assessment as complete for this year.</p>
+  <p class="govuk-body">You have finished the organisational A and D self-assessment for this year.</p>
 
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
@@ -24,6 +24,18 @@
       <dd class="govuk-summary-list__actions"></dd>
     </div>
   </dl>
+
+  <h2 class="govuk-heading-m">What this means</h2>
+  <p class="govuk-body">The organisational outcomes are complete for this year's assessment. They now contribute to the wider assessment being ready for internal review and approval.</p>
+
+  <h2 class="govuk-heading-m">What happens next</h2>
+  <div class="govuk-inset-text">
+    {% if nextActionHref == "/assessments/current/complete-self-assessment" %}
+      Both parts of the self-assessment are complete. Next, review the full assessment summary and submit it for internal review.
+    {% else %}
+      You can now continue with the remaining B and C work before the full assessment can move into internal review.
+    {% endif %}
+  </div>
 
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="{{ nextActionHref }}">{{ nextActionText }}</a>

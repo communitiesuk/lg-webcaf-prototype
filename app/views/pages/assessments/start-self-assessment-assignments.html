@@ -4,7 +4,7 @@
   {% set backHref = "/assessments/current/start-self-assessment" %}
   {% set successMessage = "Changes saved." %}
   {% if researchRound == "round-2" %}
-    {% set backHref = "/assessments/current/start-self-assessment/people" %}
+    {% set backHref = "/assessments/current/journey" %}
   {% endif %}
   {% if saved == "assignment" and savedName %}
     {% set successMessage = "Changes saved for " + savedName + "." %}
@@ -22,11 +22,10 @@
     </div>
   {% endif %}
 
-  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">Step 2 of 2</p>
   <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Assign people to assessment outcomes</h1>
+  <h1 class="govuk-heading-l">Assign outcome owners and contributors</h1>
   <p class="govuk-body">Set an owner for each contributing outcome.</p>
-  <p class="govuk-body">You can also add other contributors where more than one person needs to help.</p>
+  <p class="govuk-body">Only add contributors where they are needed. You can assign more people later if needed.</p>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -52,7 +51,7 @@
               <td class="govuk-table__cell">{{ row.collaboratorCount }}</td>
               <td class="govuk-table__cell">
                 <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
-                  {% if row.isAssigned %}Change people{% else %}Assign people{% endif %}
+                  {% if row.isAssigned %}Change assignment{% else %}Assign this outcome{% endif %}
                 </a>
               </td>
             </tr>
@@ -70,7 +69,7 @@
             Return to readiness checks
           </a>
         {% endif %}
-        <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Manage people involved</a>
+        <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add someone for later assignment</a>
       </div>
     </div>
 
@@ -88,9 +87,9 @@
       </aside>
 
       <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Need to change the team?</h2>
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Need to add someone?</h2>
         <p class="govuk-body govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add or manage the people involved</a>
+          <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add a person if they are needed for an outcome</a>
         </p>
       </aside>
     </div>

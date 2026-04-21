@@ -9,19 +9,19 @@
   <h1 class="govuk-heading-l">{{ labels.stages.scope.priority.shortlistTitle }}</h1>
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
-      Identify the systems that are most likely to be selected during annual setup for Objectives B and C.
+      Choose the systems that are most likely to be selected in a yearly assessment for Objectives B and C.
     {% else %}
       Select the critical systems to assess in Objectives B and C.
     {% endif %}
   </p>
   <div class="govuk-inset-text">
-    You are choosing where to focus B and C assessment effort. Systems not selected here can still stay in your wider scope register and be assessed in a later year.
+    You are choosing where to focus B and C assessment effort. Systems not selected here can still stay in your wider critical systems list and be assessed in a later year.
   </div>
   <p class="govuk-body">
     <a class="govuk-link" href="/stages/2/scope/systems/add">Add another critical system</a>
     <span class="govuk-hint govuk-!-margin-top-1">
       {% if researchRound == "round-2" %}
-        Adding a system means completing its mapping step and priority step before confirming the scope register.
+        Adding a system means completing its link-to-services step and priority step before confirming your setup lists.
       {% else %}
         Adding a system means completing its mapping step and priority step before confirming the scope pack.
       {% endif %}
@@ -78,7 +78,7 @@
     </form>
   {% else %}
     {% if researchRound == "round-2" %}
-      <p class="govuk-body">No likely yearly systems recorded yet. You can review systems or continue to complete the scope register.</p>
+      <p class="govuk-body">No likely yearly systems recorded yet. You can review systems or continue to complete your setup lists.</p>
       <div class="govuk-button-group">
         <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/review">Review systems</a>
         <a class="govuk-button" href="/stages/2/scope/priority/confirm">Continue</a>

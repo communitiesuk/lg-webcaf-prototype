@@ -1,0 +1,83 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/assessments/current/approve-self-assessment">Back</a>
+
+      {% if saved == "assurance-planning" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="approved-assurance-planning-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="approved-assurance-planning-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">Assurance planning details updated.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l">Annual assessment</span>
+      <h1 class="govuk-heading-l">Your assessment is ready for independent assurance</h1>
+      <p class="govuk-body">The annual assessment is now internally complete.</p>
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assessment status</dt>
+          <dd class="govuk-summary-list__value">
+            <strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong>
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Approved</dt>
+          <dd class="govuk-summary-list__value">{{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+          <dd class="govuk-summary-list__actions">{{ collaborationState.approvedBy }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Selected critical systems</dt>
+          <dd class="govuk-summary-list__value">
+            {% if selectedSystems.length > 0 %}
+              {% for system in selectedSystems %}
+                {{ system.name }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            {% else %}
+              —
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m">What this means</h2>
+      <p class="govuk-body">All required outcomes for this year's assessment have been completed, reviewed and approved internally.</p>
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <div class="govuk-inset-text">
+        Independent assurance reviews the completed assessment as a whole, rather than reviewing partial work outcome by outcome.
+      </div>
+
+      <h2 class="govuk-heading-m">Assurance planning</h2>
+      <p class="govuk-body">This helps you plan for independent assurance. You do not need to arrange or book it now.</p>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assurer name</dt>
+          <dd class="govuk-summary-list__value">{{ assurancePlanning.assurerName or "Not added" }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Organisation or provider</dt>
+          <dd class="govuk-summary-list__value">{{ assurancePlanning.provider or "Not added" }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Expected timing</dt>
+          <dd class="govuk-summary-list__value">{{ assurancePlanning.expectedTiming or "Not added" }}</dd>
+        </div>
+      </dl>
+
+      <form method="post" action="/assessments/current/approve-self-assessment/complete">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Continue to independent assurance</button>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assessments/current/assurance-planning?returnTo=/assessments/current/approve-self-assessment/complete">Review assurance planning</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

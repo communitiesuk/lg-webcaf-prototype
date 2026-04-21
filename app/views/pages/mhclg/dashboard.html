@@ -115,8 +115,8 @@
               <strong class="govuk-tag govuk-tag--blue">Active</strong>
             {% elif council.status == "In progress" %}
               <strong class="govuk-tag govuk-tag--blue">In progress</strong>
-            {% elif council.status == "Ready for review" %}
-              <strong class="govuk-tag govuk-tag--purple">Ready for review</strong>
+            {% elif council.status == "In independent assurance" %}
+              <strong class="govuk-tag govuk-tag--blue">In independent assurance</strong>
             {% elif council.status == "Draft" %}
               <strong class="govuk-tag govuk-tag--grey">Draft</strong>
             {% elif council.status == "Submitted" %}
@@ -141,8 +141,10 @@
                     <dd class="govuk-summary-list__value">
                       {% if council.assurance == "Approved" %}
                         <strong class="govuk-tag govuk-tag--green">Approved</strong>
-                      {% elif council.assurance == "Ready for review" %}
-                        <strong class="govuk-tag govuk-tag--purple">Ready for review</strong>
+                      {% elif council.assurance == "Ready for independent assurance" %}
+                        <strong class="govuk-tag govuk-tag--purple">Ready for independent assurance</strong>
+                      {% elif council.assurance == "Assurance complete" %}
+                        <strong class="govuk-tag govuk-tag--green">Assurance complete</strong>
                       {% elif council.assurance == "Changes needed" %}
                         <strong class="govuk-tag govuk-tag--red">Changes needed</strong>
                       {% else %}

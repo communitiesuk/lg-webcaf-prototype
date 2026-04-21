@@ -4,11 +4,8 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-  {% set backHref = "/assessments/current/start-self-assessment" %}
+  {% set backHref = "/assessments/current/start-self-assessment/assignments" %}
   {% set successMessage = "People updated." %}
-  {% if researchRound == "round-2" %}
-    {% set backHref = "/assessments/current/journey" %}
-  {% endif %}
   {% if saved == "person-added" %}
     {% set successMessage = "Person added." %}
     {% if savedName %}
@@ -48,21 +45,20 @@
     </div>
   {% endif %}
 
-  <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">Step 1 of 2</p>
-
   {{ appPageHeader({
     caption: "Self-assessment",
-    title: "Assign people to contributing outcomes",
+    title: "Add people where they are needed",
     guidanceHeadingId: "self-assessment-people-guidance",
     guidanceItems: [
-      "Add the people who will help complete this year's self-assessment.",
-      "Use the list below to review who is already involved.",
-      "You will assign people to contributing outcomes on the next page."
-    ]
+      "You do not need to add everyone now.",
+      "Only add people when they are needed for a specific outcome.",
+      "You can return and change these names later."
+    ],
+    intro: "Use this page if you need to add someone before assigning them to an outcome."
   }) }}
 
-  <p class="govuk-body"><strong>{{ contributors.length }} people involved</strong></p>
-  <h2 class="govuk-heading-m">People involved</h2>
+  <p class="govuk-body"><strong>{{ contributors.length }} people currently available for assignment</strong></p>
+  <h2 class="govuk-heading-m">People available for assignment</h2>
   {% if contributors.length > 0 %}
     <table class="govuk-table">
       <thead class="govuk-table__head">
@@ -131,10 +127,7 @@
   <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
   <div class="govuk-button-group">
-    <a class="govuk-button" href="/assessments/current/start-self-assessment/assignments">Continue</a>
-    {% if researchRound == "round-2" %}
-      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
-    {% endif %}
+    <a class="govuk-button" href="/assessments/current/start-self-assessment/assignments">Return to outcome assignments</a>
   </div>
     </div>
   </div>

@@ -30,8 +30,9 @@
   {% endif %}
 
   <span class="govuk-caption-l">Onboarding</span>
-  <h1 class="govuk-heading-l">Set up council roles</h1>
-  <p class="govuk-body">Add the people responsible for leading and approving the CAF work. <br/>This can be changed later.</p>
+  <h1 class="govuk-heading-l">Add the people leading this assessment</h1>
+  <p class="govuk-body">Do this once when setting up your council account. You can change these names later.</p>
+  <p class="govuk-body">You do not need to add everyone involved at this stage. Contributors can be added later as work is assigned.</p>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -74,12 +75,6 @@
           <input class="govuk-input govuk-!-width-two-thirds" id="onboardingApprover" name="onboardingApprover" type="text" value="{{ defaults.onboardingApprover }}">
         </div>
 
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="onboardingContributors">Additional contributors (optional)</label>
-          <div class="govuk-hint">Enter the names of any other people who will contribute to the CAF work, separated by commas.</div>
-          <textarea class="govuk-textarea" id="onboardingContributors" name="onboardingContributors" rows="4">{{ defaults.onboardingContributors }}</textarea>
-        </div>
-
         <div class="govuk-button-group">
           <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
           <a class="govuk-link" href="{{ returnHref }}">{{ returnText }}</a>
@@ -89,8 +84,8 @@
 
     <div class="govuk-grid-column-one-third">
       <aside class="app-outcome-page__sidebar-card app-roles-sidebar">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current roles</h2>
-        <p class="govuk-body-s app-roles-sidebar__intro">This summary updates as you add or change the key roles.</p>
+        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Current assessment leads</h2>
+        <p class="govuk-body-s app-roles-sidebar__intro">This summary updates as you add or change the lead and approver.</p>
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 app-roles-sidebar__summary">
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">CAF Lead</dt>
@@ -99,10 +94,6 @@
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Approver</dt>
             <dd class="govuk-summary-list__value" id="currentOnboardingApprover">{{ defaults.onboardingApprover or "Not added yet" }}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Additional contributors</dt>
-            <dd class="govuk-summary-list__value" id="currentOnboardingContributors">{{ defaults.onboardingContributors or "None added" }}</dd>
           </div>
           {% if rolesAudit.updatedAt %}
             <div class="govuk-summary-list__row">
@@ -123,10 +114,8 @@
     (function () {
       var leadInput = document.getElementById("onboardingLead");
       var approverInput = document.getElementById("onboardingApprover");
-      var contributorsInput = document.getElementById("onboardingContributors");
       var leadOutput = document.getElementById("currentOnboardingLead");
       var approverOutput = document.getElementById("currentOnboardingApprover");
-      var contributorsOutput = document.getElementById("currentOnboardingContributors");
 
       function setValue(output, value, emptyText) {
         if (!output) return;
@@ -136,10 +125,9 @@
       function updateSummary() {
         setValue(leadOutput, leadInput && leadInput.value, "Not added yet");
         setValue(approverOutput, approverInput && approverInput.value, "Not added yet");
-        setValue(contributorsOutput, contributorsInput && contributorsInput.value, "None added");
       }
 
-      [leadInput, approverInput, contributorsInput].forEach(function (input) {
+      [leadInput, approverInput].forEach(function (input) {
         if (input) input.addEventListener("input", updateSummary);
       });
 

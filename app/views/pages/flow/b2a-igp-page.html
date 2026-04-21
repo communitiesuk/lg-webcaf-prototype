@@ -1,0 +1,112 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  {% if error and error.items %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            {% for item in error.items %}
+              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <span class="govuk-caption-l">{{ context.caption }}</span>
+  <h1 class="govuk-heading-l">{{ page.heading }}</h1>
+  <p class="govuk-body">{{ page.intro }}</p>
+  {% if page.pageHint %}
+    <p class="govuk-hint">{{ page.pageHint }}</p>
+  {% endif %}
+
+  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">{{ page.guidanceSummary }}</span>
+    </summary>
+    <div class="govuk-details__text">
+      {{ page.guidanceBody }}
+    </div>
+  </details>
+
+  <form method="post" action="{{ formAction }}">
+    {% for row in page.rows %}
+      {% set responseField = page.stepKey ~ '-' ~ row.id ~ '-yes' %}
+      {% set explanationNaField = page.stepKey ~ '-' ~ row.id ~ '-explanation-na' %}
+      {% set explanationAltField = page.stepKey ~ '-' ~ row.id ~ '-explanation-alt' %}
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', responseField) | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">{{ row.statement }}</legend>
+          {% if row.mirrorHint %}
+            <div id="{{ page.stepKey }}-{{ row.id }}-mirror-hint" class="govuk-hint">{{ row.mirrorHint }}</div>
+          {% endif %}
+          {% if error and (error.items | selectattr('field', 'equalto', responseField) | list | length) > 0 %}
+            <p class="govuk-error-message" id="{{ responseField }}-error">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field', 'equalto', responseField) | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-radios" data-module="govuk-radios">
+            {% for option in [
+              { value: "yes", text: "Yes" },
+              { value: "no", text: "No" },
+              { value: "not-applicable", text: "Not applicable", conditional: "na" },
+              { value: "alternative-control", text: "Alternative control in place", conditional: "alt" }
+            ] %}
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="{{ page.stepKey }}-{{ row.id }}-{{ option.value }}" name="{{ page.stepKey }}-{{ row.id }}-response" type="radio" value="{{ option.value }}" {% if option.conditional == "na" %}data-aria-controls="{{ page.stepKey }}-{{ row.id }}-not-applicable-conditional"{% endif %}{% if option.conditional == "alt" %}data-aria-controls="{{ page.stepKey }}-{{ row.id }}-alternative-control-conditional"{% endif %} {% if row.response == option.value %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="{{ page.stepKey }}-{{ row.id }}-{{ option.value }}">{{ option.text }}</label>
+              </div>
+              {% if option.conditional == "na" %}
+                <div class="govuk-radios__conditional {% if row.response != option.value %}govuk-radios__conditional--hidden{% endif %}" id="{{ page.stepKey }}-{{ row.id }}-not-applicable-conditional">
+                  <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', explanationNaField) | list | length) > 0 %}govuk-form-group--error{% endif %}">
+                    <label class="govuk-label" for="{{ explanationNaField }}">Explain why this does not apply</label>
+                    {% if error and (error.items | selectattr('field', 'equalto', explanationNaField) | list | length) > 0 %}
+                      <p class="govuk-error-message">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        {{ (error.items | selectattr('field', 'equalto', explanationNaField) | list | first).text }}
+                      </p>
+                    {% endif %}
+                    <textarea class="govuk-textarea" id="{{ explanationNaField }}" name="{{ page.stepKey }}-{{ row.id }}-explanation-na" rows="3">{{ row.response == "not-applicable" and row.explanation or "" }}</textarea>
+                  </div>
+                </div>
+              {% endif %}
+              {% if option.conditional == "alt" %}
+                <div class="govuk-radios__conditional {% if row.response != option.value %}govuk-radios__conditional--hidden{% endif %}" id="{{ page.stepKey }}-{{ row.id }}-alternative-control-conditional">
+                  <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', explanationAltField) | list | length) > 0 %}govuk-form-group--error{% endif %}">
+                    <label class="govuk-label" for="{{ explanationAltField }}">Explain the alternative control</label>
+                    {% if error and (error.items | selectattr('field', 'equalto', explanationAltField) | list | length) > 0 %}
+                      <p class="govuk-error-message">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        {{ (error.items | selectattr('field', 'equalto', explanationAltField) | list | first).text }}
+                      </p>
+                    {% endif %}
+                    <textarea class="govuk-textarea" id="{{ explanationAltField }}" name="{{ page.stepKey }}-{{ row.id }}-explanation-alt" rows="3">{{ row.response == "alternative-control" and row.explanation or "" }}</textarea>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="{{ page.stepKey }}-{{ row.id }}-note">Supporting note for yes or no (optional)</label>
+        <input class="govuk-input" id="{{ page.stepKey }}-{{ row.id }}-note" name="{{ page.stepKey }}-{{ row.id }}-note" type="text" value="{{ row.note }}">
+      </div>
+
+      {% if not loop.last %}
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% endif %}
+    {% endfor %}
+
+    <div class="govuk-button-group">
+      <button class="govuk-button" type="submit" data-module="govuk-button">{{ nextLabel }}</button>
+    </div>
+  </form>
+{% endblock %}

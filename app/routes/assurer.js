@@ -41,16 +41,23 @@ module.exports = function (router) {
     const allRows = adRows.concat(bcRows);
 
     const scopedRows = applyAssurerScope(allRows, assurerContext);
-    const readyForReview = scopedRows.filter((r) => r.isReadyForReview);
     const missingEvidence = scopedRows.filter((r) => r.isMissingEvidence);
     const reviewedCount = scopedRows.filter((r) => r.assurerReview).length;
+    const workflowStatus = getAssurerAssessmentWorkflowStatus(assessment);
+    const assessmentQueue = buildAssurerAssessmentQueue(
+      assessment,
+      assurerContext,
+      workflowStatus,
+      missingEvidence
+    );
 
     res.render("pages/assurer/overview", {
       pageTitle: "Assurer overview",
       labels,
       assessment,
       assurerContext,
-      readyForReview,
+      workflowStatus,
+      assessmentQueue,
       missingEvidence,
       reviewedCount,
     });
@@ -85,23 +92,24 @@ module.exports = function (router) {
       systemName: row.lens === "bc" ? row.systemName || "" : "",
     }));
 
-    const readyForReview = scopedRows.filter((r) => r.isReadyForReview);
     const missingEvidence = scopedRows.filter((r) => r.isMissingEvidence);
-    const view = (req.query.view || "").toString();
-    let filteredRows = scopedRows;
-    if (view === "ready") filteredRows = readyForReview;
-    if (view === "missing") filteredRows = missingEvidence;
     const assuranceSnapshot = buildAssuranceSnapshot(assessment);
+    const workflowStatus = getAssurerAssessmentWorkflowStatus(assessment);
+    const assessmentQueue = buildAssurerAssessmentQueue(
+      assessment,
+      assurerContext,
+      workflowStatus,
+      missingEvidence
+    );
 
     res.render("pages/assurer/queue", {
       pageTitle: labels.assurer.queue.pageTitle,
       labels,
       assessment,
       assurerContext,
-      readyForReview,
+      workflowStatus,
+      assessmentQueue,
       missingEvidence,
-      filteredRows,
-      view,
       assuranceSnapshot,
     });
   });
@@ -521,12 +529,19 @@ module.exports = function (router) {
   router.get("/assurer/submission", (req, res) => {
     const assessment = ensureAssessment(req) ? req.session.data.assessment : null;
     if (!assessment) return res.redirect("/assurer/overview");
+    const assurerContext = getAssurerContext(req.session.data.user, assessment);
+    const workflowStatus = getAssurerAssessmentWorkflowStatus(assessment);
+    const assuranceSnapshot = buildAssuranceSnapshot(assessment);
 
     res.render("pages/assurer/submission", {
-      pageTitle: "Submission status",
+      pageTitle: "Assessment submission overview",
       labels,
       assessment,
+      assurerContext,
+      workflowStatus,
+      assuranceSnapshot,
       submission: assessment.submission || {},
+      assurerSubmission: assessment.assurerSubmission || {},
     });
   });
 
@@ -764,14 +779,13 @@ module.exports = function (router) {
       by: req.session.data.user ? req.session.data.user.name : "Assurer",
       at: new Date().toISOString(),
     };
-    row.status = "feedback_received";
-    row.nextStep = "Council to review and update";
+    row.nextStep = row.nextStep || "Consider independent assurance findings";
 
     if (!Array.isArray(row.history)) row.history = [];
     row.history.push({
       at: row.assurerReview.at,
       by: row.assurerReview.by,
-      summary: `Assurer decision: ${decision}`,
+      summary: `Independent assurance note: ${decision}`,
       status: row.status,
       statusLabel: getStatusMeta(row.status) ? getStatusMeta(row.status).label : row.status,
       dueDate: row.dueDate || "",
@@ -793,14 +807,14 @@ module.exports = function (router) {
       if (bcRow && bcRow.systemId && bcRow.outcomeKey) {
         const systemId = bcRow.systemId;
         const outcomeKey = bcRow.outcomeKey;
-        if (!assessment.selfAssess.bc[systemId]) {
-          assessment.selfAssess.bc[systemId] = { outcomes: {} };
-        }
-        const target = assessment.selfAssess.bc[systemId].outcomes[outcomeKey] || {};
-        target.assurerReview = row.assurerReview;
-        target.status = row.status;
-        target.history = Array.isArray(row.history) ? row.history : [];
-        target.updatedAt = row.assurerReview.at;
+      if (!assessment.selfAssess.bc[systemId]) {
+        assessment.selfAssess.bc[systemId] = { outcomes: {} };
+      }
+      const target = assessment.selfAssess.bc[systemId].outcomes[outcomeKey] || {};
+      target.assurerReview = row.assurerReview;
+      target.status = row.status;
+      target.history = Array.isArray(row.history) ? row.history : [];
+      target.updatedAt = row.assurerReview.at;
         assessment.selfAssess.bc[systemId].outcomes[outcomeKey] = target;
       }
     } else {
@@ -873,7 +887,7 @@ function buildAssurerBCRows(assessment, outcomesTree) {
         saved.blocker
           ? "blocked"
           : saved.judgement
-          ? "ready_for_review"
+          ? "complete"
           : hasContent
           ? "in_progress"
           : "not_started"
@@ -934,7 +948,7 @@ function buildAssurerBCOutcomeRow(assessment, outcomesTree, rowId) {
     saved.blocker
       ? "blocked"
       : saved.judgement
-      ? "ready_for_review"
+      ? "complete"
       : hasContent
       ? "in_progress"
       : "not_started"
@@ -1057,7 +1071,7 @@ function nextReadyOutcomeId(assessment, statusesDef, currentId) {
   const rows = Object.values(assessment.progressTracker).map((row) =>
     deriveRowFlags(row, statusesDef, {})
   );
-  const ready = rows.filter((row) => row.isReadyForReview);
+  const ready = rows.filter((row) => !row.assurerReview);
   if (ready.length === 0) return "";
   const next = ready.find((row) => row.outcomeId !== currentId) || ready[0];
   return next ? next.outcomeId : "";
@@ -1327,6 +1341,56 @@ function buildAssuranceSnapshot(assessment) {
       : "Not scheduled",
     iipStage2Rework: assessment.improvementPlan.stage2.assurerReview.outcome === "rework_required" ? "Yes" : "No",
   };
+}
+
+function getAssurerAssessmentWorkflowStatus(assessment) {
+  if (!assessment) {
+    return { key: "in_progress", label: "In progress", tagClass: "govuk-tag--blue" };
+  }
+
+  ensureAssuranceWorkflow(assessment);
+  const assurerSubmission = assessment.assurerSubmission || {};
+  const finalSubmission = assessment.submission || {};
+  const stage1Report = assessment.assurance.stage1Report || {};
+  const internallyComplete = Boolean(
+    (assessment.collaborationWorkflow && assessment.collaborationWorkflow.status === "approved") ||
+      (assessment.internalSignOff && assessment.internalSignOff.completed)
+  );
+
+  if (finalSubmission.submittedAt) {
+    return { key: "submitted", label: "Submitted", tagClass: "govuk-tag--green" };
+  }
+  if (stage1Report.finalisedAt) {
+    return { key: "ready_for_submission", label: "Ready for submission", tagClass: "govuk-tag--turquoise" };
+  }
+  if (assurerSubmission.submitted) {
+    return { key: "in_independent_assurance", label: "In independent assurance", tagClass: "govuk-tag--blue" };
+  }
+  if (internallyComplete) {
+    return {
+      key: "ready_for_independent_assurance",
+      label: "Ready for independent assurance",
+      tagClass: "govuk-tag--purple",
+    };
+  }
+  return { key: "in_progress", label: "In progress", tagClass: "govuk-tag--blue" };
+}
+
+function buildAssurerAssessmentQueue(assessment, assurerContext, workflowStatus, missingEvidence) {
+  if (!assessment || !assurerContext.isAssignedCouncil) return [];
+  if (!assessment.assurerSubmission || !assessment.assurerSubmission.submitted) return [];
+
+  return [
+    {
+      councilName: assurerContext.activeCouncilName || assessment.councilName || "Current council",
+      statusLabel: workflowStatus.label,
+      statusTagClass: workflowStatus.tagClass,
+      submittedBy: assessment.assurerSubmission.submittedBy || "Council lead",
+      submittedAt: assessment.assurerSubmission.submittedAt || "",
+      missingEvidenceCount: Array.isArray(missingEvidence) ? missingEvidence.length : 0,
+      href: "/assurer/submission",
+    },
+  ];
 }
 
 function ensureIipStage2Data(assessment) {

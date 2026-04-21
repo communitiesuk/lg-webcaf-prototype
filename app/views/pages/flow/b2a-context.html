@@ -1,0 +1,57 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <span class="govuk-caption-l">{{ context.caption }}</span>
+  <h1 class="govuk-heading-l">{{ outcome.code }} {{ outcome.title }}</h1>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Use this outcome to assess whether access to the system is properly verified, authenticated and authorised.</p>
+
+      <div class="govuk-inset-text">
+        You will review indicators of good practice (IGPs), make a judgement for the contributing outcome, and add supporting evidence.
+      </div>
+
+      {% if progressSummary %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-1"><strong>Current demo position</strong></p>
+          <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-1">
+            <li>Status: {{ progressSummary.statusLabel }}</li>
+            <li>IGP responses recorded: {{ progressSummary.igpsAnswered }}</li>
+            <li>Evidence references added: {{ progressSummary.evidenceCount }}</li>
+            <li>Final judgement: {{ progressSummary.judgement }}</li>
+          </ul>
+          <p class="govuk-body govuk-!-margin-bottom-0">{{ progressSummary.nextAction }}</p>
+        </div>
+      {% endif %}
+
+      <h2 class="govuk-heading-m">What this outcome is about</h2>
+      <p class="govuk-body">
+        This outcome is about making sure people are who they say they are, use their own account, and only get the access they need. It also covers stronger controls for higher-risk access, such as privileged access and remote access.
+      </p>
+
+      <h2 class="govuk-heading-m">What you may need</h2>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>joiner, mover and leaver processes for this system</li>
+        <li>role profiles or access control information</li>
+        <li>how multi-factor authentication, remote access and privileged access are managed</li>
+        <li>recent access reviews, audit checks or control evidence</li>
+      </ul>
+
+      <h2 class="govuk-heading-m">Who may need to contribute</h2>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>service owner or system owner</li>
+        <li>identity and access management or infrastructure lead</li>
+        <li>supplier or managed service contact where access is externally administered</li>
+        <li>information security or audit colleagues who can confirm evidence</li>
+      </ul>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="{{ startHref }}">{{ startLabel or "Start" }}</a>
+        <a class="govuk-link" href="/assessments/current/dashboard?lens=bc&view=all">Return to dashboard</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

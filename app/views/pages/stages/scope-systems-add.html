@@ -17,7 +17,7 @@
   {{ appPageHeader({
     caption: "Critical systems list" if researchRound == "round-2" else "",
     title: headingText if researchRound == "round-2" else pageTitle,
-    intro: "Update the critical system details for your CAF scope register." if isEdit else ("Add a system that supports one or more essential services. You will then map it to services and set its priority in 2 steps." if researchRound == "round-2" else "Add each critical system with the core details you need."),
+    intro: "Update this critical system in your list." if isEdit else ("Add a system that supports one or more essential services. You will then link it to services and set its priority in 2 steps." if researchRound == "round-2" else "Add each critical system with the core details you need."),
     hint: ""
   }) }}
 
@@ -76,7 +76,7 @@
 
     <div class="govuk-button-group">
       <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
-      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to critical systems</a>
+      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to the critical systems list</a>
     </div>
   </form>
     </div>

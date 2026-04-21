@@ -59,7 +59,7 @@
     <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
       <li>The reviewer checks quality, consistency and whether the evidence supports the draft.</li>
       <li>The approver is the final internal sign-off before the assessment is treated as approved.</li>
-      <li>Use this page when the draft is coherent and ready for someone else to challenge it.</li>
+      <li>Once internal review and approval are complete, the assessment can be sent for independent assurance.</li>
     </ul>
   </div>
 
@@ -73,8 +73,12 @@
       value: { text: roleSummaryText }
     },
     {
-      key: { text: "Status" },
+      key: { text: "Internal collaboration status" },
       value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+    },
+    {
+      key: { text: "Assessment status" },
+      value: { html: '<strong class="govuk-tag ' ~ assessmentWorkflowStatus.tagClass ~ '">' ~ assessmentWorkflowStatus.label ~ '</strong>' }
     },
     {
       key: { text: "Drafted by" },
@@ -105,6 +109,7 @@
       }) }}
 
       <h2 class="govuk-heading-m">Assessment summary</h2>
+      <p class="govuk-body">Independent assurance begins after the assessment is internally complete.</p>
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">A and D</dt>
@@ -169,10 +174,10 @@
       {% elif collaborationState.status == "approved" %}
         <h2 class="govuk-heading-m">Next step</h2>
         <div class="govuk-inset-text">
-          This self-assessment has been approved.
+          This self-assessment has been approved and is ready to be sent for independent assurance.
         </div>
         <div class="govuk-button-group">
-          <a class="govuk-button" href="/assessments/current/approve-self-assessment">View approval</a>
+          <a class="govuk-button" href="/assessments/current/approve-self-assessment/complete">Send for independent assurance</a>
           <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>

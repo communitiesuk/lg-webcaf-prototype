@@ -43,8 +43,8 @@ module.exports = function (router) {
         value: rows.filter((row) => row.assurance === "Changes needed").length,
       },
       {
-        label: "councils awaiting assurance sign-off",
-        value: rows.filter((row) => row.assurance === "Ready for review").length,
+        label: "councils ready for independent assurance",
+        value: rows.filter((row) => row.assurance === "Ready for independent assurance").length,
       },
       {
         label: "councils with incomplete outcomes",

@@ -17,7 +17,7 @@
   {{ appPageHeader({
     caption: "Essential services list" if researchRound == "round-2" else "",
     title: headingText if researchRound == "round-2" else pageTitle,
-    intro: "Update the essential service details for your CAF scope register." if isEdit else ("Add the services that are essential to delivering your council's mission and day-to-day operations. You can review and update this list over time." if researchRound == "round-2" else "Add an essential service to your CAF scope register."),
+    intro: "Update this essential service in your list." if isEdit else ("Add the services that are essential to delivering your council's mission and day-to-day operations. You can review and update this list over time." if researchRound == "round-2" else "Add an essential service to your list."),
     guidanceHeading: "",
     guidanceItems: []
   }) }}
@@ -65,7 +65,7 @@
 
     <div class="govuk-button-group">
       <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
-      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to essential services</a>
+      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to the essential services list</a>
     </div>
   </form>
     </div>

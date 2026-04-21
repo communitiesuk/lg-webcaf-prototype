@@ -17,8 +17,13 @@
   {% endif %}
 
   <h1 class="govuk-heading-l">Submit full assessment to assurer</h1>
+  <p class="govuk-body">Once the council has completed internal review, the full assessment can be sent for independent assurance.</p>
 
   <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assessment status</dt>
+      <dd class="govuk-summary-list__value"><strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong></dd>
+    </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Workshop date</dt>
       <dd class="govuk-summary-list__value">{{ submissionWindow.workshopDateDisplay or "Not set" }}</dd>
@@ -56,7 +61,7 @@
           Confirm submission
         </legend>
         <div id="submitAssessmentConfirm-hint" class="govuk-hint">
-          This submits the council assessment package to the assurer.
+          This moves the assessment into independent assurance.
         </div>
         {% if error and (error.items | selectattr('field','equalto','submitAssessmentConfirm') | list | length) > 0 %}
           <p id="submitAssessmentConfirm-error" class="govuk-error-message">
@@ -68,7 +73,7 @@
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="submitAssessmentConfirm-yes" name="submitAssessmentConfirm" type="radio" value="yes" {% if confirmChoice == "yes" %}checked{% endif %}>
             <label class="govuk-label govuk-radios__label" for="submitAssessmentConfirm-yes">
-              Yes, submit now
+              Yes, send for independent assurance now
             </label>
           </div>
           <div class="govuk-radios__item">

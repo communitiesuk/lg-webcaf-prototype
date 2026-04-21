@@ -6,7 +6,7 @@
     <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
-  <h1 class="govuk-heading-l">Who is involved in the CAF work</h1>
+  <h1 class="govuk-heading-l">Add the people helping with this assessment</h1>
   <p class="govuk-body">{{ labels.stages.scope.hub.rolesHint }}</p>
 
   <form method="post" action="/stages/2/scope/roles">
@@ -27,7 +27,7 @@
 
     <div class="govuk-form-group">
       <label class="govuk-label" for="scopeSme">{{ labels.stages.scope.hub.rolesSmeLabel }}</label>
-      <div class="govuk-hint">List the teams you will consult before asking MHCLG or assurers.</div>
+      <div class="govuk-hint">Add the teams you will usually speak to before asking MHCLG or assurers for help.</div>
       <input class="govuk-input" id="scopeSme" name="scopeSme" type="text" value="{{ assessment.scope.rolesSme or '' }}">
     </div>
 

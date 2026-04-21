@@ -16,6 +16,11 @@
       <dd class="govuk-summary-list__actions"></dd>
     </div>
     <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assessment status</dt>
+      <dd class="govuk-summary-list__value"><strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong></dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
+    <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submitted for review</dt>
       <dd class="govuk-summary-list__value">{{ collaborationState.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
       <dd class="govuk-summary-list__actions">{{ collaborationState.submittedBy }}</dd>
@@ -36,12 +41,15 @@
   </dl>
 
   <div class="govuk-inset-text">
-    Next, the reviewer can check the summary and either send it back for edits or move it to approval.
+    The reviewer can now check the summary and either send it back for edits or move it to approval. Independent assurance does not start until the assessment is internally complete.
   </div>
 
+  <h2 class="govuk-heading-m">What happens next</h2>
+  <p class="govuk-body">This is still the council's internal process. Once the reviewer is content, the approver can make the assessment internally complete and ready for independent assurance.</p>
+
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Return to task list</a>
-    <a class="govuk-link" href="/assessments/current/review-self-assessment">Open review page</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/review-self-assessment">Continue to internal review</a>
+    <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
     <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
   </div>
     </div>

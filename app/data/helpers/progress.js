@@ -102,8 +102,8 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
 
   const isComplete = row.status === "complete";
   const isBlocked = row.status === "blocked";
-  const isReadyForReview = row.status === "ready_for_review";
-  const isFeedbackReceived = row.status === "feedback_received";
+  const isReadyForReview = row.status === "ready_for_internal_review";
+  const isInternallyReviewed = row.status === "internally_reviewed";
   const isOverdue = Boolean(due && due < todayMidnight && !isComplete);
 
   const currentUserId = opts.currentUserId || null;
@@ -113,7 +113,7 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
 
   const isMine = Boolean(isOwner || isCollaborator);
 
-  const isNeedsAttention = Boolean(isOverdue || isBlocked || isReadyForReview || isFeedbackReceived);
+  const isNeedsAttention = Boolean(isOverdue || isBlocked || isReadyForReview);
 
   const statusMeta =
     statusesDef.options.find((s) => s.value === row.status) || statusesDef.options[0];
@@ -127,9 +127,8 @@ function deriveRowFlags(row, statusesDef, opts = {}) {
   const evidenceCount = countEvidenceRefs(row.evidenceRefs);
   const evidenceExpectedStatuses = new Set([
     "complete",
-    "ready_for_review",
-    "feedback_received",
-    "updated_after_feedback",
+    "ready_for_internal_review",
+    "internally_reviewed",
   ]);
   const isMissingEvidence = evidenceCount === 0 && evidenceExpectedStatuses.has(row.status);
   const isNeedsAttentionWithEvidence = Boolean(isNeedsAttention || isMissingEvidence);
@@ -266,7 +265,7 @@ function computeSummary(rows) {
     blocked: rows.filter((r) => r.status === "blocked").length,
     notStarted: rows.filter((r) => r.status === "not_started").length,
     inProgress: rows.filter((r) => r.status === "in_progress").length,
-    readyForReview: rows.filter((r) => r.status === "ready_for_review").length,
+    readyForReview: rows.filter((r) => r.status === "ready_for_internal_review").length,
     complete: rows.filter((r) => r.status === "complete").length,
     needsAttention: rows.filter((r) => r.isNeedsAttention).length,
     missingEvidence: rows.filter((r) => r.isMissingEvidence).length,

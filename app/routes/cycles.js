@@ -220,7 +220,7 @@ function computeSummary(rows) {
     blocked: rows.filter((r) => r.status === "blocked").length,
     notStarted: rows.filter((r) => r.status === "not_started").length,
     inProgress: rows.filter((r) => r.status === "in_progress").length,
-    readyForReview: rows.filter((r) => r.status === "ready_for_review").length,
+    readyForReview: rows.filter((r) => r.status === "ready_for_internal_review").length,
     complete: rows.filter((r) => r.status === "complete").length,
     needsAttention: rows.filter((r) => r.isNeedsAttention).length,
   };

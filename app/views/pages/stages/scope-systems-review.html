@@ -5,11 +5,11 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-  {% set successMessage = "Your changes to the critical systems register have been saved." %}
+  {% set successMessage = "Your changes to the critical systems list have been saved." %}
   {% if saved == "system-added" %}
-    {% set successMessage = "You have added this system to the critical systems register." %}
+    {% set successMessage = "You have added this system to the critical systems list." %}
     {% if savedName %}
-      {% set successMessage = "You have added " + savedName + " to the critical systems register." %}
+      {% set successMessage = "You have added " + savedName + " to the critical systems list." %}
     {% endif %}
   {% elif saved == "system-updated" %}
     {% set successMessage = "Your changes to this system have been saved." %}
@@ -17,9 +17,9 @@
       {% set successMessage = "You have updated " + savedName + "." %}
     {% endif %}
   {% elif saved == "system-removed" %}
-    {% set successMessage = "This system has been removed from the critical systems register." %}
+    {% set successMessage = "This system has been removed from the critical systems list." %}
     {% if savedName %}
-      {% set successMessage = "You have removed " + savedName + " from the critical systems register." %}
+      {% set successMessage = "You have removed " + savedName + " from the critical systems list." %}
     {% endif %}
   {% elif saved == "mapping" %}
     {% set successMessage = "Your mapping changes have been saved." %}
@@ -44,7 +44,7 @@
 
   {% if researchRound == "round-2" %}
   <span class="govuk-caption-l">Critical systems list</span>
-  <h1 class="govuk-heading-l">Manage your critical systems</h1>
+  <h1 class="govuk-heading-l">List your critical systems</h1>
     <p class="govuk-body">Add and maintain the full list of systems that support your essential services.</p>
     <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
     <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
@@ -53,8 +53,8 @@
       </summary>
       <div class="govuk-details__text">
         <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Add missing systems and make sure each one is mapped to services and has a priority where needed.</li>
-          <li>When this register is up to date, return to the task list to continue the scope work.</li>
+          <li>Add missing systems and make sure each one is linked to services and has a priority where needed.</li>
+          <li>When this list is up to date, return to the task list to continue setup.</li>
         </ul>
       </div>
     </details>
@@ -87,8 +87,8 @@
       </summary>
       <div class="govuk-details__text">
         <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Check the list, then map services and set priorities for the systems you need to assess.</li>
-          <li>When you continue, you can confirm the systems register and move to the next step.</li>
+          <li>Check the list, then link services and set priorities for the systems you need to assess.</li>
+          <li>When you continue, you can confirm this list and move to the next step.</li>
         </ul>
       </div>
     </details>
@@ -148,7 +148,7 @@
             </td>
             <td class="govuk-table__cell app-register-actions">
               <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/mapping/{{ system.id }}">
-                {% if hasMappedServices %}Change mapping{% else %}Map essential services{% endif %}
+                {% if hasMappedServices %}Change linked services{% else %}Link essential services{% endif %}
               </a>
               <a class="govuk-link govuk-!-display-block govuk-!-margin-top-1" href="/stages/2/scope/priority/{{ system.id }}">
                 {% if system.priorityLabel %}Change priority{% else %}Set priority{% endif %}

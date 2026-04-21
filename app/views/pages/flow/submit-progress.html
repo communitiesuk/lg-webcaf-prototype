@@ -9,7 +9,7 @@
   <h1 class="govuk-heading-l">{{ labels.flow.submit.heading }}</h1>
   <p class="govuk-body">{{ labels.flow.submit.intro }}</p>
   <div class="govuk-inset-text">
-    Include the latest scope summary snapshot in the submission pack.
+    Include the latest setup summary snapshot in the submission pack.
     {% if submission.scopePackSnapshotAt %}
       Last updated: {{ submission.scopePackSnapshotAt | replace("T", " ") | replace("Z", "") }}.
     {% endif %}
@@ -134,7 +134,7 @@
 
     <div class="govuk-form-group">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Does the submission pack include the latest scope summary snapshot?</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Does the submission pack include the latest setup summary snapshot?</legend>
         <div class="govuk-radios">
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="scopePackIncluded-yes" name="scopePackIncluded" type="radio" value="yes" {% if submission.scopePackIncluded != false %}checked{% endif %}>

@@ -1,0 +1,66 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="{{ returnTo }}">Back</a>
+
+      {% if saved %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="assurance-planning-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="assurance-planning-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">Assurance planning details updated.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Independent assurance",
+        title: "Plan for independent assurance",
+        intro: "Add any planning details that will help your team prepare once the assessment is internally complete."
+      }) }}
+
+      <div class="govuk-inset-text">
+        This helps you plan for independent assurance. You do not need to arrange or book it now.
+      </div>
+
+      {% if collaborationState and collaborationState.status != "approved" and not collaborationState.assurerSubmitted %}
+        <p class="govuk-body">You can add these details in advance, but independent assurance only starts after the assessment is internally complete.</p>
+      {% endif %}
+
+      <form method="post" action="/assessments/current/assurance-planning">
+        <input type="hidden" name="returnTo" value="{{ returnTo }}">
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="assurancePlanningAssurerName">Assurer name (optional)</label>
+          <input class="govuk-input govuk-!-width-two-thirds" id="assurancePlanningAssurerName" name="assurancePlanningAssurerName" type="text" value="{{ form.assurerName or '' }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="assurancePlanningProvider">Organisation or provider (optional)</label>
+          <input class="govuk-input govuk-!-width-two-thirds" id="assurancePlanningProvider" name="assurancePlanningProvider" type="text" value="{{ form.provider or '' }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="assurancePlanningExpectedTiming">Expected timing (optional)</label>
+          <div class="govuk-hint">Use free text, for example "after internal sign-off" or "early July".</div>
+          <input class="govuk-input govuk-!-width-two-thirds" id="assurancePlanningExpectedTiming" name="assurancePlanningExpectedTiming" type="text" value="{{ form.expectedTiming or '' }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="assurancePlanningNotes">Notes (optional)</label>
+          <div class="govuk-hint">Add anything that will help your team prepare for independent assurance.</div>
+          <textarea class="govuk-textarea" id="assurancePlanningNotes" name="assurancePlanningNotes" rows="6">{{ form.notes or '' }}</textarea>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save assurance planning details</button>
+          <a class="govuk-link" href="{{ returnTo }}">Return without saving</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

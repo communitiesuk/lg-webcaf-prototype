@@ -8,14 +8,30 @@
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
-      { text: "Submission status" }
+      { text: "Assessment submission overview" }
     ]
   }) }}
 
-  <h1 class="govuk-heading-l">Submission status</h1>
-  <p class="govuk-body">Read-only view of the council submission record.</p>
+  <h1 class="govuk-heading-l">Assessment submission overview</h1>
+  <p class="govuk-body">Independent assurance starts from the completed assessment the council has sent to you.</p>
 
   <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Current council</dt>
+      <dd class="govuk-summary-list__value">{{ assurerContext.activeCouncilName or assessment.councilName or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assessment status</dt>
+      <dd class="govuk-summary-list__value"><strong class="govuk-tag {{ workflowStatus.tagClass }}">{{ workflowStatus.label }}</strong></dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Sent for independent assurance</dt>
+      <dd class="govuk-summary-list__value">{{ assurerSubmission.submittedAt or "—" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Sent by council</dt>
+      <dd class="govuk-summary-list__value">{{ assurerSubmission.submittedBy or "—" }}</dd>
+    </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submitted by</dt>
       <dd class="govuk-summary-list__value">{{ submission.submittedBy or "—" }}</dd>
@@ -52,8 +68,30 @@
     </div>
   </dl>
 
+  <div class="govuk-inset-text">
+    Review the submitted assessment first. Outcome-level review sits inside this assessment-level assurance journey.
+  </div>
+
+  <h2 class="govuk-heading-m">Independent assurance progress</h2>
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Record of Audit</dt>
+      <dd class="govuk-summary-list__value">{{ assuranceSnapshot.recordOfAuditStatus }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Stage 1 report</dt>
+      <dd class="govuk-summary-list__value">{{ assuranceSnapshot.reportStage1Status }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Council amendments</dt>
+      <dd class="govuk-summary-list__value">{{ assuranceSnapshot.amendmentsStatus }}</dd>
+    </div>
+  </dl>
+
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assurer/overview">Back to overview</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/dashboard">Open assessment dashboard</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/record-of-audit">Open Record of Audit</a>
+    <a class="govuk-link" href="/assurer/overview">Back to overview</a>
   </div>
     </div>
   </div>

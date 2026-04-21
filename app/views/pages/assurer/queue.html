@@ -9,7 +9,7 @@
   {{ govukBreadcrumbs({
     items: [
       { text: "Assurer overview", href: "/assurer/overview" },
-      { text: "Assurer queue" }
+      { text: "Independent assurance queue" }
     ]
   }) }}
 
@@ -68,70 +68,34 @@
     </div>
   {% endif %}
 
-  <details class="govuk-details" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">Filter queue</span>
-    </summary>
-    <div class="govuk-details__text">
-      <form method="get" action="/assurer/queue" class="govuk-form-group">
-        <label class="govuk-label" for="queue-view">View</label>
-        <select class="govuk-select" id="queue-view" name="view">
-          <option value="" {% if not view %}selected{% endif %}>All outcomes</option>
-          <option value="ready" {% if view == "ready" %}selected{% endif %}>Ready for review</option>
-          <option value="missing" {% if view == "missing" %}selected{% endif %}>Missing evidence</option>
-        </select>
-        <div class="govuk-button-group govuk-!-margin-top-2">
-          <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Apply filter</button>
-          <a class="govuk-link" href="/assurer/queue">Clear filter</a>
-        </div>
-      </form>
-    </div>
-  </details>
-
   <h2 class="govuk-heading-m">{{ labels.assurer.queue.readyHeading }}</h2>
-  {% if readyForReview.length > 0 %}
+  {% if assessmentQueue.length > 0 %}
     <table class="govuk-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
           <th class="govuk-table__header" scope="col">Council</th>
-          <th class="govuk-table__header" scope="col">Outcome</th>
-          <th class="govuk-table__header" scope="col">System</th>
-          <th class="govuk-table__header" scope="col">Title</th>
-          <th class="govuk-table__header" scope="col">Status</th>
-          <th class="govuk-table__header" scope="col">Evidence refs</th>
-          <th class="govuk-table__header" scope="col">Record of Audit</th>
-          <th class="govuk-table__header" scope="col">Stage 1 report</th>
-          <th class="govuk-table__header" scope="col">Council amendments</th>
-          <th class="govuk-table__header" scope="col">IIP Stage 2 submitted</th>
-          <th class="govuk-table__header" scope="col">IIP Stage 2 session</th>
-          <th class="govuk-table__header" scope="col">IIP Stage 2 rework</th>
+          <th class="govuk-table__header" scope="col">Assessment status</th>
+          <th class="govuk-table__header" scope="col">Sent by council</th>
+          <th class="govuk-table__header" scope="col">Evidence gaps</th>
+          <th class="govuk-table__header" scope="col">Action</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
-        {% for row in readyForReview %}
+        {% for row in assessmentQueue %}
           <tr class="govuk-table__row">
-            <td class="govuk-table__cell">{{ row.councilName or assurerContext.activeCouncilName or "—" }}</td>
-            <td class="govuk-table__cell">
-              <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
-            </td>
-            <td class="govuk-table__cell">{{ row.systemName or "—" }}</td>
-            <td class="govuk-table__cell">{{ row.title }}</td>
+            <td class="govuk-table__cell">{{ row.councilName }}</td>
             <td class="govuk-table__cell">
               <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
             </td>
-            <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.recordOfAuditStatus }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.reportStage1Status }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.amendmentsStatus }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Submitted }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2SessionStatus }}</td>
-            <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Rework }}</td>
+            <td class="govuk-table__cell">{{ row.submittedBy }}{% if row.submittedAt %}<br><span class="govuk-hint">{{ row.submittedAt }}</span>{% endif %}</td>
+            <td class="govuk-table__cell">{{ row.missingEvidenceCount }}</td>
+            <td class="govuk-table__cell"><a class="govuk-link" href="{{ row.href }}">Open submitted assessment</a></td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   {% else %}
-    <p class="govuk-body">No outcomes are ready for review.</p>
+    <p class="govuk-body">No completed assessments have been sent for independent assurance yet.</p>
   {% endif %}
 
   <h2 class="govuk-heading-m">{{ labels.assurer.queue.missingHeading }}</h2>
@@ -181,55 +145,8 @@
     <p class="govuk-body">No outcomes are missing evidence references.</p>
   {% endif %}
 
-  {% if view %}
-    <h2 class="govuk-heading-m">Filtered results</h2>
-    {% if filteredRows.length > 0 %}
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th class="govuk-table__header" scope="col">Council</th>
-            <th class="govuk-table__header" scope="col">Outcome</th>
-            <th class="govuk-table__header" scope="col">System</th>
-            <th class="govuk-table__header" scope="col">Title</th>
-            <th class="govuk-table__header" scope="col">Status</th>
-            <th class="govuk-table__header" scope="col">Evidence refs</th>
-            <th class="govuk-table__header" scope="col">Record of Audit</th>
-            <th class="govuk-table__header" scope="col">Stage 1 report</th>
-            <th class="govuk-table__header" scope="col">Council amendments</th>
-            <th class="govuk-table__header" scope="col">IIP Stage 2 submitted</th>
-            <th class="govuk-table__header" scope="col">IIP Stage 2 session</th>
-            <th class="govuk-table__header" scope="col">IIP Stage 2 rework</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for row in filteredRows %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">{{ row.councilName or assurerContext.activeCouncilName or "—" }}</td>
-              <td class="govuk-table__cell">
-                <a class="govuk-link" href="/assurer/outcomes/{{ row.outcomeId }}">{{ row.outcomeCode }}</a>
-              </td>
-              <td class="govuk-table__cell">{{ row.systemName or "—" }}</td>
-              <td class="govuk-table__cell">{{ row.title }}</td>
-              <td class="govuk-table__cell">
-                <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
-              </td>
-              <td class="govuk-table__cell">{{ row.evidenceCount }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.recordOfAuditStatus }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.reportStage1Status }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.amendmentsStatus }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Submitted }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2SessionStatus }}</td>
-              <td class="govuk-table__cell">{{ assuranceSnapshot.iipStage2Rework }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="govuk-body">No outcomes match this filter.</p>
-    {% endif %}
-  {% endif %}
-
   <div class="govuk-button-group govuk-!-margin-top-6">
+    <a class="govuk-button" data-module="govuk-button" href="/assurer/submission">Open submitted assessment</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/record-of-audit">Open Record of Audit</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/report-stage-1">Open Stage 1 report</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/iip-stage-2">Open IIP Stage 2</a>

@@ -8,12 +8,12 @@
     {{ appPageHeader({
       caption: "Independent review",
       title: "Assessment dashboard",
-      intro: "Review the assessment assigned to you and open the outcomes that need independent review feedback."
+      intro: "Review the completed assessment assigned to you and inspect the outcomes within that assessment."
     }) }}
     <div class="govuk-inset-text">
       <p class="govuk-body govuk-!-margin-bottom-1"><strong>Acting as assurer</strong></p>
       <p class="govuk-body govuk-!-margin-bottom-0">
-        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} for assurance.
+        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} in independent assurance after the council completed it internally.
       </p>
     </div>
   {% elif researchRound == "round-2" %}
@@ -50,6 +50,17 @@
     </div>
   {% endif %}
 
+  {% if researchRound == "round-2" and query.saved == "assurance-planning" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-assurance-planning-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="dashboard-assurance-planning-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">Assurance planning details updated.</p>
+      </div>
+    </div>
+  {% endif %}
+
   <section aria-labelledby="dashboard-summary-heading">
     <h2 class="govuk-heading-m" id="dashboard-summary-heading">{{ labels.dashboard.summaryHeading }}</h2>
     <div class="govuk-grid-row app-dashboard-summary">
@@ -67,6 +78,23 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if assurancePlanningSummary and assurancePlanningSummary.available %}
+    <section class="govuk-!-margin-top-6" aria-labelledby="assurance-planning-heading">
+      <h2 class="govuk-heading-m" id="assurance-planning-heading">Independent assurance</h2>
+      <div class="govuk-inset-text">
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>Assurance planning is optional</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ assurancePlanningSummary.body }}</p>
+      </div>
+      <p class="govuk-body">
+        Current status:
+        <strong>{{ assurancePlanningSummary.statusText }}</strong>
+      </p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        <a class="govuk-link" href="{{ assurancePlanningSummary.href }}">Add or update assurance planning details</a>
+      </p>
+    </section>
+  {% endif %}
 
   {% if researchRound == "round-2" and roundTwoWorkQueues %}
     <section aria-labelledby="dashboard-next-actions-heading">
@@ -163,7 +191,7 @@
           {% endfor %}
         </ul>
         <p class="govuk-body govuk-!-margin-bottom-0">
-          Use your booked check-in call to review shared outcomes and clarify feedback.
+          Use this to spot outcomes waiting for internal council review.
         </p>
       </div>
     </div>

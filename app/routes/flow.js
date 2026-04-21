@@ -28,6 +28,14 @@ const PROTOTYPE_OUTCOME_LIMITS = {
   BC: 1,
 };
 
+const PROTOTYPE_OUTCOME_IDS = {
+  AD: ["A1a", "A1b"],
+  BC: ["B1a", "B2a"],
+};
+
+const B2A_OUTCOME_ID = "B2a";
+const B2A_MAX_EVIDENCE_ROWS = 5;
+
 module.exports = function (router) {
   const protectedPrefixes = [
     "/prepare",
@@ -159,12 +167,11 @@ module.exports = function (router) {
     const defaults = {
       onboardingLead: (assessment.prepare.onboardingLead || (currentUser && currentUser.name) || "").toString(),
       onboardingApprover: (assessment.prepare.onboardingApprover || "").toString(),
-      onboardingContributors: (assessment.prepare.onboardingContributors || "").toString(),
     };
     const returnTo = getCouncilRolesReturnTo(req);
 
     return res.render("pages/flow/prepare-round-2-roles", {
-      pageTitle: "Set up council roles",
+      pageTitle: "Who is leading and approving the CAF assessment?",
       labels,
       assessment,
       defaults,
@@ -194,7 +201,6 @@ module.exports = function (router) {
     const returnTo = getCouncilRolesReturnTo(req);
     const onboardingLead = (req.session.data.onboardingLead || "").toString().trim();
     const onboardingApprover = (req.session.data.onboardingApprover || "").toString().trim();
-    const onboardingContributors = (req.session.data.onboardingContributors || "").toString().trim();
     const errors = [];
     if (!onboardingLead) {
       errors.push({ field: "onboardingLead", text: "Enter the CAF Lead." });
@@ -207,34 +213,29 @@ module.exports = function (router) {
       ...assessment.prepare,
       onboardingLead,
       onboardingApprover,
-      onboardingContributors,
+      onboardingContributors: "",
       onboardingRolesComplete: Boolean(onboardingLead && onboardingApprover),
-      contributorsConfirmed: Boolean(onboardingContributors),
+      contributorsConfirmed: false,
       guidanceRead: Boolean(onboardingLead && onboardingApprover),
     };
     applyRoleAudit(assessment.prepare, "onboardingRoles", currentUser, {
       lead: onboardingLead,
       approver: onboardingApprover,
-      contributors: onboardingContributors,
     });
 
     if (!assessment.scope) assessment.scope = {};
     assessment.scope.rolesLead = onboardingLead || ((currentUser && currentUser.name) || "");
     assessment.scope.rolesApprover = onboardingApprover;
-    if (!assessment.scope.rolesTech) {
-      assessment.scope.rolesTech = onboardingContributors;
-    }
     assessment.updatedAt = new Date().toISOString();
 
     if (errors.length > 0) {
       return res.render("pages/flow/prepare-round-2-roles", {
-        pageTitle: "Set up council roles",
+        pageTitle: "Who is leading and approving the CAF assessment?",
         labels,
         assessment,
         defaults: {
           onboardingLead,
           onboardingApprover,
-          onboardingContributors,
         },
         returnTo,
         backHref: getCouncilRolesReturnHref(returnTo),
@@ -964,6 +965,10 @@ module.exports = function (router) {
         title: outcome.title,
         description: outcome.description || "",
         judgement: saved.judgement || "",
+        actionHref:
+          outcome.id === B2A_OUTCOME_ID
+            ? buildB2aStepPath(system.id, "context")
+            : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`,
         carriedForward: Boolean(saved.carriedForward && saved.reviewRequired),
         evidenceCount,
         status:
@@ -1006,6 +1011,251 @@ module.exports = function (router) {
     });
   });
 
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-context`, (req, res) => {
+    const assessment = getAssessmentOrRedirect(req, res);
+    if (!assessment) return;
+
+    ensureFlowData(assessment);
+    if (
+      redirectIfScopeNotReady(
+        req,
+        res,
+        assessment,
+        `/self-assess/bc/${req.params.systemId}/outcomes/${B2A_OUTCOME_ID}/b2a-context`
+      )
+    ) return;
+    if (!isRoundTwoRequest(req)) {
+      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${B2A_OUTCOME_ID}`);
+    }
+
+    const system = findBCSystemForJourney(assessment, req.params.systemId);
+    if (!system) return renderNotFound(res);
+
+    const { bc } = getOutcomesForVersion(assessment);
+    const outcome = findOutcome(bc, B2A_OUTCOME_ID);
+    if (!outcome) return renderNotFound(res);
+
+    const saved = getBCOutcome(assessment, system.id, outcome.id);
+    const journey = normaliseB2aJourney(saved.b2aJourney);
+    const igpProgress = buildB2aIgpProgressSummary(journey);
+    const evidenceCount = Array.isArray(saved.evidenceRefs)
+      ? saved.evidenceRefs.filter((item) => Boolean(item && (item.title || item.link || item.description))).length
+      : 0;
+    const nextAction = !saved.judgement
+      ? "Continue the IGP responses and set the final judgement."
+      : !saved.rationale
+      ? "Finish the rationale and review the supporting evidence."
+      : "Review the remaining gaps and mark the outcome ready for internal review.";
+
+    return res.render("pages/flow/b2a-context", {
+      pageTitle: `${outcome.code} ${outcome.title}`,
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      backHref: `/self-assess/bc/${encodeURIComponent(system.id)}`,
+      startHref: buildB2aStepPath(system.id, "achieved"),
+      startLabel: igpProgress.completed > 0 ? "Continue B2.a" : "Start B2.a",
+      progressSummary: {
+        statusLabel: formatB2aStatusLabel((saved.status || "").toString() || "in_progress"),
+        igpsAnswered: `${igpProgress.completed} of ${igpProgress.total}`,
+        evidenceCount,
+        judgement: saved.judgement || "Not set",
+        rationaleStarted: Boolean((saved.rationale || "").toString().trim()),
+        nextAction,
+      },
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-achieved`, (req, res) => {
+    renderB2aIgpStep(req, res, {
+      stepKey: "achieved",
+      pageTitle: "Achieved IGPs",
+      heading: "Achieved IGPs",
+      intro:
+        "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
+      guidanceSummary: "How to answer these statements",
+      guidanceBody:
+        "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "context"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
+    });
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-achieved`, (req, res) => {
+    handleB2aIgpStepPost(req, res, {
+      stepKey: "achieved",
+      pageTitle: "Achieved IGPs",
+      heading: "Achieved IGPs",
+      intro:
+        "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
+      guidanceSummary: "How to answer these statements",
+      guidanceBody:
+        "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "context"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-not-achieved`, (req, res) => {
+    renderB2aIgpStep(req, res, {
+      stepKey: "notAchieved",
+      pageTitle: "Not achieved IGPs",
+      heading: "Not achieved IGPs",
+      intro:
+        "Now review indicators that would usually suggest this contributing outcome is not achieved.",
+      pageHint: "Some statements on this page relate to controls you reviewed earlier.",
+      guidanceSummary: "How to use this page",
+      guidanceBody:
+        "A 'Yes' answer may indicate a gap that affects your judgement. Use 'Not applicable' or 'Alternative control in place' only when you can explain why the statement does not apply as written.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "achieved"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "partially-achieved"),
+    });
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-not-achieved`, (req, res) => {
+    handleB2aIgpStepPost(req, res, {
+      stepKey: "notAchieved",
+      pageTitle: "Not achieved IGPs",
+      heading: "Not achieved IGPs",
+      intro:
+        "Now review indicators that would usually suggest this contributing outcome is not achieved.",
+      pageHint: "Some statements on this page relate to controls you reviewed earlier.",
+      guidanceSummary: "How to use this page",
+      guidanceBody:
+        "A 'Yes' answer may indicate a gap that affects your judgement. Use 'Not applicable' or 'Alternative control in place' only when you can explain why the statement does not apply as written.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "achieved"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "partially-achieved"),
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-partially-achieved`, (req, res) => {
+    renderB2aIgpStep(req, res, {
+      stepKey: "partiallyAchieved",
+      pageTitle: "Partially achieved IGPs",
+      heading: "Partially achieved IGPs",
+      intro:
+        "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
+      guidanceSummary: "How to use these statements",
+      guidanceBody:
+        "These statements help you consider whether the council is getting worthwhile security benefit, while still having gaps to address.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "indicative-judgement"),
+    });
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-partially-achieved`, (req, res) => {
+    handleB2aIgpStepPost(req, res, {
+      stepKey: "partiallyAchieved",
+      pageTitle: "Partially achieved IGPs",
+      heading: "Partially achieved IGPs",
+      intro:
+        "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
+      guidanceSummary: "How to use these statements",
+      guidanceBody:
+        "These statements help you consider whether the council is getting worthwhile security benefit, while still having gaps to address.",
+      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
+      nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "indicative-judgement"),
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-indicative-judgement`, (req, res) => {
+    const routeContext = getB2aRouteContext(req, res);
+    if (!routeContext) return;
+    const { assessment, system, outcome, saved } = routeContext;
+    const summary = buildB2aIndicativeJudgement(saved.b2aJourney || {});
+    syncB2aOutcomeData(assessment, system.id, {
+      ...saved,
+      b2aJourney: {
+        ...(saved.b2aJourney || {}),
+        indicativeJudgement: summary.judgement,
+        indicativeSummary: summary,
+      },
+    });
+
+    return res.render("pages/flow/b2a-indicative-judgement", {
+      pageTitle: "Indicative judgement",
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: routeContext.bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      system,
+      backHref: buildB2aStepPath(system.id, "partially-achieved"),
+      nextHref: buildB2aStepPath(system.id, "final-judgement"),
+      summary,
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-final-judgement`, (req, res) => {
+    renderB2aFinalJudgement(req, res);
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-final-judgement`, (req, res) => {
+    handleB2aFinalJudgementPost(req, res);
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-rationale`, (req, res) => {
+    renderB2aRationale(req, res);
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-rationale`, (req, res) => {
+    handleB2aRationalePost(req, res);
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-evidence`, (req, res) => {
+    renderB2aEvidence(req, res);
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-evidence`, (req, res) => {
+    handleB2aEvidencePost(req, res);
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-review-before-internal-review`, (req, res) => {
+    renderB2aReviewBeforeAssurance(req, res);
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-review-before-internal-review`, (req, res) => {
+    handleB2aReviewBeforeAssurancePost(req, res);
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-ready-for-internal-review`, (req, res) => {
+    const routeContext = getB2aRouteContext(req, res);
+    if (!routeContext) return;
+    const { assessment, system, outcome, saved } = routeContext;
+    const journey = saved.b2aJourney || {};
+    const evidenceRefs = Array.isArray(saved.evidenceRefs) ? saved.evidenceRefs : [];
+
+    if (!saved.judgement || !saved.rationale || evidenceRefs.length === 0 || !journey.reviewDeclaration) {
+      return res.redirect(buildB2aStepPath(system.id, "review"));
+    }
+
+    return res.render("pages/flow/b2a-ready", {
+      pageTitle: "Outcome ready for internal review",
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: routeContext.bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      system,
+      summary: {
+        judgement: saved.judgement,
+        rationale: saved.rationale,
+        evidenceCount: evidenceRefs.length,
+        indicativeJudgement: journey.indicativeJudgement || "",
+      },
+      dashboardHref: "/assessments/current/dashboard?lens=bc&view=all",
+      systemHref: `/self-assess/bc/${encodeURIComponent(system.id)}`,
+    });
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-review-before-assurance`, (req, res) => {
+    return res.redirect(buildB2aStepPath(req.params.systemId, "review"));
+  });
+
+  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-review-before-assurance`, (req, res) => {
+    return res.redirect(303, buildB2aStepPath(req.params.systemId, "review"));
+  });
+
+  router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-ready-for-assurance`, (req, res) => {
+    return res.redirect(buildB2aStepPath(req.params.systemId, "ready"));
+  });
+
   router.get("/self-assess/bc/:systemId/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
@@ -1038,6 +1288,10 @@ module.exports = function (router) {
     }
     const outcome = findOutcome(bc, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
+
+    if (isRoundTwoRequest(req) && outcome.id === B2A_OUTCOME_ID) {
+      return res.redirect(buildB2aStepPath(system.id, "context"));
+    }
 
     const saved = getBCOutcome(assessment, system.id, outcome.id);
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
@@ -1357,6 +1611,10 @@ module.exports = function (router) {
     }
     const outcome = findOutcome(bc, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
+
+    if (isRoundTwoRequest(req) && outcome.id === B2A_OUTCOME_ID) {
+      return res.redirect(buildB2aStepPath(system.id, "context"));
+    }
 
     const action = (req.session.data.action || "").toString();
     const roundTwo = isRoundTwoRequest(req);
@@ -2660,7 +2918,13 @@ function getPrototypeOutcomeLimit(outcomesTree) {
 }
 
 function getPrototypeOutcomeRows(outcomesTree) {
-  return flattenOutcomes(outcomesTree).slice(0, getPrototypeOutcomeLimit(outcomesTree));
+  const rows = flattenOutcomes(outcomesTree);
+  const lens = outcomesTree && outcomesTree.lens ? String(outcomesTree.lens).toUpperCase() : "";
+  const ids = PROTOTYPE_OUTCOME_IDS[lens];
+  if (Array.isArray(ids) && ids.length > 0) {
+    return ids.map((id) => rows.find((outcome) => outcome.id === id)).filter(Boolean);
+  }
+  return rows.slice(0, getPrototypeOutcomeLimit(outcomesTree));
 }
 
 function getPrototypeOutcomeIds(outcomesTree) {
@@ -2727,6 +2991,724 @@ function buildRoundTwoOutcomeContext({ lens, tree, outcome, system, nextOutcomeI
   };
 }
 
+function buildB2aStepPath(systemId, step) {
+  const base = `/self-assess/bc/${encodeURIComponent(systemId)}/outcomes/${B2A_OUTCOME_ID}`;
+  const byStep = {
+    context: `${base}/b2a-context`,
+    achieved: `${base}/b2a-achieved`,
+    "not-achieved": `${base}/b2a-not-achieved`,
+    "partially-achieved": `${base}/b2a-partially-achieved`,
+    "indicative-judgement": `${base}/b2a-indicative-judgement`,
+    "final-judgement": `${base}/b2a-final-judgement`,
+    rationale: `${base}/b2a-rationale`,
+    evidence: `${base}/b2a-evidence`,
+    review: `${base}/b2a-review-before-internal-review`,
+    ready: `${base}/b2a-ready-for-internal-review`,
+  };
+  return byStep[step] || byStep.context;
+}
+
+function getB2aStatements() {
+  return {
+    achieved: [
+      {
+        id: "robust-identity-proofing",
+        statement:
+          "Users are identity verified to an appropriate level before accounts are issued for this system.",
+      },
+      {
+        id: "individual-authentication",
+        statement:
+          "Each user has an individual account and authentication credentials are not shared.",
+      },
+      {
+        id: "authorised-access-only",
+        statement:
+          "Access is restricted so only authorised users can reach the system and the functions they need.",
+      },
+      {
+        id: "mfa-privileged-remote",
+        statement:
+          "Multi-factor authentication is used for privileged access and for remote access to the system.",
+      },
+      {
+        id: "access-review",
+        statement:
+          "User and privileged access lists are reviewed regularly and leavers or role changes are updated promptly.",
+      },
+      {
+        id: "auth-practice-current",
+        statement:
+          "Authentication methods and account controls are kept up to date with current good practice.",
+      },
+    ],
+    notAchieved: [
+      {
+        id: "unauthorised-access",
+        statement:
+          "Unauthorised individuals can gain access to this system or its administrative functions.",
+        mirrorHint: "This is the inverse of an earlier statement about authorised access.",
+      },
+      {
+        id: "excessive-access",
+        statement:
+          "Users have broader access than they need to perform their role on this system.",
+        mirrorHint: "You reviewed a related statement earlier about limiting access to what users need.",
+      },
+      {
+        id: "weak-authentication",
+        statement:
+          "Authentication for this system does not follow current good practice for the type of access being provided.",
+        mirrorHint: "This relates to the earlier statement about keeping authentication controls up to date.",
+      },
+    ],
+    partiallyAchieved: [
+      {
+        id: "reasonable-confidence",
+        statement:
+          "The council has reasonable confidence in identity verification, but some joining routes still need strengthening.",
+      },
+      {
+        id: "some-additional-controls",
+        statement:
+          "Additional authentication controls are in place for higher-risk access, but not yet consistently applied.",
+      },
+      {
+        id: "annual-access-review",
+        statement:
+          "Access lists are reviewed at least annually, but not always when people move role or leave.",
+      },
+      {
+        id: "remote-access-controlled",
+        statement:
+          "Remote access is individually authenticated and authorised, although local exceptions still exist.",
+      },
+    ],
+  };
+}
+
+function createEmptyB2aJourney() {
+  return {
+    achieved: {},
+    notAchieved: {},
+    partiallyAchieved: {},
+    indicativeJudgement: "",
+    indicativeSummary: null,
+    reviewDeclaration: false,
+  };
+}
+
+function normaliseB2aJourney(raw) {
+  return {
+    ...createEmptyB2aJourney(),
+    ...(raw || {}),
+    achieved: { ...(raw && raw.achieved ? raw.achieved : {}) },
+    notAchieved: { ...(raw && raw.notAchieved ? raw.notAchieved : {}) },
+    partiallyAchieved: { ...(raw && raw.partiallyAchieved ? raw.partiallyAchieved : {}) },
+  };
+}
+
+function findBCSystemForJourney(assessment, systemId) {
+  const scopeSystems =
+    assessment && assessment.scope && Array.isArray(assessment.scope.criticalSystems)
+      ? assessment.scope.criticalSystems
+      : [];
+  return scopeSystems.find((item) => item.id === systemId) || null;
+}
+
+function getB2aRouteContext(req, res) {
+  const assessment = getAssessmentOrRedirect(req, res);
+  if (!assessment) return null;
+
+  ensureFlowData(assessment);
+  if (redirectIfScopeNotReady(req, res, assessment, buildB2aStepPath(req.params.systemId, "context"))) {
+    return null;
+  }
+  if (!isRoundTwoRequest(req)) {
+    res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${B2A_OUTCOME_ID}`);
+    return null;
+  }
+
+  const system = findBCSystemForJourney(assessment, req.params.systemId);
+  if (!system) {
+    renderNotFound(res);
+    return null;
+  }
+
+  const { bc } = getOutcomesForVersion(assessment);
+  const outcome = findOutcome(bc, B2A_OUTCOME_ID);
+  if (!outcome) {
+    renderNotFound(res);
+    return null;
+  }
+
+  const saved = getBCOutcome(assessment, system.id, outcome.id);
+  saved.b2aJourney = normaliseB2aJourney(saved.b2aJourney);
+
+  return { assessment, system, outcome, saved, bc };
+}
+
+function getB2aStepForm(journey, stepKey) {
+  const stepValues = journey[stepKey] || {};
+  return getB2aStatements()[stepKey].map((statement) => ({
+    ...statement,
+    response: ((stepValues[statement.id] && stepValues[statement.id].response) || "").toString(),
+    explanation: ((stepValues[statement.id] && stepValues[statement.id].explanation) || "").toString(),
+    note: ((stepValues[statement.id] && stepValues[statement.id].note) || "").toString(),
+  }));
+}
+
+function parseB2aStepForm(body, stepKey) {
+  return getB2aStatements()[stepKey].map((statement) => {
+    const prefix = `${stepKey}-${statement.id}`;
+    const explanationNotApplicable = ((body && body[`${prefix}-explanation-na`]) || "").toString().trim();
+    const explanationAlternative = ((body && body[`${prefix}-explanation-alt`]) || "").toString().trim();
+    const response = ((body && body[`${prefix}-response`]) || "").toString();
+    return {
+      ...statement,
+      stepKey,
+      response,
+      explanation:
+        response === "not-applicable"
+          ? explanationNotApplicable
+          : response === "alternative-control"
+          ? explanationAlternative
+          : explanationNotApplicable || explanationAlternative,
+      note: ((body && body[`${prefix}-note`]) || "").toString().trim(),
+    };
+  });
+}
+
+function validateB2aStepRows(rows) {
+  const errors = [];
+  rows.forEach((row) => {
+    if (!row.response) {
+      errors.push({
+        field: `${row.stepKey}-${row.id}-yes`,
+        text: `Select a response for: ${row.statement}`,
+      });
+    }
+    if (
+      (row.response === "not-applicable" || row.response === "alternative-control") &&
+      !row.explanation
+    ) {
+      errors.push({
+        field:
+          row.response === "not-applicable"
+            ? `${row.stepKey}-${row.id}-explanation-na`
+            : `${row.stepKey}-${row.id}-explanation-alt`,
+        text: `Explain why for: ${row.statement}`,
+      });
+    }
+  });
+  return errors;
+}
+
+function updateB2aJourneySection(journey, stepKey, rows) {
+  const nextJourney = normaliseB2aJourney(journey);
+  nextJourney[stepKey] = rows.reduce((acc, row) => {
+    acc[row.id] = {
+      response: row.response,
+      explanation: row.explanation,
+      note: row.note,
+    };
+    return acc;
+  }, {});
+  return nextJourney;
+}
+
+function flattenB2aResponses(journey) {
+  const statements = getB2aStatements();
+  return Object.entries(statements).flatMap(([stepKey, items]) =>
+    items.map((item) => {
+      const saved = (journey[stepKey] && journey[stepKey][item.id]) || {};
+      return {
+        statement: item.statement,
+        response: (saved.response || "").toString(),
+        rationale: (saved.explanation || saved.note || "").toString(),
+        evidenceNote: (saved.note || "").toString(),
+        captureMode: "signal",
+      };
+    })
+  );
+}
+
+function buildB2aIgpResponseSummary(journey) {
+  const flattened = flattenB2aResponses(journey);
+  const answered = flattened.filter((item) => item.response);
+  if (answered.length === 0) return "";
+  const positive = answered.filter((item) => item.response === "yes").length;
+  const negative = answered.filter((item) => item.response === "no").length;
+  const alternative = answered.filter((item) => item.response === "alternative-control").length;
+  const notApplicable = answered.filter((item) => item.response === "not-applicable").length;
+  return `${positive} yes, ${negative} no, ${alternative} alternative control, ${notApplicable} not applicable`;
+}
+
+function buildB2aIndicativeJudgement(journey) {
+  const summary = {
+    judgement: "Partially achieved",
+    strengths: [],
+    weaknesses: [],
+    uncertainties: [],
+    reflections: [],
+  };
+
+  const sections = getB2aStatements();
+  let score = 0;
+  let criticalGaps = 0;
+
+  Object.entries(sections).forEach(([stepKey, items]) => {
+    items.forEach((item) => {
+      const saved = (journey[stepKey] && journey[stepKey][item.id]) || {};
+      const response = (saved.response || "").toString();
+      if (!response) return;
+
+      const positiveResponse =
+        (stepKey === "achieved" && response === "yes") ||
+        (stepKey === "notAchieved" && response === "no") ||
+        (stepKey === "partiallyAchieved" && response === "yes");
+      const negativeResponse =
+        (stepKey === "achieved" && response === "no") ||
+        (stepKey === "notAchieved" && response === "yes") ||
+        (stepKey === "partiallyAchieved" && response === "no");
+
+      if (positiveResponse) {
+        score += stepKey === "partiallyAchieved" ? 1 : 2;
+        summary.strengths.push(item.statement);
+      } else if (negativeResponse) {
+        score -= stepKey === "partiallyAchieved" ? 1 : 2;
+        criticalGaps += stepKey === "partiallyAchieved" ? 0 : 1;
+        summary.weaknesses.push(item.statement);
+      } else if (response === "alternative-control") {
+        score += 1;
+        summary.uncertainties.push(`${item.statement} Alternative control noted.`);
+      } else if (response === "not-applicable") {
+        summary.uncertainties.push(`${item.statement} Marked not applicable.`);
+      }
+    });
+  });
+
+  if (criticalGaps >= 2 || score <= 1) {
+    summary.judgement = "Not achieved";
+  } else if (score >= 8 && criticalGaps === 0) {
+    summary.judgement = "Achieved";
+  }
+
+  if (summary.strengths.length > 0) {
+    summary.reflections.push("Some identity, authentication or access controls appear to be in place.");
+  }
+  if (summary.weaknesses.length > 0) {
+    summary.reflections.push("There may still be gaps in access control or authentication practice.");
+  }
+  if (summary.uncertainties.length > 0) {
+    summary.reflections.push("Some areas may need clarification, alternative controls or further evidence.");
+  }
+
+  return summary;
+}
+
+function syncB2aOutcomeData(assessment, systemId, saved) {
+  const journey = normaliseB2aJourney(saved.b2aJourney);
+  const next = {
+    ...saved,
+    b2aJourney: journey,
+    igpAssessments: flattenB2aResponses(journey),
+    igpResponse: buildB2aIgpResponseSummary(journey),
+    updatedAt: new Date().toISOString(),
+  };
+  setBCOutcome(assessment, systemId, B2A_OUTCOME_ID, next);
+  assessment.updatedAt = next.updatedAt;
+  invalidateRoundTwoSectionCompletion(assessment, "bc");
+  updateRoundTwoCollaborationDraftState(assessment, null);
+  return next;
+}
+
+function buildB2aStepRoute(stepKey, systemId) {
+  if (stepKey === "notAchieved") return buildB2aStepPath(systemId, "not-achieved");
+  if (stepKey === "partiallyAchieved") return buildB2aStepPath(systemId, "partially-achieved");
+  return buildB2aStepPath(systemId, stepKey);
+}
+
+function isB2aReviewReturn(req) {
+  return ((req && req.query && req.query.return) || "").toString() === "review";
+}
+
+function withB2aReviewReturn(href, req) {
+  if (!isB2aReviewReturn(req)) return href;
+  return `${href}?return=review`;
+}
+
+function renderB2aIgpStep(req, res, options) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const journey = normaliseB2aJourney(saved.b2aJourney);
+  const returnToReview = isB2aReviewReturn(req);
+
+  return res.render("pages/flow/b2a-igp-page", {
+    pageTitle: options.pageTitle,
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : options.backHrefBuilder(system.id),
+    formAction: withB2aReviewReturn(buildB2aStepRoute(options.stepKey, system.id), req),
+    nextLabel: "Continue",
+    page: {
+      heading: options.heading,
+      intro: options.intro,
+      pageHint: options.pageHint || "",
+      guidanceSummary: options.guidanceSummary,
+      guidanceBody: options.guidanceBody,
+      stepKey: options.stepKey,
+      rows: getB2aStepForm(journey, options.stepKey),
+    },
+    error: null,
+  });
+}
+
+function handleB2aIgpStepPost(req, res, options) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const rows = parseB2aStepForm(req.body, options.stepKey);
+  const errors = validateB2aStepRows(rows);
+
+  if (errors.length > 0) {
+    const returnToReview = isB2aReviewReturn(req);
+    return res.render("pages/flow/b2a-igp-page", {
+      pageTitle: options.pageTitle,
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      backHref: returnToReview ? buildB2aStepPath(system.id, "review") : options.backHrefBuilder(system.id),
+      formAction: withB2aReviewReturn(buildB2aStepRoute(options.stepKey, system.id), req),
+      nextLabel: "Continue",
+      page: {
+        heading: options.heading,
+        intro: options.intro,
+        pageHint: options.pageHint || "",
+        guidanceSummary: options.guidanceSummary,
+        guidanceBody: options.guidanceBody,
+        stepKey: options.stepKey,
+        rows,
+      },
+      error: { items: errors },
+    });
+  }
+
+  const journey = updateB2aJourneySection(saved.b2aJourney, options.stepKey, rows);
+  syncB2aOutcomeData(assessment, system.id, {
+    ...saved,
+    b2aJourney: journey,
+    status: "in_progress",
+  });
+
+  return res.redirect(options.nextHrefBuilder(system.id));
+}
+
+function renderB2aFinalJudgement(req, res, error = null, values = null) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const journey = normaliseB2aJourney(saved.b2aJourney);
+  const summary = journey.indicativeSummary || buildB2aIndicativeJudgement(journey);
+  const returnToReview = isB2aReviewReturn(req);
+
+  return res.render("pages/flow/b2a-final-judgement", {
+    pageTitle: "Final contributing outcome judgement",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : buildB2aStepPath(system.id, "indicative-judgement"),
+    formAction: withB2aReviewReturn(buildB2aStepPath(system.id, "final-judgement"), req),
+    summary,
+    form: {
+      judgement: values ? values.judgement : (saved.judgement || ""),
+    },
+    error,
+  });
+}
+
+function handleB2aFinalJudgementPost(req, res) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, saved } = routeContext;
+  const judgement = ((req.body && req.body.b2aFinalJudgement) || "").toString();
+
+  if (!judgement) {
+    return renderB2aFinalJudgement(
+      req,
+      res,
+      { items: [{ field: "b2aFinalJudgement", text: "Select the final contributing outcome judgement." }] },
+      { judgement }
+    );
+  }
+
+  syncB2aOutcomeData(assessment, system.id, {
+    ...saved,
+    judgement,
+    status: "in_progress",
+  });
+
+  return res.redirect(buildB2aStepPath(system.id, "rationale"));
+}
+
+function renderB2aRationale(req, res, error = null, values = null) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const returnToReview = isB2aReviewReturn(req);
+
+  return res.render("pages/flow/b2a-rationale", {
+    pageTitle: "Contributing outcome rationale",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : buildB2aStepPath(system.id, "final-judgement"),
+    formAction: withB2aReviewReturn(buildB2aStepPath(system.id, "rationale"), req),
+    form: {
+      rationale: values ? values.rationale : (saved.rationale || ""),
+    },
+    error,
+  });
+}
+
+function handleB2aRationalePost(req, res) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, saved } = routeContext;
+  const rationale = ((req.body && req.body.b2aRationale) || "").toString().trim();
+
+  if (!rationale) {
+    return renderB2aRationale(
+      req,
+      res,
+      { items: [{ field: "b2aRationale", text: "Enter the rationale for this contributing outcome judgement." }] },
+      { rationale }
+    );
+  }
+
+  syncB2aOutcomeData(assessment, system.id, {
+    ...saved,
+    rationale,
+    status: "in_progress",
+  });
+
+  return res.redirect(buildB2aStepPath(system.id, "evidence"));
+}
+
+function getB2aEvidenceRows(savedRefs) {
+  const refs = Array.isArray(savedRefs) ? savedRefs.slice(0, B2A_MAX_EVIDENCE_ROWS) : [];
+  while (refs.length < 1) {
+    refs.push({ title: "", link: "", description: "" });
+  }
+  return refs.map((item) => ({
+    title: (item.title || "").toString(),
+    link: (item.link || "").toString(),
+    description: (item.description || "").toString(),
+  }));
+}
+
+function parseB2aEvidenceRows(body) {
+  const rawCount = Number((body && body.b2aEvidenceRowCount) || 1);
+  const rowCount = Math.max(1, Math.min(B2A_MAX_EVIDENCE_ROWS, Number.isNaN(rawCount) ? 1 : rawCount));
+  return Array.from({ length: rowCount }, (_, offset) => {
+    const index = offset + 1;
+    return {
+    title: ((body && body[`b2aEvidenceTitle-${index}`]) || "").toString().trim(),
+    link: ((body && body[`b2aEvidenceLink-${index}`]) || "").toString().trim(),
+    description: ((body && body[`b2aEvidenceNote-${index}`]) || "").toString().trim(),
+    };
+  });
+}
+
+function validateB2aEvidenceRows(rows) {
+  const errors = [];
+  const populated = rows
+    .map((row, index) => ({ ...row, rowNumber: index + 1 }))
+    .filter((row) => row.title || row.link || row.description);
+  if (populated.length === 0) {
+    errors.push({ field: "b2aEvidenceTitle-1", text: "Add at least one evidence reference for this outcome." });
+    return errors;
+  }
+
+  populated.forEach((row) => {
+    const rowNumber = row.rowNumber;
+    if (!row.title) {
+      errors.push({
+        field: `b2aEvidenceTitle-${rowNumber}`,
+        text: `Enter an evidence title or reference for item ${rowNumber}.`,
+      });
+    }
+    if (!row.link) {
+      errors.push({
+        field: `b2aEvidenceLink-${rowNumber}`,
+        text: `Enter a link or identifier for item ${rowNumber}.`,
+      });
+    }
+  });
+  return errors;
+}
+
+function renderB2aEvidence(req, res, error = null, values = null) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const returnToReview = isB2aReviewReturn(req);
+
+  return res.render("pages/flow/b2a-evidence", {
+    pageTitle: "Evidence references",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : buildB2aStepPath(system.id, "rationale"),
+    formAction: withB2aReviewReturn(buildB2aStepPath(system.id, "evidence"), req),
+    evidenceRows: values || getB2aEvidenceRows(saved.evidenceRefs),
+    error,
+  });
+}
+
+function buildB2aIgpProgressSummary(journey) {
+  const sections = ["achieved", "notAchieved", "partiallyAchieved"];
+  const rows = sections.flatMap((sectionKey) => getB2aStepForm(normaliseB2aJourney(journey), sectionKey));
+  const completed = rows.filter((row) => row.response).length;
+  return {
+    completed,
+    total: rows.length,
+  };
+}
+
+function countB2aExplainedResponses(journey) {
+  const rows = flattenB2aResponses(normaliseB2aJourney(journey));
+  const responsesNeedingExplanation = rows.filter(
+    (row) => row.response === "not-applicable" || row.response === "alternative-control"
+  );
+  const explained = responsesNeedingExplanation.filter((row) => (row.rationale || "").trim()).length;
+  return {
+    explained,
+    total: responsesNeedingExplanation.length,
+  };
+}
+
+function buildB2aRationalePreview(rationale) {
+  const text = (rationale || "").toString().trim();
+  if (!text) return "Not added";
+  if (text.length <= 180) return text;
+  return `${text.slice(0, 177).trim()}...`;
+}
+
+function renderB2aReviewBeforeAssurance(req, res, error = null, values = null) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc } = routeContext;
+  const journey = normaliseB2aJourney(saved.b2aJourney);
+  const evidenceRefs = Array.isArray(saved.evidenceRefs) ? saved.evidenceRefs : [];
+  const igpProgress = buildB2aIgpProgressSummary(journey);
+  const explanationCount = countB2aExplainedResponses(journey);
+
+  return res.render("pages/flow/b2a-review-before-assurance", {
+    pageTitle: "Review this outcome before internal review",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: buildB2aStepPath(system.id, "evidence"),
+    formAction: buildB2aStepPath(system.id, "review"),
+    reviewSummary: {
+      judgement: saved.judgement || "Not set",
+      rationalePreview: buildB2aRationalePreview(saved.rationale),
+      evidenceCount: evidenceRefs.length,
+      igpResponses: `${igpProgress.completed} of ${igpProgress.total} answered`,
+      explainedResponses:
+        explanationCount.total > 0
+          ? `${explanationCount.explained} of ${explanationCount.total} explained`
+          : "None needed",
+    },
+    form: {
+      readinessChecks: values ? values.readinessChecks : [],
+      declaration: values ? values.declaration : Boolean(journey.reviewDeclaration),
+    },
+    error,
+    editLinks: {
+      igp: `${buildB2aStepPath(system.id, "achieved")}?return=review`,
+      judgement: `${buildB2aStepPath(system.id, "final-judgement")}?return=review`,
+      rationale: `${buildB2aStepPath(system.id, "rationale")}?return=review`,
+      evidence: `${buildB2aStepPath(system.id, "evidence")}?return=review`,
+    },
+  });
+}
+
+function handleB2aReviewBeforeAssurancePost(req, res) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, saved } = routeContext;
+  const declarationValues = coerceArray(
+    (req.body && req.body.b2aReviewDeclaration) ||
+      (req.session && req.session.data && req.session.data.b2aReviewDeclaration)
+  ).map((value) => value.toString().trim());
+  const declaration = declarationValues.includes("yes") || declarationValues.includes("true");
+  const readinessChecks = coerceArray(
+    (req.body && req.body.b2aReadinessChecks) ||
+      (req.session && req.session.data && req.session.data.b2aReadinessChecks)
+  );
+
+  if (!declaration) {
+    return renderB2aReviewBeforeAssurance(
+      req,
+      res,
+      { items: [{ field: "b2aReviewDeclaration", text: "Confirm that this outcome is ready for internal review." }] },
+      { declaration, readinessChecks }
+    );
+  }
+
+  syncB2aOutcomeData(assessment, system.id, {
+    ...saved,
+    b2aJourney: {
+      ...normaliseB2aJourney(saved.b2aJourney),
+      reviewDeclaration: true,
+    },
+    status: "ready_for_internal_review",
+  });
+
+  return res.redirect(buildB2aStepPath(system.id, "ready"));
+}
+
+function handleB2aEvidencePost(req, res) {
+  const routeContext = getB2aRouteContext(req, res);
+  if (!routeContext) return;
+  const { assessment, system, saved } = routeContext;
+  const evidenceRows = parseB2aEvidenceRows(req.body);
+  const action = ((req.body && req.body.action) || "").toString();
+
+  if (action === "addEvidence" && evidenceRows.length < B2A_MAX_EVIDENCE_ROWS) {
+    return renderB2aEvidence(req, res, null, evidenceRows.concat([{ title: "", link: "", description: "" }]));
+  }
+
+  if (action.startsWith("removeEvidence:")) {
+    const index = Number(action.split(":")[1]) - 1;
+    const nextRows = evidenceRows.filter((_, rowIndex) => rowIndex !== index);
+    return renderB2aEvidence(req, res, null, nextRows.length > 0 ? nextRows : [{ title: "", link: "", description: "" }]);
+  }
+
+  const errors = validateB2aEvidenceRows(evidenceRows);
+
+  if (errors.length > 0) {
+    return renderB2aEvidence(req, res, { items: errors }, evidenceRows);
+  }
+
+  const cleanedEvidence = evidenceRows.filter((row) => row.title || row.link || row.description);
+  syncB2aOutcomeData(assessment, system.id, {
+    ...saved,
+    evidenceRefs: cleanedEvidence,
+    b2aJourney: {
+      ...normaliseB2aJourney(saved.b2aJourney),
+      reviewDeclaration: false,
+    },
+    status: "in_progress",
+  });
+
+  return res.redirect(buildB2aStepPath(system.id, "review"));
+}
+
 function buildRoundTwoOutcomeProgressText(tree, outcome, options = {}) {
   const items = getPrototypeOutcomeRows(tree || {});
   if (!outcome || items.length === 0) return "";
@@ -2738,6 +3720,18 @@ function buildRoundTwoOutcomeProgressText(tree, outcome, options = {}) {
     return `Outcome ${current} of ${total} for ${options.systemName}`;
   }
   return `Outcome ${current} of ${total}`;
+}
+
+function formatB2aStatusLabel(value) {
+  const map = {
+    not_started: "Not started",
+    in_progress: "In progress",
+    blocked: "Blocked",
+    ready_for_internal_review: "Ready for internal review",
+    internally_reviewed: "Internally reviewed",
+    complete: "Complete",
+  };
+  return map[value] || "Not started";
 }
 
 function getRoundTwoJudgementOptions() {

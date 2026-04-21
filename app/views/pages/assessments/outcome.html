@@ -42,7 +42,7 @@
         <strong>Acting as assurer</strong>
       </p>
       <p class="govuk-body govuk-!-margin-bottom-0">
-        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} for independent review. You can review the assessment content below and record feedback.
+        Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} in independent assurance. This outcome is being reviewed as part of the completed assessment, not as a separate assurance item.
       </p>
     </div>
   {% endif %}
@@ -61,6 +61,9 @@
         <li>Record what is true now, where it happens, and where practice is inconsistent.</li>
         <li>Reference existing evidence that shows why your judgement is reasonable.</li>
       </ul>
+    </div>
+    <div class="govuk-inset-text">
+      Once all required outcomes are complete, the full assessment can be sent for independent assurance.
     </div>
   {% endif %}
   {% if openEvidenceRequestCount and openEvidenceRequestCount > 0 %}
@@ -103,7 +106,7 @@
 
   {% if row.assurerReview %}
     <div class="govuk-inset-text">
-      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Latest assurer feedback</strong></p>
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Latest independent assurance note</strong></p>
       <p class="govuk-body govuk-!-margin-bottom-1">
         Decision: {{ row.assurerReview.decision | capitalize }}
       </p>
@@ -165,6 +168,8 @@
     <input type="hidden" name="action" value="">
 
   <h2 class="govuk-heading-m">{{ labels.outcome.sections.assignment }}</h2>
+
+  <p class="govuk-body">You can assign contributors as you work through the assessment. Only add people where they are needed.</p>
 
   <dl class="govuk-summary-list govuk-!-margin-bottom-4">
     <div class="govuk-summary-list__row">
@@ -399,14 +404,10 @@
 
     <div class="govuk-button-group govuk-!-margin-top-4">
       <button class="govuk-button" data-module="govuk-button" type="submit">
-        {{ labels.outcome.saveAndReturn }}
+        Save outcome and return
       </button>
       <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="shareForReview">
-        {% if row.status == "feedback_received" or row.status == "updated_after_feedback" %}
-          Re-share with assurer for feedback
-        {% else %}
-          Share with assurer for feedback
-        {% endif %}
+        Mark ready for internal review
       </button>
       <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard{% if query.objective or query.principle or query.status or query.owner or query.view or query.overdueOnly %}?objective={{ query.objective }}&principle={{ query.principle }}&status={{ query.status }}&owner={{ query.owner }}&view={{ query.view }}&overdueOnly={{ query.overdueOnly }}{% endif %}">
         Return to dashboard

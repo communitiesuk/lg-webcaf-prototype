@@ -1,0 +1,39 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-panel govuk-panel--confirmation">
+    <h1 class="govuk-panel__title">Outcome ready for internal review</h1>
+    <div class="govuk-panel__body">{{ outcome.code }} {{ outcome.title }}</div>
+  </div>
+
+  <p class="govuk-hint">Critical system: {{ context.systemName }}</p>
+  <p class="govuk-body">This contributing outcome is now ready for internal review.</p>
+  <p class="govuk-body">After internal review and approval, it will count towards the wider assessment being ready for independent assurance.</p>
+
+  <ul class="govuk-list govuk-list--bullet">
+    <li>IGP responses have been completed for this outcome</li>
+    <li>the final judgement is <strong>{{ summary.judgement }}</strong></li>
+    <li>a rationale has been added for the outcome</li>
+    <li>{{ summary.evidenceCount }} evidence reference{% if summary.evidenceCount != 1 %}s{% endif %} {% if summary.evidenceCount == 1 %}has{% else %}have{% endif %} been added</li>
+  </ul>
+
+  <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Indicative judgement</dt>
+      <dd class="govuk-summary-list__value">{{ summary.indicativeJudgement or "Not captured" }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Final judgement</dt>
+      <dd class="govuk-summary-list__value">{{ summary.judgement }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Rationale</dt>
+      <dd class="govuk-summary-list__value">{{ summary.rationale }}</dd>
+    </div>
+  </dl>
+
+  <div class="govuk-button-group">
+    <a class="govuk-button" href="{{ dashboardHref }}">Return to dashboard</a>
+    <a class="govuk-link" href="{{ systemHref }}">Return to outcomes list</a>
+  </div>
+{% endblock %}

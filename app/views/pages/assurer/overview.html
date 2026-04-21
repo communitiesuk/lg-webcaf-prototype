@@ -11,7 +11,7 @@
   }) }}
 
   <h1 class="govuk-heading-l">Assurer overview</h1>
-  <p class="govuk-body">Review outcomes, provide assurance decisions, and sign off improvement plans.</p>
+  <p class="govuk-body">Start from completed assessments that have been sent for independent assurance, then review the outcomes within those submitted assessments.</p>
 
   {{ govukSummaryList({
     rows: [
@@ -33,36 +33,50 @@
   <div class="govuk-grid-row app-dashboard-summary">
     <div class="govuk-grid-column-one-third">
       <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Ready for review</p>
-        <p class="app-dashboard-card__value">{{ readyForReview.length }}</p>
-        <p class="app-dashboard-card__meta">Outcomes waiting for assurance</p>
+        <p class="app-dashboard-card__label">Assessment status</p>
+        <p class="app-dashboard-card__value">{{ workflowStatus.label }}</p>
+        <p class="app-dashboard-card__meta">Current assessment lifecycle position</p>
       </div>
     </div>
     <div class="govuk-grid-column-one-third">
       <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Missing evidence</p>
+        <p class="app-dashboard-card__label">Submitted assessments</p>
+        <p class="app-dashboard-card__value">{{ assessmentQueue.length }}</p>
+        <p class="app-dashboard-card__meta">Assessments you can open in assurance</p>
+      </div>
+    </div>
+    <div class="govuk-grid-column-one-third">
+      <div class="app-dashboard-card">
+        <p class="app-dashboard-card__label">Evidence gaps</p>
         <p class="app-dashboard-card__value">{{ missingEvidence.length }}</p>
-        <p class="app-dashboard-card__meta">Blocked items</p>
+        <p class="app-dashboard-card__meta">Outcome evidence gaps within submitted assessments</p>
       </div>
     </div>
+  </div>
+
+  <div class="govuk-inset-text">
+    Independent assurance begins after the council has completed the assessment internally.
+  </div>
+
+  <div class="govuk-grid-row app-dashboard-summary">
     <div class="govuk-grid-column-one-third">
       <div class="app-dashboard-card">
-        <p class="app-dashboard-card__label">Reviewed</p>
+        <p class="app-dashboard-card__label">Assurance notes recorded</p>
         <p class="app-dashboard-card__value">{{ reviewedCount }}</p>
-        <p class="app-dashboard-card__meta">Decisions recorded</p>
+        <p class="app-dashboard-card__meta">Outcome-level notes captured within submitted assessments</p>
       </div>
     </div>
   </div>
 
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assurer/queue">Go to assurer queue</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assurer/queue">Open independent assurance queue</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/workshops">Objective workshops</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/record-of-audit">Record of Audit</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/report-stage-1">IIP Stage 1 report</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/iip-stage-2">IIP Stage 2 queue</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/evidence-requests">Evidence requests</a>
     <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/check-ins">Log check-in blocker</a>
-    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/submission">View submission status</a>
+    <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assurer/submission">Open submitted assessment</a>
     <a class="govuk-link" href="/mhclg/reporting">View reporting snapshot</a>
   </div>
 {% endblock %}

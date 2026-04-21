@@ -52,10 +52,14 @@
       key: { text: "What this role can do" },
       value: { text: "Approve content after review is complete." }
     },
-    {
-      key: { text: "Status" },
-      value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
-    },
+      {
+        key: { text: "Internal collaboration status" },
+        value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
+      },
+      {
+        key: { text: "Assessment status" },
+        value: { html: '<strong class="govuk-tag ' ~ assessmentWorkflowStatus.tagClass ~ '">' ~ assessmentWorkflowStatus.label ~ '</strong>' }
+      },
     {
       key: { text: "Reviewer" },
       value: { text: collaborationState.reviewerName or "Not set" }
@@ -79,6 +83,7 @@
   }) }}
 
   <h2 class="govuk-heading-m">Assessment summary</h2>
+  <p class="govuk-body">Approving this makes the assessment internally complete. The next step is to send the full assessment for independent assurance.</p>
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">A and D</dt>
@@ -111,7 +116,7 @@
       Approved {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }} by {{ collaborationState.approvedBy }}.
     </div>
     <div class="govuk-button-group">
-      <a class="govuk-button" href="/assessments/current/journey">Return to task list</a>
+      <a class="govuk-button" href="/assessments/current/approve-self-assessment/complete">Continue to independent assurance handoff</a>
       <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
     </div>
   {% else %}

@@ -22,24 +22,24 @@
   {% endif %}
 
   {{ appPageHeader({
-    title: "Review and update your scope summary",
-    intro: "Review your current CAF scope summary and update it if anything has changed before you set up this year's assessment.",
+    title: "Review your services and systems lists",
+    intro: "Check your current services and systems lists and update them if anything has changed before you set up this year's assessment.",
     showSaveReassurance: true
   }) }}
   <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
     <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">Help with this step</span>
+        <span class="govuk-details__summary-text">Help with this step</span>
     </summary>
     <div class="govuk-details__text">
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>Only update your scope if your context, essential services or critical systems have changed.</li>
-        <li>If something has changed, you will update that part of the scope before continuing.</li>
+        <li>Only update these lists if your context, essential services or critical systems have changed.</li>
+        <li>If something has changed, you will update that part before continuing.</li>
       </ul>
-      <p class="govuk-body govuk-!-margin-top-3">A scope change usually means a real change in services, systems, suppliers, delivery model or risk context, not just a wording tidy-up.</p>
+      <p class="govuk-body govuk-!-margin-top-3">A change here usually means a real change in services, systems, suppliers, delivery model or risk context, not just a wording tidy-up.</p>
     </div>
   </details>
 
-  <h2 class="govuk-heading-m">Current scope summary</h2>
+  <h2 class="govuk-heading-m">Current setup summary</h2>
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Organisational context</dt>
@@ -58,7 +58,7 @@
   <form method="post" action="/assessments/current/review-scope">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset" id="scopeChanged"{% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %} aria-describedby="scopeChanged-error"{% endif %}>
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Has your CAF scope changed since it was last reviewed?</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do these setup details need updating for this year's assessment?</legend>
         {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}
           <p id="scopeChanged-error" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -68,7 +68,7 @@
         <div class="govuk-radios" data-module="govuk-radios">
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="scopeChanged-no" name="scopeChanged" type="radio" value="no" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "no" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="scopeChanged-no">No, my CAF scope is up to date</label>
+            <label class="govuk-label govuk-radios__label" for="scopeChanged-no">No, these details are up to date</label>
           </div>
           <div class="govuk-radios__item">
             <input class="govuk-radios__input" id="scopeChanged-yes" name="scopeChanged" type="radio" value="yes" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "yes" %}checked{% endif %}>
@@ -77,7 +77,7 @@
           <div class="govuk-radios__conditional {% if form.scopeChanged != 'yes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-scopeChanged">
             <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}govuk-form-group--error{% endif %}">
               <fieldset class="govuk-fieldset" id="scopeUpdateArea"{% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %} aria-describedby="scopeUpdateArea-error"{% endif %}>
-                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which part of your CAF scope do you need to update?</legend>
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which part do you need to update?</legend>
                 {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}
                   <p id="scopeUpdateArea-error" class="govuk-error-message">
                     <span class="govuk-visually-hidden">Error:</span>
@@ -91,11 +91,11 @@
                   </div>
                   <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="scopeUpdateArea-services" name="scopeUpdateArea" type="radio" value="services" {% if form.scopeUpdateArea == "services" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-services">Essential services</label>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-services">Essential services list</label>
                   </div>
                   <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="scopeUpdateArea-systems" name="scopeUpdateArea" type="radio" value="systems" {% if form.scopeUpdateArea == "systems" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-systems">Critical systems</label>
+                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-systems">Critical systems list</label>
                   </div>
                 </div>
                 <div class="govuk-hint govuk-!-margin-top-3">For example: a new major supplier platform, a service redesign, a shared service arrangement, or a significant shift in cyber risk.</div>

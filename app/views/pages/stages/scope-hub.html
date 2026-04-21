@@ -52,28 +52,28 @@
   {% set systemsInProgress = summary.systemsCount > 0 or summary.mappedCount > 0 %}
   {% set scopeTasksCompleted = (1 if strategyComplete else 0) + (1 if servicesComplete else 0) + (1 if systemsComplete else 0) %}
   {% set scopeTasksTotal = 3 if roundTwo else 4 %}
-  {% set pageTitle = "Set your scope" %}
-  {% set completionLabel = "Scope pack is complete." %}
+  {% set pageTitle = "Set up this assessment" %}
+  {% set completionLabel = "Setup is complete." %}
   {% if roundTwo %}
-    {% set pageTitle = "CAF scope register" %}
-    {% set completionLabel = "Scope register is complete." %}
+    {% set pageTitle = "Review your services and systems lists" %}
+    {% set completionLabel = "Your setup lists are complete." %}
   {% endif %}
 
   {{ appPageHeader({
     title: pageTitle,
     guidanceHeadingId: "scope-hub-guidance",
     guidanceItems: [
-      "You are building your CAF scope register for this council.",
-      "Add and review your strategic context, essential services and critical systems.",
-      "When the register is complete, you can use it for annual setup and later review."
+      "Use these pages to set up the lists this service uses across assessments.",
+      "Add and review your council context, essential services and critical systems.",
+      "You will usually create these lists once, then review and update them when something changes."
     ],
     intro: labels.stages.scope.hub.intro
   }) }}
   {% if roundTwo %}
-    <p class="govuk-body">Build your full list of strategic context, essential services and critical systems here. You can return to update these registers when things change.</p>
+    <p class="govuk-body">Use these pages to build the main lists for your council. You can return to review and update them when things change.</p>
   {% endif %}
 
-  <h2 class="govuk-heading-m">Scope register summary</h2>
+  <h2 class="govuk-heading-m">Setup summary</h2>
   {{ govukSummaryList({
     rows: [
       {
@@ -93,11 +93,11 @@
         value: { text: summary.priorityCount + " (of " + summary.systemsCount + " listed)" }
       },
       {
-        key: { text: "Scope tasks complete" },
+        key: { text: "Setup tasks complete" },
         value: { text: scopeTasksCompleted + " of " + scopeTasksTotal }
       },
       {
-        key: { text: "Scope register ready" if roundTwo else "Scope pack ready" },
+        key: { text: "Setup ready" if roundTwo else "Setup ready" },
         value: { text: "Yes" if summary.isComplete else "No" }
       }
     ]
@@ -112,7 +112,7 @@
     </div>
   {% elif not roundTwo %}
     <div class="govuk-inset-text">
-      <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Next scope action</h2>
+      <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Next setup action</h2>
       <p class="govuk-body govuk-!-margin-bottom-0">
         <a class="govuk-link govuk-link--no-visited-state" href="{{ summary.nextStepUrl }}">Continue to {{ summary.nextStepLabel | lower }}</a>
       </p>
@@ -122,11 +122,11 @@
   {% set scopeItems = [
       {
         title: {
-          text: "Define organisational context" if roundTwo else "Define organisational context and CAF roles"
+          text: "Add your council context" if roundTwo else "Add your council context and CAF roles"
         },
         href: strategyTaskHref,
         hint: {
-          text: "Done when the strategic context for your council has been recorded." if roundTwo else "Done when organisational context and CAF team roles are confirmed."
+          text: "You usually do this once, then review it if the council context changes." if roundTwo else "Done when council context and CAF team roles are confirmed."
         },
         status: {
           tag: {
@@ -137,11 +137,11 @@
       },
       {
         title: {
-          text: "Define essential services in scope"
+          text: "List your essential services"
         },
         href: servicesTaskHref if not servicesLocked or roundTwo else "",
         hint: {
-          text: "Done when your full essential services register is recorded and reviewed."
+          text: "Build this main list once, then review and update it when services change."
         },
         status: {
           tag: {
@@ -152,11 +152,11 @@
       },
       {
         title: {
-          text: "Define critical systems and set priorities" if roundTwo else "Define 3 critical systems and set priorities"
+          text: "List your critical systems and set priorities" if roundTwo else "List 3 critical systems and set priorities"
         },
         href: systemsTaskHref if not systemsLocked or roundTwo else "",
         hint: {
-          text: "Done when your full critical systems register is recorded, mapped to essential services and reviewed. Annual setup will choose up to 3 for this year's B and C assessment." if roundTwo else "Done when at least 3 critical systems are added and mapped."
+          text: "Build this main list once, then review it before each yearly assessment. Each year you can choose up to 3 systems to assess." if roundTwo else "Done when at least 3 critical systems are added and mapped."
         },
         status: {
           tag: {
@@ -174,7 +174,7 @@
         },
         href: "/stages/2/scope/priority/confirm" if not shareLocked else "",
         hint: {
-          text: "Done when CAF Lead confirms internal sign-off and submits the scope pack."
+          text: "Done when the CAF Lead confirms internal sign-off and submits the setup details."
         },
         status: {
           tag: {
@@ -185,7 +185,7 @@
       }]) %}
   {% endif %}
 
-  <h2 class="govuk-heading-m">Scope tasks</h2>
+  <h2 class="govuk-heading-m">Setup tasks</h2>
   {{ govukTaskList({
     items: scopeItems
   }) }}

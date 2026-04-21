@@ -125,7 +125,7 @@ function buildAttentionFlags(r) {
   const flags = [];
   if (r.isOverdue) flags.push("overdue");
   if (r.status === "blocked") flags.push("blocked");
-  if (r.status === "ready_for_review") flags.push("ready_for_review");
+  if (r.status === "ready_for_internal_review") flags.push("ready_for_internal_review");
   if (r.isMissingEvidence) flags.push("missing_evidence");
   return flags.join("|");
 }

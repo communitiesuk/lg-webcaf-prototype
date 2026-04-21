@@ -334,7 +334,7 @@ function isOnboardingComplete(assessment) {
 function buildOnboardingTasks(assessment) {
   const prepare = assessment && assessment.prepare ? assessment.prepare : {};
   const rolesStarted = Boolean(
-    prepare.onboardingLead || prepare.onboardingApprover || prepare.onboardingContributors
+    prepare.onboardingLead || prepare.onboardingApprover
   );
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const scopeReview = assessment && assessment.scopeReview ? assessment.scopeReview : {};
@@ -350,9 +350,9 @@ function buildOnboardingTasks(assessment) {
 
   return [
     {
-      title: "Set up council roles",
+      title: "Add the people leading this assessment",
       href: "/prepare/roles?returnTo=journey",
-      hint: "Set the initial CAF Lead, approver and supporting contributors.",
+      hint: "Do this once when your council account is set up. You can update these names later.",
       status: rolesComplete
         ? "Complete"
         : rolesStarted
@@ -360,9 +360,9 @@ function buildOnboardingTasks(assessment) {
           : "Ready to start",
     },
     {
-      title: "Review and update your scope summary",
+      title: "Review your services and systems lists",
       href: "/onboarding/scope",
-      hint: "Record strategic context, essential services and critical systems before any annual assessment starts.",
+      hint: "Use your main lists and update them if anything has changed before the yearly assessment starts.",
       status: scopeReviewed
         ? "Complete"
         : scopeStarted

@@ -58,7 +58,7 @@ function isRoundTwoOnboardingComplete(assessment) {
 function buildRoundTwoSetupProgress(assessment) {
   return buildPhaseProgress([
     {
-      label: "Set up council roles",
+      label: "Confirm council oversight roles",
       completed: hasRoundTwoRolesComplete(assessment),
     },
     {

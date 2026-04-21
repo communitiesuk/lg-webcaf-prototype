@@ -6,11 +6,16 @@
     <div class="govuk-grid-column-two-thirds">
   <span class="govuk-caption-l">{{ "Annual assessment" if roundTwo else "Submission" }}</span>
   {{ appConfirmationPanel({
-    title: "Assessment submitted to assurer",
-    body: "The assessment has been sent to the assurer for review." if roundTwo else "The full assessment package has been submitted to the assurer."
+    title: "Assessment sent for independent assurance",
+    body: "The assessment is now in independent assurance." if roundTwo else "The full assessment package is now in independent assurance."
   }) }}
 
   <dl class="govuk-summary-list">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">Assessment status</dt>
+      <dd class="govuk-summary-list__value"><strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong></dd>
+      <dd class="govuk-summary-list__actions"></dd>
+    </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submitted by</dt>
       <dd class="govuk-summary-list__value">{{ submitted.submittedBy or "—" }}</dd>
@@ -37,14 +42,17 @@
 
   <div class="govuk-inset-text">
     {% if roundTwo %}
-      Council users do not need to do anything else in WebCAF for this submission. The assurer can now review the assessment.
+      The assurer now reviews the completed assessment. Once assurance is complete, the next step is to create or update the improvement plan and prepare for submission.
     {% else %}
-      The assurer can now review the submitted package outside the council workflow.
+      Independent assurance now starts from the completed assessment. After assurance, the next step is to update the improvement and implementation plan and prepare for submission.
     {% endif %}
   </div>
 
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">{{ "Return to annual assessment" if roundTwo else "Return to CAF journey task list" }}</a>
+    {% if not roundTwo %}
+      <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
+    {% endif %}
   </div>
     </div>
   </div>

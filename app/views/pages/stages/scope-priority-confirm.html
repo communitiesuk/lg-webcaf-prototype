@@ -7,15 +7,15 @@
   {% set pageTitle = "Complete scope pack" %}
   {% set confirmButtonText = "Complete scope pack" %}
   {% if researchRound == "round-2" %}
-    {% set pageTitle = "Complete scope register" %}
-    {% set confirmButtonText = "Complete scope register" %}
+    {% set pageTitle = "Complete setup lists" %}
+    {% set confirmButtonText = "Complete setup lists" %}
   {% endif %}
   <a class="govuk-back-link" href="/stages/2/scope">Back</a>
 
   <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">
     {% if researchRound == "round-2" %}
-      Check the critical systems, then confirm the register is ready to use for yearly planning and assessment.
+      Check the critical systems, then confirm these lists are ready to use for yearly planning and assessment.
     {% else %}
       Check the critical systems, then confirm internal sign-off and assurance scheduling details.
     {% endif %}

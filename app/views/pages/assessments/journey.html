@@ -8,7 +8,7 @@
     {{ appPageHeader({
       caption: "Annual assessment",
       title: "Complete this year's WebCAF assessment",
-      intro: "Use this task list to continue the annual assessment.",
+      intro: "Use this task list to work through this year's assessment.",
       showSaveReassurance: true
     }) }}
     {% if nextAction %}
@@ -44,14 +44,14 @@
 
   {% if researchRound == "round-2" and roundTwoSetupSection and roundTwoAssessmentSection %}
     <section class="govuk-!-margin-bottom-7" aria-labelledby="before-you-start-heading">
-      <h2 class="govuk-heading-m" id="before-you-start-heading">Setup</h2>
+      <h2 class="govuk-heading-m" id="before-you-start-heading">Before you assess</h2>
       {{ govukTaskList({
         items: roundTwoSetupSection.items
       }) }}
     </section>
 
     <section aria-labelledby="complete-caf-assessment-heading">
-      <h2 class="govuk-heading-m" id="complete-caf-assessment-heading">Assessment</h2>
+      <h2 class="govuk-heading-m" id="complete-caf-assessment-heading">Complete the assessment</h2>
       {{ govukTaskList({
         items: roundTwoAssessmentSection.items
       }) }}
