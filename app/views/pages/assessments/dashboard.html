@@ -96,6 +96,38 @@
     </section>
   {% endif %}
 
+  {% if researchRound == "round-2" and not isAssurerView and bcSystems and bcSystems.length > 0 %}
+    <section class="govuk-!-margin-top-6" aria-labelledby="critical-systems-heading">
+      <h2 class="govuk-heading-m" id="critical-systems-heading">Critical systems</h2>
+      <table class="govuk-table">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header">System</th>
+            <th scope="col" class="govuk-table__header">Status</th>
+            <th scope="col" class="govuk-table__header">Progress</th>
+            <th scope="col" class="govuk-table__header"></th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for system in bcSystems %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ system.name }}</td>
+              <td class="govuk-table__cell">
+                <strong class="govuk-tag {{ system.statusTagClass }}">{{ system.statusLabel }}</strong>
+              </td>
+              <td class="govuk-table__cell">
+                {{ system.completed }} of {{ system.totalOutcomes }} outcome{{ "s" if system.totalOutcomes != 1 else "" }} complete
+              </td>
+              <td class="govuk-table__cell">
+                <a class="govuk-link" href="{{ system.actionHref }}">{{ system.actionText }}</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
   {% if researchRound == "round-2" and roundTwoWorkQueues %}
     <section aria-labelledby="dashboard-next-actions-heading">
       <h2 class="govuk-heading-m" id="dashboard-next-actions-heading">Next actions</h2>

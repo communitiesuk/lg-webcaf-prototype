@@ -1,0 +1,88 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/status-summary.njk" import appStatusSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/assessments/current/journey">Back to annual assessment</a>
+
+      {{ appPageHeader({
+        caption: "Annual assessment",
+        title: "Review assessment and send to assurer",
+        intro: "Check the assessment is complete and internally approved before sending it for independent assurance."
+      }) }}
+
+      <h2 class="govuk-heading-m">Assessment status</h2>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assessment status</dt>
+          <dd class="govuk-summary-list__value">
+            <strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong>
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Outcomes judged</dt>
+          <dd class="govuk-summary-list__value">
+            {% set totalJudged = completion.bcJudged %}
+            {% set totalOutcomes = completion.bcTotal %}
+            {{ totalJudged }} of {{ totalOutcomes }}
+            {% if totalJudged == totalOutcomes and totalOutcomes > 0 %}
+              &mdash; <strong class="govuk-tag govuk-tag--green">Complete</strong>
+            {% else %}
+              &mdash; <strong class="govuk-tag govuk-tag--yellow">Incomplete</strong>
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Critical system assessed this year</dt>
+          <dd class="govuk-summary-list__value">
+            {% if selectedSystems.length > 0 %}
+              {% for system in selectedSystems %}{{ system.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% else %}
+              None selected
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Internal sign-off</dt>
+          <dd class="govuk-summary-list__value">
+            <strong class="govuk-tag govuk-tag--green">Confirmed</strong>
+            {% if collaborationState.approvedAt %}
+              &mdash; {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }}
+            {% endif %}
+            {% if collaborationState.approvedBy %}
+              by {{ collaborationState.approvedBy }}
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      {% if not isReadyToSend %}
+        <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+            <span class="govuk-visually-hidden">Warning</span>
+            The assessment has not been approved internally. Complete the review and approval steps before sending to the assurer.
+          </strong>
+        </div>
+
+        <div class="govuk-button-group">
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/complete-self-assessment">Go back to sign-off</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+        </div>
+      {% else %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            This assessment has been approved and is ready for independent assurance. Once sent, the assurer will review the completed assessment.
+          </p>
+        </div>
+
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/assessments/current/send-to-assurer">Continue to send</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

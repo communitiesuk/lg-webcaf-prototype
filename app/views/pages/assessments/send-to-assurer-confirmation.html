@@ -1,0 +1,57 @@
+{% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Annual assessment</span>
+
+      {{ appConfirmationPanel({
+        title: "Assessment sent to assurer",
+        body: "The assessment is now with the assurer for independent review."
+      }) }}
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assessment status</dt>
+          <dd class="govuk-summary-list__value">
+            <strong class="govuk-tag {{ assessmentWorkflowStatus.tagClass }}">{{ assessmentWorkflowStatus.label }}</strong>
+          </dd>
+          <dd class="govuk-summary-list__actions"></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Sent by</dt>
+          <dd class="govuk-summary-list__value">{{ submitted.submittedBy or "—" }}</dd>
+          <dd class="govuk-summary-list__actions"></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Sent at</dt>
+          <dd class="govuk-summary-list__value">{{ submitted.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+          <dd class="govuk-summary-list__actions"></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Critical systems submitted</dt>
+          <dd class="govuk-summary-list__value">
+            {% if selectedSystems.length > 0 %}
+              {% for system in selectedSystems %}{{ system.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% else %}
+              —
+            {% endif %}
+          </dd>
+          <dd class="govuk-summary-list__actions"></dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">The assurer will review the assessment and check whether the judgements are supported by the evidence provided.</p>
+      <div class="govuk-inset-text">
+        You do not need to do anything now. If the assurer needs clarification or has feedback, they will be in touch through the service.
+      </div>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="/assessments/current/journey">Return to annual assessment</a>
+        <a class="govuk-link" href="/assessments/current/dashboard">View assessment dashboard</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

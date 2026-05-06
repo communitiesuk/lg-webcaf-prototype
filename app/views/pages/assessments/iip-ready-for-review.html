@@ -1,0 +1,94 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/assessments/current/recommendations">Back to recommendations</a>
+
+      {{ appPageHeader({
+        caption: "Improvement & Implementation Plan",
+        title: "Ready for internal review"
+      }) }}
+
+      {% if saved %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">IIP marked as ready for internal review.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <p class="govuk-body">
+        Before sending the IIP for internal review and sign-off, confirm that all implementation plans are complete.
+      </p>
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Total recommendations</dt>
+          <dd class="govuk-summary-list__value">{{ totalRows }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation plans complete</dt>
+          <dd class="govuk-summary-list__value">
+            {{ completedRows }} of {{ totalRows }}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Current IIP status</dt>
+          <dd class="govuk-summary-list__value">
+            {% if alreadyMarked %}
+              <strong class="govuk-tag govuk-tag--green">Ready for internal review</strong>
+            {% elif allComplete %}
+              <strong class="govuk-tag govuk-tag--blue">All plans complete</strong>
+            {% else %}
+              <strong class="govuk-tag govuk-tag--grey">In progress</strong>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      {% if not allComplete %}
+        <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+            <span class="govuk-visually-hidden">Warning</span>
+            {{ totalRows - completedRows }} implementation plan{% if (totalRows - completedRows) != 1 %}s are{% else %} is{% endif %} still incomplete. Complete all plans before marking as ready for review.
+          </strong>
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/recommendations">Return to recommendations</a>
+          <a class="govuk-link" href="/improvement-plan/stage-2/review">Edit implementation plans</a>
+        </div>
+
+      {% elif alreadyMarked %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            This IIP has already been marked as ready for internal review. Proceed to internal sign-off when the reviewer is ready.
+          </p>
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button" href="/improvement-plan/stage-2/internal-sign-off">Continue to internal sign-off</a>
+          <a class="govuk-link" href="/assessments/current/recommendations">Return to recommendations</a>
+        </div>
+
+      {% else %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            All {{ totalRows }} implementation plans are complete. Marking as ready for review will notify the internal reviewer that the IIP is ready for sign-off.
+          </p>
+        </div>
+        <form method="post" action="/assessments/current/iip/ready-for-review">
+          <div class="govuk-button-group">
+            <button class="govuk-button" type="submit">Mark as ready for internal review</button>
+            <a class="govuk-link" href="/assessments/current/recommendations">Cancel</a>
+          </div>
+        </form>
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock %}

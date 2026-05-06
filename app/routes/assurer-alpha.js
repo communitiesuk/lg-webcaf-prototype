@@ -58,24 +58,7 @@ module.exports = function (router) {
   });
 
   router.get("/assurer-alpha/assessment/:assessmentId/organisation-outcomes", (req, res) => {
-    const state = ensureAssurerAlphaState(req);
-    const assessment = getAssessment(state, req.params.assessmentId);
-    if (!assessment) return res.redirect("/assurer-alpha/dashboard");
-
-    state.activeAssessmentId = assessment.id;
-
-    res.render("pages/assurer-alpha/outcomes", {
-      pageTitle: `Organisation outcomes for ${assessment.councilName}`,
-      assessment,
-      summary: buildOutcomeSummary(getOrganisationOutcomes(assessment)),
-      saved: req.query.saved === "1",
-      pageCaption: `${assessment.councilName} CAF assessment`,
-      sectionTitle: "Review organisation outcomes",
-      sectionDescription:
-        "These outcomes are part of the same CAF submission and cover the organisation outcomes for Objectives A and D.",
-      sectionType: "organisation",
-      outcomes: getOrganisationOutcomes(assessment),
-    });
+    return res.redirect(`/assurer-alpha/assessment/${req.params.assessmentId}/critical-systems`);
   });
 
   router.get("/assurer-alpha/assessment/:assessmentId/critical-systems", (req, res) => {
@@ -146,12 +129,6 @@ module.exports = function (router) {
     }
     if (!values.rationale) {
       errors.push({ field: "assurerRationale", text: "Enter the assurer rationale." });
-    }
-    if (!values.alignmentDecision) {
-      errors.push({
-        field: "assurerAlignmentDecision",
-        text: "Select how this compares with the organisation-level assessment.",
-      });
     }
 
     if (errors.length > 0) {
@@ -375,13 +352,6 @@ module.exports = function (router) {
           text: "Review every contributing outcome before completing the assurance step.",
         });
       }
-      if (!completionState.iipReviewed) {
-        errors.push({
-          field: "review-complete",
-          text: "Review the improvement and implementation plan before completing the assurance step.",
-        });
-      }
-
       return res.render("pages/assurer-alpha/summary", {
         pageTitle: `Assurance summary for ${assessment.councilName}`,
         assessment,
@@ -468,13 +438,7 @@ module.exports = function (router) {
     if (!values.decision) {
       errors.push({ field: "assurerSubmissionDecision", text: "Select what should happen next." });
     }
-    if (values.decision === "submitted_by_assurer" && !values.submissionDate) {
-      errors.push({ field: "assurerSubmissionDate", text: "Enter the submission date." });
-    }
-    if (
-      ["ready_for_submission", "submitted_by_assurer"].includes(values.decision) &&
-      !completionState.readyForSubmission
-    ) {
+    if (values.decision === "ready_for_submission" && !completionState.readyForSubmission) {
       errors.push({
         field: "assurerSubmissionDecision",
         text: "This assessment is not ready for submission. Choose the option that sends it back for council action.",
@@ -492,15 +456,8 @@ module.exports = function (router) {
     }
 
     assessment.submission.status = values.decision;
-    assessment.submission.submittedBy =
-      values.decision === "submitted_by_assurer" ? "Assurer" : "";
-    assessment.submission.submittedAt =
-      values.decision === "submitted_by_assurer" ? values.submissionDate : "";
 
-    if (values.decision === "submitted_by_assurer") {
-      assessment.overallStatus = "Submitted to MHCLG";
-      assessment.statusTagClass = "govuk-tag--green";
-    } else if (values.decision === "ready_for_submission") {
+    if (values.decision === "ready_for_submission") {
       assessment.overallStatus = "Assurance complete";
       assessment.statusTagClass = "govuk-tag--blue";
     } else {
@@ -524,6 +481,22 @@ module.exports = function (router) {
       summary: buildAssessmentSummary(assessment),
       nextSteps: buildNextSteps(assessment),
     });
+  });
+
+  router.get("/research-rounds/alpha-demo/assurer-confirmation", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+    delete req.session.data.assurerAlpha;
+    const state = ensureAssurerAlphaState(req);
+    const assessment = getAssessment(state, "west-marchshire-2026");
+    if (assessment) {
+      assessment.assuranceComplete = true;
+      assessment.completedAt = "15 April 2026";
+      assessment.overallStatus = "Assurance complete";
+      assessment.statusTagClass = "govuk-tag--blue";
+      assessment.submission.status = "ready_for_submission";
+    }
+    return res.redirect("/assurer-alpha/assessment/west-marchshire-2026/confirmation");
   });
 };
 
@@ -634,7 +607,7 @@ function getOutcomeReturnPath(assessment, outcome) {
 function getPostSectionRoute(assessment, outcome) {
   return outcome.lens === "ad"
     ? `/assurer-alpha/assessment/${assessment.id}/critical-systems?saved=1`
-    : `/assurer-alpha/assessment/${assessment.id}/iip`;
+    : `/assurer-alpha/assessment/${assessment.id}/summary`;
 }
 
 function getQueueCount(state) {
@@ -656,10 +629,6 @@ function buildAssessmentOverviewStats(assessment) {
     {
       label: "Critical systems outcomes",
       value: assessment.submissionSummary.criticalSystemsComplete ? "Complete" : "In progress",
-    },
-    {
-      label: "IIP status",
-      value: assessment.submissionSummary.iipIncluded ? "Included" : "Not included",
     },
     {
       label: "Submission state",
@@ -789,50 +758,26 @@ function buildCompletionState(assessment) {
       "cannot_judge_insufficient_evidence",
     ].includes(decision);
   });
-  const iipDecision = assessment.iip && assessment.iip.assurerReview
-    ? assessment.iip.assurerReview.decision
-    : "";
-  const iipReviewed = Boolean(iipDecision);
-  const iipHasBlocker = ["request_changes", "priority_gaps"].includes(iipDecision);
   const missingOutcomeReviews = getMissingReviewCount(assessment);
 
   return {
     missingOutcomeReviews,
-    iipReviewed,
     issueCount: outcomeIssues.length,
     blockerOutcomeCount: blockerOutcomes.length,
-    iipHasBlocker,
-    reviewCompleteReady: missingOutcomeReviews === 0 && iipReviewed,
+    reviewCompleteReady: missingOutcomeReviews === 0,
     readyForSubmission:
       missingOutcomeReviews === 0 &&
-      iipReviewed &&
       blockerOutcomes.length === 0 &&
-      outcomeIssues.length === 0 &&
-      iipDecision === "agree_sufficient",
+      outcomeIssues.length === 0,
   };
 }
 
 function buildNextAction(assessment, completionState) {
   if (completionState.missingOutcomeReviews > 0) {
-    const organisationNotReviewed = getOrganisationOutcomes(assessment).some(
-      (outcome) => !outcome.assurerReview
-    );
     return {
-      href: organisationNotReviewed
-        ? `/assurer-alpha/assessment/${assessment.id}/organisation-outcomes`
-        : `/assurer-alpha/assessment/${assessment.id}/critical-systems`,
-      text: organisationNotReviewed
-        ? "Review organisation outcomes"
-        : "Review critical systems outcomes",
+      href: `/assurer-alpha/assessment/${assessment.id}/critical-systems`,
+      text: "Review critical systems outcomes",
       hint: `${completionState.missingOutcomeReviews} outcomes in this submission still need an assurer decision.`,
-    };
-  }
-
-  if (!completionState.iipReviewed) {
-    return {
-      href: `/assurer-alpha/assessment/${assessment.id}/iip`,
-      text: "Review the IIP",
-      hint: "The improvement and implementation plan still needs an assurer decision.",
     };
   }
 
@@ -1002,29 +947,18 @@ function buildSubmissionFormValues(sessionData, assessment) {
     decision:
       (sessionData.assurerSubmissionDecision || "").toString() ||
       (assessment.submission ? assessment.submission.status : ""),
-    submissionDate:
-      (sessionData.assurerSubmissionDate || "").toString() ||
-      (assessment.submission ? assessment.submission.submittedAt : ""),
   };
 }
 
 function clearSubmissionForm(sessionData) {
   delete sessionData.assurerSubmissionDecision;
-  delete sessionData.assurerSubmissionDate;
 }
 
 function buildNextSteps(assessment) {
-  if (assessment.submission.status === "submitted_by_assurer") {
-    return [
-      `The assurer has completed the assurance step and submitted the assessment to MHCLG on ${assessment.submission.submittedAt}.`,
-      "The council can be told that no further action is needed for this submission.",
-    ];
-  }
-
   if (assessment.submission.status === "ready_for_submission") {
     return [
-      "The assurer has completed the review and marked the assessment as ready for submission.",
-      "The council can now submit to MHCLG or confirm whether the assurer submission route should be used.",
+      "The assurer has completed the review and the assessment is ready for submission.",
+      "The council can now submit to MHCLG.",
     ];
   }
 

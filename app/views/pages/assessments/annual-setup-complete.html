@@ -4,7 +4,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  <a class="govuk-back-link" href="/assessments/current/annual-setup/roles">Back</a>
+  <a class="govuk-back-link" href="/assessments/current/annual-setup/assessment">Back</a>
 
   {{ appPageHeader({
     caption: "Assessment setup",
@@ -43,14 +43,6 @@
           —
         {% endif %}
       </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">CAF Lead</dt>
-      <dd class="govuk-summary-list__value">{{ assessment.annualSetup.annualLead or "—" }}</dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Approver</dt>
-      <dd class="govuk-summary-list__value">{{ assessment.annualSetup.annualApprover or "—" }}</dd>
     </div>
   </dl>
 

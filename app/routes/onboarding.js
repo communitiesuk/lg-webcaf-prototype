@@ -17,7 +17,6 @@ const {
 } = require("../data/helpers/roles");
 const {
   buildRoundTwoSetupProgress,
-  hasRoundTwoRolesComplete,
   hasRoundTwoScopeSummaryComplete,
   isRoundTwoOnboardingComplete,
 } = require("../data/helpers/phase-progress");
@@ -104,7 +103,7 @@ module.exports = function (router) {
     if (!systemsComplete) {
       return res.redirect(systemsStarted ? "/stages/2/scope/systems/review" : "/stages/2/scope/systems/add");
     }
-    return res.redirect("/onboarding");
+    return res.redirect("/stages/2/scope/systems/review");
   });
 
   router.get("/organisation-details", (req, res) => {
@@ -332,13 +331,8 @@ function isOnboardingComplete(assessment) {
 }
 
 function buildOnboardingTasks(assessment) {
-  const prepare = assessment && assessment.prepare ? assessment.prepare : {};
-  const rolesStarted = Boolean(
-    prepare.onboardingLead || prepare.onboardingApprover
-  );
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const scopeReview = assessment && assessment.scopeReview ? assessment.scopeReview : {};
-  const rolesComplete = hasRoundTwoRolesComplete(assessment);
   const scopeReviewed = hasRoundTwoScopeSummaryComplete(assessment);
   const scopeStarted = Boolean(
     (scope.context && Object.values(scope.context).some(Boolean)) ||
@@ -350,26 +344,14 @@ function buildOnboardingTasks(assessment) {
 
   return [
     {
-      title: "Add the people leading this assessment",
-      href: "/prepare/roles?returnTo=journey",
-      hint: "Do this once when your council account is set up. You can update these names later.",
-      status: rolesComplete
-        ? "Complete"
-        : rolesStarted
-          ? "In progress"
-          : "Ready to start",
-    },
-    {
-      title: "Review your services and systems lists",
+      title: "Set up what you're assessing",
       href: "/onboarding/scope",
-      hint: "Use your main lists and update them if anything has changed before the yearly assessment starts.",
+      hint: "Add your organisation's strategic context, list your essential services, and identify the critical systems that support them.",
       status: scopeReviewed
         ? "Complete"
         : scopeStarted
           ? "In progress"
-          : rolesComplete
-            ? "Ready to start"
-            : "Cannot start yet",
+          : "Ready to start",
     },
   ];
 }

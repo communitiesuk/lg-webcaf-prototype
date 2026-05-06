@@ -193,37 +193,6 @@
       <textarea class="govuk-textarea" id="assurerEvidenceReviewed" name="assurerEvidenceReviewed" rows="4">{{ values.evidenceReviewed }}</textarea>
     </div>
 
-    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerAlignmentDecision') | list | length %} govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Alignment with organisation-level assessment</legend>
-        <div class="govuk-hint">Use this to record whether the organisation-level story is reflected in this outcome.</div>
-        {% for item in errorItems if item.field == "assurerAlignmentDecision" %}
-          <p class="govuk-error-message" id="assurerAlignmentDecision">
-            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
-          </p>
-        {% endfor %}
-        <div class="govuk-radios" data-module="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerAlignmentDecision-1" name="assurerAlignmentDecision" type="radio" value="consistent_with_organisation_assessment" {% if values.alignmentDecision == "consistent_with_organisation_assessment" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-1">This is consistent with organisation-level assessment</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerAlignmentDecision-2" name="assurerAlignmentDecision" type="radio" value="gaps_in_organisation_controls" {% if values.alignmentDecision == "gaps_in_organisation_controls" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-2">This suggests gaps in organisation-level controls</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerAlignmentDecision-3" name="assurerAlignmentDecision" type="radio" value="not_enough_information_alignment" {% if values.alignmentDecision == "not_enough_information_alignment" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerAlignmentDecision-3">Not enough information to assess</label>
-          </div>
-        </div>
-      </fieldset>
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label govuk-label--m" for="assurerAlignmentExplanation">Explain any misalignment (optional)</label>
-      <textarea class="govuk-textarea" id="assurerAlignmentExplanation" name="assurerAlignmentExplanation" rows="4">{{ values.alignmentExplanation }}</textarea>
-    </div>
-
     <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerRationale') | list | length %} govuk-form-group--error{% endif %}">
       <label class="govuk-label govuk-label--m" for="assurerRationale">Assurer rationale</label>
       <div class="govuk-hint">Explain the evidence for your position briefly.</div>

@@ -1,0 +1,76 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <div class="govuk-panel govuk-panel--confirmation">
+        <h1 class="govuk-panel__title">Assessment finalised</h1>
+        <div class="govuk-panel__body">
+          Your reference<br>
+          <strong>{{ finalised.ref }}</strong>
+        </div>
+      </div>
+
+      <p class="govuk-body govuk-!-margin-top-6">
+        The assured assessment and Improvement &amp; Implementation Plan for <strong>{{ councilName }}</strong> have been declared as the final official records for this assessment year.
+      </p>
+
+      <h2 class="govuk-heading-m">What was confirmed</h2>
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-8">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Reference</dt>
+          <dd class="govuk-summary-list__value"><strong>{{ finalised.ref }}</strong></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Organisation</dt>
+          <dd class="govuk-summary-list__value">{{ councilName }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Confirmed by</dt>
+          <dd class="govuk-summary-list__value">{{ finalised.by }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Role</dt>
+          <dd class="govuk-summary-list__value">{{ finalised.role }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Date and time</dt>
+          <dd class="govuk-summary-list__value">{{ finalisedAtDisplay }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Records confirmed</dt>
+          <dd class="govuk-summary-list__value">
+            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+              <li>Assured self-assessment (WebCAF)</li>
+              <li>Improvement &amp; Implementation Plan (IIP)</li>
+            </ul>
+          </dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+
+      <p class="govuk-body">
+        Keep a copy of your reference number for your records. The finalised assessment and IIP are now the official records for this assessment year and may be shared with MHCLG and your assurer.
+      </p>
+
+      <p class="govuk-body">
+        You can continue to view the full detail of the assessment and IIP using the links below.
+      </p>
+
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-8">
+        <li><a class="govuk-link" href="/assessments/current/recommendations">View assurer recommendations</a></li>
+        <li><a class="govuk-link" href="/assessments/current/iip-report">View full IIP report</a></li>
+        <li><a class="govuk-link" href="/assessments/current/assurance-report">View assurance report</a></li>
+      </ul>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button govuk-button--secondary" href="/assessments/current/journey">Return to task list</a>
+        <a class="govuk-link" href="/entry">Return to home</a>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

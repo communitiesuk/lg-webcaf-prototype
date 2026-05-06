@@ -522,6 +522,26 @@
   line-height: 1.2;
 }
 
+.app-demo-panel {
+  border: 2px solid #4c2c92;
+  border-top: 6px solid #4c2c92;
+  background: #f9f5ff;
+  padding: 24px;
+  margin-bottom: 40px;
+}
+
+.app-demo-panel__header {
+  margin-bottom: 20px;
+}
+
+.app-demo-panel__heading {
+  margin-bottom: 4px;
+}
+
+.app-demo-panel__intro {
+  margin-bottom: 0;
+}
+
 .app-rounds-grid > [class*="govuk-grid-column"] {
   display: flex;
 }

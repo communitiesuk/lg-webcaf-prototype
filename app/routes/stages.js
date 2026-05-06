@@ -293,7 +293,7 @@ module.exports = function (router) {
     if (!isRoundTwoRequest(req) && !assessment.scope.rolesConfirmed) {
       return res.redirect("/stages/2/scope/roles");
     }
-    return redirectToScopeReviewReturnOr(req, res, "/stages/2/scope/services/add");
+    return redirectToScopeReviewReturnOr(req, res, "/stages/2/scope/services/review");
   });
 
   router.get("/stages/2/scope/context/:step", (req, res) => {

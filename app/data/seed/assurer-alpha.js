@@ -1,7 +1,7 @@
 function buildAssurerAlphaSeed() {
   return {
     assumptions: [
-      "The assurer reviews one completed CAF submission from a council, covering organisation outcomes, critical systems outcomes, evidence references and the IIP.",
+      "The assurer reviews one completed CAF submission from a council, covering organisation outcomes, critical systems outcomes and evidence references.",
       "Structured review decisions are included to test whether they make assurance more consistent across councils and assurers.",
       "Evidence is shown as references and links for alpha research. This prototype does not model document upload or access control.",
       "This route explores an optional model where the assurer can complete final submission to MHCLG, but it is clearly marked as an alpha assumption.",
@@ -20,224 +20,18 @@ function buildAssurerAlphaSeed() {
         submittedBy: "Morgan Ellis, CAF lead",
         assignedAssurer: "NorthStar Assurance",
         submissionSummary: {
-          organisationComplete: true,
           criticalSystemsComplete: true,
-          iipIncluded: true,
-          criticalSystemsAssessed: 2,
-          contributingOutcomesCompleted: 7,
-          evidenceReferencesIncluded: 10,
+          iipIncluded: false,
+          criticalSystemsAssessed: 1,
+          contributingOutcomesCompleted: 2,
+          evidenceReferencesIncluded: 4,
         },
-        contributingOutcomeCount: 7,
-        outcomesNeedingAttention: 4,
-        iipStatus: "Included",
+        contributingOutcomeCount: 2,
+        outcomesNeedingAttention: 1,
+        iipStatus: "Not yet submitted",
         summary:
-          "This submission includes organisation outcomes for Objectives A and D, critical systems outcomes for Objectives B and C, evidence references and a draft improvement and implementation plan.",
-        crossCuttingSignals: [
-          "Organisation-level evidence points to improving governance and risk management, but accountability is still being embedded.",
-          "Multiple critical systems outcomes suggest uneven control maturity where supplier assurance and monitoring depend on local workarounds.",
-          "System-level monitoring and supplier oversight appear weaker than the organisation-level story would suggest.",
-        ],
-        organisationContext:
-          "The council assessed governance and risk management as improving but not yet fully embedded. As you review critical systems, check whether local controls, supplier oversight and monitoring reflect that organisation-level position.",
+          "This submission covers critical systems outcomes for the payments platform, with evidence references for each outcome.",
         outcomes: [
-          {
-            id: "a1-governance-oversight",
-            lens: "ad",
-            code: "A1",
-            title: "Governance and oversight",
-            description:
-              "Senior leaders should have clear oversight of cyber risk, receive timely reporting and use it to make decisions.",
-            councilJudgement: "Partially achieved",
-            councilRationale:
-              "Corporate leadership now receives a quarterly cyber risk report and the risk committee reviews movement in the top five issues. Directorates use the same reporting template, but escalation thresholds are not yet applied consistently in every service.",
-            igpSignals: [
-              "Board and committee reporting is in place and happens quarterly.",
-              "A single reporting template is being used across directorates.",
-              "Escalation thresholds are still being embedded in service-level practice.",
-            ],
-            evidenceReferences: [
-              {
-                title: "Corporate cyber risk report template",
-                reference: "WM-AD-A1-001",
-                href: "https://example.gov.uk/west-marchshire/cyber-risk-report-template",
-                note: "Template used for quarterly leadership reporting.",
-              },
-              {
-                title: "Risk committee minutes, January and March 2026",
-                reference: "WM-AD-A1-002",
-                href: "https://example.gov.uk/west-marchshire/risk-committee-minutes",
-                note: "Minutes showing discussion of cyber risk decisions.",
-              },
-            ],
-            reviewPromptLabel: "Rationale and evidence look complete",
-            reviewPromptHint:
-              "Use this as a straightforward example to sense-check the council judgement.",
-            reviewPromptTagClass: "govuk-tag--green",
-            assurerReview: {
-              decision: "agree_judgement",
-              rationale:
-                "The rationale is clear and the evidence references support a partially achieved judgement.",
-              nextAction: "No further action needed before sign-off.",
-              alignmentDecision: "consistent_with_organisation_assessment",
-              alignmentExplanation:
-                "This outcome is consistent with the broader organisation-level picture of governance maturing but not yet embedded everywhere.",
-              status: "agreed",
-              statusLabel: "Agree with council judgement",
-              statusTagClass: "govuk-tag--green",
-              reviewedAt: "11 April 2026",
-            },
-            issue: null,
-          },
-          {
-            id: "a2-roles-responsibilities",
-            lens: "ad",
-            code: "A2",
-            title: "Roles and responsibilities",
-            description:
-              "Roles for cyber risk, decision making and operational delivery should be clear across corporate teams, services and suppliers.",
-            councilJudgement: "Partially achieved",
-            councilRationale:
-              "Named leads exist across ICT, procurement and service teams. Handoffs are improving and the council intends to confirm accountability in the next quarter.",
-            igpSignals: [
-              "Named leads are listed for ICT, procurement and service ownership.",
-              "The handoff between teams is described inconsistently in workshop notes.",
-              "The accountability map is still in draft and not yet signed off.",
-            ],
-            evidenceReferences: [
-              {
-                title: "Draft cyber accountability map",
-                reference: "WM-AD-A2-001",
-                href: "https://example.gov.uk/west-marchshire/accountability-map",
-                note: "Working draft showing planned ownership model.",
-              },
-              {
-                title: "Procurement and ICT operating note",
-                reference: "WM-AD-A2-002",
-                href: "https://example.gov.uk/west-marchshire/procurement-ict-note",
-                note: "Describes how teams currently hand off supplier issues.",
-              },
-            ],
-            reviewPromptLabel: "Rationale unclear",
-            reviewPromptHint:
-              "Check whether the rationale explains how roles work in practice, not just who is named.",
-            reviewPromptTagClass: "govuk-tag--yellow",
-            assurerReview: null,
-            issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
-            },
-          },
-          {
-            id: "d1-risk-management",
-            lens: "ad",
-            code: "D1",
-            title: "Risk management",
-            description:
-              "The council should identify, track and act on cyber risks consistently across the organisation.",
-            councilJudgement: "Partially achieved",
-            councilRationale:
-              "The council says high-level risks are understood and reviewed by leadership, but service evidence is still being pulled together.",
-            igpSignals: [
-              "Corporate cyber risks are listed in the main risk register.",
-              "Service-level risk treatment activity is referenced but not clearly evidenced.",
-              "The rationale refers to local registers that are not linked in this submission.",
-            ],
-            evidenceReferences: [
-              {
-                title: "Corporate risk register extract",
-                reference: "WM-AD-D1-001",
-                href: "https://example.gov.uk/west-marchshire/corporate-risk-register",
-                note: "Extract covering the main cyber and resilience risks.",
-              },
-            ],
-            reviewPromptLabel: "Evidence missing",
-            reviewPromptHint:
-              "Check whether service-level risk evidence is referenced clearly enough to support the judgement.",
-            reviewPromptTagClass: "govuk-tag--red",
-            assurerReview: null,
-            issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
-            },
-          },
-          {
-            id: "b1-social-care-policy",
-            lens: "bc",
-            systemName: "Adult social care case management",
-            code: "B1",
-            title: "Policy, process and procedure development",
-            description:
-              "Controls for the critical system should be supported by clear policy and operating procedures.",
-            councilJudgement: "Partially achieved",
-            councilRationale:
-              "The council has a protection policy and operational process for the case management system, but supplier evidence is still referenced indirectly.",
-            igpSignals: [
-              "Service protection policy is in place.",
-              "Operational procedures are documented locally.",
-              "Supplier evidence is referenced but not fully explained.",
-            ],
-            evidenceReferences: [
-              {
-                title: "Service protection policy",
-                reference: "WM-BC-B1-001",
-                href: "https://example.gov.uk/west-marchshire/service-protection-policy",
-                note: "Current policy governing protective controls for the system.",
-              },
-              {
-                title: "Supplier assurance statement",
-                reference: "WM-BC-B1-002",
-                href: "https://example.gov.uk/west-marchshire/supplier-assurance-statement",
-                note: "Referenced supplier statement used to support the judgement.",
-              },
-            ],
-            reviewPromptLabel: "Evidence mostly complete",
-            reviewPromptHint:
-              "Check whether the supplier evidence is specific enough to support the council judgement.",
-            reviewPromptTagClass: "govuk-tag--turquoise",
-            assurerReview: null,
-            issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
-            },
-          },
-          {
-            id: "c1-social-care-detection",
-            lens: "bc",
-            systemName: "Adult social care case management",
-            code: "C1",
-            title: "Monitoring and detection",
-            description:
-              "The council should be able to detect and investigate suspicious activity affecting the critical system.",
-            councilJudgement: "Partially achieved",
-            councilRationale:
-              "Central monitoring is in place, but the council still relies on the supplier for some alert triage and evidence is split across teams.",
-            igpSignals: [
-              "Monitoring is enabled for core services.",
-              "Alert triage between council and supplier is not yet fully defined.",
-              "Incident evidence is referenced across different sources.",
-            ],
-            evidenceReferences: [
-              {
-                title: "Monitoring operations note",
-                reference: "WM-BC-C1-001",
-                href: "https://example.gov.uk/west-marchshire/monitoring-operations-note",
-                note: "Explains current monitoring responsibilities for the system.",
-              },
-            ],
-            reviewPromptLabel: "Rationale unclear",
-            reviewPromptHint:
-              "Check whether monitoring responsibilities and alert triage are explained clearly enough.",
-            reviewPromptTagClass: "govuk-tag--yellow",
-            assurerReview: null,
-            issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
-            },
-          },
           {
             id: "b2-payments-supply-chain",
             lens: "bc",
@@ -272,11 +66,25 @@ function buildAssurerAlphaSeed() {
             reviewPromptHint:
               "Check whether the submission covers legacy suppliers as well as new procurements.",
             reviewPromptTagClass: "govuk-tag--turquoise",
-            assurerReview: null,
+            assurerReview: {
+              decision: "judgement_may_need_changing",
+              rationale:
+                "The council's judgement of Achieved is not supported by the evidence. Legacy contracts have not been brought onto the standard security schedule, and the tracker shows partial coverage only. Achieved implies comprehensive coverage — this submission does not demonstrate that.",
+              nextAction: "Issue raised. Council should either revise the judgement or provide evidence that legacy contracts are sufficiently covered.",
+              alignmentDecision: "consistent_with_organisation_assessment",
+              alignmentExplanation:
+                "Consistent with the cross-cutting signal about uneven control maturity and supplier assurance depending on local workarounds.",
+              status: "challenged",
+              statusLabel: "Judgement may need changing",
+              statusTagClass: "govuk-tag--red",
+              reviewedAt: "14 April 2026",
+            },
             issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
+              categories: ["supply chain"],
+              detail:
+                "Legacy supplier contracts have not been brought onto the standard security schedule. The evidence shows partial coverage, which does not support a judgement of Achieved.",
+              actionRequested:
+                "Extend the standard security schedule to legacy contracts for the payments platform and update the tracker to reflect full coverage, or revise the judgement to Partially achieved.",
             },
           },
           {
@@ -313,41 +121,34 @@ function buildAssurerAlphaSeed() {
             reviewPromptHint:
               "Use this as a stronger system example and sense-check whether the judgement is proportionate.",
             reviewPromptTagClass: "govuk-tag--green",
-            assurerReview: null,
-            issue: {
-              categories: [],
-              detail: "",
-              actionRequested: "",
+            assurerReview: {
+              decision: "agree_judgement",
+              rationale:
+                "Partially achieved is the right call. The playbook and dependency map are in place. The absence of a completed recovery exercise is clearly acknowledged and the judgement reflects this accurately.",
+              nextAction: "No further action needed. The council should complete a recovery exercise in the next cycle.",
+              alignmentDecision: "consistent_with_organisation_assessment",
+              alignmentExplanation:
+                "No cross-cutting concerns for this outcome — the evidence and rationale are self-consistent.",
+              status: "agreed",
+              statusLabel: "Agree with council judgement",
+              statusTagClass: "govuk-tag--green",
+              reviewedAt: "14 April 2026",
             },
+            issue: null,
           },
         ],
         iip: {
-          status: "Included",
+          status: "Submitted",
           owner: "Morgan Ellis, CAF lead",
-          lastUpdated: "8 April 2026",
-          summary:
-            "The council has provided a short improvement and implementation plan covering organisation-wide actions and critical systems actions.",
+          submittedAt: "23 April 2026",
+          lastUpdated: "23 April 2026",
           priorities: [
             {
-              title: "Embed one reporting model across all directorates",
+              title: "Extend standard security schedule to legacy supplier contracts",
               timescale: "By July 2026",
-              owner: "Corporate governance lead",
-              relatedOutcomes: ["A1", "A2"],
-              successMeasure: "All directorates use the same reporting template and escalation thresholds.",
-            },
-            {
-              title: "Clarify supplier monitoring and assurance for critical systems",
-              timescale: "By August 2026",
               owner: "Head of ICT operations",
-              relatedOutcomes: ["B1", "C1", "B2"],
-              successMeasure: "Council and supplier responsibilities are clear for monitoring, assurance and escalation.",
-            },
-            {
-              title: "Complete a recovery exercise for the payments platform",
-              timescale: "By September 2026",
-              owner: "Service resilience lead",
-              relatedOutcomes: ["C2"],
-              successMeasure: "Recovery exercise completed with actions recorded and owned.",
+              relatedOutcomes: ["B2"],
+              successMeasure: "All priority legacy contracts include security requirements aligned to the standard schedule, and the supplier tracker reflects full coverage.",
             },
           ],
           assurerReview: null,
@@ -385,12 +186,7 @@ function buildAssurerAlphaSeed() {
         contributingOutcomeCount: 5,
         outcomesNeedingAttention: 1,
         iipStatus: "Included",
-        summary: "A full CAF submission currently being reviewed.",
-        crossCuttingSignals: [
-          "Organisation narrative and system-level controls appear broadly aligned so far.",
-        ],
-        organisationContext:
-          "Use the organisation-level judgements to sense-check whether critical systems are showing the same level of maturity.",
+        summary: "A CAF submission covering critical systems outcomes, currently being reviewed.",
         outcomes: [],
         iip: {
           status: "Included",

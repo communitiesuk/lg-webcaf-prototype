@@ -1,6 +1,7 @@
 {# app/views/pages/assessments/journey.html #}
 {% extends "layouts/main.html" %}
 {% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/accordion/macro.njk" import govukAccordion %}
 {% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
@@ -8,16 +9,9 @@
     {{ appPageHeader({
       caption: "Annual assessment",
       title: "Complete this year's WebCAF assessment",
-      intro: "Use this task list to work through this year's assessment.",
       showSaveReassurance: true
     }) }}
-    {% if nextAction %}
-      <section class="govuk-!-margin-bottom-6" aria-labelledby="next-step-heading">
-        <h2 class="govuk-heading-m govuk-!-margin-bottom-2" id="next-step-heading">Next step</h2>
-        <p class="govuk-body"><strong>Current step:</strong> {{ nextAction.text }}.</p>
-        <a class="govuk-button" data-module="govuk-button" href="{{ nextAction.href }}">Start next step</a>
-      </section>
-    {% endif %}
+    <p class="govuk-body govuk-hint govuk-!-margin-top-0">Started {{ assessmentStartedAtDisplay }} · Due {{ assessmentDueAtDisplay }}</p>
   {% else %}
     {{ appPageHeader({
       title: "Assessment journey",
@@ -51,14 +45,83 @@
     </section>
 
     <section aria-labelledby="complete-caf-assessment-heading">
-      <h2 class="govuk-heading-m" id="complete-caf-assessment-heading">Complete the assessment</h2>
+      <h2 class="govuk-heading-m" id="complete-caf-assessment-heading">This year's assessment</h2>
+
+      {# Assign outcome owners sits above the per-system accordion #}
       {{ govukTaskList({
-        items: roundTwoAssessmentSection.items
+        items: [roundTwoAssessmentSection.items[0]]
       }) }}
+
+      {# Per-system accordion — one section per critical system being assessed.
+         For this alpha prototype, we show one system (the first in the priority list). #}
+      {% if primaryCriticalSystem %}
+        {% set systemSteps = [
+          {
+            title: { text: "Complete the self-assessment" },
+            href: roundTwoAssessmentSection.items[2].href,
+            hint: { text: roundTwoAssessmentSection.items[2].hint.text },
+            status: roundTwoAssessmentSection.items[2].status
+          },
+          {
+            title: { text: "Get internal sign-off" },
+            href: roundTwoAssessmentSection.items[3].href,
+            hint: { text: roundTwoAssessmentSection.items[3].hint.text },
+            status: roundTwoAssessmentSection.items[3].status
+          },
+          {
+            title: { text: "Send to assurer" },
+            href: roundTwoAssessmentSection.items[4].href,
+            hint: { text: roundTwoAssessmentSection.items[4].hint.text },
+            status: roundTwoAssessmentSection.items[4].status
+          },
+          {
+            title: { text: "Review assurance report" },
+            href: roundTwoAssessmentSection.items[5].href,
+            hint: { text: roundTwoAssessmentSection.items[5].hint.text },
+            status: roundTwoAssessmentSection.items[5].status
+          },
+          {
+            title: { text: "Complete your Improvement and Implementation Plan" },
+            href: roundTwoAssessmentSection.items[6].href,
+            hint: { text: roundTwoAssessmentSection.items[6].hint.text },
+            status: roundTwoAssessmentSection.items[6].status
+          },
+          {
+            title: { text: "Finalise assessment record" },
+            href: roundTwoAssessmentSection.items[7].href,
+            hint: { text: roundTwoAssessmentSection.items[7].hint.text },
+            status: roundTwoAssessmentSection.items[7].status
+          }
+        ] %}
+
+        {% set systemTaskListHtml %}
+          {{ govukTaskList({ items: systemSteps }) }}
+        {% endset %}
+
+        {% set adCompletedHtml %}
+          <p class="govuk-body govuk-!-margin-bottom-1">Organisation self-assessment completed on <strong>3 March 2026</strong>.</p>
+          <p class="govuk-body govuk-!-margin-bottom-0"><a class="govuk-link" href="/assessments/current/self-assessment/ad">View organisation assessment</a></p>
+        {% endset %}
+
+        {{ govukAccordion({
+          id: "system-assessment-accordion",
+          items: [
+            {
+              heading: { text: "Organisation assessment" },
+              summary: { text: "Objectives A and D · Completed" },
+              content: { html: adCompletedHtml },
+              expanded: false
+            },
+            {
+              heading: { text: primaryCriticalSystem.name },
+              summary: { text: "Objectives B and C · Critical system" },
+              content: { html: systemTaskListHtml },
+              expanded: true
+            }
+          ]
+        }) }}
+      {% endif %}
     </section>
-    <div class="govuk-inset-text govuk-!-margin-top-6">
-      You started this self-assessment on <strong>{{ assessmentStartedAtDisplay }}</strong>. You need to complete it by <strong>{{ assessmentDueAtDisplay }}</strong>.
-    </div>
   {% else %}
     {% for section in journeySections %}
       <h2 class="govuk-heading-m">{{ section.heading }}</h2>

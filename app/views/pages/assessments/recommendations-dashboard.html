@@ -1,0 +1,123 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
+
+      {{ appPageHeader({
+        caption: "Improvement & Implementation Plan",
+        title: "Your implementation plan",
+        intro: "The assurer has provided recommendations for each contributing outcome. Use these to plan your council's response and track implementation."
+      }) }}
+
+      <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" style="max-width: 36em;">
+        {% if finalisedAt %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Report finalised</dt>
+            <dd class="govuk-summary-list__value">{{ finalisedAt }}</dd>
+          </div>
+        {% endif %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Total recommendations</dt>
+          <dd class="govuk-summary-list__value">{{ totalRows }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation plans complete</dt>
+          <dd class="govuk-summary-list__value">
+            {{ completedRows }} of {{ totalRows }}
+            {% if completedRows == totalRows and totalRows > 0 %}
+              &ensp;<strong class="govuk-tag govuk-tag--green">All complete</strong>
+            {% elif completedRows > 0 %}
+              &ensp;<strong class="govuk-tag govuk-tag--blue">In progress</strong>
+            {% else %}
+              &ensp;<strong class="govuk-tag govuk-tag--grey">Not started</strong>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      <div class="govuk-button-group govuk-!-margin-bottom-8">
+        <a class="govuk-button govuk-button--secondary" href="/assessments/current/iip-report">View IIP report</a>
+        {% if completedRows == totalRows and totalRows > 0 %}
+          <a class="govuk-button" href="/assessments/current/iip/ready-for-review">Mark as ready for internal review</a>
+        {% endif %}
+      </div>
+
+      {% if groups.length == 0 %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            No recommendations are available yet. The assurer's report needs to be finalised before recommendations appear here.
+          </p>
+        </div>
+      {% else %}
+        {% for group in groups %}
+          {% for principle in group.principles %}
+            <h2 class="govuk-heading-m govuk-!-margin-top-4">{{ principle.code }} {{ principle.title }}</h2>
+
+            <table class="govuk-table govuk-!-margin-bottom-6">
+              <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                  <th scope="col" class="govuk-table__header" style="width: 22%;">Contributing outcome</th>
+                  <th scope="col" class="govuk-table__header" style="width: 10%;">Risk level</th>
+                  <th scope="col" class="govuk-table__header">Recommendation</th>
+                  <th scope="col" class="govuk-table__header" style="width: 12%;">Priority</th>
+                  <th scope="col" class="govuk-table__header" style="width: 14%;">Owner</th>
+                  <th scope="col" class="govuk-table__header" style="width: 8%;">Action</th>
+                </tr>
+              </thead>
+              <tbody class="govuk-table__body">
+                {% for row in principle.rows %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">
+                      <strong>{{ row.outcomeCode }}</strong><br>
+                      <span class="govuk-body-s">{{ row.outcomeTitle }}</span>
+                    </td>
+                    <td class="govuk-table__cell">
+                      {% if row.assurerRiskLevel == "high" %}
+                        <strong class="govuk-tag govuk-tag--red">High</strong>
+                      {% elif row.assurerRiskLevel == "medium" %}
+                        <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                      {% elif row.assurerRiskLevel == "low" %}
+                        <strong class="govuk-tag govuk-tag--blue">Low</strong>
+                      {% else %}
+                        <span class="govuk-hint">–</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell">
+                      {% if row.assurerRecommendation %}
+                        <span class="govuk-body-s">{{ row.assurerRecommendation | truncate(120) }}</span>
+                      {% else %}
+                        <span class="govuk-hint">No recommendation</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell">
+                      {% if row.implementationPriority == "high" %}
+                        <strong class="govuk-tag govuk-tag--red">High</strong>
+                      {% elif row.implementationPriority == "medium" %}
+                        <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                      {% elif row.implementationPriority == "low" %}
+                        <strong class="govuk-tag govuk-tag--blue">Low</strong>
+                      {% elif row.implementationPriority == "no_action" %}
+                        <strong class="govuk-tag govuk-tag--grey">No action</strong>
+                      {% else %}
+                        <span class="govuk-hint">Not set</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell">
+                      {{ row.ownerNameSnapshot or "Not set" }}
+                    </td>
+                    <td class="govuk-table__cell">
+                      <a class="govuk-link" href="/assessments/current/recommendations/{{ row.id }}">View</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

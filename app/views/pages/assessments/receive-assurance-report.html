@@ -1,0 +1,275 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <span class="govuk-caption-l">Annual assessment — {{ councilDisplayName }}</span>
+      <h1 class="govuk-heading-l">Assurance report</h1>
+
+      <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" style="max-width: 44em;">
+        {% if stage1.finalisedBy or assuranceSummary.assurerName %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurer</dt>
+            <dd class="govuk-summary-list__value">{{ stage1.finalisedBy or assuranceSummary.assurerName or "NorthStar Assurance" }}</dd>
+          </div>
+        {% endif %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Record of Audit</dt>
+          <dd class="govuk-summary-list__value">
+            {% if record.submittedAt %}
+              <strong class="govuk-tag govuk-tag--green">Submitted</strong>
+              {% if record.submittedAt %}
+                &ensp;<span class="govuk-hint govuk-!-display-inline">{{ record.submittedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+              {% endif %}
+            {% else %}
+              <strong class="govuk-tag govuk-tag--grey">Not yet submitted</strong>
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assurer report</dt>
+          <dd class="govuk-summary-list__value">
+            {% if stage1.finalisedAt %}
+              <strong class="govuk-tag govuk-tag--green">Finalised</strong>
+              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.finalisedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+            {% elif stage1.draftSharedAt %}
+              <strong class="govuk-tag govuk-tag--blue">Draft shared</strong>
+              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.draftSharedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+            {% else %}
+              <strong class="govuk-tag govuk-tag--grey">Not yet shared</strong>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      {% if not record.submittedAt %}
+        <div class="govuk-inset-text">
+          The assurer has not yet submitted their Record of Audit. This page will show the full comparison once the assurer has completed their review.
+        </div>
+      {% endif %}
+
+      {# ── Recommendations ──────────────────────────────────── #}
+      {% if recommendations and recommendations.length > 0 %}
+
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+        <h2 class="govuk-heading-m govuk-!-margin-top-6">Assurer recommendations</h2>
+        <p class="govuk-body">The assurer has identified the following areas for improvement. These recommendations will form the basis of your Improvement and Implementation Plan (IIP).</p>
+
+        {% for item in recommendations %}
+          <div class="govuk-summary-card govuk-!-margin-bottom-4">
+            <div class="govuk-summary-card__title-wrapper">
+              <h3 class="govuk-summary-card__title">{{ item.outcomeId }}</h3>
+              <ul class="govuk-summary-card__actions">
+                <li class="govuk-summary-card__action">
+                  {% if item.riskLevel == "high" %}
+                    <strong class="govuk-tag govuk-tag--red">High risk</strong>
+                  {% elif item.riskLevel == "medium" %}
+                    <strong class="govuk-tag govuk-tag--yellow">Medium risk</strong>
+                  {% elif item.riskLevel == "low" %}
+                    <strong class="govuk-tag govuk-tag--blue">Low risk</strong>
+                  {% elif item.riskLevel == "no_action" %}
+                    <strong class="govuk-tag govuk-tag--grey">No action required</strong>
+                  {% endif %}
+                </li>
+              </ul>
+            </div>
+            <div class="govuk-summary-card__content">
+              <p class="govuk-body govuk-!-margin-bottom-0">{{ item.recommendation }}</p>
+            </div>
+          </div>
+        {% endfor %}
+
+      {% endif %}
+
+      {# ── Outcome comparison ───────────────────────────────── #}
+
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Outcome ratings</h2>
+      <p class="govuk-body">A comparison of the council's self-assessment with the assurer's independent rating for each contributing outcome.</p>
+
+      <table class="govuk-table govuk-!-margin-bottom-8">
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header" style="width: 35%;">Contributing outcome</th>
+            <th scope="col" class="govuk-table__header" style="width: 32%;">Council self-assessment</th>
+            <th scope="col" class="govuk-table__header" style="width: 33%;">Assurer rating</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for group in outcomeGroups %}
+            {% for principle in group.principles %}
+              {% for outcome in principle.outcomes %}
+                <tr class="govuk-table__row">
+                  <td class="govuk-table__cell">
+                    <strong>{{ outcome.code }}</strong> {{ outcome.title }}
+                    <div class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ group.code }} {{ group.title }}</div>
+                  </td>
+                  <td class="govuk-table__cell">
+                    {% if outcome.councilJudgement %}
+                      {% if outcome.councilJudgement == "Achieved" %}
+                        <strong class="govuk-tag govuk-tag--green">{{ outcome.councilJudgement }}</strong>
+                      {% elif outcome.councilJudgement == "Partially achieved" %}
+                        <strong class="govuk-tag govuk-tag--yellow">{{ outcome.councilJudgement }}</strong>
+                      {% elif outcome.councilJudgement == "Not achieved" %}
+                        <strong class="govuk-tag govuk-tag--red">{{ outcome.councilJudgement }}</strong>
+                      {% else %}
+                        <strong class="govuk-tag govuk-tag--grey">{{ outcome.councilJudgement }}</strong>
+                      {% endif %}
+                    {% else %}
+                      <span class="govuk-hint">Not assessed</span>
+                    {% endif %}
+                  </td>
+                  <td class="govuk-table__cell">
+                    {% if outcome.assurerRatingLabel %}
+                      {% if outcome.assurerRating == "achieved" %}
+                        <strong class="govuk-tag govuk-tag--green">{{ outcome.assurerRatingLabel }}</strong>
+                      {% elif outcome.assurerRating == "partial" %}
+                        <strong class="govuk-tag govuk-tag--yellow">{{ outcome.assurerRatingLabel }}</strong>
+                      {% elif outcome.assurerRating == "not_achieved" %}
+                        <strong class="govuk-tag govuk-tag--red">{{ outcome.assurerRatingLabel }}</strong>
+                      {% else %}
+                        <strong class="govuk-tag govuk-tag--grey">{{ outcome.assurerRatingLabel }}</strong>
+                      {% endif %}
+                    {% else %}
+                      <span class="govuk-hint">Not yet reviewed</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {# ── Detailed review ──────────────────────────────────── #}
+
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Detailed review</h2>
+      <p class="govuk-body">The assurer's rationale and indicator-level assessment for each contributing outcome.</p>
+
+      <div class="govuk-accordion" data-module="govuk-accordion" id="assurance-detail">
+        {% for group in outcomeGroups %}
+          {% for principle in group.principles %}
+            {% for outcome in principle.outcomes %}
+              <div class="govuk-accordion__section">
+                <div class="govuk-accordion__section-header">
+                  <h3 class="govuk-accordion__section-heading">
+                    <span class="govuk-accordion__section-button" id="accordion-detail-heading-{{ outcome.id }}">
+                      {{ outcome.code }} {{ outcome.title }}
+                    </span>
+                  </h3>
+                  <div class="govuk-accordion__section-summary govuk-body" id="accordion-detail-summary-{{ outcome.id }}">
+                    {% if outcome.assurerRatingLabel %}
+                      Assurer rating:
+                      <strong class="govuk-tag govuk-!-margin-left-1 {% if outcome.assurerRating == 'achieved' %}govuk-tag--green{% elif outcome.assurerRating == 'partial' %}govuk-tag--yellow{% elif outcome.assurerRating == 'not_achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %}">{{ outcome.assurerRatingLabel }}</strong>
+                    {% else %}
+                      {{ group.title }}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div id="accordion-detail-content-{{ outcome.id }}" class="govuk-accordion__section-content">
+
+                  <h4 class="govuk-heading-s">Outcome rating</h4>
+
+                  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+                    <div class="govuk-summary-list__row">
+                      <dt class="govuk-summary-list__key">Council self-assessment</dt>
+                      <dd class="govuk-summary-list__value">
+                        {% if outcome.councilJudgement %}
+                          <strong class="govuk-tag {% if outcome.councilJudgement == 'Achieved' %}govuk-tag--green{% elif outcome.councilJudgement == 'Partially achieved' %}govuk-tag--yellow{% elif outcome.councilJudgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-bottom-2">{{ outcome.councilJudgement }}</strong>
+                          {% if outcome.councilRationale %}
+                            <p class="govuk-body govuk-!-margin-bottom-0">{{ outcome.councilRationale }}</p>
+                          {% endif %}
+                        {% else %}
+                          <span class="govuk-hint">Not assessed</span>
+                        {% endif %}
+                      </dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                      <dt class="govuk-summary-list__key">Assurer rating</dt>
+                      <dd class="govuk-summary-list__value">
+                        {% if outcome.assurerRatingLabel %}
+                          <strong class="govuk-tag {% if outcome.assurerRating == 'achieved' %}govuk-tag--green{% elif outcome.assurerRating == 'partial' %}govuk-tag--yellow{% elif outcome.assurerRating == 'not_achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-bottom-2">{{ outcome.assurerRatingLabel }}</strong>
+                          {% if outcome.assurerJustification %}
+                            <p class="govuk-body govuk-!-margin-bottom-0">{{ outcome.assurerJustification }}</p>
+                          {% endif %}
+                        {% else %}
+                          <span class="govuk-hint">Not yet reviewed</span>
+                        {% endif %}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {% if outcome.igps.length > 0 %}
+                    <h4 class="govuk-heading-s">Indicators of Good Practice (IGP)</h4>
+
+                    <table class="govuk-table govuk-!-margin-bottom-2">
+                      <thead class="govuk-table__head">
+                        <tr class="govuk-table__row">
+                          <th scope="col" class="govuk-table__header" style="width: 10%;">IGP</th>
+                          <th scope="col" class="govuk-table__header" style="width: 35%;">Council response</th>
+                          <th scope="col" class="govuk-table__header" style="width: 20%;">Assurer assessment</th>
+                          <th scope="col" class="govuk-table__header" style="width: 35%;">Assurer note</th>
+                        </tr>
+                      </thead>
+                      <tbody class="govuk-table__body">
+                        {% for igp in outcome.igps %}
+                          <tr class="govuk-table__row">
+                            <td class="govuk-table__cell">{{ igp.igpId }}</td>
+                            <td class="govuk-table__cell">
+                              {% if igp.councilMaturity %}
+                                {{ igp.councilMaturity }}
+                                {% if igp.councilRationale %}
+                                  <p class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ igp.councilRationale }}</p>
+                                {% endif %}
+                              {% else %}
+                                <span class="govuk-hint">Not recorded</span>
+                              {% endif %}
+                            </td>
+                            <td class="govuk-table__cell">
+                              {% if igp.assurerAssessment == "met" %}
+                                <strong class="govuk-tag govuk-tag--green">Met</strong>
+                              {% elif igp.assurerAssessment == "not_met" %}
+                                <strong class="govuk-tag govuk-tag--red">Not met</strong>
+                              {% else %}
+                                <span class="govuk-hint">Not reviewed</span>
+                              {% endif %}
+                            </td>
+                            <td class="govuk-table__cell">
+                              {% if igp.assurerNote %}
+                                {{ igp.assurerNote }}
+                              {% else %}
+                                <span class="govuk-hint">—</span>
+                              {% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  {% endif %}
+
+                </div>
+              </div>
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+
+      {# ── Actions ──────────────────────────────────────────── #}
+
+      <div class="govuk-button-group govuk-!-margin-top-8">
+        <a class="govuk-button" href="/assessments/current/recommendations">Start your Improvement and Implementation Plan</a>
+        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        <a class="govuk-link" href="javascript:window.print()">Print or save as PDF</a>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

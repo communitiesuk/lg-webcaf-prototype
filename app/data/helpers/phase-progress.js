@@ -22,15 +22,6 @@ function buildPhaseProgress(milestones) {
   };
 }
 
-function hasRoundTwoRolesComplete(assessment) {
-  if (!assessment) return false;
-  const prepare = assessment.prepare || {};
-  return Boolean(
-    prepare.onboardingRolesComplete ||
-    (prepare.onboardingLead && prepare.onboardingApprover)
-  );
-}
-
 function hasRoundTwoScopeSummaryComplete(assessment) {
   if (!assessment) return false;
   const stage = assessment.stage || {};
@@ -52,15 +43,11 @@ function hasRoundTwoScopeSummaryComplete(assessment) {
 }
 
 function isRoundTwoOnboardingComplete(assessment) {
-  return hasRoundTwoRolesComplete(assessment) && hasRoundTwoScopeSummaryComplete(assessment);
+  return hasRoundTwoScopeSummaryComplete(assessment);
 }
 
 function buildRoundTwoSetupProgress(assessment) {
   return buildPhaseProgress([
-    {
-      label: "Confirm council oversight roles",
-      completed: hasRoundTwoRolesComplete(assessment),
-    },
     {
       label: "Review and update your scope summary",
       completed: hasRoundTwoScopeSummaryComplete(assessment),
@@ -71,7 +58,6 @@ function buildRoundTwoSetupProgress(assessment) {
 module.exports = {
   buildPhaseProgress,
   buildRoundTwoSetupProgress,
-  hasRoundTwoRolesComplete,
   hasRoundTwoScopeSummaryComplete,
   isRoundTwoOnboardingComplete,
 };

@@ -44,6 +44,18 @@
       </fieldset>
     </div>
 
+    <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <label class="govuk-label govuk-label--m" for="b2aRationale">Outcome rationale</label>
+      <div class="govuk-hint">This is the main explanation an assurer will read. Explain why the judgement is appropriate, the most important gaps or risks, any council context that matters, and how the evidence supports the judgement. Focus on the judgement for the outcome as a whole, rather than repeating each IGP response.</div>
+      {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
+        <p class="govuk-error-message">
+          <span class="govuk-visually-hidden">Error:</span>
+          {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
+        </p>
+      {% endif %}
+      <textarea class="govuk-textarea" id="b2aRationale" name="b2aRationale" rows="10">{{ form.rationale }}</textarea>
+    </div>
+
     <div class="govuk-button-group">
       <button class="govuk-button" type="submit" data-module="govuk-button">Continue</button>
     </div>

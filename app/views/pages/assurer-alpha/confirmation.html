@@ -8,7 +8,7 @@
     <div class="govuk-panel__body">{{ assessment.councilName }}</div>
   </div>
 
-  <p class="govuk-body">The assurance step has been completed for this full CAF submission.</p>
+  <p class="govuk-body">The assurance step has been completed for this CAF submission.</p>
 
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
@@ -24,16 +24,10 @@
       <dd class="govuk-summary-list__value">{{ summary.judgementMayNeedChanging }}</dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Missing evidence items</dt>
-      <dd class="govuk-summary-list__value">{{ summary.insufficientEvidence }}</dd>
-    </div>
-    <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submission status</dt>
       <dd class="govuk-summary-list__value">
-        {% if assessment.submission.status == "submitted_by_assurer" %}
-          Submitted by assurer on {{ assessment.submission.submittedAt }}
-        {% elif assessment.submission.status == "ready_for_submission" %}
-          Ready for submission
+        {% if assessment.submission.status == "ready_for_submission" %}
+          Ready for the council to submit to MHCLG
         {% else %}
           Council needs to act before submission
         {% endif %}

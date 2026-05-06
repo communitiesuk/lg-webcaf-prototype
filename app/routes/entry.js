@@ -293,11 +293,7 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
       value: annualSetupComplete ? "Completed" : "Not started",
     },
     {
-      key: "Organisation self-assessment (Objectives A and D)",
-      value: adComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
-    },
-    {
-      key: "Critical systems self-assessment (Objectives B and C)",
+      key: "Self-assessment",
       value: bcComplete ? "Completed" : (selfAssessStarted ? "In progress" : "Not started"),
     },
     {

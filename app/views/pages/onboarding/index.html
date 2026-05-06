@@ -21,36 +21,21 @@
       {% endif %}
 
       <h2 class="govuk-heading-m" id="onboarding-tasks">Setup tasks</h2>
-      <p class="govuk-body">Complete these setup tasks in order. Most councils spend the most time reviewing their services and systems lists.</p>
+      <p class="govuk-body">Complete this setup task before you start this year's annual assessment.</p>
       {{ govukTaskList({
         items: [
           {
             title: {
               text: tasks[0].title
             },
-            href: tasks[0].href if canManageSetup else "",
+            href: tasks[0].href,
             hint: {
-              text: tasks[0].hint if canManageSetup else (tasks[0].hint + " Only the CAF Lead or a central admin can change council roles.")
+              text: tasks[0].hint
             },
             status: {
               tag: {
                 text: tasks[0].status,
                 classes: "govuk-tag--green" if tasks[0].status == "Complete" else ("govuk-tag--blue" if tasks[0].status == "In progress" else "govuk-tag--grey")
-              }
-            }
-          },
-          {
-            title: {
-              text: tasks[1].title
-            },
-            href: tasks[1].href if tasks[1].status != "Cannot start yet" else "",
-            hint: {
-              text: tasks[1].hint
-            },
-            status: {
-              tag: {
-                text: tasks[1].status,
-                classes: "govuk-tag--green" if tasks[1].status == "Complete" else ("govuk-tag--blue" if tasks[1].status == "In progress" else "govuk-tag--grey")
               }
             }
           }

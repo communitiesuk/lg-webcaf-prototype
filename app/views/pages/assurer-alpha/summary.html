@@ -1,7 +1,7 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/iip">Back</a>
+  <a class="govuk-back-link" href="/assurer-alpha/assessment/{{ assessment.id }}/critical-systems">Back</a>
   {% set errorItems = error.items if error else [] %}
 
   {% if error %}
@@ -37,16 +37,6 @@
     </div>
   {% endif %}
 
-  {% if not completionState.iipReviewed %}
-    <div class="govuk-warning-text">
-      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-      <strong class="govuk-warning-text__text">
-        <span class="govuk-warning-text__assistive">Warning</span>
-        The IIP has not been reviewed yet.
-      </strong>
-    </div>
-  {% endif %}
-
   <h2 class="govuk-heading-m">Assurer position on submission</h2>
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
@@ -72,8 +62,8 @@
     <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
       <li>Major gaps or issues raised: {{ issueRows.length }}</li>
       <li>Outcomes that could not be assessed because evidence was insufficient: {{ summary.insufficientEvidence }}</li>
-      <li>Areas consistent across A&amp;D and B&amp;C: {% if alignmentSummary.consistentAreas.length > 0 %}{{ alignmentSummary.consistentAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
-      <li>Areas where systems contradict organisation-level claims: {% if alignmentSummary.gapAreas.length > 0 %}{{ alignmentSummary.gapAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
+      <li>Outcomes with consistent findings: {% if alignmentSummary.consistentAreas.length > 0 %}{{ alignmentSummary.consistentAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
+      <li>Outcomes where gaps were identified: {% if alignmentSummary.gapAreas.length > 0 %}{{ alignmentSummary.gapAreas | join(", ") }}{% else %}None recorded yet.{% endif %}</li>
       {% if alignmentSummary.alignmentNotes.length > 0 %}
         <li>{{ alignmentSummary.alignmentNotes[0] }}</li>
       {% endif %}
@@ -150,47 +140,9 @@
     <p class="govuk-body">No missing evidence or issue records have been added.</p>
   {% endif %}
 
-  <h2 class="govuk-heading-m">IIP assessment</h2>
-  {% if assessment.iip.assurerReview %}
-    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">IIP assessment</dt>
-        <dd class="govuk-summary-list__value">
-          {% if assessment.iip.assurerReview.decision == "agree_sufficient" %}Sufficient{% endif %}
-          {% if assessment.iip.assurerReview.decision == "request_changes" %}Not sufficient{% endif %}
-          {% if assessment.iip.assurerReview.decision == "priority_gaps" %}Priority gaps identified{% endif %}
-        </dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Rationale</dt>
-        <dd class="govuk-summary-list__value">{{ assessment.iip.assurerReview.rationale }}</dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Priority gaps</dt>
-        <dd class="govuk-summary-list__value">{{ assessment.iip.assurerReview.priorityGaps or "None recorded" }}</dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Cross-cutting issues</dt>
-        <dd class="govuk-summary-list__value">
-          {% if assessment.iip.assurerReview.crossCuttingDecision == "yes" %}Addressed{% endif %}
-          {% if assessment.iip.assurerReview.crossCuttingDecision == "partly" %}Partly addressed{% endif %}
-          {% if assessment.iip.assurerReview.crossCuttingDecision == "no" %}Not addressed{% endif %}
-          {% if assessment.iip.assurerReview.crossCuttingExplanation %}
-            <div class="govuk-hint">{{ assessment.iip.assurerReview.crossCuttingExplanation }}</div>
-          {% endif %}
-        </dd>
-      </div>
-    </dl>
-  {% else %}
-    <p class="govuk-body">The IIP has not been reviewed yet.</p>
-  {% endif %}
-
-  <p class="govuk-body">This combines organisation outcomes, critical systems outcomes and the IIP into one independent assurer position for the submission.</p>
-
   <h2 class="govuk-heading-m" id="review-complete">Complete assurance</h2>
   <ul class="govuk-list govuk-list--bullet">
     <li>Every contributing outcome must have an assurer decision.</li>
-    <li>The IIP must have an assurer review outcome.</li>
     <li>Completing assurance does not mean the assessment is ready for submission.</li>
   </ul>
 

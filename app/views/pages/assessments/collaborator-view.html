@@ -1,0 +1,72 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <a class="govuk-back-link" href="/assessments/current/dashboard">Back to dashboard</a>
+
+      {{ appPageHeader({
+        caption: "Annual assessment",
+        title: "Your contributing outcomes",
+        intro: "These are the contributing outcomes you have been asked to contribute to. Review each outcome, add evidence and update your progress."
+      }) }}
+
+      {% if enriched.length == 0 %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            You have not been assigned as a collaborator on any outcomes yet. The assessment lead can add you from each outcome's record page.
+          </p>
+        </div>
+      {% else %}
+        <p class="govuk-body">You are contributing to <strong>{{ enriched.length }} outcome{% if enriched.length != 1 %}s{% endif %}</strong>.</p>
+
+        {% for principleCode, rows in grouped %}
+          <h2 class="govuk-heading-m govuk-!-margin-top-6">{{ principleCode }}</h2>
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header" style="width: 30%;">Contributing outcome</th>
+                <th scope="col" class="govuk-table__header">Status</th>
+                <th scope="col" class="govuk-table__header">Owner</th>
+                <th scope="col" class="govuk-table__header">Due date</th>
+                <th scope="col" class="govuk-table__header">Action</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for row in rows %}
+                <tr class="govuk-table__row">
+                  <td class="govuk-table__cell">
+                    <strong>{{ row.outcomeCode }}</strong><br>
+                    <span class="govuk-body-s">{{ row.outcomeTitle }}</span>
+                  </td>
+                  <td class="govuk-table__cell">
+                    <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
+                  </td>
+                  <td class="govuk-table__cell">{{ row.ownerName or "Unassigned" }}</td>
+                  <td class="govuk-table__cell">{{ row.dueDateDisplay or "Not set" }}</td>
+                  <td class="govuk-table__cell">
+                    <a class="govuk-link" href="{{ row.linkUrl }}">View outcome</a>
+                  </td>
+                </tr>
+                {% if row.nextStep %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell govuk-table__cell--no-border" colspan="5">
+                      <p class="govuk-body-s govuk-!-margin-bottom-0">
+                        <strong>Next step:</strong> {{ row.nextStep }}
+                      </p>
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endfor %}
+
+        <div class="govuk-!-margin-top-4">
+          <a class="govuk-link" href="/assessments/current/dashboard">Return to full dashboard</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

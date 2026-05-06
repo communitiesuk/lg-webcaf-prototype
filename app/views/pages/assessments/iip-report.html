@@ -1,0 +1,263 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <a class="govuk-back-link" href="/assessments/current/recommendations">Back to recommendations</a>
+
+      {{ appPageHeader({
+        caption: councilName,
+        title: "Improvement & Implementation Plan",
+        intro: "This report shows all assurer recommendations and the council's implementation plans, grouped by objective and principle."
+      }) }}
+
+      <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-4" style="max-width: 40em;">
+        {% if finalisedAt %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurer report finalised</dt>
+            <dd class="govuk-summary-list__value">{{ finalisedAt }}</dd>
+          </div>
+        {% endif %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Recommendations</dt>
+          <dd class="govuk-summary-list__value">{{ totalRows }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation plans complete</dt>
+          <dd class="govuk-summary-list__value">{{ completedRows }} of {{ totalRows }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Generated</dt>
+          <dd class="govuk-summary-list__value">{{ generatedAt }}</dd>
+        </div>
+      </dl>
+
+      {% if groups.length == 0 %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-0">No recommendations are available yet.</p>
+        </div>
+      {% else %}
+
+        {# ── SUMMARY TABLE ─────────────────────────────── #}
+        <h2 class="govuk-heading-m govuk-!-margin-top-6">Summary</h2>
+
+        <table class="govuk-table govuk-!-margin-bottom-8">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header" style="width: 22%;">Contributing outcome</th>
+              <th scope="col" class="govuk-table__header" style="width: 10%;">Risk level</th>
+              <th scope="col" class="govuk-table__header" style="width: 14%;">Owner</th>
+              <th scope="col" class="govuk-table__header" style="width: 12%;">Priority</th>
+              <th scope="col" class="govuk-table__header">Timeline</th>
+              <th scope="col" class="govuk-table__header" style="width: 8%;">Detail</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for group in groups %}
+              {% for principle in group.principles %}
+                {% for row in principle.rows %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">
+                      <strong>{{ row.outcomeCode }}</strong><br>
+                      <span class="govuk-body-s">{{ row.outcomeTitle }}</span>
+                      <br><span class="govuk-hint govuk-body-s">{{ principle.code }} {{ principle.title }}</span>
+                    </td>
+                    <td class="govuk-table__cell">
+                      {% if row.assurerRiskLevel == "high" %}
+                        <strong class="govuk-tag govuk-tag--red">High</strong>
+                      {% elif row.assurerRiskLevel == "medium" %}
+                        <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                      {% elif row.assurerRiskLevel == "low" %}
+                        <strong class="govuk-tag govuk-tag--blue">Low</strong>
+                      {% else %}
+                        <span class="govuk-hint">–</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell">{{ row.ownerNameSnapshot or "Not set" }}</td>
+                    <td class="govuk-table__cell">
+                      {% if row.implementationPriority == "high" %}
+                        <strong class="govuk-tag govuk-tag--red">High</strong>
+                      {% elif row.implementationPriority == "medium" %}
+                        <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                      {% elif row.implementationPriority == "low" %}
+                        <strong class="govuk-tag govuk-tag--blue">Low</strong>
+                      {% elif row.implementationPriority == "no_action" %}
+                        <strong class="govuk-tag govuk-tag--grey">No action</strong>
+                      {% else %}
+                        <span class="govuk-hint">Not set</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell govuk-body-s">
+                      {% set hasTimeline = row.quarter1 or row.quarter2 or row.quarter3 or row.quarter4 or row.nextYearStarts %}
+                      {% if hasTimeline %}
+                        {% if row.quarter1 %}Q1: {{ row.quarter1 }}{% endif %}
+                        {% if row.quarter2 %} Q2: {{ row.quarter2 }}{% endif %}
+                        {% if row.quarter3 %} Q3: {{ row.quarter3 }}{% endif %}
+                        {% if row.quarter4 %} Q4: {{ row.quarter4 }}{% endif %}
+                        {% if row.nextYearStarts %} Next year: {{ row.nextYearStarts }}{% endif %}
+                      {% else %}
+                        <span class="govuk-hint">Not set</span>
+                      {% endif %}
+                    </td>
+                    <td class="govuk-table__cell">
+                      <a class="govuk-link" href="/assessments/current/recommendations/{{ row.id }}">View</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {# ── DETAILED SECTION ──────────────────────────── #}
+        <h2 class="govuk-heading-m">Full detail</h2>
+        <p class="govuk-body govuk-!-margin-bottom-6">Each recommendation below includes the assurer's assessment and the council's planned response.</p>
+
+        <div class="govuk-accordion" data-module="govuk-accordion" id="iip-report-accordion">
+          {% for group in groups %}
+            {% for principle in group.principles %}
+              {% for row in principle.rows %}
+                <div class="govuk-accordion__section">
+                  <div class="govuk-accordion__section-header">
+                    <h3 class="govuk-accordion__section-heading">
+                      <span class="govuk-accordion__section-button" id="iip-report-heading-{{ row.id }}">
+                        {{ row.outcomeCode }} {{ row.outcomeTitle }}
+                        &ensp;
+                        {% if row.assurerRiskLevel == "high" %}
+                          <strong class="govuk-tag govuk-tag--red">High risk</strong>
+                        {% elif row.assurerRiskLevel == "medium" %}
+                          <strong class="govuk-tag govuk-tag--yellow">Medium risk</strong>
+                        {% elif row.assurerRiskLevel == "low" %}
+                          <strong class="govuk-tag govuk-tag--blue">Low risk</strong>
+                        {% endif %}
+                      </span>
+                    </h3>
+                    <div class="govuk-accordion__section-summary govuk-body" id="iip-report-summary-{{ row.id }}">
+                      {{ principle.code }} {{ principle.title }}
+                      {% if row.implementationPriority %}
+                        &ensp;&middot;&ensp; Priority:
+                        {% if row.implementationPriority == "high" %}High
+                        {% elif row.implementationPriority == "medium" %}Medium
+                        {% elif row.implementationPriority == "low" %}Low
+                        {% elif row.implementationPriority == "no_action" %}No action
+                        {% endif %}
+                      {% endif %}
+                      {% if row.ownerNameSnapshot %}
+                        &ensp;&middot;&ensp; Owner: {{ row.ownerNameSnapshot }}
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div id="iip-report-content-{{ row.id }}" class="govuk-accordion__section-content">
+                    <div class="govuk-grid-row">
+                      <div class="govuk-grid-column-one-half">
+                        <h4 class="govuk-heading-s">Assurer recommendation</h4>
+                        <dl class="govuk-summary-list">
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Recommendation</dt>
+                            <dd class="govuk-summary-list__value">{{ row.assurerRecommendation or "–" }}</dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Risk level</dt>
+                            <dd class="govuk-summary-list__value">
+                              {% if row.assurerRiskLevel == "high" %}<strong class="govuk-tag govuk-tag--red">High</strong>
+                              {% elif row.assurerRiskLevel == "medium" %}<strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                              {% elif row.assurerRiskLevel == "low" %}<strong class="govuk-tag govuk-tag--blue">Low</strong>
+                              {% else %}–{% endif %}
+                            </dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Description of risk</dt>
+                            <dd class="govuk-summary-list__value">{{ row.assurerRiskDescription or "–" }}</dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Control type</dt>
+                            <dd class="govuk-summary-list__value">
+                              {% if row.assurerControlTypes and row.assurerControlTypes.length > 0 %}
+                                {% for ct in row.assurerControlTypes %}
+                                  {% if ct == "people" %}<strong class="govuk-tag govuk-tag--purple govuk-!-margin-right-1">People</strong>
+                                  {% elif ct == "process" %}<strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-1">Process</strong>
+                                  {% elif ct == "tech" %}<strong class="govuk-tag govuk-tag--green govuk-!-margin-right-1">Technology</strong>
+                                  {% else %}<strong class="govuk-tag govuk-tag--grey govuk-!-margin-right-1">{{ ct | capitalize }}</strong>{% endif %}
+                                {% endfor %}
+                              {% else %}–{% endif %}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+
+                      <div class="govuk-grid-column-one-half">
+                        <h4 class="govuk-heading-s">Council implementation plan</h4>
+                        <dl class="govuk-summary-list">
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Owner</dt>
+                            <dd class="govuk-summary-list__value">{{ row.ownerNameSnapshot or "Not set" }}</dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Ownership / roles responsible</dt>
+                            <dd class="govuk-summary-list__value">{{ row.ownershipRolesResponsible or "–" }}</dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Implementation priority</dt>
+                            <dd class="govuk-summary-list__value">
+                              {% if row.implementationPriority == "high" %}<strong class="govuk-tag govuk-tag--red">High</strong>
+                              {% elif row.implementationPriority == "medium" %}<strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+                              {% elif row.implementationPriority == "low" %}<strong class="govuk-tag govuk-tag--blue">Low</strong>
+                              {% elif row.implementationPriority == "no_action" %}<strong class="govuk-tag govuk-tag--grey">No action</strong>
+                              {% else %}–{% endif %}
+                            </dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Cost</dt>
+                            <dd class="govuk-summary-list__value">{{ row.cost or "–" }}</dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Effort / Complexity</dt>
+                            <dd class="govuk-summary-list__value">
+                              {% if row.effort %}{{ row.effort | capitalize }}{% else %}–{% endif %}
+                              {% if row.complexity %} / {{ row.complexity | capitalize }}{% endif %}
+                            </dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Timeline</dt>
+                            <dd class="govuk-summary-list__value govuk-body-s">
+                              {% set hasTimeline = row.quarter1 or row.quarter2 or row.quarter3 or row.quarter4 or row.nextYearStarts %}
+                              {% if hasTimeline %}
+                                {% if row.quarter1 %}Q1: {{ row.quarter1 }}&ensp;{% endif %}
+                                {% if row.quarter2 %}Q2: {{ row.quarter2 }}&ensp;{% endif %}
+                                {% if row.quarter3 %}Q3: {{ row.quarter3 }}&ensp;{% endif %}
+                                {% if row.quarter4 %}Q4: {{ row.quarter4 }}&ensp;{% endif %}
+                                {% if row.nextYearStarts %}Next year: {{ row.nextYearStarts }}{% endif %}
+                              {% else %}–{% endif %}
+                            </dd>
+                          </div>
+                          <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">Justification</dt>
+                            <dd class="govuk-summary-list__value">{{ row.implementationJustification or "–" }}</dd>
+                          </div>
+                        </dl>
+                        <p class="govuk-body-s govuk-!-margin-top-2">
+                          <a class="govuk-link" href="/assessments/current/recommendations/{{ row.id }}">View full detail</a>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+
+      {% endif %}
+
+      <div class="govuk-!-margin-top-6 govuk-button-group">
+        <a class="govuk-button govuk-button--secondary" href="/assessments/current/recommendations">Return to recommendations</a>
+        {% if completedRows == totalRows and totalRows > 0 %}
+          <a class="govuk-button" href="/assessments/current/iip/ready-for-review">Mark as ready for internal review</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

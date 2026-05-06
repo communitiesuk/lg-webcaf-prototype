@@ -1,0 +1,153 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
+
+      {{ appPageHeader({
+        caption: councilName,
+        title: "Finalise assessment record",
+        intro: "Confirm that the assured assessment and Improvement & Implementation Plan are complete and accurate. This declares them as the official final records for this assessment year."
+      }) }}
+
+      {% if errors and errors.length > 0 %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="#finaliseConfirm">{{ error.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if alreadyFinalised %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title">Assessment finalised</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">
+              Confirmed by {{ finalised.by }} ({{ finalised.role }}) on {{ finalisedAtDisplay }}.
+            </p>
+            <p class="govuk-body">Reference: <strong>{{ finalised.ref }}</strong></p>
+          </div>
+        </div>
+        <div class="govuk-button-group">
+          <a class="govuk-button govuk-button--secondary" href="/assessments/current/finalise/confirmation">View confirmation</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      {% else %}
+
+        {# ── PRE-CONDITIONS SUMMARY ───────────────────── #}
+        <h2 class="govuk-heading-m">Assessment status</h2>
+
+        <dl class="govuk-summary-list govuk-!-margin-bottom-8">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurance report</dt>
+            <dd class="govuk-summary-list__value">
+              {% if assuranceSummary.reportFinalised %}
+                <strong class="govuk-tag govuk-tag--green">Finalised</strong>
+              {% elif assuranceSummary.reportDraftShared %}
+                <strong class="govuk-tag govuk-tag--blue">Draft shared</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">Not yet received</strong>
+              {% endif %}
+              {% if stage1.finalisedAt %}
+                <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0">Finalised by {{ stage1.finalisedBy or "assurer" }}</span>
+              {% endif %}
+            </dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/assessments/current/recommendations">View recommendations</a>
+            </dd>
+          </div>
+
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Improvement & Implementation Plan</dt>
+            <dd class="govuk-summary-list__value">
+              {% if stage2.status == "submitted_to_mhclg" or stage2.status == "accepted" %}
+                <strong class="govuk-tag govuk-tag--green">Accepted</strong>
+              {% elif stage2.status == "submitted_to_assurer" or stage2.status == "assurer_session_scheduled" %}
+                <strong class="govuk-tag govuk-tag--blue">Submitted to assurer</strong>
+              {% elif stage2.status == "internally_signed_off" or stage2.status == "rework_internally_signed_off" or stage2.status == "ready_for_review" %}
+                <strong class="govuk-tag govuk-tag--yellow">Internally signed off</strong>
+              {% elif stage2.status and stage2.status != "not_started" %}
+                <strong class="govuk-tag govuk-tag--blue">In progress</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">Not started</strong>
+              {% endif %}
+              <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ iipStatusLabel }} &middot; {{ completedRows }} of {{ totalRows }} plans complete</span>
+            </dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/assessments/current/iip-report">View IIP report</a>
+            </dd>
+          </div>
+        </dl>
+
+        {# ── DECLARATION FORM ─────────────────────────── #}
+        <h2 class="govuk-heading-m">Declaration</h2>
+
+        <p class="govuk-body">
+          By confirming below, you are declaring that to the best of your knowledge:
+        </p>
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
+          <li>the self-assessment accurately reflects {{ councilName }}'s current cyber security posture</li>
+          <li>the assurance report has been reviewed and agreed</li>
+          <li>the Improvement & Implementation Plan represents the council's committed response to the assurer's recommendations</li>
+        </ul>
+
+        <form method="post" action="/assessments/current/finalise">
+
+          <div class="govuk-form-group {% if errors and errors.length > 0 %}govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="finaliseDeclarantName">Your full name</label>
+            <input class="govuk-input govuk-input--width-20" id="finaliseDeclarantName" name="finaliseDeclarantName" type="text"
+              value="{{ currentUser.name if currentUser else '' }}">
+          </div>
+
+          <div class="govuk-form-group">
+            <label class="govuk-label" for="finaliseDeclarantRole">Your role</label>
+            <input class="govuk-input govuk-input--width-20" id="finaliseDeclarantRole" name="finaliseDeclarantRole" type="text"
+              placeholder="e.g. CAF Lead, Director of Digital">
+          </div>
+
+          <div class="govuk-form-group {% if errors and errors.length > 0 %}govuk-form-group--error{% endif %}">
+            {% if errors and errors.length > 0 %}
+              <p id="finaliseConfirm-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span> {{ errors[0].text }}
+              </p>
+            {% endif %}
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="finaliseConfirm" name="finaliseConfirm" type="checkbox" value="yes">
+                <label class="govuk-label govuk-checkboxes__label" for="finaliseConfirm">
+                  I confirm that the assured assessment and Improvement & Implementation Plan are accurate and complete, and I am authorised to declare them as the final records for this assessment year.
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="govuk-warning-text govuk-!-margin-top-4">
+            <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+            <strong class="govuk-warning-text__text">
+              <span class="govuk-visually-hidden">Warning</span>
+              This action creates a permanent record. You will not be able to undo this declaration.
+            </strong>
+          </div>
+
+          <div class="govuk-button-group">
+            <button class="govuk-button" type="submit">Confirm and finalise</button>
+            <a class="govuk-link" href="/assessments/current/journey">Cancel</a>
+          </div>
+
+        </form>
+
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

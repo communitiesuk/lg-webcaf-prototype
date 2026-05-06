@@ -21,7 +21,7 @@
 
   <span class="govuk-caption-l">{{ assessment.councilName }}</span>
   <h1 class="govuk-heading-l">Review improvement and implementation plan</h1>
-  <p class="govuk-body">Use the improvement and implementation plan to check whether the council has responded to issues raised across the full CAF submission.</p>
+  <p class="govuk-body">The council has submitted this improvement and implementation plan in response to the issues raised during assurance. Review whether the plan adequately addresses each issue.</p>
 
   <p class="govuk-body govuk-hint">Your role is to form an independent position on whether the plan is sufficient, not to edit the plan on the council’s behalf.</p>
 
@@ -37,16 +37,12 @@
 
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Plan status</dt>
-      <dd class="govuk-summary-list__value">{{ assessment.iip.status }}</dd>
-    </div>
-    <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Plan owner</dt>
       <dd class="govuk-summary-list__value">{{ assessment.iip.owner }}</dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Last updated</dt>
-      <dd class="govuk-summary-list__value">{{ assessment.iip.lastUpdated }}</dd>
+      <dt class="govuk-summary-list__key">Submitted</dt>
+      <dd class="govuk-summary-list__value">{{ assessment.iip.submittedAt }}</dd>
     </div>
   </dl>
 
@@ -108,36 +104,6 @@
         </section>
       {% endfor %}
     {% endif %}
-
-    <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipCrossCuttingDecision') | list | length %} govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Does the plan address cross-cutting issues?</legend>
-        {% for item in errorItems if item.field == "assurerIipCrossCuttingDecision" %}
-          <p class="govuk-error-message" id="assurerIipCrossCuttingDecision">
-            <span class="govuk-visually-hidden">Error:</span> {{ item.text }}
-          </p>
-        {% endfor %}
-        <div class="govuk-radios" data-module="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-1" name="assurerIipCrossCuttingDecision" type="radio" value="yes" {% if values.crossCuttingDecision == "yes" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-1">Yes, organisation-level actions address system-level gaps</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-2" name="assurerIipCrossCuttingDecision" type="radio" value="partly" {% if values.crossCuttingDecision == "partly" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-2">Partly</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="assurerIipCrossCuttingDecision-3" name="assurerIipCrossCuttingDecision" type="radio" value="no" {% if values.crossCuttingDecision == "no" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="assurerIipCrossCuttingDecision-3">No</label>
-          </div>
-        </div>
-      </fieldset>
-    </div>
-
-    <div class="govuk-form-group">
-      <label class="govuk-label govuk-label--m" for="assurerIipCrossCuttingExplanation">Explain your view on cross-cutting issues (optional)</label>
-      <textarea class="govuk-textarea" id="assurerIipCrossCuttingExplanation" name="assurerIipCrossCuttingExplanation" rows="4">{{ values.crossCuttingExplanation }}</textarea>
-    </div>
 
     <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerIipDecision') | list | length %} govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">

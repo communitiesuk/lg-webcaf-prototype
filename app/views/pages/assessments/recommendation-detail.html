@@ -1,0 +1,185 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <a class="govuk-back-link" href="{{ backHref }}">Back to recommendations</a>
+
+      <span class="govuk-caption-l">
+        {% if row.objectiveCode %}Objective {{ row.objectiveCode }}{% if row.principleCode %} &rsaquo; {{ row.principleCode }} {{ row.principleTitle }}{% endif %}{% endif %}
+      </span>
+      <h1 class="govuk-heading-l">
+        {{ row.outcomeCode }} {{ row.outcomeTitle }}
+      </h1>
+      {% if row.outcomeDescription %}
+        <p class="govuk-body-s govuk-colour--secondary">{{ row.outcomeDescription }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row govuk-!-margin-top-4">
+    <div class="govuk-grid-column-full">
+
+      {# ── ASSURER RECOMMENDATION ─────────────────────── #}
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Assurer recommendation</h2>
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-8">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Recommendation</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.assurerRecommendation %}
+              {{ row.assurerRecommendation }}
+            {% else %}
+              <span class="govuk-hint">No recommendation provided</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Risk level</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.assurerRiskLevel == "high" %}
+              <strong class="govuk-tag govuk-tag--red">High</strong>
+            {% elif row.assurerRiskLevel == "medium" %}
+              <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+            {% elif row.assurerRiskLevel == "low" %}
+              <strong class="govuk-tag govuk-tag--blue">Low</strong>
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Description of risk</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.assurerRiskDescription %}
+              {{ row.assurerRiskDescription }}
+            {% else %}
+              <span class="govuk-hint">Not provided</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Control type</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.assurerControlTypes and row.assurerControlTypes.length > 0 %}
+              {% for ct in row.assurerControlTypes %}
+                {% if ct == "people" %}
+                  <strong class="govuk-tag govuk-tag--purple govuk-!-margin-right-1">People</strong>
+                {% elif ct == "process" %}
+                  <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-1">Process</strong>
+                {% elif ct == "tech" %}
+                  <strong class="govuk-tag govuk-tag--green govuk-!-margin-right-1">Technology</strong>
+                {% else %}
+                  <strong class="govuk-tag govuk-tag--grey govuk-!-margin-right-1">{{ ct | capitalize }}</strong>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <span class="govuk-hint">Not specified</span>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      {# ── COUNCIL IMPLEMENTATION PLAN ────────────────── #}
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-2">Council implementation plan</h2>
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-8">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Ownership / roles responsible</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.ownershipRolesResponsible %}
+              {{ row.ownershipRolesResponsible }}
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Cost</dt>
+          <dd class="govuk-summary-list__value">
+            {{ row.cost or "Not set" }}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Effort</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.effort %}
+              {{ row.effort | capitalize }}
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Complexity</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.complexity %}
+              {{ row.complexity | capitalize }}
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation justification</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.implementationJustification %}
+              {{ row.implementationJustification }}
+            {% else %}
+              <span class="govuk-hint">Not provided</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation priority</dt>
+          <dd class="govuk-summary-list__value">
+            {% if row.implementationPriority == "high" %}
+              <strong class="govuk-tag govuk-tag--red">High</strong>
+            {% elif row.implementationPriority == "medium" %}
+              <strong class="govuk-tag govuk-tag--yellow">Medium</strong>
+            {% elif row.implementationPriority == "low" %}
+              <strong class="govuk-tag govuk-tag--blue">Low</strong>
+            {% elif row.implementationPriority == "no_action" %}
+              <strong class="govuk-tag govuk-tag--grey">No action</strong>
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Implementation timeline</dt>
+          <dd class="govuk-summary-list__value">
+            {% set hasTimeline = row.quarter1 or row.quarter2 or row.quarter3 or row.quarter4 or row.nextYearStarts %}
+            {% if hasTimeline %}
+              <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+                {% if row.quarter1 %}<li>Q1 – {{ row.quarter1 }}</li>{% endif %}
+                {% if row.quarter2 %}<li>Q2 – {{ row.quarter2 }}</li>{% endif %}
+                {% if row.quarter3 %}<li>Q3 – {{ row.quarter3 }}</li>{% endif %}
+                {% if row.quarter4 %}<li>Q4 – {{ row.quarter4 }}</li>{% endif %}
+                {% if row.nextYearStarts %}<li>Next year starts – {{ row.nextYearStarts }}</li>{% endif %}
+              </ul>
+            {% else %}
+              <span class="govuk-hint">Not set</span>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button govuk-button--secondary" href="/improvement-plan/stage-2/rows/{{ row.id }}">Edit implementation plan</a>
+        <a class="govuk-link" href="{{ backHref }}">Back to all recommendations</a>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

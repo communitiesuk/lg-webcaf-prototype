@@ -30,7 +30,7 @@ const PROTOTYPE_OUTCOME_LIMITS = {
 
 const PROTOTYPE_OUTCOME_IDS = {
   AD: ["A1a", "A1b"],
-  BC: ["B1a", "B2a"],
+  BC: ["B2a"],
 };
 
 const B2A_OUTCOME_ID = "B2a";
@@ -1044,7 +1044,7 @@ module.exports = function (router) {
     const nextAction = !saved.judgement
       ? "Continue the IGP responses and set the final judgement."
       : !saved.rationale
-      ? "Finish the rationale and review the supporting evidence."
+      ? "Set the final judgement and rationale, then add supporting evidence."
       : "Review the remaining gaps and mark the outcome ready for internal review.";
 
     return res.render("pages/flow/b2a-context", {
@@ -1193,11 +1193,7 @@ module.exports = function (router) {
   });
 
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-rationale`, (req, res) => {
-    renderB2aRationale(req, res);
-  });
-
-  router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-rationale`, (req, res) => {
-    handleB2aRationalePost(req, res);
+    res.redirect(buildB2aStepPath(req.params.systemId, "final-judgement"));
   });
 
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-evidence`, (req, res) => {
@@ -3000,7 +2996,7 @@ function buildB2aStepPath(systemId, step) {
     "partially-achieved": `${base}/b2a-partially-achieved`,
     "indicative-judgement": `${base}/b2a-indicative-judgement`,
     "final-judgement": `${base}/b2a-final-judgement`,
-    rationale: `${base}/b2a-rationale`,
+    rationale: `${base}/b2a-final-judgement`,
     evidence: `${base}/b2a-evidence`,
     review: `${base}/b2a-review-before-internal-review`,
     ready: `${base}/b2a-ready-for-internal-review`,
@@ -3424,6 +3420,7 @@ function renderB2aFinalJudgement(req, res, error = null, values = null) {
     summary,
     form: {
       judgement: values ? values.judgement : (saved.judgement || ""),
+      rationale: values ? values.rationale : (saved.rationale || ""),
     },
     error,
   });
@@ -3434,23 +3431,24 @@ function handleB2aFinalJudgementPost(req, res) {
   if (!routeContext) return;
   const { assessment, system, saved } = routeContext;
   const judgement = ((req.body && req.body.b2aFinalJudgement) || "").toString();
+  const rationale = ((req.body && req.body.b2aRationale) || "").toString().trim();
 
-  if (!judgement) {
-    return renderB2aFinalJudgement(
-      req,
-      res,
-      { items: [{ field: "b2aFinalJudgement", text: "Select the final contributing outcome judgement." }] },
-      { judgement }
-    );
+  const errorItems = [];
+  if (!judgement) errorItems.push({ field: "b2aFinalJudgement", text: "Select the final contributing outcome judgement." });
+  if (!rationale) errorItems.push({ field: "b2aRationale", text: "Enter the rationale for this contributing outcome judgement." });
+
+  if (errorItems.length) {
+    return renderB2aFinalJudgement(req, res, { items: errorItems }, { judgement, rationale });
   }
 
   syncB2aOutcomeData(assessment, system.id, {
     ...saved,
     judgement,
+    rationale,
     status: "in_progress",
   });
 
-  return res.redirect(buildB2aStepPath(system.id, "rationale"));
+  return res.redirect(buildB2aStepPath(system.id, "evidence"));
 }
 
 function renderB2aRationale(req, res, error = null, values = null) {
@@ -3561,7 +3559,7 @@ function renderB2aEvidence(req, res, error = null, values = null) {
     assessment,
     context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
     outcome,
-    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : buildB2aStepPath(system.id, "rationale"),
+    backHref: returnToReview ? buildB2aStepPath(system.id, "review") : buildB2aStepPath(system.id, "final-judgement"),
     formAction: withB2aReviewReturn(buildB2aStepPath(system.id, "evidence"), req),
     evidenceRows: values || getB2aEvidenceRows(saved.evidenceRefs),
     error,
@@ -3631,7 +3629,7 @@ function renderB2aReviewBeforeAssurance(req, res, error = null, values = null) {
     editLinks: {
       igp: `${buildB2aStepPath(system.id, "achieved")}?return=review`,
       judgement: `${buildB2aStepPath(system.id, "final-judgement")}?return=review`,
-      rationale: `${buildB2aStepPath(system.id, "rationale")}?return=review`,
+      rationale: `${buildB2aStepPath(system.id, "final-judgement")}?return=review`,
       evidence: `${buildB2aStepPath(system.id, "evidence")}?return=review`,
     },
   });
