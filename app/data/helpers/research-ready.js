@@ -29,12 +29,64 @@ const DEMO_B2A_JOURNEY = {
     "remote-access-controlled": { response: "yes", explanation: "", note: "VPN-only remote access enforced; a small number of local exceptions are logged." },
   },
 };
+
 const RESEARCH_READY_EMAIL = "morgan.ellis+research-ready@west-marchshire.gov.uk";
 const RESEARCH_READY_COUNCIL = "West Marchshire Council";
 const DEMO_OWNER_IDS = {
   lead: "user-west-marchshire-1",
   collaborator: "user-west-marchshire-2",
   approver: "user-west-marchshire-3",
+};
+
+const DEMO_SYS2_OUTCOMES_COMPLETED = {
+  B2a: {
+    ownerId: DEMO_OWNER_IDS.lead,
+    collaboratorIds: [],
+    status: "ready_for_internal_review",
+    judgement: "Achieved",
+    rationale: "Identity and access controls for the Revenues and Benefits System are well established. Role-based access profiles are applied consistently, MFA is enforced for all privileged and application-level admin access, and quarterly access reviews are completed on time.",
+    b2aJourney: {
+      achieved: {
+        "robust-identity-proofing": { response: "yes", explanation: "", note: "All user accounts set up through formal onboarding process." },
+        "individual-authentication": { response: "yes", explanation: "", note: "No shared accounts in use." },
+        "authorised-access-only": { response: "yes", explanation: "", note: "Role-based profiles applied by team and function." },
+        "mfa-privileged-remote": { response: "yes", explanation: "", note: "MFA enforced for all privileged and admin access." },
+        "access-review": { response: "yes", explanation: "", note: "Quarterly access reviews completed and documented." },
+        "auth-practice-current": { response: "yes", explanation: "", note: "Authentication reviewed annually against NCSC guidance." },
+      },
+      notAchieved: {
+        "unauthorised-access": { response: "no", explanation: "", note: "" },
+        "excessive-access": { response: "no", explanation: "", note: "" },
+        "weak-authentication": { response: "no", explanation: "", note: "" },
+      },
+      partiallyAchieved: {
+        "reasonable-confidence": { response: "no", explanation: "", note: "" },
+        "some-additional-controls": { response: "no", explanation: "", note: "" },
+        "annual-access-review": { response: "no", explanation: "", note: "" },
+        "remote-access-controlled": { response: "no", explanation: "", note: "" },
+      },
+      indicativeJudgement: "Achieved",
+      reviewDeclaration: true,
+    },
+  },
+  B2b: {
+    ownerId: DEMO_OWNER_IDS.lead,
+    status: "ready_for_internal_review",
+    judgement: "Partially achieved",
+    rationale: "Device management policies are documented and MDM is deployed for most endpoints. A small number of contractor-owned devices remain outside MDM enrolment pending a procurement review.",
+  },
+  B3a: {
+    ownerId: DEMO_OWNER_IDS.lead,
+    status: "ready_for_internal_review",
+    judgement: "Achieved",
+    rationale: "Data flows are mapped and the information asset register is maintained and reviewed quarterly. Personal data processing activities are documented in line with council data protection requirements.",
+  },
+  B4a: {
+    ownerId: DEMO_OWNER_IDS.lead,
+    status: "ready_for_internal_review",
+    judgement: "Achieved",
+    rationale: "Security requirements are included in procurement and change management procedures. New systems and significant changes go through a security review before deployment.",
+  },
 };
 
 function initialiseRoundTwoPostSetupResearch(sessionData) {
@@ -81,7 +133,6 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
     startedFromEntry: true,
     cafVersion: CAF_DEFAULT_VERSION,
     councilName: RESEARCH_READY_COUNCIL,
-    hasPreviousAdAssessment: false,
     stage: {
       understandCAFComplete: true,
       prepareScopeComplete: true,
@@ -115,6 +166,13 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
           owner: "Head of Revenues and Benefits",
           inScope: true,
         },
+        {
+          id: "svc-3",
+          name: "Workforce management",
+          description: "HR, payroll and workforce planning for all council staff.",
+          owner: "Head of HR",
+          inScope: true,
+        },
       ],
       criticalSystems: [
         {
@@ -125,9 +183,27 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
           boundaryNotes: "Used by adult social care teams and commissioned providers.",
           diagramRefs: ["ARCH-CCMS-01"],
         },
+        {
+          id: "sys-2",
+          name: "Revenues and Benefits System",
+          systemType: "COTS platform",
+          ownerSupplier: "Capita",
+          boundaryNotes: "Processes council tax and housing benefit applications across two service centres.",
+          diagramRefs: ["ARCH-RBS-01"],
+        },
+        {
+          id: "sys-3",
+          name: "HR and Payroll System",
+          systemType: "SaaS",
+          ownerSupplier: "MHR",
+          boundaryNotes: "Supports workforce management and payroll processing for all council staff.",
+          diagramRefs: [],
+        },
       ],
       mappings: [
         { systemId: "sys-1", serviceIds: ["svc-1"] },
+        { systemId: "sys-2", serviceIds: ["svc-2"] },
+        { systemId: "sys-3", serviceIds: ["svc-3"] },
       ],
       priority: [
         {
@@ -136,8 +212,20 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
           rationale: "Service disruption would affect statutory casework.",
           criteria: ["statutory", "singlePointFailure"],
         },
+        {
+          systemId: "sys-2",
+          level: "high",
+          rationale: "Disruption would affect council tax and benefit payments to residents.",
+          criteria: ["statutory", "manyPeopleAffected"],
+        },
+        {
+          systemId: "sys-3",
+          level: "medium",
+          rationale: "Payroll failure would have significant operational impact on service delivery.",
+          criteria: ["manyPeopleAffected"],
+        },
       ],
-      priorityShortlist: ["sys-1"],
+      priorityShortlist: ["sys-1", "sys-2", "sys-3"],
       servicesConfirmed: true,
       assurerReviewed: false,
       rolesLead: "Morgan Ellis",
@@ -165,9 +253,10 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
       completed: true,
       updatedAt: nowIso,
     },
+    whoInvolvedStepCompleted: true,
     annualSetup: {
-      scopeCheckStatus: "no_change",
-      adAssessmentStatus: "new_assessment",
+      adApproach: "first_time",
+      systemsStepComplete: true,
       annualLead: "Morgan Ellis",
       annualApprover: "Lewis Turner",
       assurerContact: "Jordan Blake",
@@ -176,12 +265,28 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
       assuranceWindow: "October 2026",
       checkInPlan: "planned",
       checkInNotes: "Monthly progress check-ins already agreed for the assessment cycle.",
-      systemIds: ["sys-1"],
+      systemIds: ["sys-1", "sys-2", "sys-3"],
       completed: true,
       updatedAt: nowIso,
     },
     selfAssess: {
-      ad: {},
+      ad: {
+        A1a: {
+          judgement: "Achieved",
+          rationale: "The council has a clearly defined board-level governance structure for cyber security and resilience, with named senior responsible owners and regular reporting.",
+          updatedAt: "2026-03-03T10:00:00.000Z",
+        },
+        A1b: {
+          judgement: "Partially achieved",
+          rationale: "Roles and responsibilities are documented but not consistently understood across all teams. A communications plan is in progress.",
+          updatedAt: "2026-03-03T10:00:00.000Z",
+        },
+      },
+      adReview: {
+        completed: true,
+        completedAt: "2026-03-03T10:00:00.000Z",
+        completedBy: "Morgan Ellis",
+      },
       bc: {
         "sys-1": {
           outcomes: {
@@ -193,6 +298,11 @@ function buildRoundTwoPostSetupAssessment(sessionData) {
               updatedAt: nowIso,
             },
           },
+        },
+        "sys-2": {
+          outcomes: Object.fromEntries(
+            Object.entries(DEMO_SYS2_OUTCOMES_COMPLETED).map(([k, v]) => [k, { ...v, updatedAt: "2026-04-10T14:00:00.000Z" }])
+          ),
         },
       },
     },
@@ -261,6 +371,16 @@ const DEMO_SYS1_B2A_COMPLETED = {
 function applyAllSystemsJudged(sessionData, nowIso) {
   const bc = sessionData.assessment.selfAssess.bc;
   bc["sys-1"].outcomes.B2a = { ...DEMO_SYS1_B2A_COMPLETED, updatedAt: nowIso };
+  bc["sys-1"].outcomes.B2b = { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Partially achieved", rationale: "Device management policies are in place for managed devices. A small number of legacy devices used by agency staff remain outside MDM enrolment.", updatedAt: nowIso };
+  bc["sys-1"].outcomes.B3a = { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Achieved", rationale: "Data flows for the Case Management System are mapped and documented. The information asset register is reviewed quarterly and kept current.", updatedAt: nowIso };
+  bc["sys-1"].outcomes.B4a = { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Achieved", rationale: "Security requirements are embedded in the system change management process. All changes to the Case Management System go through a formal security review.", updatedAt: nowIso };
+  bc["sys-3"] = bc["sys-3"] || { outcomes: {} };
+  bc["sys-3"].outcomes = {
+    B2a: { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Partially achieved", rationale: "Identity and access controls for the HR and Payroll System are partially in place. Individual accounts and MFA for remote access are enforced, but application-level admin functions do not yet require MFA.", updatedAt: nowIso },
+    B2b: { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Partially achieved", rationale: "MDM is deployed for council-issued devices. Personal devices used for mobile working are not yet enrolled.", updatedAt: nowIso },
+    B3a: { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Partially achieved", rationale: "Payroll data flows are partially mapped. The information asset register does not yet fully reflect all data flows between the HR system and third-party payroll processor.", updatedAt: nowIso },
+    B4a: { ownerId: DEMO_OWNER_IDS.lead, status: "ready_for_internal_review", judgement: "Partially achieved", rationale: "Security requirements are considered during procurement but are not formally documented in all supplier contracts. A review is under way.", updatedAt: nowIso },
+  };
   sessionData.assessment.selfAssess.ad = {
     A1a: {
       judgement: "Achieved",
@@ -338,6 +458,32 @@ function initialiseDemoScene(sessionData, scene) {
   if (scene === "onboarding-systems") {
     sessionData.assessment.stage.prepareScopeComplete = false;
     sessionData.assessment.scopeReview = {};
+  }
+
+  if (scene === "carried-forward-task-list") {
+    const nowIso = new Date().toISOString();
+    sessionData.assessment.annualSetup.adApproach = "reuse_current";
+    sessionData.assessment.selfAssess = sessionData.assessment.selfAssess || { ad: {}, bc: {} };
+    sessionData.assessment.selfAssess.ad = {
+      A1a: {
+        judgement: "Achieved",
+        rationale: "Board-level ownership and reporting were in place across the council last year.",
+        igpResponse: "Board reporting was regular and cyber risks were reviewed at the right level.",
+        evidenceRefs: [{ title: "Previous annual governance report", type: "Board paper" }],
+        updatedAt: nowIso,
+        carriedForward: true,
+        reviewRequired: true,
+      },
+      A1b: {
+        judgement: "Partially achieved",
+        rationale: "Roles were defined last year but not all responsibilities were consistently understood.",
+        igpResponse: "Role descriptions existed, but handoffs between teams were inconsistent.",
+        evidenceRefs: [{ title: "Prior accountability matrix", type: "Role description" }],
+        updatedAt: nowIso,
+        carriedForward: true,
+        reviewRequired: true,
+      },
+    };
   }
 
   if (scene === "completed") {

@@ -22,76 +22,50 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">Self-assessment</span>
   <h1 class="govuk-heading-l">Assign outcome owners and contributors</h1>
-  <p class="govuk-body">Set an owner for each contributing outcome.</p>
-  <p class="govuk-body">Only add contributors where they are needed. You can assign more people later if needed.</p>
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">Outcome</th>
-            <th scope="col" class="govuk-table__header">Owner</th>
-            <th scope="col" class="govuk-table__header">Collaborators</th>
-            <th scope="col" class="govuk-table__header">Action</th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for row in rows %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <strong>{{ row.outcomeCode }}</strong> {{ row.title }}
-                {% if row.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ row.systemName }}</div>
-                {% endif %}
-              </td>
-              <td class="govuk-table__cell">{{ row.ownerName }}</td>
-              <td class="govuk-table__cell">{{ row.collaboratorCount }}</td>
-              <td class="govuk-table__cell">
-                <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
-                  {% if row.isAssigned %}Change assignment{% else %}Assign this outcome{% endif %}
-                </a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">Outcome</th>
+        <th scope="col" class="govuk-table__header">Owner</th>
+        <th scope="col" class="govuk-table__header">Collaborators</th>
+        <th scope="col" class="govuk-table__header">Action</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for row in rows %}
+        <tr class="govuk-table__row">
+          <td class="govuk-table__cell">
+            <strong>{{ row.outcomeCode }}</strong> {{ row.title }}
+            {% if row.systemName %}
+              <div class="govuk-hint govuk-!-margin-top-1">System: {{ row.systemName }}</div>
+            {% endif %}
+          </td>
+          <td class="govuk-table__cell">{{ row.ownerName }}</td>
+          <td class="govuk-table__cell">{{ row.collaboratorCount }}</td>
+          <td class="govuk-table__cell">
+            <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments/{{ row.outcomeId }}">
+              {% if row.isAssigned %}Change assignment{% else %}Assign this outcome{% endif %}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
+  {% if researchRound == "round-2" %}
+    <form method="post" action="/assessments/current/start-self-assessment/assignments">
       <div class="govuk-button-group">
-        {% if researchRound == "round-2" %}
-          <a class="govuk-button" href="/assessments/current/journey">
-            Return to task list
-          </a>
-        {% else %}
-          <a class="govuk-button" href="/assessments/current/start-self-assessment">
-            Return to readiness checks
-          </a>
-        {% endif %}
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
         <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add someone for later assignment</a>
+        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
       </div>
+    </form>
+  {% else %}
+    <div class="govuk-button-group">
+      <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add someone for later assignment</a>
+      <a class="govuk-link" href="/assessments/current/start-self-assessment">Return to readiness checks</a>
     </div>
-
-    <div class="govuk-grid-column-one-third">
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Assignment progress</h2>
-        <p class="govuk-body">{{ assignedCount }} of {{ totalCount }} outcomes assigned.</p>
-        <p class="govuk-body govuk-!-margin-bottom-0">
-          {% if assignedCount == totalCount and totalCount > 0 %}
-            All contributing outcomes now have an owner.
-          {% else %}
-            Assign an owner to each outcome before you move into the assessment.
-          {% endif %}
-        </p>
-      </aside>
-
-      <aside class="app-outcome-page__sidebar-card">
-        <h2 class="govuk-heading-s app-outcome-page__sidebar-card-title">Need to add someone?</h2>
-        <p class="govuk-body govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/start-self-assessment/people">Add a person if they are needed for an outcome</a>
-        </p>
-      </aside>
-    </div>
-  </div>
+  {% endif %}
 {% endblock %}

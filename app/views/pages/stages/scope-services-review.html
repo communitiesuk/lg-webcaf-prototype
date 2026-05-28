@@ -3,8 +3,6 @@
 {% from "components/feedback-message.njk" import appNotificationBanner %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
   {% set successMessage = "Your changes to the essential services list have been saved." %}
   {% if saved == "service-added" %}
     {% set successMessage = "You have added this service to the essential services list." %}
@@ -22,6 +20,7 @@
       {% set successMessage = "You have removed " + savedName + " from the essential services list." %}
     {% endif %}
   {% endif %}
+
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
   {% if saved %}
@@ -32,112 +31,103 @@
     }) }}
   {% endif %}
 
-  {% if roundTwo %}
-  <span class="govuk-caption-l">Essential services list</span>
-  <h1 class="govuk-heading-l">List your essential services</h1>
-    <p class="govuk-body">Add and review the essential services your council needs to keep running. When you are ready, continue to the critical systems list.</p>
-    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-      <summary class="govuk-details__summary">
-        <span class="govuk-details__summary-text">Help with this step</span>
-      </summary>
-      <div class="govuk-details__text">
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Make sure the list reflects the services your council needs to keep running.</li>
-          <li>You can return later to update this list if something changes.</li>
-        </ul>
-      </div>
-    </details>
-    <p class="govuk-body">
-      <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">Add service</a>
-    </p>
-    {% if services.length > 0 %}
-      <div class="govuk-inset-text">
-        <p class="govuk-body"><strong>List summary</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-0">{{ services.length }} essential services listed.</p>
-      </div>
-    {% endif %}
-  {% else %}
-    <h1 class="govuk-heading-l">{{ labels.stages.scope.services.reviewTitle }}</h1>
-    <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-      <summary class="govuk-details__summary">
-        <span class="govuk-details__summary-text">Help with this step</span>
-      </summary>
-      <div class="govuk-details__text">
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-          <li>Check the list and confirm which services should stay in this assessment.</li>
-          <li>When you continue, you can confirm this list and move to the next step.</li>
-        </ul>
-      </div>
-    </details>
-  {% endif %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
 
-  {% if services.length > 0 %}
-    <table class="govuk-table">
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          <th class="govuk-table__header" scope="col">Service</th>
-          <th class="govuk-table__header" scope="col">Owner</th>
-          {% if roundTwo %}
-            <th class="govuk-table__header" scope="col">Actions</th>
-          {% else %}
-            <th class="govuk-table__header" scope="col">In scope</th>
-          {% endif %}
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        {% for service in services %}
-          {% set ownerText = "—" %}
-          {% if roundTwo %}
-            {% set ownerText = "Not added yet" %}
-          {% endif %}
-          {% if service.owner %}
-            {% set ownerText = service.owner %}
-          {% endif %}
-          <tr class="govuk-table__row">
-            <td class="govuk-table__cell">
-              <strong>{{ service.name }}</strong>
-              {% if service.description %}
-                <div class="govuk-hint govuk-!-margin-top-1">{{ service.description }}</div>
+      {% if roundTwo %}
+        <span class="govuk-caption-l">Essential services list</span>
+        <h1 class="govuk-heading-l">List your essential services</h1>
+        <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">Help with this step</span>
+          </summary>
+          <div class="govuk-details__text">
+            <p class="govuk-body govuk-!-margin-bottom-0">Make sure the list reflects the services your council needs to keep running.</p>
+          </div>
+        </details>
+        <p class="govuk-body">
+          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">Add service</a>
+        </p>
+        {% if services.length > 0 %}
+          <p class="govuk-body">{{ services.length }} essential service{% if services.length != 1 %}s{% endif %} added.</p>
+        {% endif %}
+      {% else %}
+        <h1 class="govuk-heading-l">{{ labels.stages.scope.services.reviewTitle }}</h1>
+        <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">Help with this step</span>
+          </summary>
+          <div class="govuk-details__text">
+            <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+              <li>Check the list and confirm which services should stay in this assessment.</li>
+              <li>When you continue, you can confirm this list and move to the next step.</li>
+            </ul>
+          </div>
+        </details>
+      {% endif %}
+
+      {% if services.length > 0 %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th class="govuk-table__header" scope="col">Service</th>
+              <th class="govuk-table__header" scope="col">Owner</th>
+              {% if roundTwo %}
+                <th class="govuk-table__header" scope="col">Actions</th>
+              {% else %}
+                <th class="govuk-table__header" scope="col">In scope</th>
               {% endif %}
-            </td>
-            <td class="govuk-table__cell">{{ ownerText }}</td>
-            {% if roundTwo %}
-              <td class="govuk-table__cell app-register-actions">
-                <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/services/{{ service.id }}/edit">Change</a>
-                <form method="post" action="/stages/2/scope/services/{{ service.id }}/remove" class="govuk-!-margin-top-1">
-                  <button class="govuk-link app-link-button" type="submit">Remove</button>
-                </form>
-              </td>
-            {% else %}
-              <td class="govuk-table__cell">{% if service.inScope %}Yes{% else %}No{% endif %}</td>
-            {% endif %}
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="govuk-body">No essential services added yet.</p>
-  {% endif %}
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for service in services %}
+              {% set ownerText = "—" %}
+              {% if roundTwo %}
+                {% set ownerText = "Not added yet" %}
+              {% endif %}
+              {% if service.owner %}
+                {% set ownerText = service.owner %}
+              {% endif %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <strong>{{ service.name }}</strong>
+                  {% if service.description %}
+                    <div class="govuk-hint govuk-!-margin-top-1">{{ service.description }}</div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ ownerText }}</td>
+                {% if roundTwo %}
+                  <td class="govuk-table__cell app-register-actions">
+                    <a class="govuk-link govuk-!-display-block" href="/stages/2/scope/services/{{ service.id }}/edit">Change</a>
+                    <form method="post" action="/stages/2/scope/services/{{ service.id }}/remove" class="govuk-!-margin-top-1">
+                      <button class="govuk-link app-link-button" type="submit">Remove</button>
+                    </form>
+                  </td>
+                {% else %}
+                  <td class="govuk-table__cell">{% if service.inScope %}Yes{% else %}No{% endif %}</td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="govuk-body">No essential services added yet.</p>
+      {% endif %}
 
-  <div class="govuk-button-group">
-    {% if roundTwo %}
-      <a class="govuk-button" href="/stages/2/scope/systems/review">
-        Continue to critical systems
-      </a>
-      <form method="post" action="/stages/2/scope/services/review" class="govuk-button-group__item">
-        <button class="govuk-link app-link-button" type="submit">
-          Save and return to task list
-        </button>
-      </form>
-    {% else %}
-      <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">
-        Add service
-      </a>
-      <a class="govuk-button" href="/stages/2/scope/services/confirm">
-        {{ labels.stages.scope.services.continueButton }}
-      </a>
-    {% endif %}
-  </div>
+      {% if roundTwo %}
+        <form method="post" action="/stages/2/scope/services/review">
+          <div class="govuk-button-group">
+            <button class="govuk-button" name="servicesReviewAction" value="continue" type="submit">Continue to critical systems</button>
+            <button class="govuk-link app-link-button" type="submit">Save and return to task list</button>
+          </div>
+        </form>
+      {% else %}
+        <div class="govuk-button-group">
+          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">Add service</a>
+          <a class="govuk-button" href="/stages/2/scope/services/confirm">{{ labels.stages.scope.services.continueButton }}</a>
+        </div>
+      {% endif %}
+
     </div>
   </div>
 {% endblock %}

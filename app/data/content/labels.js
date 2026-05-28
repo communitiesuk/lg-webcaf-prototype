@@ -214,7 +214,7 @@ module.exports = {
         systemName: "Enter the critical system name",
         mappingRequired: "Select at least one essential service",
         priorityLevel: "Select a priority level",
-        priorityRationale: "Enter a short rationale for the priority",
+        priorityRationale: "Enter a short reason for the priority",
         scopePackStatus: "Select the setup status",
         scopeBlockerReason: "Select a blocker reason",
         scopeRolesConfirm: "Confirm the team who will complete this assessment",
@@ -334,7 +334,7 @@ module.exports = {
       errors: {
         igpRequired: "Enter the IGP response summary",
         judgementRequired: "Select an overall judgement",
-        rationaleRequired: "Enter the rationale for the judgement",
+        rationaleRequired: "Enter a reason for your judgement",
         evidenceRequired: "Add at least one evidence reference (ID or link)",
       },
     },
@@ -487,12 +487,12 @@ module.exports = {
         { value: "upgrade", text: "Upgrade judgement" },
         { value: "downgrade", text: "Downgrade judgement" },
       ],
-      rationaleLabel: "Rationale",
+      rationaleLabel: "Reason",
       saveReview: "Save assurance note",
     },
     errors: {
       decisionRequired: "Select a decision",
-      rationaleRequired: "Enter a rationale",
+      rationaleRequired: "Enter a reason",
     },
   },
 

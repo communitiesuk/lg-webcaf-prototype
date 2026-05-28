@@ -558,6 +558,11 @@
   border-top: 6px solid #505a5f;
 }
 
+.app-round-card--archived {
+  border-top: 6px solid #b1b4b6;
+  background: #f3f2f1;
+}
+
 .app-round-card--current {
   border-top: 6px solid #1d70b8;
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);

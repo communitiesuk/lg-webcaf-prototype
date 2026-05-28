@@ -2,34 +2,33 @@
 {% from "components/section-start.njk" import appSectionStart %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
-  {{ appSectionStart({
-    caption: "Strategic context",
-    title: "Add your council context",
-    intro: "Add the context that explains your services and systems lists.",
-    showSaveReassurance: true,
-    guidanceHeading: "Help with this step",
-    guidanceItems: [
-      "Keep each answer short and specific to your council.",
-      "You can save each answer as you move through the section.",
-      "At the end, you will check the full council context before continuing."
-    ],
-    guidanceLinkHref: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/identify-essential-services/#section_1_discuss-and-document-your-organisational-context",
-    guidanceLinkText: "Read the CAF guidance on discussing and documenting your organisational context",
-    needToKnowTitle: "What you will need",
-    needToKnowItems: [
-      "A short summary of your mission, objectives and priorities.",
-      "How the organisation is set up and how services operate.",
-      "Your current threat landscape and cyber risk appetite."
-    ],
-    action: "/stages/2/scope/context",
-    buttonText: "Continue",
-    secondaryHref: backHref,
-    secondaryText: returnText
-  }) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appSectionStart({
+        caption: "Strategic context",
+        title: "Add your council context",
+        intro: "Describe your council's mission, structure and approach to risk. This sets the context for your essential services and critical systems.",
+        showSaveReassurance: true,
+        guidanceHeading: "Help with this step",
+        guidanceItems: [
+          "Keep each answer short and specific to your council.",
+          "At the end, you will check your answers before continuing."
+        ],
+        guidanceLinkHref: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/identify-essential-services/#section_1_discuss-and-document-your-organisational-context",
+        guidanceLinkText: "Read the CAF guidance on discussing and documenting your organisational context",
+        needToKnowTitle: "What you will need",
+        needToKnowItems: [
+          "A short summary of your mission, objectives and priorities.",
+          "How the organisation is set up and how services operate.",
+          "Information about the current threats your council faces and your approach to managing cyber security risk."
+        ],
+        action: "/stages/2/scope/context",
+        buttonText: "Continue",
+        secondaryHref: backHref,
+        secondaryText: returnText
+      }) }}
     </div>
   </div>
 {% endblock %}

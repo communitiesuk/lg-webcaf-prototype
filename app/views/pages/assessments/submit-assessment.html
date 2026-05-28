@@ -44,7 +44,7 @@
 
   {% if submitted and submitted.submitted %}
     <div class="govuk-inset-text">
-      Submitted by {{ submitted.submittedBy }} on {{ submitted.submittedAt | replace("T", " ") | replace("Z", "") }}.
+      Submitted by {{ submitted.submittedBy }} on {{ submitted.submittedAt | ukDate }}.
     </div>
   {% endif %}
 

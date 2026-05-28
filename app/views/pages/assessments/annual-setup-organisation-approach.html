@@ -1,0 +1,56 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/annual-setup">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appErrorSummary(error) }}
+
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Organisation self-assessment"
+      }) }}
+
+      <form method="post" action="/assessments/current/annual-setup/organisation/approach">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','adApproach') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="adApproach" {% if error and (error.items | selectattr('field','equalto','adApproach') | list | length) > 0 %}aria-describedby="adApproach-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">How will you approach the previous assessment?</legend>
+            {% if error and (error.items | selectattr('field','equalto','adApproach') | list | length) > 0 %}
+              <p class="govuk-error-message" id="adApproach-error">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','adApproach') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="adApproach-reuse" name="adApproach" type="radio" value="reuse_current" {% if adApproach == "reuse_current" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="adApproach-reuse">Carry forward with a light review</label>
+                <div class="govuk-hint govuk-radios__hint">The council-wide position is still broadly accurate. You will check it briefly but do not expect significant changes.</div>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="adApproach-update" name="adApproach" type="radio" value="update_existing" {% if adApproach == "update_existing" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="adApproach-update">Review and update</label>
+                <div class="govuk-hint govuk-radios__hint">The previous position is a useful starting point but some outcomes, judgements or evidence need updating.</div>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="adApproach-new" name="adApproach" type="radio" value="new_assessment" {% if adApproach == "new_assessment" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="adApproach-new">Start fresh</label>
+                <div class="govuk-hint govuk-radios__hint">There has been major change in structure, risk, controls or service model since the last assessment. Previous judgements are no longer a reliable baseline.</div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

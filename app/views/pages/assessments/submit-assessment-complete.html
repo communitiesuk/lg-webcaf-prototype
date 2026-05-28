@@ -4,7 +4,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  <span class="govuk-caption-l">{{ "Annual assessment" if roundTwo else "Submission" }}</span>
+  <span class="govuk-caption-l">{{ "Assessment" if roundTwo else "Submission" }}</span>
   {{ appConfirmationPanel({
     title: "Assessment sent for independent assurance",
     body: "The assessment is now in independent assurance." if roundTwo else "The full assessment package is now in independent assurance."
@@ -23,7 +23,7 @@
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submitted at</dt>
-      <dd class="govuk-summary-list__value">{{ submitted.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__value">{{ submitted.submittedAt | ukDate }}</dd>
       <dd class="govuk-summary-list__actions"></dd>
     </div>
     {% if not roundTwo %}
@@ -49,7 +49,7 @@
   </div>
 
   <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">{{ "Return to annual assessment" if roundTwo else "Return to CAF journey task list" }}</a>
+    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">{{ "Return to task list" if roundTwo else "Return to CAF journey task list" }}</a>
     {% if not roundTwo %}
       <a class="govuk-link" href="/assessments/current/assurance-report">Open assurance report</a>
     {% endif %}

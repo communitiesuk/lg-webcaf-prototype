@@ -4,6 +4,8 @@
 {% from "components/status-summary.njk" import appStatusSummary %}
 
 {% block content %}
+
+  {# ── Assurer view ────────────────────────────────────────────── #}
   {% if isAssurerView %}
     {{ appPageHeader({
       caption: "Independent review",
@@ -16,257 +18,215 @@
         Reviewing {{ assurerAccess.activeCouncilName or assessment.councilName or "this assessment" }} in independent assurance after the council completed it internally.
       </p>
     </div>
+
+  {# ── Round-2 CAF lead view ───────────────────────────────────── #}
   {% elif researchRound == "round-2" %}
-    <a href="/assessments/current/journey" class="govuk-back-link">Return to task list</a>
-    {{ appPageHeader({
-      caption: councilDisplayName,
-      title: "Assessment dashboard",
-      intro: "Continue this year's assessment work and review the outcomes that need your attention.",
-      hint: "Use the dashboard to continue outcome work. Use the task list to track yearly milestones and complete the main stages."
-    }) }}
+    <a href="/assessments/current/journey" class="govuk-back-link">Back</a>
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+
+        {% if dashboardPhase %}
+          <span class="govuk-caption-l">{{ dashboardPhase.label }}</span>
+        {% endif %}
+        <h1 class="govuk-heading-l">Assessment dashboard</h1>
+
+        {% if query.saved == "outcome" %}
+          <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-saved-title" data-module="govuk-notification-banner">
+            <div class="govuk-notification-banner__header">
+              <h2 class="govuk-notification-banner__title" id="dashboard-saved-title">Success</h2>
+            </div>
+            <div class="govuk-notification-banner__content">
+              <p class="govuk-notification-banner__heading">{{ query.name or "Outcome" }} saved.</p>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if query.saved == "assurance-planning" %}
+          <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-assurance-planning-saved-title" data-module="govuk-notification-banner">
+            <div class="govuk-notification-banner__header">
+              <h2 class="govuk-notification-banner__title" id="dashboard-assurance-planning-saved-title">Success</h2>
+            </div>
+            <div class="govuk-notification-banner__content">
+              <p class="govuk-notification-banner__heading">Assurance planning details updated.</p>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if adDashboardRows and adDashboardRows.length > 0 %}
+          <section aria-labelledby="ad-outcomes-heading" class="govuk-!-margin-bottom-6">
+            <h2 class="govuk-heading-m" id="ad-outcomes-heading">Organisation self-assessment</h2>
+            <table class="govuk-table">
+              <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                  <th scope="col" class="govuk-table__header">Outcome</th>
+                  <th scope="col" class="govuk-table__header">Status</th>
+                  <th scope="col" class="govuk-table__header"></th>
+                </tr>
+              </thead>
+              <tbody class="govuk-table__body">
+                {% for row in adDashboardRows %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell"><strong>{{ row.code }}</strong> {{ row.title }}</td>
+                    <td class="govuk-table__cell">
+                      <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.statusLabel }}</strong>
+                    </td>
+                    <td class="govuk-table__cell">
+                      <a class="govuk-link" href="{{ row.actionHref }}">{{ row.actionText }}</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+        {% endif %}
+
+        {% if bcSystems and bcSystems.length > 0 %}
+          <section aria-labelledby="critical-systems-heading">
+            <h2 class="govuk-heading-m" id="critical-systems-heading">Critical systems</h2>
+            <table class="govuk-table">
+              <thead class="govuk-table__head">
+                <tr class="govuk-table__row">
+                  <th scope="col" class="govuk-table__header">System</th>
+                  <th scope="col" class="govuk-table__header">Status</th>
+                  <th scope="col" class="govuk-table__header">Progress</th>
+                  <th scope="col" class="govuk-table__header"></th>
+                </tr>
+              </thead>
+              <tbody class="govuk-table__body">
+                {% for system in bcSystems %}
+                  <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">{{ system.name }}</td>
+                    <td class="govuk-table__cell">
+                      <strong class="govuk-tag {{ system.statusTagClass }}">{{ system.statusLabel }}</strong>
+                    </td>
+                    <td class="govuk-table__cell">
+                      {{ system.completed }} of {{ system.totalOutcomes }} outcome{{ "s" if system.totalOutcomes != 1 else "" }} complete
+                    </td>
+                    <td class="govuk-table__cell">
+                      <a class="govuk-link" href="{{ system.actionHref }}">{{ system.actionText }}</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+        {% endif %}
+
+        {% if assurancePlanningSummary and assurancePlanningSummary.available %}
+          <section aria-labelledby="assurance-planning-heading">
+            <h2 class="govuk-heading-m" id="assurance-planning-heading">Independent assurance</h2>
+            <p class="govuk-body">{{ assurancePlanningSummary.body }}</p>
+            <p class="govuk-body">Status: <strong>{{ assurancePlanningSummary.statusText }}</strong></p>
+            <p class="govuk-body govuk-!-margin-bottom-0">
+              <a class="govuk-link" href="{{ assurancePlanningSummary.href }}">Add or update assurance planning details</a>
+            </p>
+          </section>
+        {% endif %}
+
+      </div>
+    </div>
+
+  {# ── Round-1 view ────────────────────────────────────────────── #}
   {% else %}
     {{ appPageHeader({
       title: labels.dashboard.heading
     }) }}
-  {% endif %}
-  {% if currentUser and researchRound != "round-2" and not isAssurerView %}
-    <p class="govuk-hint">Role: {{ currentUser.role | capitalize }}</p>
-  {% endif %}
+    {% if currentUser %}
+      <p class="govuk-hint">Role: {{ currentUser.role | capitalize }}</p>
+    {% endif %}
 
-  {% if researchRound == "round-2" and not isAssurerView %}
-    <div class="govuk-!-margin-bottom-4" style="text-align: right;">
-      <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
-    </div>
-  {% endif %}
-
-  {% if researchRound == "round-2" and query.saved == "outcome" %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="dashboard-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">{{ query.name or "Outcome" }} saved.</p>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if researchRound == "round-2" and query.saved == "assurance-planning" %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="dashboard-assurance-planning-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="dashboard-assurance-planning-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">Assurance planning details updated.</p>
-      </div>
-    </div>
-  {% endif %}
-
-  <section aria-labelledby="dashboard-summary-heading">
-    <h2 class="govuk-heading-m" id="dashboard-summary-heading">{{ labels.dashboard.summaryHeading }}</h2>
-    <div class="govuk-grid-row app-dashboard-summary">
-      {% for card in summaryCards %}
-        <div class="govuk-grid-column-one-third">
-          <a class="app-dashboard-card app-dashboard-card--link" href="{{ card.href }}">
-            <p class="app-dashboard-card__label">{{ card.label }}</p>
-            <p class="app-dashboard-card__value">{{ card.value }}</p>
-            {% if card.meta %}
-              <p class="app-dashboard-card__meta">{{ card.meta }}</p>
-            {% endif %}
-            <p class="app-dashboard-card__action">{{ card.actionText }}</p>
-          </a>
-        </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  {% if assurancePlanningSummary and assurancePlanningSummary.available %}
-    <section class="govuk-!-margin-top-6" aria-labelledby="assurance-planning-heading">
-      <h2 class="govuk-heading-m" id="assurance-planning-heading">Independent assurance</h2>
-      <div class="govuk-inset-text">
-        <p class="govuk-body govuk-!-margin-bottom-1"><strong>Assurance planning is optional</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-0">{{ assurancePlanningSummary.body }}</p>
-      </div>
-      <p class="govuk-body">
-        Current status:
-        <strong>{{ assurancePlanningSummary.statusText }}</strong>
-      </p>
-      <p class="govuk-body govuk-!-margin-bottom-0">
-        <a class="govuk-link" href="{{ assurancePlanningSummary.href }}">Add or update assurance planning details</a>
-      </p>
-    </section>
-  {% endif %}
-
-  {% if researchRound == "round-2" and not isAssurerView and bcSystems and bcSystems.length > 0 %}
-    <section class="govuk-!-margin-top-6" aria-labelledby="critical-systems-heading">
-      <h2 class="govuk-heading-m" id="critical-systems-heading">Critical systems</h2>
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header">System</th>
-            <th scope="col" class="govuk-table__header">Status</th>
-            <th scope="col" class="govuk-table__header">Progress</th>
-            <th scope="col" class="govuk-table__header"></th>
-          </tr>
-        </thead>
-        <tbody class="govuk-table__body">
-          {% for system in bcSystems %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">{{ system.name }}</td>
-              <td class="govuk-table__cell">
-                <strong class="govuk-tag {{ system.statusTagClass }}">{{ system.statusLabel }}</strong>
-              </td>
-              <td class="govuk-table__cell">
-                {{ system.completed }} of {{ system.totalOutcomes }} outcome{{ "s" if system.totalOutcomes != 1 else "" }} complete
-              </td>
-              <td class="govuk-table__cell">
-                <a class="govuk-link" href="{{ system.actionHref }}">{{ system.actionText }}</a>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-  {% endif %}
-
-  {% if researchRound == "round-2" and roundTwoWorkQueues %}
-    <section aria-labelledby="dashboard-next-actions-heading">
-      <h2 class="govuk-heading-m" id="dashboard-next-actions-heading">Next actions</h2>
-
-      <h3 class="govuk-heading-s">Needs attention</h3>
-      {% if roundTwoWorkQueues.needsAttention.length > 0 %}
-        <table class="govuk-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Assessment item</th>
-              <th scope="col" class="govuk-table__header">Issue</th>
-              <th scope="col" class="govuk-table__header">Action</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for r in roundTwoWorkQueues.needsAttention %}
-              <tr class="govuk-table__row">
-                <td class="govuk-table__cell">
-                  <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                  {% if r.carriedForwardFlag %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                  {% endif %}
-                  {% if r.frameworkFlag %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                  {% endif %}
-                  {% if r.systemName %}
-                    <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                  {% endif %}
-                </td>
-                <td class="govuk-table__cell">{{ r.issueText }}</td>
-                <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.actionHref }}">{{ r.actionText }}</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="govuk-body">No actions need attention right now.</p>
-      {% endif %}
-
-      {% if roundTwoWorkQueues.inProgress.length > 0 %}
-        <h3 class="govuk-heading-s">In progress</h3>
-        <table class="govuk-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Assessment item</th>
-              <th scope="col" class="govuk-table__header">Area</th>
-              <th scope="col" class="govuk-table__header">Status</th>
-              <th scope="col" class="govuk-table__header">Action</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for r in roundTwoWorkQueues.inProgress %}
-              <tr class="govuk-table__row">
-                <td class="govuk-table__cell">
-                  <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                  {% if r.carriedForwardFlag %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                  {% endif %}
-                  {% if r.frameworkFlag %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                  {% endif %}
-                  {% if r.systemName %}
-                    <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                  {% endif %}
-                </td>
-                <td class="govuk-table__cell">{% if r.lens == "ad" %}Organisation self-assessment{% else %}Critical systems self-assessment{% endif %}</td>
-                <td class="govuk-table__cell"><strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong></td>
-                <td class="govuk-table__cell"><a class="govuk-link" href="{{ r.actionHref }}">{{ r.actionText }}</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-    </section>
-  {% endif %}
-
-  {% if notifications and notifications.length %}
-    <h2 class="govuk-heading-m">Feedback and review updates</h2>
-    <div class="govuk-notification-banner" role="region" aria-labelledby="feedback-notifications-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="feedback-notifications-title">Updates</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-3">
-          {% for n in notifications %}
-            <li>
-              {% if n.href %}
-                <a class="govuk-link" href="{{ n.href }}?{{ buildQueryString(query) }}">{{ n.text }}</a>
-              {% else %}
-                {{ n.text }}
+    <section aria-labelledby="dashboard-summary-heading">
+      <h2 class="govuk-heading-m" id="dashboard-summary-heading">{{ labels.dashboard.summaryHeading }}</h2>
+      <div class="govuk-grid-row app-dashboard-summary">
+        {% for card in summaryCards %}
+          <div class="govuk-grid-column-one-third">
+            <a class="app-dashboard-card app-dashboard-card--link" href="{{ card.href }}">
+              <p class="app-dashboard-card__label">{{ card.label }}</p>
+              <p class="app-dashboard-card__value">{{ card.value }}</p>
+              {% if card.meta %}
+                <p class="app-dashboard-card__meta">{{ card.meta }}</p>
               {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-        <p class="govuk-body govuk-!-margin-bottom-0">
-          Use this to spot outcomes waiting for internal council review.
-        </p>
+              <p class="app-dashboard-card__action">{{ card.actionText }}</p>
+            </a>
+          </div>
+        {% endfor %}
       </div>
-    </div>
-  {% endif %}
+    </section>
 
-  {% if researchRound != "round-2" and assuranceSummary and assuranceSummary.openEvidenceRequests > 0 %}
-    <div class="govuk-notification-banner" role="region" aria-labelledby="evidence-notifications-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="evidence-notifications-title">Evidence requests</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">
-          You have {{ assuranceSummary.openEvidenceRequests }} open evidence clarification requests.
-        </p>
-        <p class="govuk-body govuk-!-margin-bottom-0">
-          <a class="govuk-link" href="/assessments/current/evidence-requests">Review and respond</a>
-        </p>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if researchRound == "round-2" %}
-    {% set filtersApplied = query.lens != "all" or query.workStatus != "all" or query.assigned != "anyone" %}
-  {% else %}
-    {% set filtersApplied = query.view != "all" or query.objective or query.principle or query.status or query.owner or query.overdueOnly == "1" %}
-  {% endif %}
-  {% if filtersApplied %}
-    <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Viewing a filtered list</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">
-          {{ summaryFiltered.total }} of {{ summaryAll.total }} outcomes shown
-        </p>
+    {% if assurancePlanningSummary and assurancePlanningSummary.available %}
+      <section class="govuk-!-margin-top-6" aria-labelledby="assurance-planning-heading">
+        <h2 class="govuk-heading-m" id="assurance-planning-heading">Independent assurance</h2>
+        <div class="govuk-inset-text">
+          <p class="govuk-body govuk-!-margin-bottom-1"><strong>Assurance planning is optional</strong></p>
+          <p class="govuk-body govuk-!-margin-bottom-0">{{ assurancePlanningSummary.body }}</p>
+        </div>
         <p class="govuk-body">
-          <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
+          Current status: <strong>{{ assurancePlanningSummary.statusText }}</strong>
         </p>
-      </div>
-    </div>
-  {% endif %}
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          <a class="govuk-link" href="{{ assurancePlanningSummary.href }}">Add or update assurance planning details</a>
+        </p>
+      </section>
+    {% endif %}
 
-  {% if researchRound != "round-2" %}
+    {% if notifications and notifications.length %}
+      <h2 class="govuk-heading-m">Feedback and review updates</h2>
+      <div class="govuk-notification-banner" role="region" aria-labelledby="feedback-notifications-title" data-module="govuk-notification-banner">
+        <div class="govuk-notification-banner__header">
+          <h2 class="govuk-notification-banner__title" id="feedback-notifications-title">Updates</h2>
+        </div>
+        <div class="govuk-notification-banner__content">
+          <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-3">
+            {% for n in notifications %}
+              <li>
+                {% if n.href %}
+                  <a class="govuk-link" href="{{ n.href }}?{{ buildQueryString(query) }}">{{ n.text }}</a>
+                {% else %}
+                  {{ n.text }}
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            Use this to spot outcomes waiting for internal council review.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if assuranceSummary and assuranceSummary.openEvidenceRequests > 0 %}
+      <div class="govuk-notification-banner" role="region" aria-labelledby="evidence-notifications-title" data-module="govuk-notification-banner">
+        <div class="govuk-notification-banner__header">
+          <h2 class="govuk-notification-banner__title" id="evidence-notifications-title">Evidence requests</h2>
+        </div>
+        <div class="govuk-notification-banner__content">
+          <p class="govuk-notification-banner__heading">
+            You have {{ assuranceSummary.openEvidenceRequests }} open evidence clarification requests.
+          </p>
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            <a class="govuk-link" href="/assessments/current/evidence-requests">Review and respond</a>
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    {% set filtersApplied = query.view != "all" or query.objective or query.principle or query.status or query.owner or query.overdueOnly == "1" %}
+    {% if filtersApplied %}
+      <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+        <div class="govuk-notification-banner__header">
+          <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Viewing a filtered list</h2>
+        </div>
+        <div class="govuk-notification-banner__content">
+          <p class="govuk-notification-banner__heading">
+            {{ summaryFiltered.total }} of {{ summaryAll.total }} outcomes shown
+          </p>
+          <p class="govuk-body">
+            <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
     <h2 class="govuk-heading-m">{{ labels.dashboard.cycleHeading }}</h2>
     <p class="govuk-body govuk-!-margin-bottom-2">
       Viewing: <strong>Current cycle</strong>.
@@ -290,55 +250,7 @@
         Export CSV (current cycle)
       </a>
     </div>
-  {% endif %}
 
-  {% if researchRound == "round-2" %}
-    <section class="app-dashboard-filter-panel" aria-labelledby="dashboard-filter-heading">
-      <div class="app-dashboard-filter-panel__header">
-        <h2 class="govuk-heading-m app-dashboard-filter-panel__title" id="dashboard-filter-heading">Filter assessment work</h2>
-        <p class="govuk-body app-dashboard-filter-panel__hint">Use filters to narrow the outcomes shown below.</p>
-      </div>
-      <form method="get" action="/assessments/current/dashboard">
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-one-third">
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="lens">Assessment area</label>
-              <select class="govuk-select" id="lens" name="lens">
-                <option value="all" {% if query.lens == "all" %}selected{% endif %}>All</option>
-                <option value="ad" {% if query.lens == "ad" %}selected{% endif %}>Organisation self-assessment (Objectives A and D)</option>
-                <option value="bc" {% if query.lens == "bc" %}selected{% endif %}>Critical systems self-assessment (Objectives B and C)</option>
-              </select>
-            </div>
-          </div>
-          <div class="govuk-grid-column-one-third">
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="workStatus">Work status</label>
-              <select class="govuk-select" id="workStatus" name="workStatus">
-                <option value="all" {% if query.workStatus == "all" %}selected{% endif %}>All</option>
-                <option value="in_progress" {% if query.workStatus == "in_progress" %}selected{% endif %}>In progress</option>
-                <option value="needs_attention" {% if query.workStatus == "needs_attention" %}selected{% endif %}>Needs attention</option>
-                <option value="completed" {% if query.workStatus == "completed" %}selected{% endif %}>Completed</option>
-                <option value="not_started" {% if query.workStatus == "not_started" %}selected{% endif %}>Not started</option>
-              </select>
-            </div>
-          </div>
-          <div class="govuk-grid-column-one-third">
-            <div class="govuk-form-group">
-              <label class="govuk-label" for="assigned">Assigned to</label>
-              <select class="govuk-select" id="assigned" name="assigned">
-                <option value="anyone" {% if query.assigned == "anyone" %}selected{% endif %}>Anyone</option>
-                <option value="me" {% if query.assigned == "me" %}selected{% endif %}>Me</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div class="govuk-button-group govuk-!-margin-bottom-0">
-          <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
-          <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
-        </div>
-      </form>
-    </section>
-  {% else %}
     <h2 class="govuk-heading-m">{{ labels.dashboard.viewsHeading }}</h2>
 
     <div class="govuk-button-group">
@@ -373,197 +285,145 @@
         <span class="govuk-details__summary-text">{{ labels.dashboard.filterHeading }}</span>
       </summary>
       <div class="govuk-details__text">
+        <form method="get" action="/assessments/current/dashboard">
+          <input type="hidden" name="view" value="{{ query.view }}">
+          <input type="hidden" name="lens" value="{{ query.lens }}">
 
-    <form method="get" action="/assessments/current/dashboard">
-      <input type="hidden" name="view" value="{{ query.view }}">
-      <input type="hidden" name="lens" value="{{ query.lens }}">
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-quarter">
+              <div class="govuk-form-group">
+                <label class="govuk-label" for="objective">Objective</label>
+                <select class="govuk-select" id="objective" name="objective">
+                  <option value="" {% if not query.objective %}selected{% endif %}>All</option>
+                  <option value="A" {% if query.objective == "A" %}selected{% endif %}>A</option>
+                  <option value="B" {% if query.objective == "B" %}selected{% endif %}>B</option>
+                  <option value="C" {% if query.objective == "C" %}selected{% endif %}>C</option>
+                  <option value="D" {% if query.objective == "D" %}selected{% endif %}>D</option>
+                </select>
+              </div>
+            </div>
 
-      <div class="govuk-grid-row">
-        <div class="govuk-grid-column-one-quarter">
+            <div class="govuk-grid-column-one-quarter">
+              <div class="govuk-form-group">
+                <label class="govuk-label" for="principle">Principle</label>
+                <select class="govuk-select" id="principle" name="principle">
+                  <option value="" {% if not query.principle %}selected{% endif %}>All</option>
+                  <option value="A1" {% if query.principle == "A1" %}selected{% endif %}>A1</option>
+                  <option value="A2" {% if query.principle == "A2" %}selected{% endif %}>A2</option>
+                  <option value="A3" {% if query.principle == "A3" %}selected{% endif %}>A3</option>
+                  <option value="A4" {% if query.principle == "A4" %}selected{% endif %}>A4</option>
+                  <option value="B1" {% if query.principle == "B1" %}selected{% endif %}>B1</option>
+                  <option value="C1" {% if query.principle == "C1" %}selected{% endif %}>C1</option>
+                  <option value="D1" {% if query.principle == "D1" %}selected{% endif %}>D1</option>
+                  <option value="D2" {% if query.principle == "D2" %}selected{% endif %}>D2</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="govuk-grid-column-one-quarter">
+              <div class="govuk-form-group">
+                <label class="govuk-label" for="status">Status</label>
+                <select class="govuk-select" id="status" name="status">
+                  <option value="" {% if not query.status %}selected{% endif %}>All</option>
+                  {% for s in statuses.options %}
+                    <option value="{{ s.value }}" {% if query.status == s.value %}selected{% endif %}>{{ s.label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="govuk-grid-column-one-quarter">
+              <div class="govuk-form-group">
+                <label class="govuk-label" for="owner">Owner</label>
+                <select class="govuk-select" id="owner" name="owner">
+                  <option value="" {% if not query.owner %}selected{% endif %}>All</option>
+                  {% for u in users %}
+                    {% if u.role != "assurer" %}
+                      <option value="{{ u.id }}" {% if query.owner == u.id %}selected{% endif %}>{{ u.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="govuk-form-group">
-            <label class="govuk-label" for="objective">Objective</label>
-            <select class="govuk-select" id="objective" name="objective">
-              <option value="" {% if not query.objective %}selected{% endif %}>All</option>
-              <option value="A" {% if query.objective == "A" %}selected{% endif %}>A</option>
-              <option value="B" {% if query.objective == "B" %}selected{% endif %}>B</option>
-              <option value="C" {% if query.objective == "C" %}selected{% endif %}>C</option>
-              <option value="D" {% if query.objective == "D" %}selected{% endif %}>D</option>
-            </select>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="overdueOnly" name="overdueOnly" type="checkbox" value="1" {% if query.overdueOnly == "1" %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="overdueOnly">
+                  {{ labels.dashboard.overdueOnly }}
+                </label>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="govuk-grid-column-one-quarter">
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="principle">Principle</label>
-            <select class="govuk-select" id="principle" name="principle">
-              <option value="" {% if not query.principle %}selected{% endif %}>All</option>
-              <option value="A1" {% if query.principle == "A1" %}selected{% endif %}>A1</option>
-              <option value="A2" {% if query.principle == "A2" %}selected{% endif %}>A2</option>
-              <option value="A3" {% if query.principle == "A3" %}selected{% endif %}>A3</option>
-              <option value="A4" {% if query.principle == "A4" %}selected{% endif %}>A4</option>
-              <option value="B1" {% if query.principle == "B1" %}selected{% endif %}>B1</option>
-              <option value="C1" {% if query.principle == "C1" %}selected{% endif %}>C1</option>
-              <option value="D1" {% if query.principle == "D1" %}selected{% endif %}>D1</option>
-              <option value="D2" {% if query.principle == "D2" %}selected{% endif %}>D2</option>
-            </select>
+          <div class="govuk-button-group">
+            <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
+            <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
           </div>
-        </div>
-
-        <div class="govuk-grid-column-one-quarter">
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="status">Status</label>
-            <select class="govuk-select" id="status" name="status">
-              <option value="" {% if not query.status %}selected{% endif %}>All</option>
-              {% for s in statuses.options %}
-                <option value="{{ s.value }}" {% if query.status == s.value %}selected{% endif %}>{{ s.label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-
-        <div class="govuk-grid-column-one-quarter">
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="owner">Owner</label>
-            <select class="govuk-select" id="owner" name="owner">
-              <option value="" {% if not query.owner %}selected{% endif %}>All</option>
-              {% for u in users %}
-                {% if u.role != "assurer" %}
-                  <option value="{{ u.id }}" {% if query.owner == u.id %}selected{% endif %}>{{ u.name }}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="govuk-form-group">
-        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-          <div class="govuk-checkboxes__item">
-            <input class="govuk-checkboxes__input" id="overdueOnly" name="overdueOnly" type="checkbox" value="1" {% if query.overdueOnly == "1" %}checked{% endif %}>
-            <label class="govuk-label govuk-checkboxes__label" for="overdueOnly">
-              {{ labels.dashboard.overdueOnly }}
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="govuk-button-group">
-        <button class="govuk-button" data-module="govuk-button" type="submit">Apply filters</button>
-        <a class="govuk-link" href="/assessments/current/dashboard">Clear filters</a>
-      </div>
-    </form>
+        </form>
       </div>
     </details>
-  {% endif %}
 
-  <h2 class="govuk-heading-m">All assessment outcomes</h2>
+    <h2 class="govuk-heading-m">All assessment outcomes</h2>
 
-  <p class="govuk-body">
-    Showing <strong>{{ summaryFiltered.total }}</strong> outcomes.
-  </p>
+    <p class="govuk-body">
+      Showing <strong>{{ summaryFiltered.total }}</strong> outcomes.
+    </p>
 
-  {% if summaryFiltered.total == 0 %}
-    <div class="govuk-inset-text">
-      No outcomes match your filters. Try clearing filters or changing view.
-    </div>
-  {% endif %}
-
-  {% for objectiveCode, principles in grouped %}
-    <h3 class="govuk-heading-s">Objective {{ objectiveCode }}</h3>
-
-    {% for principleCode, rows in principles %}
-      <h4 class="govuk-heading-s govuk-!-margin-top-4">{{ principleCode }}</h4>
-
-      <table class="govuk-table">
-        <thead class="govuk-table__head">
-          <tr class="govuk-table__row">
-            <th scope="col" class="govuk-table__header" style="width: 65%;">Outcome</th>
-            <th scope="col" class="govuk-table__header" style="width: 35%;">Status</th>
-          </tr>
-        </thead>
-
-        <tbody class="govuk-table__body">
-          {% for r in rows %}
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a class="govuk-link" href="{{ r.linkUrl }}?{{ buildQueryString(query) }}">
-                  <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
-                </a>
-                {% if r.carriedForwardFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                {% endif %}
-                {% if r.frameworkFlag %}
-                  <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
-                {% endif %}
-                {% if r.systemName %}
-                  <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
-                {% endif %}
-                {% if r.description %}
-                  <div class="govuk-hint govuk-!-margin-top-1">{{ r.description }}</div>
-                {% endif %}
-                <div class="govuk-hint govuk-!-margin-top-1">
-                  Owner: {{ r.ownerName or "Unassigned" }}{% if r.collaboratorCount and r.collaboratorCount > 0 %}, Collaborators: {{ r.collaboratorCount }}{% endif %}
-                </div>
-              </td>
-
-              <td class="govuk-table__cell">
-                <strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endfor %}
-  {% endfor %}
-
-  {% if researchRound == "round-2" and not isAssurerView %}
-    <section aria-labelledby="dashboard-registers-heading">
-      <h2 class="govuk-heading-m" id="dashboard-registers-heading">Scope lists</h2>
-      <p class="govuk-body">Use these lists to keep your council's essential services and critical systems up to date throughout the year.</p>
-      <ul class="govuk-list govuk-list--spaced govuk-!-margin-bottom-6">
-        <li>
-          <a class="govuk-link" href="/stages/2/scope/services/review">Essential services list</a>
-        </li>
-        <li>
-          <a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems list</a>
-        </li>
-      </ul>
-    </section>
-  {% endif %}
-
-  {% if researchRound == "round-2" and collaborationState and not isAssurerView %}
-    {% set collaborationRows = [
-      {
-        key: { text: "Status" },
-        value: { html: '<strong class="govuk-tag ' ~ collaborationState.statusTagClass ~ '">' ~ collaborationState.statusLabel ~ '</strong>' }
-      },
-      {
-        key: { text: "Drafted by" },
-        value: { text: collaborationState.drafterName }
-      },
-      {
-        key: { text: "Reviewer" },
-        value: { text: collaborationState.reviewerName or "Not set" }
-      },
-      {
-        key: { text: "Approver" },
-        value: { text: collaborationState.approverName or "Not set" }
-      }
-    ] %}
-    {% if collaborationState.reviewNotes %}
-      {% set collaborationRows = (collaborationRows.push({
-        key: { text: "Latest review note" },
-        value: { text: collaborationState.reviewNotes }
-      }), collaborationRows) %}
+    {% if summaryFiltered.total == 0 %}
+      <div class="govuk-inset-text">
+        No outcomes match your filters. Try clearing filters or changing view.
+      </div>
     {% endif %}
-    {% set collaborationRows = (collaborationRows.push({
-      key: { text: "Next step" },
-      value: { html: '<a class="govuk-link" href="' ~ dashboardNextAction.href ~ '">' ~ dashboardNextAction.text ~ '</a>' }
-    }), collaborationRows) %}
-    {{ appStatusSummary({
-      id: "collaboration-status",
-      heading: "Assessment roles and status",
-      rows: collaborationRows
-    }) }}
+
+    {% for objectiveCode, principles in grouped %}
+      <h3 class="govuk-heading-s">Objective {{ objectiveCode }}</h3>
+
+      {% for principleCode, rows in principles %}
+        <h4 class="govuk-heading-s govuk-!-margin-top-4">{{ principleCode }}</h4>
+
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header" style="width: 65%;">Outcome</th>
+              <th scope="col" class="govuk-table__header" style="width: 35%;">Status</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for r in rows %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  <a class="govuk-link" href="{{ r.linkUrl }}?{{ buildQueryString(query) }}">
+                    <strong>{{ r.outcomeCode }}</strong> {{ r.title }}
+                  </a>
+                  {% if r.carriedForwardFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
+                  {% endif %}
+                  {% if r.frameworkFlag %}
+                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--yellow">{{ r.frameworkFlag }}</strong></div>
+                  {% endif %}
+                  {% if r.systemName %}
+                    <div class="govuk-hint govuk-!-margin-top-1">System: {{ r.systemName }}</div>
+                  {% endif %}
+                  {% if r.description %}
+                    <div class="govuk-hint govuk-!-margin-top-1">{{ r.description }}</div>
+                  {% endif %}
+                  <div class="govuk-hint govuk-!-margin-top-1">
+                    Owner: {{ r.ownerName or "Unassigned" }}{% if r.collaboratorCount and r.collaboratorCount > 0 %}, Collaborators: {{ r.collaboratorCount }}{% endif %}
+                  </div>
+                </td>
+                <td class="govuk-table__cell">
+                  <strong class="govuk-tag {{ r.statusTagClass }}">{{ r.statusLabel }}</strong>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endfor %}
+    {% endfor %}
+
   {% endif %}
+
 {% endblock %}

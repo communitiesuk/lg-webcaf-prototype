@@ -1,0 +1,82 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref or '/assessments/current/annual-setup/organisation' }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appErrorSummary(error) }}
+
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Choose critical systems to assess",
+        guidanceHeading: "Help with this question",
+        guidanceItems: [
+          "Focusing on a small number of systems keeps the assessment manageable and gives your assurer enough depth to make a meaningful judgement.",
+          "You can assess different systems in future cycles."
+        ]
+      }) }}
+
+      <form method="post" action="/assessments/current/annual-setup/systems">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint{% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %} annualSystemIds-error{% endif %}">
+            <legend class="govuk-fieldset__legend govuk-visually-hidden">Critical systems</legend>
+            <div id="annualSystemIds-hint" class="govuk-hint">Select up to 3, or choose the option below if you are not assessing any critical systems this year. Choose the systems where a cyber incident would have the biggest impact on your essential services.</div>
+            {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}
+              <p id="annualSystemIds-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','annualSystemIds') | list | first).text }}
+              </p>
+            {% endif %}
+
+            {% if systems.length > 0 %}
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                {% for system in systems %}
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" id="annualSystemIds-{{ system.id }}" name="annualSystemIds" type="checkbox" value="{{ system.id }}" {% if system.id in selectedIds %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="annualSystemIds-{{ system.id }}">
+                      <span class="govuk-!-font-weight-bold">{{ system.name }}</span>
+                      {% if system.priorityLabel %}
+                        <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Priority: {{ system.priorityLabel | capitalize }}</span>
+                      {% endif %}
+                      {% if system.mappedServices and system.mappedServices.length > 0 %}
+                        <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Supports: {{ system.mappedServices | join(", ") }}</span>
+                      {% endif %}
+                    </label>
+                  </div>
+                {% endfor %}
+
+                <div class="govuk-checkboxes__divider">or</div>
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
+                  <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
+                    We are not assessing any critical systems this year
+                  </label>
+                </div>
+              </div>
+            {% else %}
+              <p class="govuk-body">You have no critical systems in your scope list. <a class="govuk-link" href="/stages/2/scope/systems/review">Add critical systems</a> before continuing, or choose the option below if you are not assessing any this year.</p>
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
+                  <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
+                    We are not assessing any critical systems this year
+                  </label>
+                </div>
+              </div>
+            {% endif %}
+          </fieldset>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

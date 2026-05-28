@@ -1,0 +1,60 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/annual-setup/systems">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Check your choices"
+      }) }}
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Organisation self-assessment</dt>
+          <dd class="govuk-summary-list__value">{{ adApproachLabel }}</dd>
+          <dd class="govuk-summary-list__actions">
+            {% if adChangeHref %}
+              <a class="govuk-link" href="{{ adChangeHref }}">Change<span class="govuk-visually-hidden"> organisation self-assessment approach</span></a>
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Critical systems</dt>
+          <dd class="govuk-summary-list__value">
+            {% if selectedSystems.length > 0 %}
+              <ul class="govuk-list">
+                {% for system in selectedSystems %}
+                  <li>{{ system.name }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              Not assessing any critical systems this year
+            {% endif %}
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="/assessments/current/annual-setup/systems">Change<span class="govuk-visually-hidden"> critical systems</span></a>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          Once confirmed, your organisation assessment approach cannot be changed for this cycle. You can update your critical systems selection until your self-assessment is submitted.
+        </strong>
+      </div>
+
+      <form method="post" action="/assessments/current/annual-setup/confirm">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and continue</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

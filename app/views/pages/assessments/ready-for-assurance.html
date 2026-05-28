@@ -5,10 +5,10 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <a class="govuk-back-link" href="/assessments/current/journey">Back to annual assessment</a>
+      <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
 
       {{ appPageHeader({
-        caption: "Annual assessment",
+        caption: "Assessment",
         title: "Review assessment and send to assurer",
         intro: "Check the assessment is complete and internally approved before sending it for independent assurance."
       }) }}
@@ -35,7 +35,7 @@
           </dd>
         </div>
         <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Critical system assessed this year</dt>
+          <dt class="govuk-summary-list__key">Critical system in scope</dt>
           <dd class="govuk-summary-list__value">
             {% if selectedSystems.length > 0 %}
               {% for system in selectedSystems %}{{ system.name }}{% if not loop.last %}, {% endif %}{% endfor %}
@@ -49,7 +49,7 @@
           <dd class="govuk-summary-list__value">
             <strong class="govuk-tag govuk-tag--green">Confirmed</strong>
             {% if collaborationState.approvedAt %}
-              &mdash; {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }}
+              &mdash; {{ collaborationState.approvedAt | ukDate }}
             {% endif %}
             {% if collaborationState.approvedBy %}
               by {{ collaborationState.approvedBy }}
@@ -69,7 +69,7 @@
 
         <div class="govuk-button-group">
           <a class="govuk-button govuk-button--secondary" href="/assessments/current/complete-self-assessment">Go back to sign-off</a>
-          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       {% else %}
         <div class="govuk-inset-text">
@@ -80,7 +80,7 @@
 
         <div class="govuk-button-group">
           <a class="govuk-button" href="/assessments/current/send-to-assurer">Continue to send</a>
-          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       {% endif %}
     </div>

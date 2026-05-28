@@ -1,9 +1,10 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <a class="govuk-back-link" href="/round-2/sign-in">Back</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <a class="govuk-back-link" href="/logout">Back</a>
 
       {% if error %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -21,19 +22,12 @@
       {% endif %}
 
       <h1 class="govuk-heading-l">Set up your council account</h1>
-      {% if currentUser %}
-        <div class="govuk-inset-text">
-          <p class="govuk-body govuk-!-margin-bottom-1"><strong>Signed in as:</strong> {{ currentUser.name }}</p>
-          <p class="govuk-body govuk-!-margin-bottom-0"><strong>Email:</strong> {{ currentUser.email }}</p>
-        </div>
-      {% endif %}
-      <p class="govuk-body">Enter your council name to finish setting up this browser for your council account.</p>
-      <p class="govuk-hint">You will only need to do this once on this device unless browser storage is cleared.</p>
+      <p class="govuk-body">Enter your council name to continue to your council account.</p>
 
       <form method="post" action="/council-setup" data-council-setup-form data-council-email="{{ currentUser.email or '' }}">
         <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="councilSetupName">Council name</label>
-          <div class="govuk-hint">Enter the full council name, i.e. Dorset Council.</div>
+          <div class="govuk-hint">For example, Dorset Council.</div>
           {% if error %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>

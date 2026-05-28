@@ -16,9 +16,9 @@
         </div>
       {% endif %}
 
-      <span class="govuk-caption-l">Annual assessment</span>
+      <span class="govuk-caption-l">Assessment</span>
       <h1 class="govuk-heading-l">Your assessment is ready for independent assurance</h1>
-      <p class="govuk-body">The annual assessment is now internally complete.</p>
+      <p class="govuk-body">The assessment is now internally complete.</p>
 
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
         <div class="govuk-summary-list__row">
@@ -29,7 +29,7 @@
         </div>
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Approved</dt>
-          <dd class="govuk-summary-list__value">{{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+          <dd class="govuk-summary-list__value">{{ collaborationState.approvedAt | ukDate }}</dd>
           <dd class="govuk-summary-list__actions">{{ collaborationState.approvedBy }}</dd>
         </div>
         <div class="govuk-summary-list__row">
@@ -47,7 +47,7 @@
       </dl>
 
       <h2 class="govuk-heading-m">What this means</h2>
-      <p class="govuk-body">All required outcomes for this year's assessment have been completed, reviewed and approved internally.</p>
+      <p class="govuk-body">All required outcomes for this assessment have been completed, reviewed and approved internally.</p>
 
       <h2 class="govuk-heading-m">What happens next</h2>
       <div class="govuk-inset-text">
@@ -75,7 +75,7 @@
         <div class="govuk-button-group">
           <button class="govuk-button" data-module="govuk-button" type="submit">Continue to independent assurance</button>
           <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/assessments/current/assurance-planning?returnTo=/assessments/current/approve-self-assessment/complete">Review assurance planning</a>
-          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       </form>
     </div>

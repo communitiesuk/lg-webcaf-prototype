@@ -3,25 +3,17 @@
 {% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
+  <a class="govuk-back-link" href="/entry">Back</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <a class="govuk-back-link" href="/entry">Back</a>
 
       {{ appPageHeader({
         caption: councilDisplayName,
-        title: "Council onboarding and setup",
-        intro: "Complete these one-off setup steps before you start this year's annual assessment.",
-        showSaveReassurance: true
+        title: "Set up your account",
+        intro: "Your account setup is complete. You can now start your assessment." if onboardingComplete else "Complete these steps before you start your assessment."
       }) }}
 
-      {% if onboardingComplete %}
-        <div class="govuk-inset-text">
-          Onboarding is complete. You can now move into this year's annual assessment.
-        </div>
-      {% endif %}
-
-      <h2 class="govuk-heading-m" id="onboarding-tasks">Setup tasks</h2>
-      <p class="govuk-body">Complete this setup task before you start this year's annual assessment.</p>
       {{ govukTaskList({
         items: [
           {
@@ -44,7 +36,7 @@
 
       {% if onboardingComplete %}
         <div class="govuk-button-group">
-          <a class="govuk-button" href="/assessments/current/journey">Go to annual assessment</a>
+          <a class="govuk-button" href="/assessments/current/journey">Go to assessment task list</a>
         </div>
       {% endif %}
     </div>

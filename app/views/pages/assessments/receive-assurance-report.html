@@ -6,7 +6,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
 
-      <span class="govuk-caption-l">Annual assessment — {{ councilDisplayName }}</span>
+      <span class="govuk-caption-l">Assessment — {{ councilDisplayName }}</span>
       <h1 class="govuk-heading-l">Assurance report</h1>
 
       <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" style="max-width: 44em;">
@@ -22,7 +22,7 @@
             {% if record.submittedAt %}
               <strong class="govuk-tag govuk-tag--green">Submitted</strong>
               {% if record.submittedAt %}
-                &ensp;<span class="govuk-hint govuk-!-display-inline">{{ record.submittedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+                &ensp;<span class="govuk-hint govuk-!-display-inline">{{ record.submittedAt | ukDate }}</span>
               {% endif %}
             {% else %}
               <strong class="govuk-tag govuk-tag--grey">Not yet submitted</strong>
@@ -34,10 +34,10 @@
           <dd class="govuk-summary-list__value">
             {% if stage1.finalisedAt %}
               <strong class="govuk-tag govuk-tag--green">Finalised</strong>
-              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.finalisedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.finalisedAt | ukDate }}</span>
             {% elif stage1.draftSharedAt %}
               <strong class="govuk-tag govuk-tag--blue">Draft shared</strong>
-              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.draftSharedAt | replace("T", " ") | truncate(10, true, "") }}</span>
+              &ensp;<span class="govuk-hint govuk-!-display-inline">{{ stage1.draftSharedAt | ukDate }}</span>
             {% else %}
               <strong class="govuk-tag govuk-tag--grey">Not yet shared</strong>
             {% endif %}
@@ -151,7 +151,7 @@
       <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
       <h2 class="govuk-heading-m govuk-!-margin-top-6">Detailed review</h2>
-      <p class="govuk-body">The assurer's rationale and indicator-level assessment for each contributing outcome.</p>
+      <p class="govuk-body">The assurer's reasoning and indicator-level assessment for each contributing outcome.</p>
 
       <div class="govuk-accordion" data-module="govuk-accordion" id="assurance-detail">
         {% for group in outcomeGroups %}

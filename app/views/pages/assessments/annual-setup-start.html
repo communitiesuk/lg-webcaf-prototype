@@ -2,20 +2,20 @@
 {% from "components/section-start.njk" import appSectionStart %}
 
 {% block content %}
+  <a class="govuk-back-link" href="/assessments/current/review-scope">Back</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  <a class="govuk-back-link" href="/assessments/current/review-scope">Back</a>
 
   {{ appSectionStart({
     caption: "Assessment setup",
-    title: "Choose what to assess this year",
-    intro: "At the start of each yearly assessment, choose what you will assess and confirm who is leading it.",
-    showSaveReassurance: true,
+    title: "Choose what to assess",
+    intro: "At the start of each cycle, set up the two types of assessment you will complete this year.",
     guidanceHeading: "Help with this step",
     guidanceItems: [
-      "This step is for this year only.",
-      "You will choose how to approach the organisation self-assessment (Objectives A and D) and select up to 3 critical systems for the critical systems self-assessment (Objectives B and C).",
-      "You will then confirm the CAF Lead and the approver for this assessment."
+      "These choices apply to this assessment cycle only.",
+      "You will confirm your approach to the organisation self-assessment (Objectives A and D) — whether you are starting fresh or building on a previous one.",
+      "You will then choose up to 3 critical systems for the critical systems self-assessment (Objectives B and C). Choosing none is valid if you are only completing the organisation assessment this year."
     ],
     action: "/assessments/current/annual-setup",
     buttonText: "Continue",

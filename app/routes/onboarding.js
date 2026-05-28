@@ -72,7 +72,7 @@ module.exports = function (router) {
     };
 
     return res.render("pages/onboarding/index", {
-      pageTitle: "Council onboarding and setup",
+      pageTitle: "Set up your account",
       account,
       councilDisplayName: getCouncilDisplayName(req.session.data),
       currentUser: req.session.data.user || null,

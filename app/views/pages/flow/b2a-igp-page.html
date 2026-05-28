@@ -18,21 +18,10 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">{{ context.caption }}</span>
-  <h1 class="govuk-heading-l">{{ page.heading }}</h1>
-  <p class="govuk-body">{{ page.intro }}</p>
-  {% if page.pageHint %}
-    <p class="govuk-hint">{{ page.pageHint }}</p>
+  {% if outcome %}
+    <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}{% if context.systemName %} — {{ context.systemName }}{% endif %}</span>
   {% endif %}
-
-  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">{{ page.guidanceSummary }}</span>
-    </summary>
-    <div class="govuk-details__text">
-      {{ page.guidanceBody }}
-    </div>
-  </details>
+  <h1 class="govuk-heading-l">{{ page.heading }}</h1>
 
   <form method="post" action="{{ formAction }}">
     {% for row in page.rows %}

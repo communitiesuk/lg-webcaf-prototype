@@ -4,81 +4,78 @@
 {% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-  {% set headingText = "Add a critical system" %}
-  {% if isEdit %}
-    {% set headingText = "Change a critical system" %}
-  {% endif %}
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
-  {{ appErrorSummary(error) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  {{ appPageHeader({
-    caption: "Critical systems list" if researchRound == "round-2" else "",
-    title: headingText if researchRound == "round-2" else pageTitle,
-    intro: "Update this critical system in your list." if isEdit else ("Add a system that supports one or more essential services. You will then link it to services and set its priority in 2 steps." if researchRound == "round-2" else "Add each critical system with the core details you need."),
-    hint: ""
-  }) }}
+      {{ appErrorSummary(error) }}
 
-  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">What counts as a critical system</span>
-    </summary>
-    <div class="govuk-details__text">
-      <p class="govuk-body">A critical system is a system, platform or technology service that an essential service depends on.</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>Use the system name people in the council would recognise.</li>
-        <li>Include supplier-hosted, shared-service and externally managed systems if your council depends on them.</li>
-        <li>Think about what would stop or seriously degrade service delivery if it became unavailable or was compromised.</li>
-        <li>Do not limit this list to systems owned directly by internal IT.</li>
-      </ul>
-      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> a revenues platform managed by a supplier can still be one of your critical systems if residents and staff depend on it.</p>
-    </div>
-  </details>
+      {{ appPageHeader({
+        caption: "Critical systems list" if roundTwo else "",
+        title: pageTitle,
+        intro: "You will then link it to services and set its priority." if (roundTwo and not isEdit) else ""
+      }) }}
 
-  <form method="post" action="{{ formAction or '/stages/2/scope/systems/add' }}">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="systemName">System name</label>
-      {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
-        </p>
-      {% endif %}
-      <div class="govuk-hint">Such as Case Management System or Payments Platform.</div>
-      <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
-    </div>
+      <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">What counts as a critical system</span>
+        </summary>
+        <div class="govuk-details__text">
+          <p class="govuk-body">A critical system is a system, platform or technology service that an essential service depends on.</p>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>Use the system name people in the council would recognise.</li>
+            <li>Include supplier-hosted, shared-service and externally managed systems if your council depends on them.</li>
+            <li>Think about what would stop or seriously degrade service delivery if it became unavailable or was compromised.</li>
+            <li>Do not limit this list to systems owned directly by internal IT.</li>
+          </ul>
+          <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> a revenues platform managed by a supplier can still be one of your critical systems if residents and staff depend on it.</p>
+        </div>
+      </details>
 
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="systemType">System type</label>
-      {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','systemType') | list | first).text }}
-        </p>
-      {% endif %}
-      <div class="govuk-hint">Such as line-of-business application, shared platform or supplier-managed service.</div>
-      <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
-    </div>
+      <form method="post" action="{{ formAction or '/stages/2/scope/systems/add' }}">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="systemName">System name</label>
+          {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-hint">Such as Case Management System or Payments Platform.</div>
+          <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
+        </div>
 
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="supplier">Supplier</label>
-      {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','supplier') | list | first).text }}
-        </p>
-      {% endif %}
-      <div class="govuk-hint">Enter the supplier if there is one. This can be an external supplier, shared service or internal team.</div>
-      <input class="govuk-input" id="supplier" name="supplier" type="text" value="{{ data.supplier }}">
-    </div>
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="systemType">System type</label>
+          {% if error and (error.items | selectattr('field','equalto','systemType') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','systemType') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-hint">Such as line-of-business application, shared platform or supplier-managed service.</div>
+          <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
+        </div>
 
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
-      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to the critical systems list</a>
-    </div>
-  </form>
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="supplier">Supplier (optional)</label>
+          {% if error and (error.items | selectattr('field','equalto','supplier') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','supplier') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-hint">Enter the name of the external supplier, shared service or internal team responsible for this system.</div>
+          <input class="govuk-input" id="supplier" name="supplier" type="text" value="{{ data.supplier }}">
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
+          <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to the critical systems list</a>
+        </div>
+      </form>
+
     </div>
   </div>
 {% endblock %}

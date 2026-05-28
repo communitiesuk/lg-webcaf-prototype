@@ -3,137 +3,97 @@
 {% block content %}
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <span class="govuk-caption-l">Self-assessment</span>
-      <h1 class="govuk-heading-l">Complete the organisation self-assessment (Objectives A and D)</h1>
+  <span class="govuk-caption-l">Self-assessment</span>
+  <h1 class="govuk-heading-l">Organisation self-assessment</h1>
 
-      <p class="govuk-body">Use the organisation self-assessment to assess the organisational contributing outcomes for this assessment year.</p>
-      <p class="govuk-hint">Your work saves as you go. Open the current outcome, work through each IGP statement, then confirm it on the check your answers page.</p>
-      <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-        <summary class="govuk-details__summary">
-          <span class="govuk-details__summary-text">What “complete” means here</span>
-        </summary>
-        <div class="govuk-details__text">
-          <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-            <li>Each outcome has a judgement that reflects the council's real current position.</li>
-            <li>The rationale explains why that judgement is reasonable.</li>
-            <li>The evidence references point to existing material that supports the judgement.</li>
-          </ul>
-        </div>
-      </details>
+  <p class="govuk-body">Assess how well your organisation manages its cyber risks across Objectives A and D.</p>
 
-      {% if saved == "outcome" %}
-        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="ad-saved-title" data-module="govuk-notification-banner">
-          <div class="govuk-notification-banner__header">
-            <h2 class="govuk-notification-banner__title" id="ad-saved-title">Success</h2>
-          </div>
-          <div class="govuk-notification-banner__content">
-            <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
-          </div>
-        </div>
-      {% endif %}
+  <p class="govuk-hint">Your work saves as you go.</p>
 
-      {% if assessment.hasPreviousAdAssessment %}
-        <div class="govuk-inset-text">
-          Some organisation self-assessment outcomes have been carried forward from the previous assessment. Review them and confirm whether they still reflect the current position.
-        </div>
-      {% endif %}
-      {% if carriedForwardReviewCount and carriedForwardReviewCount > 0 %}
-        <p class="govuk-body"><strong>{{ carriedForwardReviewCount }}</strong> carried-forward outcome{% if carriedForwardReviewCount != 1 %}s{% endif %} still need review in the organisation self-assessment.</p>
-      {% endif %}
+  {% if saved == "outcome" %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="ad-saved-title" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="ad-saved-title">Success</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
+      </div>
+    </div>
+  {% endif %}
 
-      {% if rows and rows.length > 0 %}
-        <h2 class="govuk-heading-m">Current organisation self-assessment outcomes</h2>
-        <table class="govuk-table govuk-!-margin-bottom-6">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Outcome</th>
-              <th scope="col" class="govuk-table__header">Status</th>
-              <th scope="col" class="govuk-table__header">Action</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for row in rows %}
-              <tr class="govuk-table__row">
-                <td class="govuk-table__cell">
-                  <strong>{{ row.code }}</strong> {{ row.title }}
-                  {% if row.carriedForward %}
-                    <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                  {% endif %}
-                </td>
-                <td class="govuk-table__cell">{{ row.status }}</td>
-                <td class="govuk-table__cell">
-                  <a class="govuk-link" href="{{ row.href }}">{{ row.actionText }}</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
+  {% if assessment.hasPreviousAdAssessment %}
+    <div class="govuk-inset-text">
+      Some outcomes have been carried forward from the previous assessment. Review them to confirm they still reflect the current position.
+    </div>
+  {% endif %}
+  {% if carriedForwardReviewCount and carriedForwardReviewCount > 0 %}
+    <p class="govuk-body"><strong>{{ carriedForwardReviewCount }}</strong> carried-forward outcome{% if carriedForwardReviewCount != 1 %}s{% endif %} still need review.</p>
+  {% endif %}
 
+  {% if rows and rows.length > 0 %}
+    <table class="govuk-table govuk-!-margin-bottom-6">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th scope="col" class="govuk-table__header">Outcome</th>
+          <th scope="col" class="govuk-table__header">Status</th>
+          <th scope="col" class="govuk-table__header">Owner</th>
+          <th scope="col" class="govuk-table__header">Action</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in rows %}
+          <tr class="govuk-table__row">
+            <td class="govuk-table__cell">
+              <strong>{{ row.code }}</strong> {{ row.title }}
+            </td>
+            <td class="govuk-table__cell">
+              {% if row.status == "Complete" %}
+                <strong class="govuk-tag govuk-tag--green">Complete</strong>
+              {% elif row.status == "In progress" %}
+                <strong class="govuk-tag govuk-tag--blue">In progress</strong>
+              {% elif row.status == "Carried forward - review needed" %}
+                <strong class="govuk-tag govuk-tag--yellow">Review needed</strong>
+              {% else %}
+                <strong class="govuk-tag govuk-tag--grey">Not started</strong>
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell">
+              {{ row.ownerName or "Unassigned" }}
+              <div class="govuk-!-margin-top-1">
+                <a class="govuk-link govuk-link--no-visited-state" href="{{ row.assignmentHref }}">{{ "Change" if row.ownerName else "Assign" }}</a>
+              </div>
+            </td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="{{ row.href }}">{{ row.actionText }}</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <p class="govuk-body govuk-!-margin-bottom-6"><a class="govuk-link" href="/assessments/current/start-self-assessment/people?returnTo=%2Fassessments%2Fcurrent%2Fself-assessment%2Fad">Add a person for assignment</a></p>
+
+  {% if readyToComplete or reviewState.completed %}
+    {% if reviewState.completed %}
+      <h2 class="govuk-heading-m">Organisation self-assessment complete</h2>
+      <p class="govuk-body">Marked complete on {{ reviewState.completedAt | ukDate }} by {{ reviewState.completedBy }}.</p>
       <div class="govuk-button-group">
-        {% if primaryOutcome %}
-          <a class="govuk-button" href="{{ primaryOutcome.href }}">
-            Open current outcome
-          </a>
-        {% endif %}
         <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
       </div>
-
-      {% if readyToComplete or reviewState.completed %}
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-        {% if error %}
-          <div class="govuk-error-summary" data-module="govuk-error-summary">
-            <div role="alert">
-              <h2 class="govuk-error-summary__title">There is a problem</h2>
-              <div class="govuk-error-summary__body">
-                <ul class="govuk-list govuk-error-summary__list">
-                  {% for item in error.items %}
-                    <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-        <h2 class="govuk-heading-m">Complete the organisation self-assessment</h2>
-        <p class="govuk-body">Use this step when the organisation self-assessment is ready, even if the critical systems self-assessment is still in progress.</p>
-        <h3 class="govuk-heading-s">To complete the organisation self-assessment</h3>
-        <ul class="govuk-list govuk-list--bullet">
-          <li>work through each IGP statement for both contributing outcomes</li>
-          <li>review the check your answers page for each outcome</li>
-          <li>confirm each outcome is ready to include in the section</li>
-        </ul>
-        <p class="govuk-hint">After the organisation self-assessment is complete, return to the task list or continue with the critical systems self-assessment.</p>
-        {% if reviewState.completed %}
-          <p class="govuk-body govuk-hint">Marked complete {{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }} by {{ reviewState.completedBy }}.</p>
-        {% endif %}
-        <form method="post" action="/assessments/current/self-assessment/ad">
-          <div id="completeAdAssessment" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','completeAdAssessment') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-            <fieldset class="govuk-fieldset"{% if error and (error.items | selectattr('field','equalto','completeAdAssessment') | list | length) > 0 %} aria-describedby="completeAdAssessment-error"{% endif %}>
-              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Is the organisation self-assessment complete?</legend>
-              {% if error and (error.items | selectattr('field','equalto','completeAdAssessment') | list | length) > 0 %}
-                <p id="completeAdAssessment-error" class="govuk-error-message">
-                  <span class="govuk-visually-hidden">Error:</span>
-                  {{ (error.items | selectattr('field','equalto','completeAdAssessment') | list | first).text }}
-                </p>
-              {% endif %}
-              <div class="govuk-radios">
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="completeAdAssessment-yes" name="completeAdAssessment" type="radio" value="yes">
-                  <label class="govuk-label govuk-radios__label" for="completeAdAssessment-yes">Yes, the organisation self-assessment is complete</label>
-                </div>
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="completeAdAssessment-no" name="completeAdAssessment" type="radio" value="no">
-                  <label class="govuk-label govuk-radios__label" for="completeAdAssessment-no">No, I need to make changes</label>
-                </div>
-              </div>
-            </fieldset>
-          </div>
-          <button class="govuk-button" data-module="govuk-button" type="submit">Complete the organisation self-assessment</button>
-        </form>
-      {% endif %}
+    {% else %}
+      <h2 class="govuk-heading-m">Mark as complete</h2>
+      <p class="govuk-body">All {{ total }} outcome{% if total != 1 %}s{% endif %} have a final judgement. Confirm the organisation self-assessment is ready before moving on.</p>
+      <form method="post" action="/assessments/current/self-assessment/ad">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit" name="completeAdAssessment" value="yes">Mark organisation self-assessment as complete</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+    {% endif %}
+  {% else %}
+    <div class="govuk-button-group">
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
-  </div>
+  {% endif %}
 {% endblock %}

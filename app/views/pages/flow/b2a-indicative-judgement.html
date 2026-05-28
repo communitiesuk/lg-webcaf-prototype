@@ -3,25 +3,15 @@
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
-  <span class="govuk-caption-l">{{ context.caption }}</span>
-  <h1 class="govuk-heading-l">Indicative judgement</h1>
-  <p class="govuk-body">Use this page to reflect on your responses before you record the final judgement.</p>
-
-  <div class="govuk-inset-text">
-    This is not the final judgement. It is a guide based on the responses you have given.
-  </div>
-
-  <p class="govuk-body-l">Based on your responses so far, this contributing outcome is likely to be: <strong>{{ summary.judgement }}</strong></p>
-
-  {% if summary.reflections and summary.reflections.length > 0 %}
-    <h2 class="govuk-heading-m">Points to reflect on</h2>
-    <p class="govuk-body">Your responses suggest:</p>
-    <ul class="govuk-list govuk-list--bullet">
-      {% for item in summary.reflections %}
-        <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
+  {% if outcome %}
+    <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}{% if context.systemName %} — {{ context.systemName }}{% endif %}</span>
   {% endif %}
+  <h1 class="govuk-heading-l">Indicative judgement</h1>
+
+  <p class="govuk-body-l">Based on your responses, this contributing outcome is likely to be:
+    <strong class="govuk-tag {% if summary.judgement == 'Achieved' %}govuk-tag--green{% elif summary.judgement == 'Partially achieved' %}govuk-tag--yellow{% elif summary.judgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-left-1">{{ summary.judgement }}</strong>
+  </p>
+  <p class="govuk-body">This is not the final judgement. Review the summary below before recording your assessment on the next page.</p>
 
   <h2 class="govuk-heading-m">What appears strong</h2>
   {% if summary.strengths.length > 0 %}
@@ -34,7 +24,7 @@
     <p class="govuk-body">No clear strengths stand out from the responses so far.</p>
   {% endif %}
 
-  <h2 class="govuk-heading-m">What appears weak</h2>
+  <h2 class="govuk-heading-m">Areas to address</h2>
   {% if summary.weaknesses.length > 0 %}
     <ul class="govuk-list govuk-list--bullet">
       {% for item in summary.weaknesses %}
@@ -42,7 +32,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body">No clear indicators of non-achievement stand out from the responses so far.</p>
+    <p class="govuk-body">No indicators of non-achievement stand out from the responses so far.</p>
   {% endif %}
 
   <h2 class="govuk-heading-m">Gaps or uncertainty</h2>

@@ -1,10 +1,8 @@
 {% extends "layouts/main.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-  {% set backHref = "/assessments/current/start-self-assessment/assignments" %}
   {% set successMessage = "People updated." %}
   {% if saved == "person-added" %}
     {% set successMessage = "Person added." %}
@@ -17,118 +15,109 @@
       {% set successMessage = savedName + " removed." %}
     {% endif %}
   {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
+  <a class="govuk-back-link" href="{{ returnTo or '/assessments/current/start-self-assessment/assignments' }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {{ appErrorSummary(error) }}
+
+      {% if saved %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="people-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="people-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
+          </div>
         </div>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if saved %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="people-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="people-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">{{ successMessage }}</p>
-      </div>
-    </div>
-  {% endif %}
-
-  {{ appPageHeader({
-    caption: "Self-assessment",
-    title: "Add people where they are needed",
-    guidanceHeadingId: "self-assessment-people-guidance",
-    guidanceItems: [
-      "You do not need to add everyone now.",
-      "Only add people when they are needed for a specific outcome.",
-      "You can return and change these names later."
-    ],
-    intro: "Use this page if you need to add someone before assigning them to an outcome."
-  }) }}
-
-  <p class="govuk-body"><strong>{{ contributors.length }} people currently available for assignment</strong></p>
-  <h2 class="govuk-heading-m">People available for assignment</h2>
-  {% if contributors.length > 0 %}
-    <table class="govuk-table">
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          <th class="govuk-table__header">Name</th>
-          <th class="govuk-table__header">Email</th>
-          <th class="govuk-table__header">Action</th>
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        {% for person in contributors %}
-          <tr class="govuk-table__row">
-            <td class="govuk-table__cell">
-              {{ person.name }}
-              {% if person.isLead %}
-                <div class="govuk-!-margin-top-1">
-                  <strong class="govuk-tag govuk-tag--blue">CAF Lead</strong>
-                </div>
-              {% endif %}
-            </td>
-            <td class="govuk-table__cell">{{ person.email }}</td>
-            <td class="govuk-table__cell">
-              {% if not person.isLead %}
-                <form method="post" action="/assessments/current/start-self-assessment/people/{{ person.id }}/remove" class="govuk-!-margin-bottom-0">
-                  <button class="app-link-button" type="submit">Remove</button>
-                </form>
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="govuk-body">No people added yet.</p>
-  {% endif %}
-
-  <h2 class="govuk-heading-m">Add a person</h2>
-  <form method="post" action="/assessments/current/start-self-assessment/people">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="selfAssessPersonName">Name</label>
-      {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}
-        <p id="selfAssessPersonName-error" class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','selfAssessPersonName') | list | first).text }}
-        </p>
       {% endif %}
-      <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonName" name="selfAssessPersonName" type="text" value="{{ form.name or '' }}">
-    </div>
 
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="selfAssessPersonEmail">Email</label>
-      {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}
-        <p id="selfAssessPersonEmail-error" class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | first).text }}
-        </p>
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Add people where they are needed",
+        guidanceHeadingId: "self-assessment-people-guidance",
+        guidanceItems: [
+          "You do not need to add everyone now.",
+          "Only add people when they are needed for a specific outcome.",
+          "You can return and change these names later."
+        ]
+      }) }}
+
+      <h2 class="govuk-heading-m">People available for assignment</h2>
+      {% if contributors.length > 0 %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th class="govuk-table__header">Name</th>
+              <th class="govuk-table__header">Email</th>
+              <th class="govuk-table__header">Action</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for person in contributors %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell">
+                  {{ person.name }}
+                  {% if person.isLead %}
+                    <div class="govuk-!-margin-top-1">
+                      <strong class="govuk-tag govuk-tag--blue">CAF Lead</strong>
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell">{{ person.email }}</td>
+                <td class="govuk-table__cell">
+                  {% if not person.isLead %}
+                    <form method="post" action="/assessments/current/start-self-assessment/people/{{ person.id }}/remove" class="govuk-!-margin-bottom-0">
+                      <button class="app-link-button" type="submit">Remove</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="govuk-body">No people added yet.</p>
       {% endif %}
-      <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonEmail" name="selfAssessPersonEmail" type="email" value="{{ form.email or '' }}">
-    </div>
 
-    <div class="govuk-button-group">
-      <button class="govuk-button govuk-button--secondary" type="submit">Add person</button>
-    </div>
-  </form>
+      <h2 class="govuk-heading-m">Add a person</h2>
+      <form method="post" action="/assessments/current/start-self-assessment/people">
+        <input type="hidden" name="returnTo" value="{{ returnTo }}">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="selfAssessPersonName">Name</label>
+          {% if error and (error.items | selectattr('field','equalto','selfAssessPersonName') | list | length) > 0 %}
+            <p id="selfAssessPersonName-error" class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','selfAssessPersonName') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonName" name="selfAssessPersonName" type="text" value="{{ form.name or '' }}">
+        </div>
 
-  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="selfAssessPersonEmail">Email</label>
+          {% if error and (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | length) > 0 %}
+            <p id="selfAssessPersonEmail-error" class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','selfAssessPersonEmail') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="selfAssessPersonEmail" name="selfAssessPersonEmail" type="email" value="{{ form.email or '' }}">
+        </div>
 
-  <div class="govuk-button-group">
-    <a class="govuk-button" href="/assessments/current/start-self-assessment/assignments">Return to outcome assignments</a>
-  </div>
+        <div class="govuk-button-group">
+          <button class="govuk-button govuk-button--secondary" type="submit">Add person</button>
+        </div>
+      </form>
+
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+      <div class="govuk-button-group">
+        <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments">Return to outcome assignments</a>
+      </div>
+
     </div>
   </div>
 {% endblock %}

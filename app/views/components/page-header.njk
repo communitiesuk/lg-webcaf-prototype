@@ -5,20 +5,20 @@
     <span class="govuk-caption-l">{{ params.caption }}</span>
   {% endif %}
   <h1 class="govuk-heading-l">{{ params.title }}</h1>
-  {% if params.guidanceItems and params.guidanceItems.length %}
-    {{ appGuidanceBox({
-      heading: params.guidanceHeading,
-      headingId: params.guidanceHeadingId,
-      items: params.guidanceItems
-    }) }}
-  {% endif %}
   {% if params.intro %}
-    <p class="govuk-body">{{ params.intro }}</p>
+    <p class="{{ params.introClass or 'govuk-body' }}">{{ params.intro }}</p>
   {% endif %}
   {% if params.showSaveReassurance %}
     <p class="govuk-body-s govuk-hint">Your work is saved as you go.</p>
   {% endif %}
   {% if params.hint %}
     <p class="govuk-body govuk-hint">{{ params.hint }}</p>
+  {% endif %}
+  {% if params.guidanceItems and params.guidanceItems.length %}
+    {{ appGuidanceBox({
+      heading: params.guidanceHeading,
+      headingId: params.guidanceHeadingId,
+      items: params.guidanceItems
+    }) }}
   {% endif %}
 {% endmacro %}

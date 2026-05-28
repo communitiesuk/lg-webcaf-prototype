@@ -2,20 +2,17 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <div class="govuk-grid-row app-entry-dashboard">
+  <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {% if roundTwo %}
         <span class="govuk-caption-l">{{ roundTwoEntry.orgName }}</span>
         <h1 class="govuk-heading-xl">Your WebCAF account</h1>
-        <p class="govuk-body govuk-!-margin-bottom-6">Use this page to continue this year's assessment and review your council account and setup details.</p>
 
-        <section class="app-entry-dashboard__primary app-guidance-box govuk-!-margin-bottom-7" aria-labelledby="next-step-heading">
+        <section class="govuk-!-margin-bottom-7" aria-labelledby="next-step-heading">
           <h2 id="next-step-heading" class="govuk-heading-m govuk-!-margin-bottom-2">What to do next</h2>
           <p class="govuk-body govuk-!-margin-bottom-3">{{ roundTwoEntry.helperText }}</p>
           <p class="govuk-body govuk-!-margin-bottom-4">
-            <strong class="govuk-tag {% if roundTwoEntry.statusLabel == 'Ready for independent review' %}govuk-tag--green{% elif roundTwoEntry.statusLabel == 'Not started' %}govuk-tag--grey{% else %}govuk-tag--blue{% endif %}">
-              {{ roundTwoEntry.statusLabel }}
-            </strong>
+            <strong class="govuk-tag {{ roundTwoEntry.statusTagClass }}">{{ roundTwoEntry.statusLabel }}</strong>
           </p>
           {% if roundTwoEntry.primaryActionHref.indexOf('/entry/start-new') == 0 or roundTwoEntry.primaryActionHref == '/entry/resume' %}
             <form method="post" action="{{ roundTwoEntry.primaryActionHref }}" class="govuk-!-margin-bottom-0">
@@ -38,8 +35,8 @@
 
         {% if roundTwoEntry.onboardingComplete %}
           <section class="app-entry-dashboard__section govuk-!-margin-bottom-7" aria-labelledby="assessment-heading">
-            <h2 id="assessment-heading" class="govuk-heading-l govuk-!-margin-bottom-3">This year's assessment</h2>
-            <p class="govuk-body">Track the main stages for the {{ roundTwoEntry.year }} annual assessment.</p>
+            <h2 id="assessment-heading" class="govuk-heading-m govuk-!-margin-bottom-3">Assessment</h2>
+            <p class="govuk-body">Track the main stages for the {{ roundTwoEntry.year }} assessment.</p>
             {% if roundTwoEntry.assessmentRows and roundTwoEntry.assessmentRows.length > 0 %}
               <dl class="govuk-summary-list govuk-!-margin-bottom-4">
                 {% for row in roundTwoEntry.assessmentRows %}
@@ -50,13 +47,13 @@
                 {% endfor %}
               </dl>
             {% endif %}
-            <ul class="govuk-list govuk-!-margin-bottom-0">
-              {% for action in roundTwoEntry.secondaryActions %}
-                {% if action.href.indexOf("/assessments/current/") == 0 %}
+            {% if roundTwoEntry.assessmentLinks and roundTwoEntry.assessmentLinks.length > 0 %}
+              <ul class="govuk-list govuk-!-margin-bottom-0">
+                {% for action in roundTwoEntry.assessmentLinks %}
                   <li><a class="govuk-link" href="{{ action.href }}">{{ action.text }}</a></li>
-                {% endif %}
-              {% endfor %}
-            </ul>
+                {% endfor %}
+              </ul>
+            {% endif %}
           </section>
 
           <section class="app-entry-dashboard__section govuk-!-margin-bottom-7" aria-labelledby="registers-heading">
@@ -85,7 +82,7 @@
             {% if roundTwoEntry.onboardingComplete %}
               Council setup is complete.
             {% else %}
-              Finish council setup before starting the annual assessment.
+              Finish council setup before starting the assessment.
             {% endif %}
             <a class="govuk-link" href="{{ roundTwoEntry.onboardingActionHref }}">{{ roundTwoEntry.onboardingActionText }}</a>.
           </p>
@@ -137,44 +134,13 @@
             <a class="govuk-link" href="/assessments/current/journey">Go to CAF journey</a>
           </p>
         {% endif %}
-      {% endif %}
-    </div>
-    <div class="govuk-grid-column-one-third">
-      {% if user %}
-        {% if roundTwo %}
-          <aside class="app-entry-dashboard__account" aria-labelledby="account-heading">
-            <h2 id="account-heading" class="govuk-heading-s govuk-!-margin-bottom-3">Account</h2>
-            <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{ user.name }}</strong></p>
-            <p class="govuk-body govuk-!-margin-bottom-1 app-entry-dashboard__email">{{ user.email }}</p>
-            <p class="govuk-body govuk-!-margin-bottom-3">{{ councilDisplayName }}</p>
-            <p class="govuk-body govuk-!-margin-bottom-1">Active role: {{ user.roleTitle or "Council account user" }}</p>
-            {% if user.roleLabels %}
-              <p class="govuk-body govuk-!-margin-bottom-3">Assigned roles: {{ user.roleLabels | join(", ") }}</p>
-            {% endif %}
-            {% if accessAccount %}
-              <p class="govuk-body govuk-!-margin-bottom-3">
-                <strong>{{ accessAccount.users.length }}</strong> authorised user{% if accessAccount.users.length != 1 %}s{% endif %}
-              </p>
-            {% endif %}
-            <ul class="govuk-list govuk-!-margin-bottom-0">
-              <li><a class="govuk-link" href="/organisation-details">View organisation details</a></li>
-              <li>
-                {% if canManageUsers %}
-                  <a class="govuk-link" href="/manage-users">Manage users and roles</a>
-                {% else %}
-                  <a class="govuk-link" href="/manage-users">View users and roles</a>
-                {% endif %}
-              </li>
-            </ul>
-          </aside>
-        {% else %}
-          <p class="govuk-body">Signed in as</p>
-          <p class="govuk-body govuk-!-margin-bottom-1">
-            <strong>{{ user.name }}</strong>
-          </p>
-          <p class="govuk-body govuk-!-margin-top-0">{{ user.orgName or councilDisplayName }}</p>
+
+        {% if user %}
+          <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+          <p class="govuk-body govuk-!-margin-bottom-1">Signed in as <strong>{{ user.name }}</strong></p>
+          <p class="govuk-body govuk-!-margin-top-0 govuk-hint">{{ user.orgName or councilDisplayName }}</p>
           {% if user.roleLabels %}
-            <p class="govuk-body">Assigned roles: {{ user.roleLabels | join(", ") }}</p>
+            <p class="govuk-body govuk-hint">Assigned roles: {{ user.roleLabels | join(", ") }}</p>
           {% endif %}
           <ul class="govuk-list">
             <li><a class="govuk-link" href="/organisation-details">Your council account details</a></li>

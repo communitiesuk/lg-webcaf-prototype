@@ -19,9 +19,7 @@
   {% endif %}
 
   <span class="govuk-caption-l">{{ context.caption }}</span>
-  <h1 class="govuk-heading-l">Review this outcome before internal review</h1>
-  <p class="govuk-hint">Critical system: {{ context.systemName }}</p>
-  <p class="govuk-body">Use this page to check that this contributing outcome is complete and ready for internal review.</p>
+  <h1 class="govuk-heading-l">Check your outcome is ready</h1>
 
   <h2 class="govuk-heading-m">Outcome summary</h2>
   <dl class="govuk-summary-list">
@@ -31,13 +29,13 @@
       <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ editLinks.judgement }}">Edit<span class="govuk-visually-hidden"> judgement</span></a></dd>
     </div>
     <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Rationale</dt>
+      <dt class="govuk-summary-list__key">Reason</dt>
       <dd class="govuk-summary-list__value">{{ reviewSummary.rationalePreview }}</dd>
-      <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ editLinks.rationale }}">Edit<span class="govuk-visually-hidden"> rationale</span></a></dd>
+      <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ editLinks.rationale }}">Edit<span class="govuk-visually-hidden"> reason</span></a></dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Evidence references</dt>
-      <dd class="govuk-summary-list__value">{{ reviewSummary.evidenceCount }} added</dd>
+      <dd class="govuk-summary-list__value">{% if reviewSummary.evidenceCount == 0 %}None added{% else %}{{ reviewSummary.evidenceCount }} added{% endif %}</dd>
       <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ editLinks.evidence }}">Edit<span class="govuk-visually-hidden"> evidence references</span></a></dd>
     </div>
     <div class="govuk-summary-list__row">
@@ -48,35 +46,14 @@
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Not applicable or alternative control responses</dt>
       <dd class="govuk-summary-list__value">{{ reviewSummary.explainedResponses }}</dd>
-      <dd class="govuk-summary-list__actions"></dd>
+      <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ editLinks.igp }}">Edit<span class="govuk-visually-hidden"> IGP responses</span></a></dd>
     </div>
   </dl>
 
   <form method="post" action="{{ formAction }}">
-    <div class="govuk-form-group">
-      <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Internal review checklist</legend>
-        <div class="govuk-hint">Use this as a final sense-check before you mark the outcome ready for internal review.</div>
-        <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-          {% for item in [
-            { value: "igps", text: "I have responded to all IGPs for this outcome" },
-            { value: "notApplicable", text: "I have explained any 'Not applicable' responses" },
-            { value: "alternativeControl", text: "I have explained any 'Alternative control in place' responses" },
-            { value: "evidence", text: "I have added enough evidence references for an assurer to review this outcome" },
-            { value: "judgement", text: "My final judgement reflects the responses I have given" }
-          ] %}
-            <div class="govuk-checkboxes__item">
-              <input class="govuk-checkboxes__input" id="b2aReadinessChecks-{{ item.value }}" name="b2aReadinessChecks" type="checkbox" value="{{ item.value }}" {% if item.value in form.readinessChecks %}checked{% endif %}>
-              <label class="govuk-label govuk-checkboxes__label" for="b2aReadinessChecks-{{ item.value }}">{{ item.text }}</label>
-            </div>
-          {% endfor %}
-        </div>
-      </fieldset>
-    </div>
-
     <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aReviewDeclaration') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Final readiness declaration</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Confirm this outcome is ready</legend>
         {% if error and (error.items | selectattr('field', 'equalto', 'b2aReviewDeclaration') | list | length) > 0 %}
           <p class="govuk-error-message" id="b2aReviewDeclaration-error">
             <span class="govuk-visually-hidden">Error:</span>
@@ -94,7 +71,7 @@
 
     <div class="govuk-button-group">
       <button class="govuk-button" type="submit" data-module="govuk-button">Mark outcome as ready for internal review</button>
-      <a class="govuk-link" href="{{ editLinks.evidence }}">Return to evidence references</a>
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
   </form>
 {% endblock %}

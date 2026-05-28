@@ -15,10 +15,23 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
         navigation: headerNavigation
     }) }}
     {% if showNavigation %}
-      {{ govukServiceNavigation({
-          serviceName: serviceName,
-          navigation: navigation
-      })}}
+      {% if currentUser %}
+        {% set userIdentityHtml %}
+          <li class="govuk-service-navigation__item">
+            <span class="govuk-service-navigation__text">{{ currentUser.name }}{% if currentUser.orgName %} · {{ currentUser.orgName }}{% endif %}</span>
+          </li>
+        {% endset %}
+        {{ govukServiceNavigation({
+            serviceName: serviceName,
+            navigation: navigation,
+            slots: { navigationEnd: userIdentityHtml }
+        })}}
+      {% else %}
+        {{ govukServiceNavigation({
+            serviceName: serviceName,
+            navigation: navigation
+        })}}
+      {% endif %}
     {% endif %}
 
 {% endblock %}
@@ -31,21 +44,7 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
     text: "This service is for research only. Do not use it to make real decisions."
   }) }}
 
-  {% if currentUser and activeRole == "assurer" %}
-    <div class="govuk-inset-text">
-      Signed in as <strong>{{ activeRoleLabel or "Assurer" }}</strong>{% if currentUser.orgName %} for {{ currentUser.orgName }}{% endif %}.
-    </div>
-  {% endif %}
-
   {% if showJourney and breadcrumbs.length > 0 %}
     {{ govukBreadcrumbs({ items: breadcrumbs }) }}
-  {% endif %}
-
-  {% if showJourney and progress and showProgressBar %}
-    <div class="app-progress" aria-label="Journey progress">
-      <p class="govuk-body app-progress__summary">
-        Step {{ progress.currentIndex + 1 }} of {{ progress.total }} — {{ progress.currentLabel }}
-      </p>
-    </div>
   {% endif %}
 {% endblock %}

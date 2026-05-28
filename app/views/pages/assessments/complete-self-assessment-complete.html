@@ -22,7 +22,7 @@
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submitted for review</dt>
-      <dd class="govuk-summary-list__value">{{ collaborationState.submittedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__value">{{ collaborationState.submittedAt | ukDate }}</dd>
       <dd class="govuk-summary-list__actions">{{ collaborationState.submittedBy }}</dd>
     </div>
     <div class="govuk-summary-list__row">
@@ -49,7 +49,7 @@
 
   <div class="govuk-button-group">
     <a class="govuk-button" data-module="govuk-button" href="/assessments/current/review-self-assessment">Continue to internal review</a>
-    <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+    <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     <a class="govuk-link" href="/assessments/current/export-assessment">Download summary</a>
   </div>
     </div>

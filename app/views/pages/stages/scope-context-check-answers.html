@@ -2,45 +2,42 @@
 {% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
-  {{ appPageHeader({
-    caption: "Strategic context",
-    title: "Check your answers",
-    intro: "Review the strategic context answers before you continue.",
-    hint: "You can change any answer from this page."
-  }) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  <h2 class="govuk-heading-m">Strategic context answers</h2>
-  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-    {% for row in rows %}
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">{{ row.question }}</dt>
-        <dd class="govuk-summary-list__value">
-          {% if row.isMultiline %}
-            {{ row.answer | escape | replace("\n", "<br>") | safe }}
-          {% else %}
-            {{ row.answer }}
-          {% endif %}
-        </dd>
-        <dd class="govuk-summary-list__actions">
-          <a class="govuk-link" href="{{ row.changeHref }}">
-            Change
-            <span class="govuk-visually-hidden"> {{ row.question }}</span>
-          </a>
-        </dd>
-      </div>
-    {% endfor %}
-  </dl>
+      {{ appPageHeader({
+        caption: "Strategic context",
+        title: "Check your answers"
+      }) }}
 
-  <form method="post" action="/stages/2/scope/context/check-answers">
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
-      <a class="govuk-link" href="{{ backHref }}">Return to strategic context</a>
-    </div>
-  </form>
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ row.question }}</dt>
+            <dd class="govuk-summary-list__value">
+              {% if row.isMultiline %}
+                {{ row.answer | escape | replace("\n", "<br>") | safe }}
+              {% else %}
+                {{ row.answer }}
+              {% endif %}
+            </dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="{{ row.changeHref }}">
+                Change
+                <span class="govuk-visually-hidden"> {{ row.question }}</span>
+              </a>
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <form method="post" action="/stages/2/scope/context/check-answers">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and continue</button>
+        </div>
+      </form>
     </div>
   </div>
 {% endblock %}

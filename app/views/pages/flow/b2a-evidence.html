@@ -20,17 +20,8 @@
 
   <span class="govuk-caption-l">{{ context.caption }}</span>
   <h1 class="govuk-heading-l">Evidence references</h1>
-  <p class="govuk-hint">Critical system: {{ context.systemName }}</p>
-  <p class="govuk-body">Add the evidence references that support your judgement. Use document names, links, ticket IDs or control references. You do not need to upload files in this prototype.</p>
-
-  <details class="govuk-details" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">What useful evidence looks like</span>
-    </summary>
-    <div class="govuk-details__text">
-      Use evidence that is relevant and up to date, and that helps show how identity verification, authentication or access control works in practice.
-    </div>
-  </details>
+  <p class="govuk-body">Add the evidence references that support your judgement. Use document names, links, ticket IDs or control references.</p>
+  <p class="govuk-hint">Evidence might include access control policies, MFA configuration records, user access reviews, privilege access management records, or identity verification procedures.</p>
 
   <form method="post" action="{{ formAction }}">
     <input type="hidden" name="b2aEvidenceRowCount" value="{{ evidenceRows.length }}">
@@ -40,7 +31,7 @@
         <label class="govuk-label" for="b2aEvidenceTitle-{{ loop.index }}">Evidence title or reference</label>
         <input class="govuk-input govuk-!-margin-bottom-2" id="b2aEvidenceTitle-{{ loop.index }}" name="b2aEvidenceTitle-{{ loop.index }}" type="text" value="{{ row.title }}">
 
-        <label class="govuk-label" for="b2aEvidenceLink-{{ loop.index }}">Link or identifier</label>
+        <label class="govuk-label" for="b2aEvidenceLink-{{ loop.index }}">Link, ticket ID or control reference</label>
         <input class="govuk-input govuk-!-margin-bottom-2" id="b2aEvidenceLink-{{ loop.index }}" name="b2aEvidenceLink-{{ loop.index }}" type="text" value="{{ row.link }}">
 
         <label class="govuk-label" for="b2aEvidenceNote-{{ loop.index }}">Short note about what it demonstrates (optional)</label>
@@ -56,10 +47,11 @@
     {% endfor %}
 
     <div class="govuk-button-group">
+      <button class="govuk-button" type="submit" data-module="govuk-button">Continue</button>
       {% if evidenceRows.length < 5 %}
         <button class="govuk-button govuk-button--secondary" type="submit" name="action" value="addEvidence" data-module="govuk-button">Add another evidence reference</button>
       {% endif %}
-      <button class="govuk-button" type="submit" data-module="govuk-button">Continue</button>
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
   </form>
 {% endblock %}

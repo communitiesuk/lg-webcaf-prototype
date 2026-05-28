@@ -42,30 +42,19 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
   }
 
   if (researchRound === "round-2") {
-    const scopePathBelongsToAnnualAssessment =
-      onboardingComplete &&
-      (currentPath === "/stages/2/scope" || currentPath.startsWith("/stages/2/scope/"));
-    const onboardingActive =
-      currentPath === "/onboarding" ||
-      currentPath.startsWith("/onboarding/") ||
-      currentPath === "/prepare/roles" ||
-      (!scopePathBelongsToAnnualAssessment &&
-        (currentPath === "/stages/2/scope" || currentPath.startsWith("/stages/2/scope/")));
-    const annualAssessmentActive =
-      currentPath.startsWith("/assessments/current") ||
+    const assessmentActive =
+      currentPath === "/entry" ||
+      currentPath.startsWith("/assessments/") ||
       currentPath.startsWith("/self-assess/") ||
-      scopePathBelongsToAnnualAssessment;
+      currentPath.startsWith("/evidence-library") ||
+      currentPath.startsWith("/improvement-plan") ||
+      currentPath.startsWith("/assurance-review");
 
-    const items = [
+    return [
       {
-        text: "Home",
+        text: "Assessment",
         href: "/entry",
-        active: currentPath === "/entry",
-      },
-      {
-        text: "Onboarding and setup",
-        href: "/onboarding",
-        active: onboardingActive,
+        active: assessmentActive,
       },
       {
         text: "Users and roles",
@@ -75,16 +64,6 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
           currentPath.startsWith("/manage-users"),
       },
     ];
-
-    if (onboardingComplete) {
-      items.splice(2, 0, {
-        text: "Annual assessment",
-        href: "/assessments/current/journey",
-        active: annualAssessmentActive,
-      });
-    }
-
-    return items;
   }
 
   const items = [
@@ -110,7 +89,7 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
 
 function getRoundTwoAccountBackHref(researchRound, onboardingComplete) {
   if (researchRound === "round-2") {
-    return onboardingComplete ? "/onboarding" : "/entry";
+    return onboardingComplete ? "/entry" : "/onboarding";
   }
   return "/entry";
 }

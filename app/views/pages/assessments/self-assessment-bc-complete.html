@@ -11,7 +11,7 @@
   <dl class="govuk-summary-list">
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Marked complete</dt>
-      <dd class="govuk-summary-list__value">{{ reviewState.completedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+      <dd class="govuk-summary-list__value">{{ reviewState.completedAt | ukDate }}</dd>
       <dd class="govuk-summary-list__actions">{{ reviewState.completedBy }}</dd>
     </div>
     <div class="govuk-summary-list__row">
@@ -30,7 +30,7 @@
   </dl>
 
   <h2 class="govuk-heading-m">What this means</h2>
-  <p class="govuk-body">The critical systems outcomes are complete for this year's assessment. They now contribute to the wider assessment being ready for internal review and approval.</p>
+  <p class="govuk-body">The critical systems outcomes are complete for this assessment. They now contribute to the wider assessment being ready for internal review and approval.</p>
 
   <h2 class="govuk-heading-m">What happens next</h2>
   <div class="govuk-inset-text">

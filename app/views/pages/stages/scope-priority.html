@@ -1,97 +1,69 @@
 {# app/views/pages/stages/scope-priority.html #}
 {% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope/systems/review' }}">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appErrorSummary(error) }}
+
+      {{ appPageHeader({
+        caption: "Critical systems list",
+        title: "Set the priority for " + system.name,
+        guidanceHeading: "Help with this step",
+        guidanceItems: [
+          "Prioritise systems that would have the biggest impact on the council if disrupted by a cyber attack.",
+          "Use your team's expertise to decide this, including service leads, system owners, and IT or cyber colleagues where needed.",
+          "Be ready to explain the reason for the priority you choose to your assurer."
+        ]
+      }) }}
+
+      {% if mappedServices and mappedServices.length > 0 %}
+        <p class="govuk-body govuk-hint">Supports: {{ mappedServices | join(", ") }}</p>
+      {% endif %}
+
+      <form method="post" action="/stages/2/scope/priority/{{ system.id }}">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="priorityLevel" {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}aria-describedby="priorityLevel-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Priority</legend>
+            {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}
+              <p class="govuk-error-message" id="priorityLevel-error">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','priorityLevel') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-hint">Select one option. Choose <strong>Not sure yet</strong> if you cannot decide now.</div>
+            <div class="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="priority-high" name="priorityLevel" type="radio" value="high" {% if data.level == "high" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="priority-high">High</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="priority-medium" name="priorityLevel" type="radio" value="medium" {% if data.level == "medium" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="priority-medium">Medium</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="priority-low" name="priorityLevel" type="radio" value="low" {% if data.level == "low" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="priority-low">Low</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="priority-unknown" name="priorityLevel" type="radio" value="not_sure" {% if data.level == "not_sure" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="priority-unknown">Not sure yet</label>
+              </div>
+            </div>
+          </fieldset>
         </div>
-      </div>
-    </div>
-  {% endif %}
 
-  <span class="govuk-caption-l">Critical systems list</span>
-  <h1 class="govuk-heading-l">Set the priority for {{ system.name }}</h1>
-  <p class="govuk-body">Choose the priority for this system.</p>
-
-  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">Help with this step</span>
-    </summary>
-    <div class="govuk-details__text">
-      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>Prioritise systems that would have the biggest impact on the council if disrupted by a cyber attack.</li>
-        <li>Use your team's expertise to decide this, including service leads, system owners, and IT or cyber colleagues where needed.</li>
-        <li>Be ready to explain the rationale for the priority you choose to your assurer.</li>
-      </ul>
-      <p class="govuk-body govuk-!-margin-top-3">Base the decision on service impact, dependency and recoverability, not just cost or profile.</p>
-      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li><strong>High:</strong> major disruption to critical or statutory services, little workaround, high operational or resident impact.</li>
-        <li><strong>Medium:</strong> important impact, but workarounds or slower recovery may be possible.</li>
-        <li><strong>Low:</strong> more limited impact or easier recovery.</li>
-        <li><strong>Not sure yet:</strong> use this only if you genuinely need more input from service or system owners.</li>
-      </ul>
-      <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0"><strong>Example:</strong> a platform supporting benefits payments may be high priority if disruption would quickly affect vulnerable residents and there is no practical fallback.</p>
-      <p class="govuk-body govuk-!-margin-top-3 govuk-!-margin-bottom-0">
-        <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/prioritise-critical-systems/">Read the CAF guidance on prioritising critical systems</a>
-      </p>
-    </div>
-  </details>
-
-  {% if mappedServices and mappedServices.length > 0 %}
-    <div class="govuk-inset-text">
-      <p class="govuk-body"><strong>Supports:</strong> {{ mappedServices | join(", ") }}</p>
-    </div>
-  {% endif %}
-
-  <form method="post" action="/stages/2/scope/priority/{{ system.id }}">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset" id="priorityLevel">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Priority</legend>
-        {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}
-          <p class="govuk-error-message">
-            <span class="govuk-visually-hidden">Error:</span>
-            {{ (error.items | selectattr('field','equalto','priorityLevel') | list | first).text }}
-          </p>
-        {% endif %}
-        <div class="govuk-hint">Select one option. Choose <strong>Not sure yet</strong> if you cannot decide now.</div>
-        <div class="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="priority-high" name="priorityLevel" type="radio" value="high" {% if data.level == "high" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="priority-high">High</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="priority-medium" name="priorityLevel" type="radio" value="medium" {% if data.level == "medium" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="priority-medium">Medium</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="priority-low" name="priorityLevel" type="radio" value="low" {% if data.level == "low" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="priority-low">Low</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="priority-unknown" name="priorityLevel" type="radio" value="not_sure" {% if data.level == "not_sure" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="priority-unknown">Not sure yet</label>
-          </div>
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
+          <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to critical systems</a>
         </div>
-      </fieldset>
-    </div>
+      </form>
 
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
-      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/systems/review' }}">Cancel and return to critical systems</a>
-    </div>
-  </form>
     </div>
   </div>
 {% endblock %}

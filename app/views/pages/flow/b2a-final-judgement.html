@@ -18,15 +18,21 @@
     </div>
   {% endif %}
 
-  <span class="govuk-caption-l">{{ context.caption }}</span>
-  <h1 class="govuk-heading-l">Final contributing outcome judgement</h1>
-  <p class="govuk-hint">Critical system: {{ context.systemName }}</p>
-  <p class="govuk-body">The indicative judgement suggests <strong>{{ summary.judgement }}</strong>, but you must decide the final judgement for this contributing outcome.</p>
+  {% if outcome %}
+    <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}{% if context.systemName %} — {{ context.systemName }}{% endif %}</span>
+  {% endif %}
+  <h1 class="govuk-heading-l">Record your judgement</h1>
+
+  {% if summary and summary.judgement %}
+    <p class="govuk-body">Indicative judgement from your responses:
+      <strong class="govuk-tag {% if summary.judgement == 'Achieved' %}govuk-tag--green{% elif summary.judgement == 'Partially achieved' %}govuk-tag--yellow{% elif summary.judgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-left-1">{{ summary.judgement }}</strong>
+    </p>
+  {% endif %}
 
   <form method="post" action="{{ formAction }}">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aFinalJudgement') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Select the final judgement</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What is your final judgement?</legend>
         {% if error and (error.items | selectattr('field', 'equalto', 'b2aFinalJudgement') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -45,19 +51,20 @@
     </div>
 
     <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label govuk-label--m" for="b2aRationale">Outcome rationale</label>
-      <div class="govuk-hint">This is the main explanation an assurer will read. Explain why the judgement is appropriate, the most important gaps or risks, any council context that matters, and how the evidence supports the judgement. Focus on the judgement for the outcome as a whole, rather than repeating each IGP response.</div>
+      <label class="govuk-label govuk-label--m" for="b2aRationale">Reason for your judgement</label>
+      <div id="b2aRationale-hint" class="govuk-hint">Explain why you have selected this judgement. Consider the evidence you have and how it relates to what the indicators suggest.</div>
       {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
         <p class="govuk-error-message">
           <span class="govuk-visually-hidden">Error:</span>
           {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
         </p>
       {% endif %}
-      <textarea class="govuk-textarea" id="b2aRationale" name="b2aRationale" rows="10">{{ form.rationale }}</textarea>
+      <textarea class="govuk-textarea" id="b2aRationale" name="b2aRationale" rows="10" aria-describedby="b2aRationale-hint">{{ form.rationale }}</textarea>
     </div>
 
     <div class="govuk-button-group">
       <button class="govuk-button" type="submit" data-module="govuk-button">Continue</button>
+      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
     </div>
   </form>
 {% endblock %}

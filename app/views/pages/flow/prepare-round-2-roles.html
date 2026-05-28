@@ -45,7 +45,7 @@
           <div class="govuk-details__text">
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
               {% for entry in rolesAudit.history | reverse %}
-                <li>{{ entry.updatedAt | replace("T", ", ") | replace("Z", "") }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF Lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
+                <li>{{ entry.updatedAt | ukDate }} by {{ entry.updatedBy }}{% if entry.lead %}: CAF Lead {{ entry.lead }}{% endif %}{% if entry.approver %}, approver {{ entry.approver }}{% endif %}</li>
               {% endfor %}
             </ul>
           </div>
@@ -98,7 +98,7 @@
           {% if rolesAudit.updatedAt %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Last updated</dt>
-              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedAt | replace("T", ", ") | replace("Z", "") }}</dd>
+              <dd class="govuk-summary-list__value">{{ rolesAudit.updatedAt | ukDate }}</dd>
             </div>
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">Updated by</dt>

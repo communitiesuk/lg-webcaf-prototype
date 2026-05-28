@@ -27,7 +27,7 @@ module.exports = function (router) {
     const accessAccount = roundTwo ? buildCouncilAccount(req.session.data) : null;
 
     const viewModel = {
-      pageTitle: roundTwo ? "My account" : labels.entry.pageTitle,
+      pageTitle: roundTwo ? "Your WebCAF account" : labels.entry.pageTitle,
       labels,
       user: req.session.data.user,
       hasInProgress,
@@ -130,10 +130,6 @@ module.exports = function (router) {
     const inProgress = assigned.filter((row) => row.status !== "complete");
     const pool = inProgress.length > 0 ? inProgress : assigned;
 
-    if (req.session.data.researchRound === "round-2") {
-      return res.redirect("/assessments/current/journey");
-    }
-
     if (pool.length > 0) {
       pool.sort((aRow, bRow) => {
         const aTime = Date.parse(aRow.updatedAt || "") || 0;
@@ -225,26 +221,26 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
       orgName,
       year,
       statusLabel: "Not started",
+      statusTagClass: "govuk-tag--grey",
       primaryActionText: "Start council onboarding",
       primaryActionHref: "/entry/start-new?returnTo=/onboarding",
-      secondaryActions: [],
+      assessmentLinks: [],
       onboardingStatus: "Not started",
       onboardingComplete: false,
       onboardingActionText: "Open council setup",
       onboardingActionHref: "/onboarding",
       assessmentRows: [],
       summaryRows: [],
-      helperText: "Complete council onboarding and setup first. The annual assessment becomes available after onboarding is complete.",
+      helperText: "Complete council onboarding and setup first. The assessment becomes available after onboarding is complete.",
     };
   }
 
   const onboardingComplete = isRoundTwoOnboardingComplete(assessment);
   const annualSetupComplete = Boolean(assessment.annualSetup && assessment.annualSetup.completed);
-  const adComplete = Boolean(assessment.selfAssess && assessment.selfAssess.adReview && assessment.selfAssess.adReview.completed);
   const bcComplete = Boolean(assessment.selfAssess && assessment.selfAssess.bcReview && assessment.selfAssess.bcReview.completed);
-  const readyForReview = Boolean(
-    assessment.selfAssessmentReview && assessment.selfAssessmentReview.completed
-  );
+  const assurerSubmitted = Boolean(assessment.assurerSubmission && assessment.assurerSubmission.submitted);
+  const selfAssessApproved = Boolean(assessment.collaborationWorkflow && assessment.collaborationWorkflow.status === "approved");
+  const readyForReview = assurerSubmitted || selfAssessApproved;
   const selfAssessStarted = Boolean(
     (assessment.selfAssess &&
       assessment.selfAssess.ad &&
@@ -255,41 +251,42 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
   );
 
   let statusLabel = "In progress";
-  if (readyForReview) {
-    statusLabel = "Ready for independent review";
+  if (assurerSubmitted) {
+    statusLabel = "Sent to assurer";
+  } else if (selfAssessApproved) {
+    statusLabel = "Ready to send to assurer";
   } else if (!onboardingComplete) {
     statusLabel = "Onboarding in progress";
+  } else if (!annualSetupComplete) {
+    statusLabel = "Ready to set up assessment";
   } else if (annualSetupComplete && !selfAssessStarted) {
     statusLabel = "Ready to start self-assessment";
   }
 
-  const secondaryActions = [
-    { text: "View onboarding and setup", href: "/onboarding" },
-    { text: "Manage team access", href: "/manage-users" },
-  ];
-
+  const assessmentLinks = [];
   if (onboardingComplete) {
-    secondaryActions.push({ text: "Open annual assessment", href: "/assessments/current/journey" });
+    assessmentLinks.push({ text: "Open assessment task list", href: "/assessments/current/journey" });
+  }
+  if (annualSetupComplete) {
+    assessmentLinks.push({ text: "Open assessment dashboard", href: "/assessments/current/dashboard?view=my" });
   }
 
-  if (annualSetupComplete) {
-    secondaryActions.push({ text: "Open assessment dashboard", href: "/assessments/current/dashboard?view=my" });
-  }
+  const statusTagClass = (assurerSubmitted || selfAssessApproved) ? "govuk-tag--green" : "govuk-tag--blue";
 
   let primaryActionText = "Continue onboarding";
   let primaryActionHref = "/onboarding";
   if (onboardingComplete) {
-    primaryActionText = "Continue this year's assessment";
+    primaryActionText = "Continue this assessment";
     primaryActionHref = "/entry/resume";
   }
   if (readyForReview) {
-    primaryActionText = "Open annual assessment task list";
+    primaryActionText = "Open assessment task list";
     primaryActionHref = "/assessments/current/journey";
   }
 
   const assessmentRows = [
     {
-      key: "Annual setup",
+      key: "Assessment setup",
       value: annualSetupComplete ? "Completed" : "Not started",
     },
     {
@@ -298,7 +295,7 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
     },
     {
       key: "Independent review",
-      value: readyForReview ? "Ready to send" : "Not ready",
+      value: assurerSubmitted ? "Submitted" : selfAssessApproved ? "Ready to send" : "Not ready",
     },
   ];
 
@@ -306,9 +303,10 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
     orgName,
     year,
     statusLabel,
+    statusTagClass,
     primaryActionText,
     primaryActionHref,
-    secondaryActions,
+    assessmentLinks,
     onboardingStatus: onboardingComplete ? "Completed" : "In progress",
     onboardingComplete,
     onboardingActionText: onboardingComplete ? "Review council setup" : "Continue council setup",
@@ -321,10 +319,17 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
       },
       ...assessmentRows,
     ],
-    helperText:
-      onboardingComplete
-        ? "Onboarding is complete. Use the annual assessment task list and dashboard for this year's work."
-        : "Finish council onboarding and setup before starting the annual assessment.",
+    helperText: assurerSubmitted
+      ? "Your assessment has been sent for independent review. Check the task list for next steps."
+      : selfAssessApproved
+        ? "Your self-assessment has been approved and is ready to send to your assurer."
+        : !onboardingComplete
+          ? "Finish council setup before starting the assessment."
+          : !annualSetupComplete
+            ? "Council setup is complete. Choose what to assess to begin your self-assessment."
+            : selfAssessStarted
+              ? "Continue your self-assessment using the task list or dashboard."
+              : "Assessment setup is complete. Use the task list to begin your self-assessment.",
   };
 }
 

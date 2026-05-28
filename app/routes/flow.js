@@ -30,7 +30,7 @@ const PROTOTYPE_OUTCOME_LIMITS = {
 
 const PROTOTYPE_OUTCOME_IDS = {
   AD: ["A1a", "A1b"],
-  BC: ["B2a"],
+  BC: ["B2a", "B2b", "B3a", "B4a"],
 };
 
 const B2A_OUTCOME_ID = "B2a";
@@ -296,6 +296,9 @@ module.exports = function (router) {
     return res.redirect("/assessments/current/dashboard");
   });
 
+  registerAdIgpOutcomeRoutes(router, "A1a");
+  registerAdIgpOutcomeRoutes(router, "A1b");
+
   router.get("/self-assess/ad", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
@@ -333,13 +336,8 @@ module.exports = function (router) {
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
 
     const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo && !usesCompactCafJudgementPage({ lens: "ad", outcome })) {
-      const igpAssessments = buildIgpAssessmentForm(saved.igpAssessments, outcome);
-      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
-      const destination = igpAssessments.every(hasCompletedIgpResponse)
-        ? `/self-assess/ad/${encodeURIComponent(outcome.id)}/check-answers`
-        : `/self-assess/ad/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`;
-      return res.redirect(destination);
+    if (roundTwo) {
+      return res.redirect(buildAdIgpStepPath(outcome.id, "achieved"));
     }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
     const context = roundTwo
@@ -623,8 +621,8 @@ module.exports = function (router) {
 
     const action = (req.session.data.action || "").toString();
     const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo && !usesCompactCafJudgementPage({ lens: "ad", outcome })) {
-      return res.redirect(`/self-assess/ad/${encodeURIComponent(req.params.outcomeId)}`);
+    if (roundTwo) {
+      return res.redirect(buildAdIgpStepPath(outcome.id, "achieved"));
     }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
 
@@ -951,60 +949,75 @@ module.exports = function (router) {
 
     const { bc } = getOutcomesForVersion(assessment);
     const prototypeRows = getPrototypeOutcomeRows(bc);
+
+    const principleTitles = {};
+    for (const objective of bc.objectives || []) {
+      for (const principle of objective.principles || []) {
+        principleTitles[principle.code] = principle.title;
+      }
+    }
+
     const rows = prototypeRows.map((outcome) => {
       const saved = getBCOutcome(assessment, system.id, outcome.id);
-      const evidenceCount = Array.isArray(saved.evidenceRefs)
-        ? saved.evidenceRefs.filter(hasAnyEvidenceValue).length
-        : 0;
       const started = Array.isArray(saved.igpAssessments)
         ? saved.igpAssessments.some(hasStartedIgpAssessment)
         : false;
+      const carriedForward = Boolean(saved.carriedForward && saved.reviewRequired);
+      const status =
+        carriedForward
+          ? "Carried forward"
+          : saved.judgement
+            ? "Complete"
+            : started || (saved.status && saved.status !== "not_started")
+              ? "In progress"
+              : "Not started";
+      const statusTagClass =
+        carriedForward ? "govuk-tag--turquoise" :
+        status === "Complete" ? "govuk-tag--green" :
+        status === "In progress" ? "govuk-tag--blue" :
+        "govuk-tag--grey";
       return {
         id: outcome.id,
         code: outcome.code,
         title: outcome.title,
         description: outcome.description || "",
+        principle: outcome.principle,
         judgement: saved.judgement || "",
         actionHref:
           outcome.id === B2A_OUTCOME_ID
-            ? buildB2aStepPath(system.id, "context")
-            : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`,
-        carriedForward: Boolean(saved.carriedForward && saved.reviewRequired),
-        evidenceCount,
-        status:
-          saved.carriedForward && saved.reviewRequired
-            ? "Carried forward - review needed"
-            : saved.judgement
-              ? "Complete"
-              : started
-                ? "In progress"
-              : "Not started",
+            ? buildB2aStepPath(system.id, "achieved")
+            : PROTOTYPE_OUTCOME_IDS.BC.includes(outcome.id)
+              ? buildIgpStepPath(outcome.id, system.id, "achieved")
+              : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`,
+        carriedForward,
+        status,
+        statusTagClass,
       };
     });
 
-    const mapping = getScopeMapping(scope, system.id);
-    const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
-      .map((serviceId) => findScopeService(scope, serviceId))
-      .filter(Boolean)
-      .map((service) => service.name);
-    const priority = getScopePriority(scope, system.id);
-    const pageStatus = rows.length > 0 && rows.every((row) => row.judgement)
-      ? "Complete"
-      : rows.some((row) => row.judgement)
-        ? "In progress"
-        : "Not started";
-    const primaryOutcome = rows[0] || null;
+    const groupMap = {};
+    const groupOrder = [];
+    for (const row of rows) {
+      if (!groupMap[row.principle]) {
+        groupMap[row.principle] = {
+          principleCode: row.principle,
+          principleTitle: principleTitles[row.principle] || row.principle,
+          outcomes: [],
+        };
+        groupOrder.push(row.principle);
+      }
+      groupMap[row.principle].outcomes.push(row);
+    }
+    const groups = groupOrder.map((code) => {
+      const g = groupMap[code];
+      return { ...g, judgedCount: g.outcomes.filter((r) => r.judgement).length, totalCount: g.outcomes.length };
+    });
 
     return res.render("pages/flow/self-assess-bc-system", {
-      pageTitle: `Complete B and C self-assessment: ${system.name}`,
-      labels,
+      pageTitle: system.name,
       assessment,
       system,
-      rows,
-      mappedServices,
-      priorityLevel: priority && priority.level ? priority.level : "",
-      pageStatus,
-      primaryOutcome,
+      groups,
       saved: (req.query.saved || "").toString(),
       savedName: (req.query.name || "").toString(),
       roundTwo: true,
@@ -1076,7 +1089,7 @@ module.exports = function (router) {
       guidanceSummary: "How to answer these statements",
       guidanceBody:
         "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
-      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "context"),
+      backHrefBuilder: (systemId) => `/self-assess/bc/${encodeURIComponent(systemId)}`,
       nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
     });
   });
@@ -1091,7 +1104,7 @@ module.exports = function (router) {
       guidanceSummary: "How to answer these statements",
       guidanceBody:
         "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
-      backHrefBuilder: (systemId) => buildB2aStepPath(systemId, "context"),
+      backHrefBuilder: (systemId) => `/self-assess/bc/${encodeURIComponent(systemId)}`,
       nextHrefBuilder: (systemId) => buildB2aStepPath(systemId, "not-achieved"),
     });
   });
@@ -1252,6 +1265,10 @@ module.exports = function (router) {
     return res.redirect(buildB2aStepPath(req.params.systemId, "ready"));
   });
 
+  registerIgpOutcomeRoutes(router, "B2b");
+  registerIgpOutcomeRoutes(router, "B3a");
+  registerIgpOutcomeRoutes(router, "B4a");
+
   router.get("/self-assess/bc/:systemId/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
@@ -1287,6 +1304,9 @@ module.exports = function (router) {
 
     if (isRoundTwoRequest(req) && outcome.id === B2A_OUTCOME_ID) {
       return res.redirect(buildB2aStepPath(system.id, "context"));
+    }
+    if (isRoundTwoRequest(req) && PROTOTYPE_OUTCOME_IDS.BC.includes(outcome.id)) {
+      return res.redirect(buildIgpStepPath(outcome.id, system.id, "achieved"));
     }
 
     const saved = getBCOutcome(assessment, system.id, outcome.id);
@@ -1610,6 +1630,9 @@ module.exports = function (router) {
 
     if (isRoundTwoRequest(req) && outcome.id === B2A_OUTCOME_ID) {
       return res.redirect(buildB2aStepPath(system.id, "context"));
+    }
+    if (isRoundTwoRequest(req) && PROTOTYPE_OUTCOME_IDS.BC.includes(outcome.id)) {
+      return res.redirect(buildIgpStepPath(outcome.id, system.id, "achieved"));
     }
 
     const action = (req.session.data.action || "").toString();
@@ -3246,7 +3269,6 @@ function buildB2aIndicativeJudgement(journey) {
     strengths: [],
     weaknesses: [],
     uncertainties: [],
-    reflections: [],
   };
 
   const sections = getB2aStatements();
@@ -3288,16 +3310,6 @@ function buildB2aIndicativeJudgement(journey) {
     summary.judgement = "Not achieved";
   } else if (score >= 8 && criticalGaps === 0) {
     summary.judgement = "Achieved";
-  }
-
-  if (summary.strengths.length > 0) {
-    summary.reflections.push("Some identity, authentication or access controls appear to be in place.");
-  }
-  if (summary.weaknesses.length > 0) {
-    summary.reflections.push("There may still be gaps in access control or authentication practice.");
-  }
-  if (summary.uncertainties.length > 0) {
-    summary.reflections.push("Some areas may need clarification, alternative controls or further evidence.");
   }
 
   return summary;
@@ -3435,7 +3447,7 @@ function handleB2aFinalJudgementPost(req, res) {
 
   const errorItems = [];
   if (!judgement) errorItems.push({ field: "b2aFinalJudgement", text: "Select the final contributing outcome judgement." });
-  if (!rationale) errorItems.push({ field: "b2aRationale", text: "Enter the rationale for this contributing outcome judgement." });
+  if (!rationale) errorItems.push({ field: "b2aRationale", text: "Enter a reason for your judgement." });
 
   if (errorItems.length) {
     return renderB2aFinalJudgement(req, res, { items: errorItems }, { judgement, rationale });
@@ -3481,7 +3493,7 @@ function handleB2aRationalePost(req, res) {
     return renderB2aRationale(
       req,
       res,
-      { items: [{ field: "b2aRationale", text: "Enter the rationale for this contributing outcome judgement." }] },
+      { items: [{ field: "b2aRationale", text: "Enter a reason for your judgement." }] },
       { rationale }
     );
   }
@@ -4098,8 +4110,8 @@ function buildIgpJudgementHint(igpAssessments) {
       state: "mixed",
       title: signalMode ? "The signals are mixed." : "The picture is mixed.",
       text: signalMode
-        ? "The signals do not point clearly to a single judgement. Use the synthesis and rationale to explain how you reached your decision."
-        : "Some statements are marked as not applicable or use an alternative control. Use your rationale to explain the current position and why you selected the overall judgement.",
+        ? "The signals do not point clearly to a single judgement. Use the synthesis and your reason to explain how you reached your decision."
+        : "Some statements are marked as not applicable or use an alternative control. Use the reason field to explain the current position and why you selected the overall judgement.",
     };
   }
 
@@ -4128,8 +4140,8 @@ function buildIgpJudgementHint(igpAssessments) {
     state: "mixed",
     title: "The picture is mixed.",
     text: anyAlternative || anyNotApplicable
-      ? "Some statements use alternative controls or are marked not applicable. Use your rationale to explain the current position and why you selected the overall judgement."
-      : "The statements do not give a simple result. Use your rationale to explain the current position and why you selected the overall judgement.",
+      ? "Some statements use alternative controls or are marked not applicable. Use the reason field to explain the current position and why you selected the overall judgement."
+      : "The statements do not give a simple result. Use the reason field to explain the current position and why you selected the overall judgement.",
   };
 }
 
@@ -4654,7 +4666,7 @@ function getCouncilRolesReturnHref(returnTo) {
 
 function getCouncilRolesReturnText(returnTo) {
   return returnTo === "journey"
-    ? "Return to annual assessment task list"
+    ? "Return to task list"
     : "Return to council onboarding and setup";
 }
 
@@ -4663,16 +4675,16 @@ function getCouncilRolesSaveRedirect(returnTo) {
 }
 
 function redirectIfScopeNotReady(req, res, assessment, target) {
-  if (!assessment.prepare || !assessment.prepare.guidanceRead) {
-    req.session.data.stage1Gate = true;
-    return res.redirect("/prepare");
-  }
   if (isRoundTwoRequest(req)) {
     if (!assessment.annualSetup || !assessment.annualSetup.completed) {
       req.session.data.selfAssessReturnTo = target;
       return res.redirect("/assessments/current/journey");
     }
     return false;
+  }
+  if (!assessment.prepare || !assessment.prepare.guidanceRead) {
+    req.session.data.stage1Gate = true;
+    return res.redirect("/prepare");
   }
   if (!assessment.selfAssessStart || !assessment.selfAssessStart.completed) {
     req.session.data.selfAssessReturnTo = target;
@@ -5123,4 +5135,748 @@ function getAuditActor(user) {
   const email = (user.email || "").toString().trim();
   if (name && email) return `${name} (${email})`;
   return name || email || "Unknown user";
+}
+
+// ─── Generic IGP outcome flow (B2b, B3a, B4a) ───────────────────────────────
+
+function getA1aStatements() {
+  return {
+    achieved: [
+      { id: "policy-owned-board", statement: "Your organisation's approach and policy relating to the security of network and information systems supporting the operation of essential function(s) are owned and managed at board-level. These are communicated, in a meaningful way, to risk management decision-makers across the organisation." },
+      { id: "regular-board-discussions", statement: "Regular board-level discussions on the security of network and information systems supporting the operation of your essential function(s) take place, based on timely and accurate information and informed by expert guidance." },
+      { id: "board-accountable-individual", statement: "There is a board-level individual who has overall accountability for the security of network and information systems and drives regular discussion at board-level." },
+      { id: "direction-translated", statement: "Direction set at board-level is translated into effective organisational practices that direct and control the security of the network and information systems supporting your essential functions(s)." },
+    ],
+    notAchieved: [
+      { id: "not-reported-regularly", statement: "The security of network and information systems related to the operation of essential function(s) is not discussed or reported on regularly at board-level." },
+      { id: "partial-out-of-date-info", statement: "Board-level discussions on the security of network and information systems are based on partial or out-of-date information, without the benefit of expert guidance." },
+      { id: "direction-not-effective", statement: "The security of network and information systems supporting your essential function(s) are not driven effectively by the direction set at board-level." },
+      { id: "senior-management-exempt", statement: "Senior management or other pockets of the organisation consider themselves exempt from some policies or expect special accommodations to be made." },
+    ],
+    partiallyAchieved: [
+      { id: "board-informed", statement: "The board has the information and understanding needed in order to effectively discuss how the security and resilience of network and information systems contributes to the delivery of essential function(s) and what the potential impact from compromise of those systems would be." },
+      { id: "security-recognised-enabler", statement: "Security is recognised as an important enabler for the resilience of your essential function(s) and considered in all relevant discussions." },
+    ],
+  };
+}
+
+function getA1bStatements() {
+  return {
+    achieved: [
+      { id: "roles-defined", statement: "Responsibility for the security of network and information systems supporting your essential functions is clearly defined and assigned to named individuals." },
+      { id: "accountability-senior", statement: "Accountability for cyber risk is assigned to an appropriately senior individual with the authority to act." },
+      { id: "responsibilities-communicated", statement: "All staff with relevant responsibilities understand their specific security duties and how they apply to their role." },
+      { id: "reporting-lines-clear", statement: "Clear reporting lines exist for security issues to reach decision-making levels quickly." },
+    ],
+    notAchieved: [
+      { id: "responsibility-unclear", statement: "Responsibility for the security of network and information systems is unclear or effectively unassigned." },
+      { id: "no-accountable-individual", statement: "There is no named individual with overall accountability for cyber risk across the organisation." },
+      { id: "responsibilities-not-communicated", statement: "Security responsibilities are not communicated to staff in a way that they can understand and act on." },
+      { id: "no-review-process", statement: "There is no formal process for reviewing or updating security roles and responsibilities." },
+    ],
+    partiallyAchieved: [
+      { id: "roles-exist-not-resourced", statement: "Key security roles exist but may not be fully resourced or empowered to act effectively." },
+      { id: "inconsistent-awareness", statement: "Some staff are aware of their security responsibilities but this awareness is inconsistent across the organisation." },
+      { id: "accountability-not-acted-on", statement: "Accountability for cyber risk has been assigned but is not consistently acted on in practice." },
+      { id: "partial-coverage", statement: "Roles and responsibilities are defined for some areas but may not cover all systems supporting essential functions." },
+    ],
+  };
+}
+
+function getB2bStatements() {
+  return {
+    achieved: [
+      { id: "paw-privileged-ops", statement: "Privileged operations are only carried out from highly trusted devices (Privileged Access Workstations)." },
+      { id: "third-party-assurance", statement: "Independent assurance has been sought on the security of third-party devices used with this system." },
+      { id: "certificate-identity", statement: "Certificate-based device identity management ensures only corporate devices can connect to this system." },
+      { id: "unknown-device-scans", statement: "Regular scans for unknown devices connecting to this system are carried out." },
+    ],
+    notAchieved: [
+      { id: "non-corporate-users", statement: "Users connect to this system using non-corporate devices." },
+      { id: "non-corporate-privileged", statement: "Privileged users carry out privileged operations using non-corporate devices." },
+      { id: "no-third-party-assurance", statement: "No assurance has been sought on the security of third-party devices." },
+      { id: "port-grants-access", statement: "Connecting to this system's network port grants access without authentication." },
+    ],
+    partiallyAchieved: [
+      { id: "corporate-essential-only", statement: "Only corporate devices are used to access the essential functions of this system." },
+      { id: "corporate-privileged-ops", statement: "Privileged operations are carried out from corporate devices." },
+      { id: "third-party-understood", statement: "The council has sought to understand the security controls on third-party devices." },
+      { id: "port-no-auto-access", statement: "Connecting to this system's network port does not automatically grant access." },
+      { id: "unknown-device-detection", statement: "Unknown devices connecting to this system can be detected." },
+    ],
+  };
+}
+
+function getB3aStatements() {
+  return {
+    achieved: [
+      { id: "current-data-understanding", statement: "A current understanding of all important data relating to this system is maintained." },
+      { id: "remove-unnecessary-copies", statement: "Steps are taken to remove unnecessary copies of important data." },
+      { id: "data-links-understood", statement: "A current understanding of data links for this system is maintained, including third-party data processors." },
+      { id: "data-context-understood", statement: "The context, limitations and dependencies of important data are understood." },
+      { id: "annual-impact-validation", statement: "Impact statements are validated regularly, at least annually." },
+    ],
+    notAchieved: [
+      { id: "incomplete-data-knowledge", statement: "The council has incomplete knowledge of the data it holds relating to this system." },
+      { id: "important-data-unidentified", statement: "Important data relating to this system has not been identified." },
+      { id: "access-unidentified", statement: "The council has not identified who has access to important data for this system." },
+      { id: "impact-not-articulated", statement: "The impact of compromise of the important data has not been articulated." },
+    ],
+    partiallyAchieved: [
+      { id: "data-catalogued", statement: "Important data relating to this system has been identified and catalogued." },
+      { id: "access-catalogued", statement: "Who has access to important data for this system has been catalogued." },
+      { id: "data-location-reviewed", statement: "The location, transmission, quantity and quality of important data is regularly reviewed." },
+      { id: "mobile-media-identified", statement: "Mobile devices and removable media used with this system have been identified." },
+      { id: "impact-documented", statement: "The impact of data compromise has been understood and documented." },
+      { id: "impact-occasionally-validated", statement: "Impact statements are occasionally validated." },
+    ],
+  };
+}
+
+function getB4aStatements() {
+  return {
+    achieved: [
+      { id: "security-zones", statement: "Systems supporting this essential function are segregated into security zones." },
+      { id: "simple-data-flows", statement: "Data flows between system components are simple and well-understood." },
+      { id: "easy-to-recover", statement: "Systems supporting this essential function are designed to be easy to recover." },
+      { id: "content-attacks-mitigated", statement: "Content-based attacks are mitigated for all inputs to this system." },
+    ],
+    notAchieved: [
+      { id: "not-segregated", statement: "Systems supporting this essential function are not segregated from other systems." },
+      { id: "internet-access", statement: "Internet access is possible from systems directly supporting this essential function." },
+      { id: "complex-data-flows", statement: "Data flows supporting this essential function are complex and poorly understood." },
+      { id: "remote-access-bypasses-controls", statement: "Remote or third-party access to this system circumvents network controls." },
+    ],
+    partiallyAchieved: [
+      { id: "appropriate-expertise", statement: "Appropriate expertise is employed in the design of systems supporting this essential function." },
+      { id: "boundary-defences", statement: "Strong boundary defences are designed for systems supporting this essential function." },
+      { id: "simple-design", statement: "Data flows are designed to be simple." },
+      { id: "recovery-design", statement: "Systems supporting this essential function are designed to be easy to recover." },
+      { id: "input-validation", statement: "Inputs are validated at the network boundary." },
+    ],
+  };
+}
+
+function getIgpStatements(outcomeId) {
+  if (outcomeId === "A1a") return getA1aStatements();
+  if (outcomeId === "A1b") return getA1bStatements();
+  if (outcomeId === "B2a") return getB2aStatements();
+  if (outcomeId === "B2b") return getB2bStatements();
+  if (outcomeId === "B3a") return getB3aStatements();
+  if (outcomeId === "B4a") return getB4aStatements();
+  return { achieved: [], notAchieved: [], partiallyAchieved: [] };
+}
+
+function getIgpJourneyKey(outcomeId) {
+  return `igpJourney_${outcomeId}`;
+}
+
+function buildIgpStepPath(outcomeId, systemId, step) {
+  const slug = outcomeId.toLowerCase();
+  const base = `/self-assess/bc/${encodeURIComponent(systemId)}/outcomes/${outcomeId}`;
+  const paths = {
+    achieved: `${base}/${slug}-achieved`,
+    "not-achieved": `${base}/${slug}-not-achieved`,
+    "partially-achieved": `${base}/${slug}-partially-achieved`,
+    "indicative-judgement": `${base}/${slug}-indicative-judgement`,
+    "final-judgement": `${base}/${slug}-final-judgement`,
+  };
+  return paths[step] || base;
+}
+
+function getIgpRouteContext(req, res, outcomeId) {
+  const assessment = getAssessmentOrRedirect(req, res);
+  if (!assessment) return null;
+  ensureFlowData(assessment);
+  if (!isRoundTwoRequest(req)) {
+    res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${outcomeId}`);
+    return null;
+  }
+  const system = findBCSystemForJourney(assessment, req.params.systemId);
+  if (!system) { renderNotFound(res); return null; }
+  const { bc } = getOutcomesForVersion(assessment);
+  const outcome = findOutcome(bc, outcomeId);
+  if (!outcome) { renderNotFound(res); return null; }
+  const saved = getBCOutcome(assessment, system.id, outcome.id);
+  const journeyKey = getIgpJourneyKey(outcomeId);
+  saved[journeyKey] = normaliseB2aJourney(saved[journeyKey]);
+  return { assessment, system, outcome, saved, bc, journeyKey };
+}
+
+function getIgpStepForm(journey, stepKey, outcomeId) {
+  const statements = getIgpStatements(outcomeId);
+  const stepValues = journey[stepKey] || {};
+  return (statements[stepKey] || []).map((statement) => ({
+    ...statement,
+    response: ((stepValues[statement.id] && stepValues[statement.id].response) || "").toString(),
+    explanation: ((stepValues[statement.id] && stepValues[statement.id].explanation) || "").toString(),
+    note: ((stepValues[statement.id] && stepValues[statement.id].note) || "").toString(),
+  }));
+}
+
+function parseIgpStepForm(body, stepKey, outcomeId) {
+  const statements = getIgpStatements(outcomeId);
+  return (statements[stepKey] || []).map((statement) => {
+    const prefix = `${stepKey}-${statement.id}`;
+    const explanationNotApplicable = ((body && body[`${prefix}-explanation-na`]) || "").toString().trim();
+    const explanationAlternative = ((body && body[`${prefix}-explanation-alt`]) || "").toString().trim();
+    const response = ((body && body[`${prefix}-response`]) || "").toString();
+    return {
+      ...statement,
+      stepKey,
+      response,
+      explanation:
+        response === "not-applicable"
+          ? explanationNotApplicable
+          : response === "alternative-control"
+          ? explanationAlternative
+          : explanationNotApplicable || explanationAlternative,
+      note: ((body && body[`${prefix}-note`]) || "").toString().trim(),
+    };
+  });
+}
+
+function syncIgpOutcomeData(assessment, systemId, outcomeId, saved) {
+  const journeyKey = getIgpJourneyKey(outcomeId);
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  const statements = getIgpStatements(outcomeId);
+  const igpAssessments = Object.entries(statements).flatMap(([stepKey, items]) =>
+    items.map((item) => {
+      const s = (journey[stepKey] && journey[stepKey][item.id]) || {};
+      return {
+        statement: item.statement,
+        response: (s.response || "").toString(),
+        rationale: (s.explanation || s.note || "").toString(),
+        evidenceNote: (s.note || "").toString(),
+        captureMode: "signal",
+      };
+    })
+  );
+  const answered = igpAssessments.filter((i) => i.response);
+  const igpResponse = answered.length === 0 ? "" : [
+    `${answered.filter((i) => i.response === "yes").length} yes`,
+    `${answered.filter((i) => i.response === "no").length} no`,
+    `${answered.filter((i) => i.response === "alternative-control").length} alternative control`,
+    `${answered.filter((i) => i.response === "not-applicable").length} not applicable`,
+  ].join(", ");
+  const next = {
+    ...saved,
+    [journeyKey]: journey,
+    igpAssessments,
+    igpResponse,
+    updatedAt: new Date().toISOString(),
+  };
+  setBCOutcome(assessment, systemId, outcomeId, next);
+  assessment.updatedAt = next.updatedAt;
+  invalidateRoundTwoSectionCompletion(assessment, "bc");
+  updateRoundTwoCollaborationDraftState(assessment, null);
+  return next;
+}
+
+function buildIgpIndicativeJudgement(journey, outcomeId) {
+  const statements = getIgpStatements(outcomeId);
+  const summary = { judgement: "Partially achieved", strengths: [], weaknesses: [], uncertainties: [] };
+  let score = 0;
+  let criticalGaps = 0;
+  Object.entries(statements).forEach(([stepKey, items]) => {
+    items.forEach((item) => {
+      const s = (journey[stepKey] && journey[stepKey][item.id]) || {};
+      const response = (s.response || "").toString();
+      if (!response) return;
+      const positive =
+        (stepKey === "achieved" && response === "yes") ||
+        (stepKey === "notAchieved" && response === "no") ||
+        (stepKey === "partiallyAchieved" && response === "yes");
+      const negative =
+        (stepKey === "achieved" && response === "no") ||
+        (stepKey === "notAchieved" && response === "yes") ||
+        (stepKey === "partiallyAchieved" && response === "no");
+      if (positive) {
+        score += stepKey === "partiallyAchieved" ? 1 : 2;
+        summary.strengths.push(item.statement);
+      } else if (negative) {
+        score -= stepKey === "partiallyAchieved" ? 1 : 2;
+        criticalGaps += stepKey === "partiallyAchieved" ? 0 : 1;
+        summary.weaknesses.push(item.statement);
+      } else if (response === "alternative-control") {
+        score += 1;
+        summary.uncertainties.push(`${item.statement} Alternative control noted.`);
+      } else if (response === "not-applicable") {
+        summary.uncertainties.push(`${item.statement} Marked not applicable.`);
+      }
+    });
+  });
+  if (criticalGaps >= 2 || score <= 1) summary.judgement = "Not achieved";
+  else if (score >= 8 && criticalGaps === 0) summary.judgement = "Achieved";
+  return summary;
+}
+
+function renderIgpStep(req, res, outcomeId, options) {
+  const routeContext = getIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc, journeyKey } = routeContext;
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  return res.render("pages/flow/b2a-igp-page", {
+    pageTitle: options.pageTitle,
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: options.backHrefBuilder(system.id),
+    formAction: options.formAction(system.id),
+    nextLabel: "Continue",
+    page: {
+      heading: options.heading,
+      intro: options.intro,
+      pageHint: options.pageHint || "",
+      guidanceSummary: options.guidanceSummary,
+      guidanceBody: options.guidanceBody,
+      stepKey: options.stepKey,
+      rows: getIgpStepForm(journey, options.stepKey, outcomeId),
+    },
+    error: null,
+  });
+}
+
+function handleIgpStepPost(req, res, outcomeId, options) {
+  const routeContext = getIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc, journeyKey } = routeContext;
+  const rows = parseIgpStepForm(req.body, options.stepKey, outcomeId);
+  const errors = validateB2aStepRows(rows);
+  if (errors.length > 0) {
+    return res.render("pages/flow/b2a-igp-page", {
+      pageTitle: options.pageTitle,
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      backHref: options.backHrefBuilder(system.id),
+      formAction: options.formAction(system.id),
+      nextLabel: "Continue",
+      page: {
+        heading: options.heading,
+        intro: options.intro,
+        pageHint: options.pageHint || "",
+        guidanceSummary: options.guidanceSummary,
+        guidanceBody: options.guidanceBody,
+        stepKey: options.stepKey,
+        rows,
+      },
+      error: { items: errors },
+    });
+  }
+  const journey = updateB2aJourneySection(saved[journeyKey], options.stepKey, rows);
+  syncIgpOutcomeData(assessment, system.id, outcomeId, {
+    ...saved,
+    [journeyKey]: journey,
+    status: "in_progress",
+  });
+  return res.redirect(options.nextHrefBuilder(system.id));
+}
+
+function renderIgpFinalJudgement(req, res, outcomeId, error, values) {
+  const routeContext = getIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved, bc, journeyKey } = routeContext;
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  const summary = journey.indicativeSummary || buildIgpIndicativeJudgement(journey, outcomeId);
+  return res.render("pages/flow/b2a-final-judgement", {
+    pageTitle: "Final contributing outcome judgement",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+    outcome,
+    backHref: buildIgpStepPath(outcomeId, system.id, "indicative-judgement"),
+    formAction: buildIgpStepPath(outcomeId, system.id, "final-judgement"),
+    summary,
+    form: {
+      judgement: values ? values.judgement : (saved.judgement || ""),
+      rationale: values ? values.rationale : (saved.rationale || ""),
+    },
+    error: error || null,
+  });
+}
+
+function handleIgpFinalJudgementPost(req, res, outcomeId) {
+  const routeContext = getIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, system, outcome, saved } = routeContext;
+  const judgement = ((req.body && req.body.b2aFinalJudgement) || "").toString();
+  const rationale = ((req.body && req.body.b2aRationale) || "").toString().trim();
+  const errorItems = [];
+  if (!judgement) errorItems.push({ field: "b2aFinalJudgement", text: "Select the final contributing outcome judgement." });
+  if (!rationale) errorItems.push({ field: "b2aRationale", text: "Enter a reason for your judgement." });
+  if (errorItems.length) {
+    return renderIgpFinalJudgement(req, res, outcomeId, { items: errorItems }, { judgement, rationale });
+  }
+  syncIgpOutcomeData(assessment, system.id, outcomeId, {
+    ...saved,
+    judgement,
+    rationale,
+    status: "ready_for_internal_review",
+  });
+  return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}?saved=outcome&savedName=${encodeURIComponent(outcome.title)}`);
+}
+
+function registerIgpOutcomeRoutes(router, outcomeId) {
+  const slug = outcomeId.toLowerCase();
+  const base = `/self-assess/bc/:systemId/outcomes/${outcomeId}`;
+
+  const igpStepOptions = {
+    achieved: {
+      pageTitle: "Achieved IGPs",
+      heading: "Achieved IGPs",
+      intro: "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
+      guidanceSummary: "How to answer these statements",
+      guidanceBody: "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
+      stepKey: "achieved",
+      formAction: (systemId) => buildIgpStepPath(outcomeId, systemId, "achieved"),
+      backHrefBuilder: (systemId) => `/self-assess/bc/${encodeURIComponent(systemId)}`,
+      nextHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "not-achieved"),
+    },
+    notAchieved: {
+      pageTitle: "Not achieved IGPs",
+      heading: "Not achieved IGPs",
+      intro: "Now review indicators that would usually suggest this contributing outcome is not achieved.",
+      pageHint: "Some statements on this page relate to controls you reviewed earlier.",
+      guidanceSummary: "How to use this page",
+      guidanceBody: "A 'Yes' answer may indicate a gap that affects your judgement. Use 'Not applicable' or 'Alternative control in place' only when you can explain why the statement does not apply as written.",
+      stepKey: "notAchieved",
+      formAction: (systemId) => buildIgpStepPath(outcomeId, systemId, "not-achieved"),
+      backHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "achieved"),
+      nextHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "partially-achieved"),
+    },
+    partiallyAchieved: {
+      pageTitle: "Partially achieved IGPs",
+      heading: "Partially achieved IGPs",
+      intro: "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
+      guidanceSummary: "How to use these statements",
+      guidanceBody: "These statements help you consider whether the council is getting worthwhile security benefit, while still having gaps to address.",
+      stepKey: "partiallyAchieved",
+      formAction: (systemId) => buildIgpStepPath(outcomeId, systemId, "partially-achieved"),
+      backHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "not-achieved"),
+      nextHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "indicative-judgement"),
+    },
+  };
+
+  router.get(`${base}/${slug}-achieved`, (req, res) => {
+    renderIgpStep(req, res, outcomeId, igpStepOptions.achieved);
+  });
+  router.post(`${base}/${slug}-achieved`, (req, res) => {
+    handleIgpStepPost(req, res, outcomeId, igpStepOptions.achieved);
+  });
+
+  router.get(`${base}/${slug}-not-achieved`, (req, res) => {
+    renderIgpStep(req, res, outcomeId, igpStepOptions.notAchieved);
+  });
+  router.post(`${base}/${slug}-not-achieved`, (req, res) => {
+    handleIgpStepPost(req, res, outcomeId, igpStepOptions.notAchieved);
+  });
+
+  router.get(`${base}/${slug}-partially-achieved`, (req, res) => {
+    renderIgpStep(req, res, outcomeId, igpStepOptions.partiallyAchieved);
+  });
+  router.post(`${base}/${slug}-partially-achieved`, (req, res) => {
+    handleIgpStepPost(req, res, outcomeId, igpStepOptions.partiallyAchieved);
+  });
+
+  router.get(`${base}/${slug}-indicative-judgement`, (req, res) => {
+    const routeContext = getIgpRouteContext(req, res, outcomeId);
+    if (!routeContext) return;
+    const { assessment, system, outcome, saved, bc, journeyKey } = routeContext;
+    const summary = buildIgpIndicativeJudgement(saved[journeyKey] || {}, outcomeId);
+    syncIgpOutcomeData(assessment, system.id, outcomeId, {
+      ...saved,
+      [journeyKey]: {
+        ...(saved[journeyKey] || {}),
+        indicativeJudgement: summary.judgement,
+        indicativeSummary: summary,
+      },
+    });
+    return res.render("pages/flow/b2a-indicative-judgement", {
+      pageTitle: "Indicative judgement",
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+      outcome,
+      system,
+      backHref: buildIgpStepPath(outcomeId, system.id, "partially-achieved"),
+      nextHref: buildIgpStepPath(outcomeId, system.id, "final-judgement"),
+      summary,
+    });
+  });
+
+  router.get(`${base}/${slug}-final-judgement`, (req, res) => {
+    renderIgpFinalJudgement(req, res, outcomeId);
+  });
+  router.post(`${base}/${slug}-final-judgement`, (req, res) => {
+    handleIgpFinalJudgementPost(req, res, outcomeId);
+  });
+}
+
+function buildAdIgpStepPath(outcomeId, step) {
+  const slug = outcomeId.toLowerCase();
+  const base = `/self-assess/ad/${outcomeId}`;
+  const paths = {
+    achieved: `${base}/${slug}-achieved`,
+    "not-achieved": `${base}/${slug}-not-achieved`,
+    "partially-achieved": `${base}/${slug}-partially-achieved`,
+    "indicative-judgement": `${base}/${slug}-indicative-judgement`,
+    "final-judgement": `${base}/${slug}-final-judgement`,
+  };
+  return paths[step] || base;
+}
+
+function getAdIgpRouteContext(req, res, outcomeId) {
+  const assessment = getAssessmentOrRedirect(req, res);
+  if (!assessment) return null;
+  ensureFlowData(assessment);
+  if (!isRoundTwoRequest(req)) {
+    res.redirect(`/self-assess/ad/${outcomeId}`);
+    return null;
+  }
+  const { ad } = getOutcomesForVersion(assessment);
+  const outcome = findOutcome(ad, outcomeId);
+  if (!outcome) { renderNotFound(res); return null; }
+  if (!assessment.selfAssess) assessment.selfAssess = {};
+  if (!assessment.selfAssess.ad) assessment.selfAssess.ad = {};
+  const saved = assessment.selfAssess.ad[outcomeId] || {};
+  const journeyKey = getIgpJourneyKey(outcomeId);
+  saved[journeyKey] = normaliseB2aJourney(saved[journeyKey]);
+  return { assessment, outcome, saved, ad, journeyKey };
+}
+
+function syncAdIgpOutcomeData(assessment, outcomeId, saved) {
+  const journeyKey = getIgpJourneyKey(outcomeId);
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  const statements = getIgpStatements(outcomeId);
+  const igpAssessments = Object.entries(statements).flatMap(([stepKey, items]) =>
+    items.map((item) => {
+      const s = (journey[stepKey] && journey[stepKey][item.id]) || {};
+      return {
+        statement: item.statement,
+        response: (s.response || "").toString(),
+        rationale: (s.explanation || s.note || "").toString(),
+        evidenceNote: (s.note || "").toString(),
+        captureMode: "signal",
+      };
+    })
+  );
+  const answered = igpAssessments.filter((i) => i.response);
+  const igpResponse = answered.length === 0 ? "" : [
+    `${answered.filter((i) => i.response === "yes").length} yes`,
+    `${answered.filter((i) => i.response === "no").length} no`,
+    `${answered.filter((i) => i.response === "alternative-control").length} alternative control`,
+    `${answered.filter((i) => i.response === "not-applicable").length} not applicable`,
+  ].join(", ");
+  const next = {
+    ...saved,
+    [journeyKey]: journey,
+    igpAssessments,
+    igpResponse,
+    updatedAt: new Date().toISOString(),
+  };
+  if (!assessment.selfAssess) assessment.selfAssess = {};
+  if (!assessment.selfAssess.ad) assessment.selfAssess.ad = {};
+  assessment.selfAssess.ad[outcomeId] = next;
+  assessment.updatedAt = next.updatedAt;
+  invalidateRoundTwoSectionCompletion(assessment, "ad");
+  updateRoundTwoCollaborationDraftState(assessment, null);
+  return next;
+}
+
+function renderAdIgpStep(req, res, outcomeId, options) {
+  const routeContext = getAdIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, outcome, saved, ad, journeyKey } = routeContext;
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  return res.render("pages/flow/b2a-igp-page", {
+    pageTitle: options.pageTitle,
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
+    outcome,
+    backHref: options.backHref,
+    formAction: options.formAction,
+    nextLabel: "Continue",
+    page: {
+      heading: options.heading,
+      intro: options.intro,
+      pageHint: options.pageHint || "",
+      guidanceSummary: options.guidanceSummary,
+      guidanceBody: options.guidanceBody,
+      stepKey: options.stepKey,
+      rows: getIgpStepForm(journey, options.stepKey, outcomeId),
+    },
+    error: null,
+  });
+}
+
+function handleAdIgpStepPost(req, res, outcomeId, options) {
+  const routeContext = getAdIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, outcome, saved, ad, journeyKey } = routeContext;
+  const rows = parseIgpStepForm(req.body, options.stepKey, outcomeId);
+  const errors = validateB2aStepRows(rows);
+  if (errors.length > 0) {
+    return res.render("pages/flow/b2a-igp-page", {
+      pageTitle: options.pageTitle,
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
+      outcome,
+      backHref: options.backHref,
+      formAction: options.formAction,
+      nextLabel: "Continue",
+      page: {
+        heading: options.heading,
+        intro: options.intro,
+        pageHint: options.pageHint || "",
+        guidanceSummary: options.guidanceSummary,
+        guidanceBody: options.guidanceBody,
+        stepKey: options.stepKey,
+        rows,
+      },
+      error: { items: errors },
+    });
+  }
+  const journey = updateB2aJourneySection(saved[journeyKey], options.stepKey, rows);
+  syncAdIgpOutcomeData(assessment, outcomeId, {
+    ...saved,
+    [journeyKey]: journey,
+    status: "in_progress",
+  });
+  return res.redirect(options.nextHref);
+}
+
+function renderAdIgpFinalJudgement(req, res, outcomeId, error, values) {
+  const routeContext = getAdIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, outcome, saved, ad, journeyKey } = routeContext;
+  const journey = normaliseB2aJourney(saved[journeyKey]);
+  const summary = journey.indicativeSummary || buildIgpIndicativeJudgement(journey, outcomeId);
+  return res.render("pages/flow/b2a-final-judgement", {
+    pageTitle: "Final outcome judgement",
+    assessment,
+    context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
+    outcome,
+    backHref: buildAdIgpStepPath(outcomeId, "indicative-judgement"),
+    formAction: buildAdIgpStepPath(outcomeId, "final-judgement"),
+    summary,
+    form: {
+      judgement: values ? values.judgement : (saved.judgement || ""),
+      rationale: values ? values.rationale : (saved.rationale || ""),
+    },
+    error: error || null,
+  });
+}
+
+function handleAdIgpFinalJudgementPost(req, res, outcomeId) {
+  const routeContext = getAdIgpRouteContext(req, res, outcomeId);
+  if (!routeContext) return;
+  const { assessment, outcome, saved } = routeContext;
+  const judgement = ((req.body && req.body.b2aFinalJudgement) || "").toString();
+  const rationale = ((req.body && req.body.b2aRationale) || "").toString().trim();
+  const errorItems = [];
+  if (!judgement) errorItems.push({ field: "b2aFinalJudgement", text: "Select the final outcome judgement." });
+  if (!rationale) errorItems.push({ field: "b2aRationale", text: "Enter a reason for your judgement." });
+  if (errorItems.length) {
+    return renderAdIgpFinalJudgement(req, res, outcomeId, { items: errorItems }, { judgement, rationale });
+  }
+  syncAdIgpOutcomeData(assessment, outcomeId, {
+    ...saved,
+    judgement,
+    rationale,
+    status: "complete",
+  });
+  return res.redirect(`/assessments/current/self-assessment/ad?saved=outcome&name=${encodeURIComponent(outcome.title)}`);
+}
+
+function registerAdIgpOutcomeRoutes(router, outcomeId) {
+  const slug = outcomeId.toLowerCase();
+  const base = `/self-assess/ad/${outcomeId}`;
+
+  const igpStepOptions = {
+    achieved: {
+      pageTitle: "Achieved IGPs",
+      heading: "Achieved IGPs",
+      intro: "Start with the indicators of good practice that would usually be present if this outcome is achieved.",
+      guidanceSummary: "How to answer these statements",
+      guidanceBody: "Answer based on how your organisation works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
+      stepKey: "achieved",
+      formAction: buildAdIgpStepPath(outcomeId, "achieved"),
+      backHref: "/assessments/current/self-assessment/ad",
+      nextHref: buildAdIgpStepPath(outcomeId, "not-achieved"),
+    },
+    notAchieved: {
+      pageTitle: "Not achieved IGPs",
+      heading: "Not achieved IGPs",
+      intro: "Now review indicators that would usually suggest this outcome is not achieved.",
+      pageHint: "Some statements on this page relate to controls you reviewed earlier.",
+      guidanceSummary: "How to use this page",
+      guidanceBody: "A 'Yes' answer may indicate a gap that affects your judgement. Use 'Not applicable' or 'Alternative control in place' only when you can explain why the statement does not apply as written.",
+      stepKey: "notAchieved",
+      formAction: buildAdIgpStepPath(outcomeId, "not-achieved"),
+      backHref: buildAdIgpStepPath(outcomeId, "achieved"),
+      nextHref: buildAdIgpStepPath(outcomeId, "partially-achieved"),
+    },
+    partiallyAchieved: {
+      pageTitle: "Partially achieved IGPs",
+      heading: "Partially achieved IGPs",
+      intro: "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
+      guidanceSummary: "How to use these statements",
+      guidanceBody: "These statements help you consider whether the organisation is getting worthwhile security benefit, while still having gaps to address.",
+      stepKey: "partiallyAchieved",
+      formAction: buildAdIgpStepPath(outcomeId, "partially-achieved"),
+      backHref: buildAdIgpStepPath(outcomeId, "not-achieved"),
+      nextHref: buildAdIgpStepPath(outcomeId, "indicative-judgement"),
+    },
+  };
+
+  router.get(`${base}/${slug}-achieved`, (req, res) => {
+    renderAdIgpStep(req, res, outcomeId, igpStepOptions.achieved);
+  });
+  router.post(`${base}/${slug}-achieved`, (req, res) => {
+    handleAdIgpStepPost(req, res, outcomeId, igpStepOptions.achieved);
+  });
+
+  router.get(`${base}/${slug}-not-achieved`, (req, res) => {
+    renderAdIgpStep(req, res, outcomeId, igpStepOptions.notAchieved);
+  });
+  router.post(`${base}/${slug}-not-achieved`, (req, res) => {
+    handleAdIgpStepPost(req, res, outcomeId, igpStepOptions.notAchieved);
+  });
+
+  router.get(`${base}/${slug}-partially-achieved`, (req, res) => {
+    renderAdIgpStep(req, res, outcomeId, igpStepOptions.partiallyAchieved);
+  });
+  router.post(`${base}/${slug}-partially-achieved`, (req, res) => {
+    handleAdIgpStepPost(req, res, outcomeId, igpStepOptions.partiallyAchieved);
+  });
+
+  router.get(`${base}/${slug}-indicative-judgement`, (req, res) => {
+    const routeContext = getAdIgpRouteContext(req, res, outcomeId);
+    if (!routeContext) return;
+    const { assessment, outcome, saved, ad, journeyKey } = routeContext;
+    const summary = buildIgpIndicativeJudgement(saved[journeyKey] || {}, outcomeId);
+    syncAdIgpOutcomeData(assessment, outcomeId, {
+      ...saved,
+      [journeyKey]: {
+        ...(saved[journeyKey] || {}),
+        indicativeJudgement: summary.judgement,
+        indicativeSummary: summary,
+      },
+    });
+    return res.render("pages/flow/b2a-indicative-judgement", {
+      pageTitle: "Indicative judgement",
+      assessment,
+      context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
+      outcome,
+      backHref: buildAdIgpStepPath(outcomeId, "partially-achieved"),
+      nextHref: buildAdIgpStepPath(outcomeId, "final-judgement"),
+      summary,
+    });
+  });
+
+  router.get(`${base}/${slug}-final-judgement`, (req, res) => {
+    renderAdIgpFinalJudgement(req, res, outcomeId);
+  });
+  router.post(`${base}/${slug}-final-judgement`, (req, res) => {
+    handleAdIgpFinalJudgementPost(req, res, outcomeId);
+  });
 }

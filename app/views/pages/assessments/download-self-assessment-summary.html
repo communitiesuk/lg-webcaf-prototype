@@ -195,7 +195,7 @@
                     <td>{{ outcome.judgement or "Not provided" }}</td>
                   </tr>
                   <tr>
-                    <th scope="row">Rationale</th>
+                    <th scope="row">Reason</th>
                     <td>{{ outcome.rationale or "Not provided" }}</td>
                   </tr>
                   <tr>
@@ -219,7 +219,7 @@
                   </tr>
                   <tr>
                     <th scope="row">Latest saved update</th>
-                    <td>{{ outcome.updatedAt or "Not available" }}</td>
+                    <td>{{ outcome.updatedAt | ukDate or "Not available" }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -237,7 +237,7 @@
                           <td>{{ statement.maturity or "Not provided" }}</td>
                         </tr>
                         <tr>
-                          <th scope="row">Rationale</th>
+                          <th scope="row">Reason</th>
                           <td>{{ statement.rationale or "Not provided" }}</td>
                         </tr>
                         <tr>

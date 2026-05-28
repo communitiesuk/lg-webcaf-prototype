@@ -176,7 +176,7 @@
     {% endif %}
 
     <div class="govuk-form-group{% if errorItems | selectattr('field', 'equalto', 'assurerSummaryRationale') | list | length %} govuk-form-group--error{% endif %}">
-      <label class="govuk-label govuk-label--m" for="assurerSummaryRationale">Assurer rationale</label>
+      <label class="govuk-label govuk-label--m" for="assurerSummaryRationale">Assurer reason</label>
       <div class="govuk-hint">Summarise the overall assurance position and any remaining action the council needs to take.</div>
       {% for item in errorItems if item.field == "assurerSummaryRationale" %}
         <p class="govuk-error-message" id="assurerSummaryRationale">

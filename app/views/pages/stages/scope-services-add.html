@@ -4,70 +4,65 @@
 {% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-  {% set headingText = "Add essential services" %}
-  {% if isEdit %}
-    {% set headingText = "Change an essential service" %}
-  {% endif %}
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
 
-  {{ appErrorSummary(error) }}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  {{ appPageHeader({
-    caption: "Essential services list" if researchRound == "round-2" else "",
-    title: headingText if researchRound == "round-2" else pageTitle,
-    intro: "Update this essential service in your list." if isEdit else ("Add the services that are essential to delivering your council's mission and day-to-day operations. You can review and update this list over time." if researchRound == "round-2" else "Add an essential service to your list."),
-    guidanceHeading: "",
-    guidanceItems: []
-  }) }}
+      {{ appErrorSummary(error) }}
 
-  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-      <span class="govuk-details__summary-text">What counts as an essential service</span>
-    </summary>
-    <div class="govuk-details__text">
-      <p class="govuk-body">An essential service is something residents, service users or the council rely on the authority to keep delivering.</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>Examples include waste collection, adult social care, benefits administration and housing support.</li>
-        <li>Use the service name people in the council would recognise.</li>
-        <li>Do not add teams, projects, software or infrastructure here.</li>
-        <li>If you are naming a platform, supplier or technology, add it later as a critical system instead.</li>
-      </ul>
-      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> "Adult social care" is an essential service. "Liquidlogic" or "case management platform" is a critical system that supports that service.</p>
-    </div>
-  </details>
+      {{ appPageHeader({
+        caption: "Essential services list" if roundTwo else "",
+        title: pageTitle
+      }) }}
 
-  <form method="post" action="{{ formAction or '/stages/2/scope/services/add' }}">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="serviceName">Service name</label>
-      {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field','equalto','serviceName') | list | first).text }}
-        </p>
-      {% endif %}
-      <div class="govuk-hint">Such as Adult social care, Housing support or Waste collection.</div>
-      <input class="govuk-input" id="serviceName" name="serviceName" type="text" value="{{ data.name }}">
-    </div>
+      <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">What counts as an essential service</span>
+        </summary>
+        <div class="govuk-details__text">
+          <p class="govuk-body">An essential service is something residents, service users or the council rely on the authority to keep delivering.</p>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>Examples include waste collection, adult social care, benefits administration and housing support.</li>
+            <li>Use the service name people in the council would recognise.</li>
+            <li>Do not add teams, projects, software or infrastructure here.</li>
+            <li>If you are naming a platform, supplier or technology, add it later as a critical system instead.</li>
+          </ul>
+          <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> "Adult social care" is an essential service. "Liquidlogic" or "case management platform" is a critical system that supports that service.</p>
+        </div>
+      </details>
 
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="serviceDescription">What does this service do?</label>
-      <div class="govuk-hint">Include who it supports, what it enables the council to deliver, and what would be affected if it stopped.</div>
-      <textarea class="govuk-textarea" id="serviceDescription" name="serviceDescription" rows="3">{{ data.description }}</textarea>
-    </div>
+      <form method="post" action="{{ formAction or '/stages/2/scope/services/add' }}">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="serviceName">Service name</label>
+          {% if error and (error.items | selectattr('field','equalto','serviceName') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (error.items | selectattr('field','equalto','serviceName') | list | first).text }}
+            </p>
+          {% endif %}
+          <div class="govuk-hint">Such as Adult social care, Housing support or Waste collection.</div>
+          <input class="govuk-input" id="serviceName" name="serviceName" type="text" value="{{ data.name }}">
+        </div>
 
-    <div class="govuk-form-group">
-      <label class="govuk-label" for="serviceOwner">Who owns this service?</label>
-      <div class="govuk-hint">Enter the role, team or service owner responsible for this service.</div>
-      <input class="govuk-input" id="serviceOwner" name="serviceOwner" type="text" value="{{ data.owner }}">
-    </div>
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="serviceDescription">What does this service do?</label>
+          <div class="govuk-hint">Include who it supports, what it enables the council to deliver, and what would be affected if it stopped.</div>
+          <textarea class="govuk-textarea" id="serviceDescription" name="serviceDescription" rows="3">{{ data.description }}</textarea>
+        </div>
 
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
-      <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to the essential services list</a>
-    </div>
-  </form>
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="serviceOwner">Who owns this service?</label>
+          <div class="govuk-hint">Enter the role, team or service owner responsible for this service.</div>
+          <input class="govuk-input" id="serviceOwner" name="serviceOwner" type="text" value="{{ data.owner }}">
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">{{ submitText or "Save and continue" }}</button>
+          <a class="govuk-link" href="{{ cancelHref or '/stages/2/scope/services/review' }}">Cancel and return to the essential services list</a>
+        </div>
+      </form>
+
     </div>
   </div>
 {% endblock %}

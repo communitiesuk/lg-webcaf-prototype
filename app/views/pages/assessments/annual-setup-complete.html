@@ -1,59 +1,31 @@
 {% extends "layouts/main.html" %}
-{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  <a class="govuk-back-link" href="/assessments/current/annual-setup/assessment">Back</a>
 
-  {{ appPageHeader({
-    caption: "Assessment setup",
-    title: "This year's assessment setup is complete",
-    intro: "You have finished the yearly setup for this assessment."
-  }) }}
+      {{ appNotificationBanner({
+        type: "success",
+        titleId: "annual-setup-complete-title",
+        heading: "Assessment setup complete"
+      }) }}
 
-  <div class="govuk-inset-text">
-    You have set the shape of this year's assessment. Outcome owners and contributors can still be added later as you work through the outcomes.
-  </div>
+      <h1 class="govuk-heading-l">What happens next</h1>
 
-  <h2 class="govuk-heading-m">What you set up for this year</h2>
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Organisation self-assessment approach</dt>
-      <dd class="govuk-summary-list__value">
-        {% if assessment.annualSetup.adAssessmentStatus == "update_existing" %}
-          Review and update last year's organisation self-assessment
-        {% elif assessment.annualSetup.adAssessmentStatus == "reuse_current" %}
-          Reuse last year's organisation self-assessment with a light review
-        {% elif assessment.annualSetup.adAssessmentStatus == "new_assessment" %}
-          Start a new organisation self-assessment
-        {% else %}
-          —
-        {% endif %}
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Selected critical systems for this year</dt>
-      <dd class="govuk-summary-list__value">
-        {% if selectedSystems.length > 0 %}
+      {% if selectedSystems.length > 0 %}
+        <p class="govuk-body">Your task list now includes the organisation self-assessment and the following critical systems:</p>
+        <ul class="govuk-list govuk-list--bullet">
           {% for system in selectedSystems %}
-            {{ system.name }}{% if not loop.last %}, {% endif %}
+            <li>{{ system.name }}</li>
           {% endfor %}
-        {% else %}
-          —
-        {% endif %}
-      </dd>
-    </div>
-  </dl>
+        </ul>
+      {% else %}
+        <p class="govuk-body">Your task list now includes the organisation self-assessment. No critical systems are included in this cycle.</p>
+      {% endif %}
 
-  <h2 class="govuk-heading-m">What happens next</h2>
-  <p class="govuk-body">You can now move into the assessment itself. The next step is to assign outcome owners and contributors, then start the self-assessment work.</p>
-  <p class="govuk-body">You can add assurance planning details later, when the assessment is closer to being ready for independent assurance.</p>
+      <a class="govuk-button" data-module="govuk-button" href="/assessments/current/journey">Continue to task list</a>
 
-  <div class="govuk-button-group">
-    <a class="govuk-button" data-module="govuk-button" href="/assessments/current/start-self-assessment/assignments">Continue to assign outcome owners</a>
-    <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
-  </div>
     </div>
   </div>
 {% endblock %}

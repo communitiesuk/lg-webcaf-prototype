@@ -20,7 +20,7 @@
         </div>
       {% endif %}
 
-      <span class="govuk-caption-l">Annual assessment</span>
+      <span class="govuk-caption-l">Assessment</span>
       <h1 class="govuk-heading-l">Confirm and send to assurer</h1>
       <p class="govuk-body">Check the details below. Once you send this assessment to the assurer, they will begin independent assurance.</p>
 
@@ -31,7 +31,7 @@
           <dd class="govuk-summary-list__value">{{ councilDisplayName or assessment.councilName or "Your council" }}</dd>
         </div>
         <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Critical system assessed this year</dt>
+          <dt class="govuk-summary-list__key">Critical system in scope</dt>
           <dd class="govuk-summary-list__value">
             {% if selectedSystems.length > 0 %}
               {% for system in selectedSystems %}{{ system.name }}{% if not loop.last %}, {% endif %}{% endfor %}
@@ -49,7 +49,7 @@
           <dd class="govuk-summary-list__value">
             <strong class="govuk-tag govuk-tag--green">Confirmed</strong>
             {% if collaborationState.approvedAt %}
-              &mdash; {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }}
+              &mdash; {{ collaborationState.approvedAt | ukDate }}
             {% endif %}
             {% if collaborationState.approvedBy %}
               by {{ collaborationState.approvedBy }}

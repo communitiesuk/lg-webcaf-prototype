@@ -1,0 +1,30 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/annual-setup">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Organisation self-assessment"
+      }) }}
+
+      <p class="govuk-body">You will complete the organisation self-assessment for the first time as part of this cycle.</p>
+
+      <p class="govuk-body">This covers Objectives A and D — how your organisation manages cyber security risk, including governance, asset management and supply chain security.</p>
+
+      <p class="govuk-body">Once complete, you carry it forward to future cycles and only need to revisit it if something significant changes.</p>
+
+      <form method="post" action="/assessments/current/annual-setup/organisation/first-time">
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

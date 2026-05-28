@@ -23,7 +23,7 @@
 
   {{ appPageHeader({
     title: "Review your services and systems lists",
-    intro: "Check your current services and systems lists and update them if anything has changed before you set up this year's assessment.",
+    intro: "Check your current services and systems lists and update them if anything has changed before setting up this assessment.",
     showSaveReassurance: true
   }) }}
   <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
@@ -58,7 +58,7 @@
   <form method="post" action="/assessments/current/review-scope">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       <fieldset class="govuk-fieldset" id="scopeChanged"{% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %} aria-describedby="scopeChanged-error"{% endif %}>
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do these setup details need updating for this year's assessment?</legend>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do these setup details need updating for this assessment?</legend>
         {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}
           <p id="scopeChanged-error" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>

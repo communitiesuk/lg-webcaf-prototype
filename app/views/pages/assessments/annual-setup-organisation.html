@@ -1,0 +1,49 @@
+{% extends "layouts/main.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assessments/current/annual-setup">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ appErrorSummary(error) }}
+
+      {{ appPageHeader({
+        caption: "Assessment setup",
+        title: "Organisation self-assessment"
+      }) }}
+
+      <form method="post" action="/assessments/current/annual-setup/organisation">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','hasPreviousAd') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="hasPreviousAd" {% if error and (error.items | selectattr('field','equalto','hasPreviousAd') | list | length) > 0 %}aria-describedby="hasPreviousAd-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Have you completed an organisation self-assessment (Objectives A and D) before?</legend>
+            {% if error and (error.items | selectattr('field','equalto','hasPreviousAd') | list | length) > 0 %}
+              <p class="govuk-error-message" id="hasPreviousAd-error">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','hasPreviousAd') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="hasPreviousAd-yes" name="hasPreviousAd" type="radio" value="yes" {% if hasPreviousAd == "yes" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="hasPreviousAd-yes">Yes</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="hasPreviousAd-no" name="hasPreviousAd" type="radio" value="no" {% if hasPreviousAd == "no" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="hasPreviousAd-no">No</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

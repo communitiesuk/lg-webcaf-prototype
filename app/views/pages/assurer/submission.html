@@ -26,7 +26,7 @@
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Sent for independent assurance</dt>
-      <dd class="govuk-summary-list__value">{{ assurerSubmission.submittedAt or "—" }}</dd>
+      <dd class="govuk-summary-list__value">{{ assurerSubmission.submittedAt | ukDate or "—" }}</dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Sent by council</dt>
@@ -38,7 +38,7 @@
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Submission date</dt>
-      <dd class="govuk-summary-list__value">{{ submission.submittedAt or "—" }}</dd>
+      <dd class="govuk-summary-list__value">{{ submission.submittedAt | ukDate or "—" }}</dd>
     </div>
     <div class="govuk-summary-list__row">
       <dt class="govuk-summary-list__key">Method</dt>

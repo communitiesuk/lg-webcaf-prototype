@@ -11,7 +11,7 @@
   <div class="govuk-inset-text">
     Include the latest setup summary snapshot in the submission pack.
     {% if submission.scopePackSnapshotAt %}
-      Last updated: {{ submission.scopePackSnapshotAt | replace("T", " ") | replace("Z", "") }}.
+      Last updated: {{ submission.scopePackSnapshotAt | ukDate }}.
     {% endif %}
   </div>
 

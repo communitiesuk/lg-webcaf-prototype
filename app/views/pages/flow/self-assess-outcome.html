@@ -9,15 +9,6 @@
       <div class="govuk-grid-column-two-thirds">
   {% endif %}
 
-  {% if context.roundTwo and context.caption %}
-    <span class="govuk-caption-l">{{ context.caption }}</span>
-  {% endif %}
-  {% if context.roundTwo and context.sectionCaption %}
-    <p class="govuk-body govuk-hint govuk-!-margin-bottom-2">{{ context.sectionCaption }}</p>
-  {% endif %}
-  {% if context.roundTwo and context.progressText %}
-    <p class="govuk-body govuk-!-margin-bottom-2"><strong>Progress:</strong> {{ context.progressText | lower }}</p>
-  {% endif %}
   <h1 class="govuk-heading-l">{{ context.heading }}</h1>
   {% if context.roundTwo and context.systemName %}
     <p class="govuk-body"><strong>Critical system:</strong> {{ context.systemName }}</p>
@@ -82,7 +73,6 @@
 
       <div id="igpAssessments" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}govuk-form-group--error{% endif %}">
         <h2 class="govuk-heading-m">Signals from indicators of good practice</h2>
-        <p class="govuk-body">Review each signal and record how far it reflects the current position.</p>
         {% if error and (error.items | selectattr('field','equalto','igpAssessments') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -377,9 +367,6 @@
             {{ labels.flow.selfAssessOutcome.judgement }}
           {% endif %}
         </legend>
-        {% if context.cafJudgementPage %}
-          <div class="govuk-hint">Use the signals and evidence to inform your judgement, then decide the contributing outcome overall.</div>
-        {% endif %}
         {% if error and (error.items | selectattr('field','equalto','judgement') | list | length) > 0 %}
           <p class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -434,11 +421,7 @@
           {{ labels.flow.selfAssessOutcome.rationale }}
         {% endif %}
       </label>
-      {% if context.cafJudgementPage %}
-        <div class="govuk-hint">
-          Bring the signals and evidence together. Explain why this judgement is reasonable, including the key evidence, important limitations and why the outcome is achieved, partially achieved or not achieved.
-        </div>
-      {% elif context.roundTwo %}
+      {% if not context.cafJudgementPage and context.roundTwo %}
         <div class="govuk-hint">
           This is required. Include why you selected this judgement and any important gaps, alternative controls or evidence limits.
         </div>
@@ -470,7 +453,6 @@
     {% if context.roundTwo and form.evidenceRefs %}
       <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}govuk-form-group--error{% endif %}">
         <h2 class="govuk-heading-m">{% if context.cafJudgementPage %}Supporting evidence links{% else %}5. Add evidence links{% endif %}</h2>
-        <p class="govuk-body govuk-hint">Add links to evidence stored outside WebCAF, such as a SharePoint document, policy, process note or architecture diagram. Describe what each item shows and why it matters. Assurers will need access to the linked evidence.</p>
         {% if error and (error.items | selectattr('field','equalto','evidenceRefs') | list | length) > 0 %}
           <p id="evidenceRefs" class="govuk-error-message">
             <span class="govuk-visually-hidden">Error:</span>
@@ -539,7 +521,6 @@
 
               <div class="govuk-form-group govuk-!-margin-top-3">
                 <label class="govuk-label" for="evidenceRefs-{{ loop.index0 }}-description">Description</label>
-                <div class="govuk-hint">Explain what the evidence shows and why it is relevant to this assessment item.</div>
                 <textarea class="govuk-textarea" id="evidenceRefs-{{ loop.index0 }}-description" name="evidenceRefs[{{ loop.index0 }}][description]" rows="3">{{ ref.description }}</textarea>
               </div>
 

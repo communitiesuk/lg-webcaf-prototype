@@ -13,41 +13,38 @@
 
   <span class="govuk-caption-l">Prototype setup</span>
   <h1 class="govuk-heading-l">Demo control panel</h1>
-  <p class="govuk-body">Use this page to select a research round, jump into a specific demo scene, or reset prototype data.</p>
+  <p class="govuk-body">Use this page to jump into a specific demo scene or reset prototype data.</p>
 
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-6">
 
   <section aria-labelledby="research-rounds-title" class="govuk-!-margin-bottom-8">
     <h2 id="research-rounds-title" class="govuk-heading-m">Research rounds</h2>
-    <p class="govuk-body govuk-!-margin-bottom-6">Select which prototype journey to use for testing.</p>
 
     <div class="govuk-grid-row app-rounds-grid">
-      <div class="govuk-grid-column-one-half">
-        <section class="app-round-card app-round-card--baseline">
+      <div class="govuk-grid-column-one-third">
+        <section class="app-round-card app-round-card--archived">
           <p class="govuk-caption-m app-round-card__label">Round 1</p>
-          <h3 class="govuk-heading-m">Baseline journey</h3>
-          <p class="govuk-body">The original prototype journey from the first round of research.</p>
-          <ul class="govuk-list govuk-list--bullet app-round-card__list">
-            <li>Original flow and content</li>
-            <li>Useful as a comparison point</li>
-          </ul>
-          <a class="govuk-button govuk-button--secondary" href="/research-rounds/round-1">Open Round 1</a>
+          <h3 class="govuk-heading-s">Baseline journey</h3>
+          <p class="govuk-body-s">Original prototype from the first round of research. Kept as a reference point.</p>
+          <a class="govuk-button govuk-button--secondary govuk-button--small" href="/research-rounds/round-1">Open Round 1</a>
         </section>
       </div>
 
-      <div class="govuk-grid-column-one-half">
-        <section class="app-round-card app-round-card--current">
+      <div class="govuk-grid-column-one-third">
+        <section class="app-round-card app-round-card--archived">
           <p class="govuk-caption-m app-round-card__label">Round 2</p>
-          <h3 class="govuk-heading-m">Current iteration</h3>
-          <p class="govuk-body">The updated journey with the latest changes for second-round research.</p>
-          <ul class="govuk-list govuk-list--bullet app-round-card__list">
-            <li>Latest Round 2 flow</li>
-            <li>For active testing and iteration</li>
-          </ul>
-          <a class="govuk-button" href="/research-rounds/round-2">Open Round 2</a>
-          <p class="govuk-body-s govuk-!-margin-top-3 govuk-!-margin-bottom-0">
-            <a class="govuk-link" href="/research-rounds/round-2-post-setup">Open with setup already completed</a>
-          </p>
+          <h3 class="govuk-heading-s">Alpha assessment</h3>
+          <p class="govuk-body-s">Full assessment flow with assurer journey and IIP. Scenes archived below.</p>
+          <a class="govuk-button govuk-button--secondary govuk-button--small" href="/research-rounds/round-2-post-setup">Open Round 2</a>
+        </section>
+      </div>
+
+      <div class="govuk-grid-column-one-third">
+        <section class="app-round-card app-round-card--current">
+          <p class="govuk-caption-m app-round-card__label">Round 3</p>
+          <h3 class="govuk-heading-s">Simplified journey</h3>
+          <p class="govuk-body-s">Stripped-back pages responding to the alpha assessment. Scenes listed below.</p>
+          <a class="govuk-button govuk-button--small" href="/research-rounds/round-3/start">Start from beginning</a>
         </section>
       </div>
     </div>
@@ -55,176 +52,194 @@
 
   <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
-  <section aria-labelledby="alpha-demo-title" class="govuk-!-margin-bottom-8">
-    <h2 id="alpha-demo-title" class="govuk-heading-m">Alpha assessment demo scenes</h2>
-    <p class="govuk-body govuk-!-margin-bottom-6">Jump directly into a specific moment in the alpha journey. Each link resets the relevant data and drops you straight to that screen.</p>
+  <section aria-labelledby="round-3-title" class="govuk-!-margin-bottom-8">
+    <h2 id="round-3-title" class="govuk-heading-m">Round 3 scenes</h2>
 
-    <div class="app-demo-panel govuk-!-margin-bottom-8">
-      <p class="govuk-body govuk-!-margin-bottom-6">
-        <strong class="govuk-tag govuk-tag--purple govuk-!-margin-right-2">Live demo walkthroughs</strong>
-      </p>
-
-      <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — onboarding and setup</h3>
-      <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. Each scene picks up where the previous one left off.</p>
-      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Setup task list</dt>
-          <dd class="govuk-summary-list__value">Onboarding page — scope task shows as not yet started</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-task-list">Open</a></dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Strategic context</dt>
-          <dd class="govuk-summary-list__value">Check-answers page — council context pre-filled, ready to confirm</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-context">Open</a></dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Essential services</dt>
-          <dd class="govuk-summary-list__value">Services review — context confirmed, two services added, ready to continue</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-services">Open</a></dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Critical systems</dt>
-          <dd class="govuk-summary-list__value">Systems review — services confirmed, one critical system added, ready to confirm</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-systems">Open</a></dd>
-        </div>
-      </dl>
-
-      <h3 class="govuk-heading-s govuk-!-margin-bottom-1">Contributor — assigned outcome</h3>
-      <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Priya Shah</strong>, contributor — West Marchshire Council. IGP questions are empty to test whether contributors can complete their assigned work unaided.</p>
-      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Your assigned outcomes</dt>
-          <dd class="govuk-summary-list__value">Priya arrives and sees B2.a — Identity and access controls assigned to her for the Case Management System</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/collaborator">Open</a></dd>
-        </div>
-      </dl>
-
-      <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — outcome and IGP assessment</h3>
-      <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. All IGP answers are pre-filled — click through each page without entering data.</p>
-      <dl class="govuk-summary-list govuk-!-margin-bottom-0">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">B2.a outcome overview</dt>
-          <dd class="govuk-summary-list__value">The outcome context page for the Case Management System — introduction before the IGP questions begin</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/context">Open</a></dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">IGP questions (achieved)</dt>
-          <dd class="govuk-summary-list__value">First set of IGP questions — all answers pre-filled, ready to step through</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/igp-walkthrough">Open</a></dd>
-        </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Final judgement and rationale</dt>
-          <dd class="govuk-summary-list__value">All IGP questions answered — land directly on the combined judgement and rationale page</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/final-judgement">Open</a></dd>
-        </div>
-      </dl>
-    </div>
-
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — self-assessment</h3>
-    <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council.</p>
-    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Assessment dashboard</dt>
-        <dd class="govuk-summary-list__value">Three critical systems — one in progress, one complete, one not started</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/dashboard">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">B2.a overview</dt>
-        <dd class="govuk-summary-list__value">The outcome context page for the Case Management System — IGP questions pre-filled, ready to continue</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/context">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Final judgement and rationale</dt>
-        <dd class="govuk-summary-list__value">All IGP questions answered — land directly on the combined judgement and rationale page</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/final-judgement">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Completed outcome</dt>
-        <dd class="govuk-summary-list__value">B2.a fully completed with judgement, rationale and evidence — shows the confirmation screen</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/completed">Open</a></dd>
-      </div>
-    </dl>
-
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-6">
-
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — sign-off and submission</h3>
-    <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. Case Management System fully assessed.</p>
-    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Get internal sign-off</dt>
-        <dd class="govuk-summary-list__value">All outcomes judged — the CAF lead downloads the draft and confirms internal sign-off before sending to the assurer</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/review-self-assessment">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Review and send to assurer</dt>
-        <dd class="govuk-summary-list__value">Sign-off confirmed — the CAF lead reviews the completed assessment summary before sending it for independent assurance</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/ready-for-assurance">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Confirm and send to assurer</dt>
-        <dd class="govuk-summary-list__value">Final declaration — the CAF lead confirms and sends the assessment to the assurer</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/send-to-assurer">Open</a></dd>
-      </div>
-    </dl>
-
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-6">
-
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — post-assurance</h3>
-    <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council.</p>
-    <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Receive assurance report</dt>
-        <dd class="govuk-summary-list__value">The assurer has submitted their report — the council reviews the side-by-side comparison of self-assessment and assurer judgements, with recommendations</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/receive-assurance-report">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Create implementation plan</dt>
-        <dd class="govuk-summary-list__value">The council reviews the assurer's recommendations and begins building their Improvement and Implementation Plan</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/recommendations">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">IIP ready for review</dt>
-        <dd class="govuk-summary-list__value">The improvement and implementation plan, ready to mark as complete for internal sign-off</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/iip">Open</a></dd>
-      </div>
-    </dl>
-
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-6">
-
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-1">Assurer journey</h3>
-    <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Jordan Blake</strong>, NorthStar Assurance. Assurer scenes use a separate session and reset the assurer state each time.</p>
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead - simplified journey</h3>
+    <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead - West Marchshire Council. Three critical systems at different stages: Case Management System (in progress), Revenues and Benefits System (complete), HR and Payroll System (not started). Scenes test changes made in response to alpha assessment feedback.</p>
     <dl class="govuk-summary-list govuk-!-margin-bottom-0">
       <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Assessment overview</dt>
-        <dd class="govuk-summary-list__value">The assurer sees the submitted assessment from West Marchshire Council — critical systems and evidence count, ready to start their review</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-overview">Open</a></dd>
+        <dt class="govuk-summary-list__key">Task list</dt>
+        <dd class="govuk-summary-list__value">Alpha feedback: accordion structure added cognitive load. Now a flat two-section layout — "Before you assess" and "This year's assessment". BC progress shown as hint text on the task item.</dd>
+        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/round-3/task-list">Open</a></dd>
       </div>
       <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Critical systems outcomes list</dt>
-        <dd class="govuk-summary-list__value">The list of critical system outcomes to review — shows assurer decisions already recorded against each</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-outcomes-list">Open</a></dd>
+        <dt class="govuk-summary-list__key">Assessment dashboard</dt>
+        <dd class="govuk-summary-list__value">Alpha feedback: filter panel and full outcomes list were overwhelming. Now shows critical systems table only — three systems at different stages of progress.</dd>
+        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/round-3/dashboard">Open</a></dd>
       </div>
       <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Outcome review</dt>
-        <dd class="govuk-summary-list__value">The assurer reviews B2 — Supply chain and external dependencies (Payments platform) — records a decision and rationale</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-outcome">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">IIP review</dt>
-        <dd class="govuk-summary-list__value">The assurer reviews the council's improvement and implementation plan and records their position on each issue raised</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-iip">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Assurance summary</dt>
-        <dd class="govuk-summary-list__value">The assurer reviews their overall position across all outcomes before completing the assurance step</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-summary">Open</a></dd>
-      </div>
-      <div class="govuk-summary-list__row">
-        <dt class="govuk-summary-list__key">Assurance confirmation</dt>
-        <dd class="govuk-summary-list__value">Assurance is complete — the council has been notified the submission is ready to send to MHCLG</dd>
-        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-confirmation">Open</a></dd>
+        <dt class="govuk-summary-list__key">B2.a Identity and access controls — Case Management System</dt>
+        <dd class="govuk-summary-list__value">Alpha feedback: context/overview page was unnecessary friction; participants lost track of which outcome they were on. Now lands directly on the first IGP question. Outcome and system shown as caption throughout. IGP answers pre-filled.</dd>
+        <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/round-3/outcome-b2a">Open</a></dd>
       </div>
     </dl>
+  </section>
+
+  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+  <section aria-labelledby="archived-title" class="govuk-!-margin-bottom-8">
+    <h2 id="archived-title" class="govuk-heading-m">Round 2 scenes (archived)</h2>
+    <p class="govuk-body-s govuk-!-margin-bottom-4">All Round 2 entry points are preserved and still work. Expand to access them.</p>
+
+    <details class="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">Show Round 2 demo scenes</span>
+      </summary>
+      <div class="govuk-details__text">
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — onboarding and setup</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. Each scene picks up where the previous one left off.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Setup task list</dt>
+            <dd class="govuk-summary-list__value">Onboarding page — scope task shows as not yet started</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-task-list">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Strategic context</dt>
+            <dd class="govuk-summary-list__value">Check-answers page — council context pre-filled, ready to confirm</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-context">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Essential services</dt>
+            <dd class="govuk-summary-list__value">Services review — context confirmed, two services added, ready to continue</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-services">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Critical systems</dt>
+            <dd class="govuk-summary-list__value">Systems review — services confirmed, one critical system added, ready to confirm</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/onboarding-systems">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">Contributor — assigned outcome</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Priya Shah</strong>, contributor — West Marchshire Council.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Your assigned outcomes</dt>
+            <dd class="govuk-summary-list__value">Priya arrives and sees B2.a — Identity and access controls assigned to her for the Case Management System</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/collaborator">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — outcome and IGP assessment</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. All IGP answers are pre-filled — click through each page without entering data.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">B2.a outcome overview</dt>
+            <dd class="govuk-summary-list__value">The outcome context page for the Case Management System — introduction before the IGP questions begin</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/context">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">IGP questions (achieved)</dt>
+            <dd class="govuk-summary-list__value">First set of IGP questions — all answers pre-filled, ready to step through</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/igp-walkthrough">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Final judgement and reason</dt>
+            <dd class="govuk-summary-list__value">All IGP questions answered — land directly on the combined judgement and reason page</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/final-judgement">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — self-assessment</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Task list (carried-forward A&D)</dt>
+            <dd class="govuk-summary-list__value">A&D self-assessment carried forward from a previous cycle — shows "Needs review" on the task list, B&C not yet started</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/carried-forward-task-list">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assessment dashboard</dt>
+            <dd class="govuk-summary-list__value">Three critical systems — one in progress, one complete, one not started</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/dashboard">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Completed outcome</dt>
+            <dd class="govuk-summary-list__value">B2.a fully completed with judgement, reason and evidence — shows the confirmation screen</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/completed">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — sign-off and submission</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council. Case Management System fully assessed.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Get internal sign-off</dt>
+            <dd class="govuk-summary-list__value">All outcomes judged — the CAF lead downloads the draft and confirms internal sign-off before sending to the assurer</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/review-self-assessment">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Review and send to assurer</dt>
+            <dd class="govuk-summary-list__value">Sign-off confirmed — the CAF lead reviews the completed assessment summary before sending it for independent assurance</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/ready-for-assurance">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Confirm and send to assurer</dt>
+            <dd class="govuk-summary-list__value">Final declaration — the CAF lead confirms and sends the assessment to the assurer</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/send-to-assurer">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">CAF lead — post-assurance</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Morgan Ellis</strong>, CAF Lead — West Marchshire Council.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Receive assurance report</dt>
+            <dd class="govuk-summary-list__value">The assurer has submitted their report — the council reviews the side-by-side comparison of self-assessment and assurer judgements, with recommendations</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/receive-assurance-report">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Create implementation plan</dt>
+            <dd class="govuk-summary-list__value">The council reviews the assurer's recommendations and begins building their Improvement and Implementation Plan</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/recommendations">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">IIP ready for review</dt>
+            <dd class="govuk-summary-list__value">The improvement and implementation plan, ready to mark as complete for internal sign-off</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/iip">Open</a></dd>
+          </div>
+        </dl>
+
+        <h3 class="govuk-heading-s govuk-!-margin-bottom-1">Assurer journey</h3>
+        <p class="govuk-body-s govuk-!-margin-bottom-3">Signed in as <strong>Jordan Blake</strong>, NorthStar Assurance. Assurer scenes use a separate session and reset the assurer state each time.</p>
+        <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assessment overview</dt>
+            <dd class="govuk-summary-list__value">The assurer sees the submitted assessment from West Marchshire Council — critical systems and evidence count, ready to start their review</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-overview">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Critical systems outcomes list</dt>
+            <dd class="govuk-summary-list__value">The list of critical system outcomes to review — shows assurer decisions already recorded against each</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-outcomes-list">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Outcome review</dt>
+            <dd class="govuk-summary-list__value">The assurer reviews B2 — Supply chain and external dependencies (Payments platform) — records a decision and reason</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-outcome">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">IIP review</dt>
+            <dd class="govuk-summary-list__value">The assurer reviews the council's improvement and implementation plan and records their position on each issue raised</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-iip">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurance summary</dt>
+            <dd class="govuk-summary-list__value">The assurer reviews their overall position across all outcomes before completing the assurance step</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-summary">Open</a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurance confirmation</dt>
+            <dd class="govuk-summary-list__value">Assurance is complete — the council has been notified the submission is ready to send to MHCLG</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/research-rounds/alpha-demo/assurer-confirmation">Open</a></dd>
+          </div>
+        </dl>
+
+      </div>
+    </details>
   </section>
 
   <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">

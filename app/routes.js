@@ -275,15 +275,8 @@ router.get("/round-2/start", (req, res) => {
   if (!req.session.data) req.session.data = {};
   req.session.data.researchRound = "round-2";
   res.render("pages/round-2/start", {
-    pageTitle: "Start Round 2",
+    pageTitle: "CAF for Local Government",
   });
-});
-
-router.post("/round-2/start", (req, res) => {
-  if (!req.session) req.session = {};
-  if (!req.session.data) req.session.data = {};
-  req.session.data.researchRound = "round-2";
-  return res.redirect("/round-2/sign-in");
 });
 
 router.get("/round-2/access", (req, res) => {
@@ -324,8 +317,6 @@ router.post("/round-2/sign-in", (req, res) => {
   const errors = [];
   if (!name) {
     errors.push({ field: "round2AuthName", text: "Enter your full name." });
-  } else if (!/\s+/.test(name)) {
-    errors.push({ field: "round2AuthName", text: "Enter your first and last name." });
   }
   if (!email) {
     errors.push({ field: "round2AuthEmail", text: "Enter your work email address." });

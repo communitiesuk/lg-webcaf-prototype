@@ -17,8 +17,15 @@ A GOV.UK Prototype Kit project for the Local Government WebCAF (Cyber Assessment
 |---|---|
 | `app/routes/assessments.js` | Main route file — dashboard, journey task list, self-assessment, IIP, send-to-assurer. Very large (~265KB) |
 | `app/routes/flow.js` | Step-by-step outcome flows — B2.a IGP journey, IIP stage 2, assurer flow |
+| `app/routes/entry.js` | Entry/home page — `buildRoundTwoEntrySummary`, resume logic |
+| `app/routes/stages.js` | Scope setup flows — context questions, services, systems, scope review |
+| `app/routes/onboarding.js` | Onboarding task list and scope sub-pages |
+| `app/routes/council-context.js` | Council account setup (`/council-setup`, `/council-context/restore`) |
 | `app/routes/research-rounds.js` | Demo control panel routes — scene entry points |
 | `app/data/helpers/research-ready.js` | Demo data seeding — `initialiseRoundTwoPostSetupResearch`, `initialiseDemoScene` |
+| `app/data/content/labels.js` | User-facing label strings shared across routes |
+| `app/views/components/page-header.njk` | `appPageHeader` macro — caption, H1, intro, hint, guidance box |
+| `app/views/components/section-start.njk` | `appSectionStart` macro — wraps `appPageHeader` + guidance details + button group |
 | `app/views/pages/assessments/dashboard.html` | Assessment dashboard template |
 | `app/views/pages/assessments/journey.html` | Task list template |
 | `app/views/pages/research-rounds.html` | Demo control panel page |
@@ -47,6 +54,10 @@ const outcomeList = flattenAllOutcomes(bcOutcomesTree).filter(o => PROTOTYPE_BC_
 ```
 This bug was fixed in `buildBCSystemRows`, `buildBCOutcomeRows`, and `buildBCJourneySummary`.
 
+## Terminology — "reason" not "rationale"
+
+All user-facing copy uses **"reason"** (e.g. "Reason for your judgement"). The underlying session data field is still named `rationale` (e.g. `saved.rationale`, `b2aRationale` form field name) — do not rename these internal keys as it would break saved data. The distinction is: field name = `rationale`, label/heading = "reason".
+
 ## Demo data — signed-in users
 
 - **Council (CAF lead):** Morgan Ellis, CAF Lead — West Marchshire Council
@@ -65,10 +76,13 @@ Each scene calls `initialiseRoundTwoPostSetupResearch` then applies overrides:
 | `"dashboard"` | 3 systems: sys-1 in progress, sys-2 ready_for_internal_review, sys-3 not started | `/assessments/current/dashboard?lens=bc&view=all` |
 | `"context"` | Same as dashboard | `/self-assess/bc/sys-1/outcomes/B2a/b2a-context` |
 | `"final-judgement"` | Same as dashboard | `/self-assess/bc/sys-1/outcomes/B2a/b2a-final-judgement` |
-| `"completed"` | sys-1 B2a fully judged (Partially achieved) with rationale + evidence | `/self-assess/bc/sys-1/outcomes/B2a/b2a-ready-for-internal-review` |
+| `"completed"` | sys-1 B2a fully judged (Partially achieved) with reason + evidence | `/self-assess/bc/sys-1/outcomes/B2a/b2a-ready-for-internal-review` |
 | `"review"` | All 3 systems judged, adReview/bcReview complete, collaborationWorkflow.status = "in_review" | `/assessments/current/complete-self-assessment` |
 | `"send-to-assurer"` | All 3 systems judged, collaborationWorkflow.status = "approved" | `/assessments/current/send-to-assurer` |
 | `"post-assurance"` | All 3 systems judged, approved, assurerSubmission.submitted = true, assurance.recordOfAudit submitted, stage1Report finalised with 3 recommendations (A1a high, A1b medium, B1a medium), assurer IGP reviews for A1a and A1b | `/assessments/current/assurance-report` |
+| `"carried-forward-task-list"` | A&D outcomes carried forward from previous cycle (carriedForward + reviewRequired), B&C not started | `/assessments/current/journey` |
+| `"collaborator"` | Collaborator view state | `/assessments/current/collaborator-view` |
+| `"onboarding-task-list"` | Onboarding task list state | `/onboarding` |
 
 ## IGP data — scope and constraints
 
@@ -92,7 +106,18 @@ b2aJourney: {
 }
 ```
 
-The final judgement and rationale are combined on one page (`b2a-final-judgement`). The old `b2a-rationale` route redirects to `b2a-final-judgement`.
+The final judgement and reason are combined on one page (`b2a-final-judgement`). The old `b2a-rationale` route redirects to `b2a-final-judgement`.
+
+`buildB2aIndicativeJudgement` returns `{ judgement, strengths, weaknesses, uncertainties }` — no `reflections` property. The template renders the judgement as a govuk-tag (green/yellow/red).
+
+## Carry-forward A&D outcomes
+
+When `selfAssess.ad[id].carriedForward === true && selfAssess.ad[id].reviewRequired === true`, the outcome is carried forward from a previous cycle and needs review. `countADJudged` excludes these from the judged count. `buildADJourneySummary` shows:
+
+- `"Needs review"` (yellow) — when `annualSetup.completed` is true and there are unreviewed carried-forward outcomes
+- `"Carried forward"` (yellow) — when `annualSetup.completed` is false but carry-forward data exists
+
+Once the user reviews and saves a judgement for a carried-forward outcome, `reviewRequired` should be cleared.
 
 ## Assessment status values
 
@@ -114,6 +139,23 @@ Stored at `assessment.collaborationWorkflow.status`:
 Gates:
 - `complete-self-assessment` page: requires `selfAssess.adReview.completed && selfAssess.bcReview.completed`
 - `send-to-assurer` page: requires `collaborationWorkflow.status === "approved"`
+
+## Entry page (`/entry`) — round-2 status ladder
+
+`buildRoundTwoEntrySummary` in `entry.js` drives the "What to do next" box. Status labels (in priority order):
+
+1. `"Sent to assurer"` — `assurerSubmission.submitted === true`
+2. `"Ready to send to assurer"` — `collaborationWorkflow.status === "approved"`
+3. `"Onboarding in progress"` — `!isRoundTwoOnboardingComplete`
+4. `"Ready to set up assessment"` — onboarding done, `!annualSetup.completed`
+5. `"Ready to start self-assessment"` — `annualSetup.completed && !selfAssessStarted`
+6. `"In progress"` — catch-all
+
+**Do not** use `selfAssessmentReview.completed` for readyForReview — that field is never set. Use `assurerSubmission.submitted || collaborationWorkflow.status === "approved"`.
+
+## `redirectIfScopeNotReady` guard (`flow.js`)
+
+Round-2 check comes FIRST — before the `prepare.guidanceRead` round-1 check. If round-2 and `!annualSetup.completed`, redirects to `/assessments/current/journey`. This prevents round-2 users hitting the round-1 `/prepare` → `/onboarding` chain.
 
 ## IIP (Improvement & Implementation Plan)
 
@@ -148,15 +190,79 @@ Gates:
 
 The demo panel at `/research-rounds` is divided by role:
 
-- **CAF lead — self-assessment** (Morgan Ellis): dashboard, B2.a overview, final judgement, completed outcome
+- **CAF lead — self-assessment** (Morgan Ellis): dashboard, B2.a overview, final judgement, completed outcome, carried-forward task list
 - **CAF lead — review and submission** (Morgan Ellis): review draft, send to assurer
 - **CAF lead — post-assurance** (Morgan Ellis): receive assurance report, create implementation plan, IIP ready for review
 - **Assurer journey** (Jordan Blake): assessment overview, outcome review, IIP review, assurance summary
 
 Each section clearly states the signed-in user. Assurer scenes reset `req.session.data.assurerAlpha` before redirecting.
 
+## Design and content conventions
+
+### Back link placement
+Back links must sit **above** the `govuk-grid-row` div — never inside a column. Placing a back link inside `govuk-grid-column-two-thirds` constrains it to column width and breaks the GDS layout pattern. Every template should follow:
+```html
+<a class="govuk-back-link" href="{{ backHref }}">Back</a>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    ...
+```
+
+### pageTitle must match H1
+The `pageTitle` passed from the route (used as the browser tab title) must match or be very close to the page's H1. Mismatches disorient screen reader users and fail GDS guidelines.
+
+### No self-describing intro paragraphs
+Never write "Use this page to..." or "Review the [X] before you continue." — copy that describes the page rather than helping the user. The H1 and component labels do this work. Delete these on sight.
+
+### Inset text — correct use only
+`govuk-inset-text` is for important information that stands apart from surrounding content (e.g. a policy caveat, a constraint the user must act on). Do NOT use it for:
+- Record counts ("3 services listed") — use a plain `govuk-body` paragraph
+- Form preamble ("Enter your name and email") — use field hint text
+- Completion confirmations — use a notification banner or task tag
+
+### Check-answers pages
+- Button label: **"Confirm and continue"** — not "Save and continue" (saving happened per question)
+- No secondary link in the button group — the back link handles backwards navigation; Change links handle individual edits
+- No intro paragraph, no H2 above the summary list
+
+### "for example" not "i.e."
+GDS content style requires plain English. Replace all instances of "i.e." with "for example".
+
+## `appPageHeader` component (`app/views/components/page-header.njk`)
+
+Rendering order (top to bottom): caption → H1 → intro → save reassurance → hint → guidance box.
+
+The guidance box (`govuk-details`) renders **last** — after the intro and hint — so users read the question and instruction before the optional supplementary help.
+
+**`introClass` param:** defaults to `govuk-body`. Pass `introClass: "govuk-hint"` on question pages where the intro is a step counter ("Question 1 of 7") so it renders visually lighter than body content.
+
+## Round-2 auth and account setup flow
+
+```
+/round-2/start → sign in | join council | request access
+/round-2/sign-in → pages/round-2/auth (mode: sign-in)
+/round-2/register → pages/round-2/auth (mode: register)
+/council-setup → set council name → redirects to /assessments/current/dashboard or /onboarding
+```
+
+- Back link on `/council-setup` goes to `/round-2/sign-in` (not `/logout`)
+- Register secondary links appear below the form as a paragraph, not inside the button group
+- Name validation: empty check only — do NOT validate for spaces (GDS anti-pattern)
+- POST `/round-2/start` was removed — the start button is an anchor, no form needed
+
+## Onboarding and scope setup flow
+
+**`/onboarding`** — page title and H1: "Set up your account" (not "Council onboarding and setup"). Single task in the task list (`buildOnboardingTasks` always returns one item). Completion state: conditional intro text via `appPageHeader`, no inset text.
+
+**`/stages/2/scope/context`** — start page title/H1: "Add your council context". Context questions use `scope-context-question.html` (shared template for all steps). Step counter passed as `intro` with `introClass: "govuk-hint"`.
+
+**`/stages/2/scope/services/review`** — two submit buttons in a single form, both POST to `/stages/2/scope/services/review`. The `servicesReviewAction` session key controls redirect:
+- `"continue"` → `/stages/2/scope/systems/review`
+- anything else → onboarding (via `redirectToScopeReviewReturnOr`)
+
 ## Things NOT to change without good reason
 
 - `PROTOTYPE_OUTCOME_LIMITS` — changing these breaks BC outcome counting everywhere
 - The `assurerAlpha` session namespace — assurer state must stay separate from council state
 - `ensurePrototypeRecommendationSeed` / `ensureIipStage2Data` — these are idempotent guards, always called before IIP pages render
+- Internal field names `rationale`, `b2aRationale` — user-facing label is "reason" but the data key stays as `rationale`

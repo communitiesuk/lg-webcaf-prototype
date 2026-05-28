@@ -15,7 +15,6 @@ const SCOPE_CONTEXT_STEPS = [
     sessionKey: "scopeContextMission",
     contextKey: "mission",
     question: "What is your mission?",
-    hint: "Summarise your council mission in 2 to 3 sentences.",
     guidanceItems: [
       "Describe the core issues your council addresses and who it serves.",
       "Mention the main responsibilities or duties the council must fulfil.",
@@ -250,7 +249,7 @@ module.exports = function (router) {
   router.get("/stages/2/scope/context", (req, res) => {
     const backHref = getScopeContextStartBackHref(req);
     return res.render("pages/stages/scope-context-start", {
-      pageTitle: "Provide organisation strategic context",
+      pageTitle: "Add your council context",
       backHref,
       returnText: backHref === "/assessments/current/review-scope"
         ? "Return to scope review"
@@ -670,7 +669,8 @@ module.exports = function (router) {
     }
 
     res.render("pages/stages/scope-services-add", {
-      pageTitle: labels.stages.scope.services.addTitle,
+      pageTitle: "Add an essential service",
+      roundTwo: isRoundTwoRequest(req),
       labels,
       assessment,
       formAction: "/stages/2/scope/services/add",
@@ -707,7 +707,8 @@ module.exports = function (router) {
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-services-add", {
-        pageTitle: labels.stages.scope.services.addTitle,
+        pageTitle: "Add an essential service",
+        roundTwo,
         labels,
         assessment,
         backHref: getScopeServicesAddBackHref(req, assessment, { isEdit: false }),
@@ -746,7 +747,8 @@ module.exports = function (router) {
     if (!service) return res.redirect("/stages/2/scope/services/review");
 
     res.render("pages/stages/scope-services-add", {
-      pageTitle: "Change essential service",
+      pageTitle: "Change an essential service",
+      roundTwo: isRoundTwoRequest(req),
       labels,
       assessment,
       formAction: `/stages/2/scope/services/${service.id}/edit`,
@@ -785,7 +787,8 @@ module.exports = function (router) {
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-services-add", {
-        pageTitle: "Change essential service",
+        pageTitle: "Change an essential service",
+        roundTwo,
         labels,
         assessment,
         formAction: `/stages/2/scope/services/${service.id}/edit`,
@@ -891,7 +894,7 @@ module.exports = function (router) {
     ensureScope(assessment);
 
     res.render("pages/stages/scope-services-review", {
-      pageTitle: labels.stages.scope.services.reviewTitle,
+      pageTitle: isRoundTwoRequest(req) ? "List your essential services" : labels.stages.scope.services.reviewTitle,
       labels,
       assessment,
       backHref: getScopeServicesReviewBackHref(req),
@@ -916,6 +919,11 @@ module.exports = function (router) {
     }
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
+    const servicesAction = (req.session.data.servicesReviewAction || "").toString();
+    delete req.session.data.servicesReviewAction;
+    if (isRoundTwoRequest(req) && servicesAction === "continue") {
+      return res.redirect("/stages/2/scope/systems/review");
+    }
     return redirectToScopeReviewReturnOr(req, res, "/onboarding");
   });
 
@@ -965,7 +973,8 @@ module.exports = function (router) {
     }
 
     res.render("pages/stages/scope-systems-add", {
-      pageTitle: labels.stages.scope.systems.addTitle,
+      pageTitle: "Add a critical system",
+      roundTwo: isRoundTwoRequest(req),
       labels,
       assessment,
       formAction: "/stages/2/scope/systems/add",
@@ -995,11 +1004,11 @@ module.exports = function (router) {
     const errors = [];
     if (!name) errors.push({ field: "systemName", text: labels.stages.scope.errors.systemName });
     if (!systemType) errors.push({ field: "systemType", text: "Enter the system type" });
-    if (!supplier) errors.push({ field: "supplier", text: "Enter the supplier" });
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-systems-add", {
-        pageTitle: labels.stages.scope.systems.addTitle,
+        pageTitle: "Add a critical system",
+        roundTwo: isRoundTwoRequest(req),
         labels,
         assessment,
         backHref: getScopeSystemsAddBackHref(req, assessment, { isEdit: false }),
@@ -1052,7 +1061,8 @@ module.exports = function (router) {
     if (!system) return res.redirect("/stages/2/scope/systems/review");
 
     res.render("pages/stages/scope-systems-add", {
-      pageTitle: "Change critical system",
+      pageTitle: "Change a critical system",
+      roundTwo: isRoundTwoRequest(req),
       labels,
       assessment,
       formAction: `/stages/2/scope/systems/${system.id}/edit`,
@@ -1084,11 +1094,11 @@ module.exports = function (router) {
     const errors = [];
     if (!name) errors.push({ field: "systemName", text: labels.stages.scope.errors.systemName });
     if (!systemType) errors.push({ field: "systemType", text: "Enter the system type" });
-    if (!supplier) errors.push({ field: "supplier", text: "Enter the supplier" });
 
     if (errors.length > 0) {
       return res.render("pages/stages/scope-systems-add", {
-        pageTitle: "Change critical system",
+        pageTitle: "Change a critical system",
+        roundTwo,
         labels,
         assessment,
         formAction: `/stages/2/scope/systems/${system.id}/edit`,
@@ -1258,7 +1268,7 @@ module.exports = function (router) {
     });
 
     res.render("pages/stages/scope-systems-review", {
-      pageTitle: labels.stages.scope.systems.reviewTitle,
+      pageTitle: isRoundTwoRequest(req) ? "List your critical systems" : labels.stages.scope.systems.reviewTitle,
       labels,
       assessment,
       backHref: getScopeSystemsReviewBackHref(req),

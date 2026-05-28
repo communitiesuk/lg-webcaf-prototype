@@ -32,6 +32,34 @@ module.exports = function (router) {
     return res.redirect("/assessments/current/journey");
   });
 
+  router.get("/research-rounds/round-3/start", (req, res) => {
+    if (!req.session) req.session = {};
+    if (req.session.data) req.session.data = {};
+    if (!req.session.data) req.session.data = {};
+    return res.redirect("/round-2/start");
+  });
+
+  router.get("/research-rounds/round-3/task-list", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+    initialiseDemoScene(req.session.data, "dashboard");
+    return res.redirect("/assessments/current/journey");
+  });
+
+  router.get("/research-rounds/round-3/dashboard", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+    initialiseDemoScene(req.session.data, "dashboard");
+    return res.redirect("/assessments/current/dashboard");
+  });
+
+  router.get("/research-rounds/round-3/outcome-b2a", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+    initialiseDemoScene(req.session.data, "context");
+    return res.redirect(`/self-assess/bc/${DEMO_SYSTEM_ID}/outcomes/B2a/b2a-achieved`);
+  });
+
   router.get("/research-rounds/alpha-demo/dashboard", (req, res) => {
     if (!req.session) req.session = {};
     if (!req.session.data) req.session.data = {};
@@ -51,6 +79,13 @@ module.exports = function (router) {
     if (!req.session.data) req.session.data = {};
     initialiseDemoScene(req.session.data, "final-judgement");
     return res.redirect(`/self-assess/bc/${DEMO_SYSTEM_ID}/outcomes/B2a/b2a-final-judgement`);
+  });
+
+  router.get("/research-rounds/alpha-demo/carried-forward-task-list", (req, res) => {
+    if (!req.session) req.session = {};
+    if (!req.session.data) req.session.data = {};
+    initialiseDemoScene(req.session.data, "carried-forward-task-list");
+    return res.redirect("/assessments/current/journey");
   });
 
   router.get("/research-rounds/alpha-demo/completed", (req, res) => {

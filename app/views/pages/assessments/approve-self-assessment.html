@@ -113,7 +113,7 @@
   {% if collaborationState.status == "approved" %}
     <h2 class="govuk-heading-m">Approval outcome</h2>
     <div class="govuk-inset-text">
-      Approved {{ collaborationState.approvedAt | replace("T", ", ") | replace("Z", "") }} by {{ collaborationState.approvedBy }}.
+      Approved {{ collaborationState.approvedAt | ukDate }} by {{ collaborationState.approvedBy }}.
     </div>
     <div class="govuk-button-group">
       <a class="govuk-button" href="/assessments/current/approve-self-assessment/complete">Continue to independent assurance handoff</a>

@@ -3,7 +3,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <a class="govuk-back-link" href="/assessments/current/journey">Back to annual assessment</a>
+      <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
 
       {% if error %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -20,7 +20,7 @@
         </div>
       {% endif %}
 
-      <span class="govuk-caption-l">Annual assessment</span>
+      <span class="govuk-caption-l">Assessment</span>
       <h1 class="govuk-heading-l">Get internal sign-off</h1>
 
       <p class="govuk-body">Before sending your self-assessment for independent assurance, it must be reviewed and approved internally.</p>
@@ -33,7 +33,7 @@
           <dd class="govuk-summary-list__value">{{ completion.bcJudged }} of {{ completion.bcTotal }}</dd>
         </div>
         <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Critical system assessed this year</dt>
+          <dt class="govuk-summary-list__key">Critical system in scope</dt>
           <dd class="govuk-summary-list__value">
             {% if selectedSystems.length > 0 %}
               {% for system in selectedSystems %}{{ system.name }}{% if not loop.last %}, {% endif %}{% endfor %}
@@ -60,7 +60,7 @@
         </div>
         <div class="govuk-button-group">
           <a class="govuk-button" href="/assessments/current/ready-for-assurance">Continue to send to assurer</a>
-          <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       {% else %}
         <form method="post" action="/assessments/current/complete-self-assessment">
@@ -88,7 +88,7 @@
 
           <div class="govuk-button-group">
             <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and continue</button>
-            <a class="govuk-link" href="/assessments/current/journey">Return to annual assessment</a>
+            <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
           </div>
         </form>
       {% endif %}
