@@ -3,7 +3,6 @@
 
 {% block content %}
   <a class="govuk-back-link" href="/assessments/current/annual-setup/systems">Back</a>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
@@ -32,7 +31,7 @@
                 {% endfor %}
               </ul>
             {% else %}
-              Not assessing any critical systems this year
+              No systems selected
             {% endif %}
           </dd>
           <dd class="govuk-summary-list__actions">
@@ -44,10 +43,11 @@
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
         <strong class="govuk-warning-text__text">
-          <span class="govuk-warning-text__assistive">Warning</span>
-          Once confirmed, your organisation assessment approach cannot be changed for this cycle. You can update your critical systems selection until your self-assessment is submitted.
+          <span class="govuk-visually-hidden">Warning</span>
+          You cannot change the organisation self-assessment after you click confirm.
         </strong>
       </div>
+      <p class="govuk-body">You can change your critical systems until you submit your assessment.</p>
 
       <form method="post" action="/assessments/current/annual-setup/confirm">
         <div class="govuk-button-group">

@@ -5,9 +5,9 @@
 {% block content %}
   {% set successMessage = "Your changes to the critical systems list have been saved." %}
   {% if saved == "system-added" %}
-    {% set successMessage = "You have added this system to the critical systems list." %}
+    {% set successMessage = "Added to the critical systems list." %}
     {% if savedName %}
-      {% set successMessage = "You have added " + savedName + " to the critical systems list." %}
+      {% set successMessage = "Added " + savedName + " to the critical systems list." %}
     {% endif %}
   {% elif saved == "system-updated" %}
     {% set successMessage = "Your changes to this system have been saved." %}
@@ -25,10 +25,7 @@
       {% set successMessage = "You have saved the mapping for " + savedName + "." %}
     {% endif %}
   {% elif saved == "priority" %}
-    {% set successMessage = "Your priority changes have been saved." %}
-    {% if savedName %}
-      {% set successMessage = "You have saved the priority for " + savedName + "." %}
-    {% endif %}
+    {% set successMessage = "Priority saved." %}
   {% endif %}
 
   <a class="govuk-back-link" href="{{ backHref or '/stages/2/scope' }}">Back</a>
@@ -46,21 +43,22 @@
 
       {% if roundTwo %}
         <span class="govuk-caption-l">Critical systems list</span>
-        <h1 class="govuk-heading-l">List your critical systems</h1>
-        <p class="govuk-body">Add and maintain the full list of systems that support your essential services.</p>
-        <p class="govuk-body govuk-hint">Critical systems should support one or more essential services.</p>
+        <h1 class="govuk-heading-l">List your council's critical systems</h1>
+        <p class="govuk-body">List the systems that support your council's essential services.</p>
+        <p class="govuk-body">Each system must support at least one essential service.</p>
         <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
           <summary class="govuk-details__summary">
             <span class="govuk-details__summary-text">Help with this step</span>
           </summary>
           <div class="govuk-details__text">
             <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-              <li>Add missing systems and make sure each one is linked to services and has a priority where needed.</li>
+              <li>Add any missing systems.</li>
+              <li>Make sure each one is linked to a service and has a priority where needed.</li>
             </ul>
           </div>
         </details>
         <p class="govuk-body">
-          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/add">Add system</a>
+          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/systems/add">{{ "Add another system" if systems.length > 0 else "Add system" }}</a>
         </p>
         {% if systems.length > 0 %}
           {% set mappedCount = 0 %}
@@ -165,7 +163,7 @@
       <div class="govuk-button-group">
         {% if roundTwo %}
           <form method="post" action="/stages/2/scope/systems/review">
-            <button class="govuk-link app-link-button" type="submit">Save and return to task list</button>
+            <button class="govuk-button" data-module="govuk-button" type="submit">Save and return to task list</button>
           </form>
         {% elif systems.length > 0 %}
           <a class="govuk-button" href="{{ nextAction.href }}">{{ nextAction.text }}</a>

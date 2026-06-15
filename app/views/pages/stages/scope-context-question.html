@@ -17,20 +17,6 @@
         guidanceItems: contextStep.guidanceItems
       }) }}
 
-      {% if contextStep.slug == "mission" %}
-        <div class="govuk-inset-text">
-          Use your existing council plan or corporate plan. Summarise what the council exists to deliver, not every service or team. Aim for 2 to 3 sentences.
-        </div>
-      {% elif contextStep.slug == "threat" %}
-        <div class="govuk-inset-text">
-          Think about likely cyber disruption to council services, data and suppliers. You do not need a long threat report here, just the main risks that shape your judgement.
-        </div>
-      {% elif contextStep.slug == "appetite" %}
-        <div class="govuk-inset-text">
-          Describe how much cyber risk the council is willing to accept before action is needed. If this is defined elsewhere, summarise it in council language and note where it is recorded.
-        </div>
-      {% endif %}
-
       <form method="post" action="{{ formAction }}">
         {% if contextStep.type == "textarea" %}
           <div class="govuk-form-group">

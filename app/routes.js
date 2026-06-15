@@ -161,13 +161,7 @@ router.use((req, res, next) => {
     currentUser.roles.length > 1
   );
 
-  res.locals.headerNavigation = buildHeaderNavigation({
-    signedIn,
-    role,
-    researchRound,
-  });
-
-  const hideNav = req.path === "/entry";
+const hideNav = req.path === "/entry";
   res.locals.showNavigation = signedIn && !hideNav;
   res.locals.navigation = signedIn && !hideNav
     ? buildNavigation(req.path, role, researchRound, { onboardingComplete })
@@ -268,14 +262,14 @@ require("./routes/cycles")(router);
 require("./routes/export")(router);
 
 // Root redirect
-router.get("/", (req, res) => res.redirect("/research-rounds"));
+router.get("/", (req, res) => res.redirect("/round-2/start"));
 
 router.get("/round-2/start", (req, res) => {
   if (!req.session) req.session = {};
   if (!req.session.data) req.session.data = {};
   req.session.data.researchRound = "round-2";
   res.render("pages/round-2/start", {
-    pageTitle: "CAF for Local Government",
+    pageTitle: "Assess your council's cyber resilience",
   });
 });
 
@@ -291,12 +285,9 @@ router.get("/round-2/sign-in", (req, res) => {
   res.render("pages/round-2/auth", {
     pageTitle: "Sign in to webCAF",
     mode: "sign-in",
-    heading: "Sign in to webCAF",
+    heading: "Sign in to CAF for Local Government",
     submitText: "Continue",
-    secondaryLinks: [
-      { href: "/round-2/register?path=join-existing", text: "Join your council" },
-      { href: "/round-2/register?path=request-new", text: "Request access" },
-    ],
+    secondaryLinks: [],
     defaults: {
       name: (req.session.data.round2AuthName || "").toString(),
       email: (req.session.data.round2AuthEmail || "").toString(),
@@ -334,12 +325,9 @@ router.post("/round-2/sign-in", (req, res) => {
     return res.render("pages/round-2/auth", {
       pageTitle: "Sign in to webCAF",
       mode: "sign-in",
-      heading: "Sign in to webCAF",
+      heading: "Sign in to CAF for Local Government",
       submitText: "Continue",
-      secondaryLinks: [
-        { href: "/round-2/register?path=join-existing", text: "Join your council" },
-        { href: "/round-2/register?path=request-new", text: "Request access" },
-      ],
+      secondaryLinks: [],
       defaults: { name, email, councilName: "", accessPath: "join-existing" },
       error: { items: errors },
     });
@@ -482,7 +470,7 @@ router.get("/signed-out", (req, res) => {
     pageTitle: "Signed out",
     roundTwo,
     signInHref: roundTwo ? "/round-2/sign-in" : "/research-start?reset=1",
-    secondaryHref: roundTwo ? "/research-rounds" : "/research-start?reset=1",
+    secondaryHref: roundTwo ? "/round-2/start" : "/research-start?reset=1",
   });
 });
 router.get("/organisation-details", (req, res) => res.redirect("/entry"));
@@ -770,7 +758,7 @@ function buildHeaderNavigation({ signedIn, role, researchRound }) {
 function getSignOutRedirect(req) {
   const researchRound =
     req.session && req.session.data ? normaliseResearchRound(req.session.data.researchRound) : "round-1";
-  return researchRound === "round-2" ? "/research-rounds" : "/research-start?reset=1";
+  return researchRound === "round-2" ? "/round-2/start" : "/research-start?reset=1";
 }
 
 function getSignedOutPageRedirect(req) {
@@ -794,7 +782,7 @@ function getSignedInLanding(req) {
 
 function getRoundTwoCouncilLanding(sessionData) {
   if (sessionData && sessionData.assessment && sessionData.assessment.id) {
-    return "/assessments/current/dashboard?view=my";
+    return "/assessments/current/journey";
   }
   return "/entry/start-new?returnTo=/onboarding";
 }

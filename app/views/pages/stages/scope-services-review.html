@@ -5,9 +5,9 @@
 {% block content %}
   {% set successMessage = "Your changes to the essential services list have been saved." %}
   {% if saved == "service-added" %}
-    {% set successMessage = "You have added this service to the essential services list." %}
+    {% set successMessage = "Added to the essential services list." %}
     {% if savedName %}
-      {% set successMessage = "You have added " + savedName + " to the essential services list." %}
+      {% set successMessage = "Added " + savedName + " to the essential services list." %}
     {% endif %}
   {% elif saved == "service-updated" %}
     {% set successMessage = "Your changes to this service have been saved." %}
@@ -39,14 +39,21 @@
         <h1 class="govuk-heading-l">List your essential services</h1>
         <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
           <summary class="govuk-details__summary">
-            <span class="govuk-details__summary-text">Help with this step</span>
+            <span class="govuk-details__summary-text">What counts as an essential service</span>
           </summary>
           <div class="govuk-details__text">
-            <p class="govuk-body govuk-!-margin-bottom-0">Make sure the list reflects the services your council needs to keep running.</p>
+            <p class="govuk-body">An essential service is a service your council must keep running for residents, service users or staff.</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>Examples include waste collection, adult social care, benefits and housing support.</li>
+              <li>Use a service name people in your council will recognise.</li>
+              <li>Do not include teams, projects or systems here.</li>
+              <li>If you are naming software, a platform or a supplier service, add it later as a critical system.</li>
+            </ul>
+            <p class="govuk-body govuk-!-margin-bottom-0">Example: Adult social care is an essential service. A case management platform that supports it is a critical system.</p>
           </div>
         </details>
         <p class="govuk-body">
-          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">Add service</a>
+          <a class="govuk-button govuk-button--secondary" href="/stages/2/scope/services/add">{{ "Add another service" if services.length > 0 else "Add service" }}</a>
         </p>
         {% if services.length > 0 %}
           <p class="govuk-body">{{ services.length }} essential service{% if services.length != 1 %}s{% endif %} added.</p>

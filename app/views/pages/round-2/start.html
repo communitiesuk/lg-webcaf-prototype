@@ -1,19 +1,29 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/research-rounds">Back</a>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-l">CAF for Local Government</h1>
 
-      <p class="govuk-body-l">Use this service to complete your council's Cyber Assessment Framework submission and manage your assurance process.</p>
+      <h1 class="govuk-heading-xl">Assess your council's cyber resilience</h1>
 
-      <div class="govuk-inset-text">
-        There is one webCAF account per council. If your council already uses webCAF, ask to join that account instead of creating another one.
-      </div>
+      <p class="govuk-body">Use this service to:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>set the scope of your assessment, including essential services and critical systems</li>
+        <li>complete your council's self-assessment</li>
+        <li>assign work to colleagues across your council</li>
+        <li>share your assessment with your independent assurer</li>
+        <li>track actions in your improvement and implementation plan (IIP)</li>
+      </ul>
 
-      <p class="govuk-body">Make sure you are using your council, government or other public sector work email address before you continue.</p>
+      <h2 class="govuk-heading-m">Before you start</h2>
+      <p class="govuk-body">You should:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>know who will help complete the self-assessment</li>
+        <li>have identified your council's essential services and critical systems</li>
+        <li>know who your independent assurer is and how to contact them<br>
+          <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/assurance/arrange-independent-assurance/">Find out how to arrange independent assurance</a>
+        </li>
+      </ul>
 
       <a class="govuk-button govuk-button--start" href="/round-2/sign-in" role="button" data-module="govuk-button">
         Sign in
@@ -22,16 +32,6 @@
         </svg>
       </a>
 
-      <ul class="govuk-list">
-        <li class="govuk-!-margin-bottom-4">
-          <a class="govuk-link govuk-link--no-visited-state" href="/round-2/register?path=join-existing">Join your council</a><br>
-          <span class="govuk-hint">Use this if your council already uses webCAF and you need access.</span>
-        </li>
-        <li>
-          <a class="govuk-link govuk-link--no-visited-state" href="/round-2/register?path=request-new">Request access</a><br>
-          <span class="govuk-hint">Use this if your council is not set up yet and needs its first webCAF account.</span>
-        </li>
-      </ul>
     </div>
   </div>
 {% endblock %}

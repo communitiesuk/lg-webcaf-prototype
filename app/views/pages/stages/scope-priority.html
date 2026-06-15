@@ -11,20 +11,23 @@
 
       {{ appErrorSummary(error) }}
 
+      {% set supportsText = "" %}
+      {% if mappedServices and mappedServices.length > 0 %}
+        {% set supportsText = "Supports: " + (mappedServices | join(", ")) %}
+      {% endif %}
+
       {{ appPageHeader({
         caption: "Critical systems list",
         title: "Set the priority for " + system.name,
+        intro: supportsText if supportsText else "",
+        introClass: "govuk-body govuk-hint",
         guidanceHeading: "Help with this step",
         guidanceItems: [
-          "Prioritise systems that would have the biggest impact on the council if disrupted by a cyber attack.",
-          "Use your team's expertise to decide this, including service leads, system owners, and IT or cyber colleagues where needed.",
-          "Be ready to explain the reason for the priority you choose to your assurer."
+          "Choose the systems that would have the biggest impact if they failed.",
+          "Work with service leads, system owners and IT or cyber colleagues if needed.",
+          "Be ready to explain your choice."
         ]
       }) }}
-
-      {% if mappedServices and mappedServices.length > 0 %}
-        <p class="govuk-body govuk-hint">Supports: {{ mappedServices | join(", ") }}</p>
-      {% endif %}
 
       <form method="post" action="/stages/2/scope/priority/{{ system.id }}">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','priorityLevel') | list | length) > 0 %}govuk-form-group--error{% endif %}">
@@ -36,7 +39,7 @@
                 {{ (error.items | selectattr('field','equalto','priorityLevel') | list | first).text }}
               </p>
             {% endif %}
-            <div class="govuk-hint">Select one option. Choose <strong>Not sure yet</strong> if you cannot decide now.</div>
+            <div class="govuk-hint">Select one option.</div>
             <div class="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="priority-high" name="priorityLevel" type="radio" value="high" {% if data.level == "high" %}checked{% endif %}>

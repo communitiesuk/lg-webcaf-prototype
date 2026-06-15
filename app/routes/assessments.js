@@ -44,8 +44,8 @@ const {
 const { getAssurerAccessContext } = require("../data/helpers/assurer-access");
 
 const PROTOTYPE_OUTCOME_LIMITS = {
-  AD: 2,
-  BC: 1,
+  AD: 12,
+  BC: 25,
 };
 const PROTOTYPE_BC_SYSTEM_LIMIT = Number.POSITIVE_INFINITY;
 const B2A_SELF_ASSESS_HREF = (systemId) =>
@@ -520,8 +520,8 @@ module.exports = function (router) {
     }
     const availableSystems = buildAvailableSystems(assessment);
     const allowedIds = new Set(availableSystems.map((s) => s.id));
-    const noSystemsChosen = (req.session.data.noSystemsThisYear || "").toString() === "yes";
-    const requestedIds = noSystemsChosen ? [] : coerceArray(req.session.data.annualSystemIds).filter(Boolean);
+    const noSystemsChosen = (req.body.noSystemsThisYear || "").toString() === "yes";
+    const requestedIds = noSystemsChosen ? [] : coerceArray(req.body.annualSystemIds).filter(Boolean);
     const selectedIds = requestedIds.filter((id) => allowedIds.has(id));
     const errors = [];
     if (!noSystemsChosen && requestedIds.length === 0) {
@@ -562,10 +562,10 @@ module.exports = function (router) {
       return res.redirect("/assessments/current/annual-setup/systems");
     }
     const adApproachLabels = {
-      first_time: "Included — first assessment",
-      update_existing: "Included — review and update",
-      reuse_current: "Included — carry forward with light review",
-      new_assessment: "Included — start fresh",
+      first_time: "Included",
+      update_existing: "Included",
+      reuse_current: "Included",
+      new_assessment: "Included",
     };
     const allSystems = Array.isArray(assessment.scope && assessment.scope.criticalSystems) ? assessment.scope.criticalSystems : [];
     const selectedSystems = allSystems.filter((s) => (assessment.annualSetup.systemIds || []).includes(s.id));
@@ -698,28 +698,45 @@ module.exports = function (router) {
     const outcomes = flattenOutcomes(ad);
     const total = countOutcomesInTree(ad);
     const judged = countADJudged(assessment);
-    const currentUser = req.session.data.user || null;
-    const assignmentUsers = buildAssignmentUsers(assessment, currentUser);
-    const ownerMap = new Map(assignmentUsers.map((u) => [u.id, u.name]));
+
+    const principleTitles = {};
+    for (const objective of ad.objectives || []) {
+      for (const principle of objective.principles || []) {
+        principleTitles[principle.code] = principle.title;
+      }
+    }
+
     const rows = outcomes.map((outcome) => {
       const saved = (assessment.selfAssess && assessment.selfAssess.ad && assessment.selfAssess.ad[outcome.id]) || {};
       const carriedForward = Boolean(saved.carriedForward);
       const reviewRequired = Boolean(saved.reviewRequired);
       const started = hasStartedIgpAssessmentRow(saved);
-      const tracker = (assessment.progressTracker && assessment.progressTracker[outcome.id]) || {};
-      const ownerId = tracker.ownerId || "";
+      const statusText = carriedForward && reviewRequired ? "Carried forward" : saved.judgement ? "Complete" : started ? "In progress" : "Not started";
+      const statusTagClass = carriedForward && reviewRequired ? "govuk-tag--turquoise" : saved.judgement ? "govuk-tag--green" : started ? "govuk-tag--blue" : "govuk-tag--grey";
       return {
         ...outcome,
-        status: carriedForward && reviewRequired ? "Carried forward - review needed" : saved.judgement ? "Complete" : started ? "In progress" : "Not started",
+        statusText,
+        statusTagClass,
         href: buildSelfAssessUrl({ outcomeId: outcome.id }),
-        actionText: carriedForward && reviewRequired ? "Review" : saved.judgement ? "Review" : started ? "Continue" : "Start",
         carriedForward,
-        ownerName: (ownerId && ownerMap.get(ownerId)) || "",
-        assignmentHref: `/assessments/current/start-self-assessment/assignments/${outcome.id}?returnTo=%2Fassessments%2Fcurrent%2Fself-assessment%2Fad`,
       };
     });
+
+    const groupMap = {};
+    const groupOrder = [];
+    for (const row of rows) {
+      if (!groupMap[row.principle]) {
+        groupMap[row.principle] = { principleCode: row.principle, principleTitle: principleTitles[row.principle] || row.principle, outcomes: [] };
+        groupOrder.push(row.principle);
+      }
+      groupMap[row.principle].outcomes.push(row);
+    }
+    const groups = groupOrder.map((code) => {
+      const g = groupMap[code];
+      return { ...g, judgedCount: g.outcomes.filter((r) => r.statusText === "Complete").length, totalCount: g.outcomes.length };
+    });
+
     const carriedForwardReviewCount = rows.filter((row) => row.carriedForward).length;
-    const adPageStatus = judged === 0 ? "Not started" : judged >= total ? "Complete" : "In progress";
     const reviewState = getADReviewState(assessment);
     const readyToComplete = total > 0 && judged >= total;
 
@@ -728,8 +745,7 @@ module.exports = function (router) {
       assessment,
       total,
       judged,
-      rows,
-      adPageStatus,
+      groups,
       reviewState,
       collaborationState: getCollaborationWorkflowState(assessment, req.session.data.user || null),
       readyToComplete,
@@ -834,15 +850,6 @@ module.exports = function (router) {
     }
     const { bc } = getOutcomesForVersion(assessment);
     const allSystems = buildBCSystemList(assessment, bc);
-    const bcCurrentUser = req.session.data.user || null;
-    const bcAssignmentUsers = buildAssignmentUsers(assessment, bcCurrentUser);
-    const bcOwnerMap = new Map(bcAssignmentUsers.map((u) => [u.id, u.name]));
-    allSystems.forEach((system) => {
-      const bcOutcomes = (assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id] && assessment.selfAssess.bc[system.id].outcomes) || {};
-      const ownerId = (bcOutcomes.B2a && bcOutcomes.B2a.ownerId) || "";
-      system.ownerName = (ownerId && bcOwnerMap.get(ownerId)) || "";
-      system.assignmentHref = `/assessments/current/start-self-assessment/assignments/${system.id}:B2a?returnTo=%2Fassessments%2Fcurrent%2Fself-assessment%2Fbc`;
-    });
     const filterState = buildBCSystemFilterState(allSystems, req.query.view);
     const systems = filterState.visibleSystems;
     const totalPerSystem = filterState.totalPerSystem;
@@ -868,7 +875,7 @@ module.exports = function (router) {
     const readyToComplete = totalPerSystem > 0 && allSystems.length > 0 && allSystems.every((system) => system.judged >= totalPerSystem);
 
     return res.render("pages/assessments/self-assessment-bc", {
-      pageTitle: "Complete B and C self-assessment",
+      pageTitle: "Critical systems",
       assessment,
       systems,
       allSystemsCount: allSystems.length,
@@ -936,7 +943,7 @@ module.exports = function (router) {
 
     if (!decision) {
       return res.render("pages/assessments/self-assessment-bc", {
-        pageTitle: "Complete B and C self-assessment",
+        pageTitle: "Critical systems",
         assessment,
         systems,
         allSystemsCount: allSystems.length,
@@ -956,7 +963,7 @@ module.exports = function (router) {
         carriedForwardReviewCount: filterState.carriedForwardReviewCount,
         saved: "",
         savedName: "",
-        error: { items: [{ field: "completeBcAssessment", text: "Select whether B and C is complete." }] },
+        error: { items: [{ field: "completeBcAssessment", text: "Confirm the critical systems self-assessment is complete to continue." }] },
       });
     }
 
@@ -1144,7 +1151,7 @@ module.exports = function (router) {
     assessment.updatedAt = nowIso;
     delete req.session.data.internalSignOffConfirm;
 
-    return res.redirect("/assessments/current/ready-for-assurance");
+    return res.redirect("/assessments/current/send-to-assurer");
   });
 
   router.get("/assessments/current/review-scope", (req, res) => {
@@ -1161,7 +1168,7 @@ module.exports = function (router) {
     const criticalSystems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
 
     return res.render("pages/assessments/review-scope", {
-      pageTitle: "Review your CAF scope",
+      pageTitle: "Review your services and systems lists",
       assessment,
       form: assessment.scopeReview,
       scopeSummary: {
@@ -1184,12 +1191,12 @@ module.exports = function (router) {
     ensureScopeReviewState(assessment);
     ensureAnnualSetupData(assessment);
 
-    const scopeChanged = (req.session.data.scopeChanged || "").toString();
     const scopeUpdateArea = (req.session.data.scopeUpdateArea || "").toString();
+    const scopeChanged = scopeUpdateArea === "no" ? "no" : scopeUpdateArea ? "yes" : "";
     assessment.scopeReview.scopeChanged = scopeChanged;
     assessment.scopeReview.scopeUpdateArea = scopeUpdateArea;
     assessment.scopeReview.decision =
-      scopeChanged === "no"
+      scopeUpdateArea === "no"
         ? "no_change"
         : scopeUpdateArea === "context"
           ? "update_context"
@@ -1204,16 +1211,13 @@ module.exports = function (router) {
     const criticalSystems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
 
     const errors = [];
-    if (!scopeChanged) {
-      errors.push({ field: "scopeChanged", text: "Select whether your CAF scope has changed." });
-    }
-    if (scopeChanged === "yes" && !scopeUpdateArea) {
-      errors.push({ field: "scopeUpdateArea", text: "Select which part of your CAF scope you need to update." });
+    if (!scopeUpdateArea) {
+      errors.push({ field: "scopeUpdateArea", text: "Select whether your setup details need updating, or which part to update." });
     }
 
     if (errors.length > 0) {
       return res.render("pages/assessments/review-scope", {
-        pageTitle: "Review your CAF scope",
+        pageTitle: "Review your services and systems lists",
         assessment,
         form: assessment.scopeReview,
         scopeSummary: {
@@ -1225,10 +1229,9 @@ module.exports = function (router) {
       });
     }
 
-    if (scopeChanged === "no") {
+    if (scopeUpdateArea === "no") {
       assessment.scopeReview.completed = true;
       assessment.annualSetup.scopeCheckStatus = "no_change";
-      delete req.session.data.scopeChanged;
       delete req.session.data.scopeUpdateArea;
       return res.redirect("/assessments/current/annual-setup");
     }
@@ -1237,7 +1240,6 @@ module.exports = function (router) {
     assessment.annualSetup.scopeCheckStatus = "updated";
     assessment.annualSetup.completed = false;
     req.session.data.scopeReviewReturnTo = "/assessments/current/review-scope";
-    delete req.session.data.scopeChanged;
     delete req.session.data.scopeUpdateArea;
 
     if (scopeUpdateArea === "context") {
@@ -1552,35 +1554,6 @@ module.exports = function (router) {
   });
 
   // --- Ready for assurance (CAF lead review view) ---
-  router.get("/assessments/current/ready-for-assurance", (req, res) => {
-    const assessment = getAssessmentOrRedirect(req, res);
-    if (!assessment) return;
-    if (!isRoundTwoRequest(req)) return res.redirect("/assessments/current/journey");
-
-    if (assessment.assurerSubmission && assessment.assurerSubmission.submitted) {
-      return res.redirect("/assessments/current/send-to-assurer/confirmation");
-    }
-
-    ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
-    const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
-    const completion = getAssessmentCompletionState(assessment);
-    const selectedSystems = getSelectedAnnualSystems(assessment);
-    const assessmentWorkflowStatus = getAssessmentWorkflowStatus(assessment, {
-      preferReadyForIndependentAssurance: true,
-    });
-    const isReadyToSend = collaborationState.status === "approved";
-
-    return res.render("pages/assessments/ready-for-assurance", {
-      pageTitle: "Review assessment and send to assurer",
-      assessment,
-      collaborationState,
-      completion,
-      selectedSystems,
-      assessmentWorkflowStatus,
-      isReadyToSend,
-    });
-  });
-
   // --- Send to assurer (CAF lead declaration + submit) ---
   router.get("/assessments/current/send-to-assurer", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
@@ -1594,7 +1567,7 @@ module.exports = function (router) {
     ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
     if (collaborationState.status !== "approved") {
-      return res.redirect("/assessments/current/ready-for-assurance");
+      return res.redirect("/assessments/current/journey");
     }
 
     const completion = getAssessmentCompletionState(assessment);
@@ -1619,7 +1592,7 @@ module.exports = function (router) {
     ensureCollaborationWorkflowData(assessment, req.session.data.user || null);
     const collaborationState = getCollaborationWorkflowState(assessment, req.session.data.user || null);
     if (collaborationState.status !== "approved") {
-      return res.redirect("/assessments/current/ready-for-assurance");
+      return res.redirect("/assessments/current/journey");
     }
 
     const declarationChecked =
@@ -2401,6 +2374,7 @@ module.exports = function (router) {
 
     const currentUser = req.session.data.user || null;
     const councilUsers = buildAssignmentUsers(assessment, currentUser);
+    const contributorUsers = councilUsers.filter((u) => u.id !== (row.ownerId || ""));
 
     return res.render("pages/assessments/start-self-assessment-assign-outcome", {
       pageTitle: `Assign this outcome: ${row.outcomeCode}`,
@@ -2408,6 +2382,7 @@ module.exports = function (router) {
       assessment,
       row,
       councilUsers,
+      contributorUsers,
       returnTo: (req.query.returnTo || "").toString(),
       error: null,
     });
@@ -2430,7 +2405,7 @@ module.exports = function (router) {
 
     const ownerId = (req.session.data.ownerId || "").toString();
     const collaboratorIds = coerceArray(req.session.data.collaboratorIds).filter((id) =>
-      allowedIds.has(id)
+      allowedIds.has(id) && id !== ownerId
     );
     const additionalCollaborators = (req.session.data.additionalCollaborators || "")
       .toString()
@@ -2442,6 +2417,7 @@ module.exports = function (router) {
     }
 
     if (errors.length > 0) {
+      const contributorUsers = councilUsers.filter((u) => u.id !== ownerId);
       return res.render("pages/assessments/start-self-assessment-assign-outcome", {
         pageTitle: `Assign this outcome: ${row.outcomeCode}`,
         labels,
@@ -2453,6 +2429,7 @@ module.exports = function (router) {
           additionalCollaborators,
         },
         councilUsers,
+        contributorUsers,
         error: { items: errors },
       });
     }
@@ -2479,6 +2456,9 @@ module.exports = function (router) {
 
   // DASHBOARD (Progress tracker hub)
   router.get("/assessments/current/dashboard", (req, res) => {
+    if (isRoundTwoRequest(req)) {
+      return res.redirect("/assessments/current/journey");
+    }
     const assessment = getAssessmentOrRedirect(req, res);
     if (!assessment) return;
     ensureAssuranceStageData(assessment);
@@ -3542,6 +3522,7 @@ function flattenOutcomes(outcomesTree) {
           id: outcome.id,
           code: outcome.code,
           title: outcome.title,
+          principle: principle.code,
         });
       }
     }
@@ -3621,7 +3602,7 @@ function buildBCSystemRows(assessment, outcomesTree) {
   const scope = assessment.scope || {};
   const systems = getPrototypeBCSystems(scope, assessment);
   const shortlist = getResolvedBCSystemIds(assessment);
-  const PROTOTYPE_BC_OUTCOME_IDS = ["B2a", "B2b", "B3a", "B4a"];
+  const PROTOTYPE_BC_OUTCOME_IDS = ["B1a", "B1b", "B2a", "B2b", "B2c", "B2d", "B3a", "B3b", "B3c", "B3d", "B3e", "B4a", "B4b", "B4c", "B4d", "B5a", "B5b", "B5c", "B6a", "B6b", "C1a", "C1b", "C1c", "C2a", "C2b"];
   const outcomeList = flattenAllOutcomes(outcomesTree).filter((o) => PROTOTYPE_BC_OUTCOME_IDS.includes(o.id));
   const totalOutcomes = outcomeList.length;
 
@@ -3684,7 +3665,7 @@ function buildBCSystemRows(assessment, outcomesTree) {
 function buildBCOutcomeRows(assessment, outcomesTree) {
   const scope = assessment.scope || {};
   const systems = getPrototypeBCSystems(scope, assessment);
-  const PROTOTYPE_BC_OUTCOME_IDS = ["B2a", "B2b", "B3a", "B4a"];
+  const PROTOTYPE_BC_OUTCOME_IDS = ["B1a", "B1b", "B2a", "B2b", "B2c", "B2d", "B3a", "B3b", "B3c", "B3d", "B3e", "B4a", "B4b", "B4c", "B4d", "B5a", "B5b", "B5c", "B6a", "B6b", "C1a", "C1b", "C1c", "C2a", "C2b"];
   const outcomeList = flattenAllOutcomes(outcomesTree).filter((o) => PROTOTYPE_BC_OUTCOME_IDS.includes(o.id));
 
   const rows = [];
@@ -3776,14 +3757,15 @@ function getPrototypeBCSystems(scope, assessment) {
 function buildBCSystemList(assessment, outcomesTree) {
   const scope = assessment.scope || {};
   const selectedSystems = getPrototypeBCSystems(scope, assessment);
-  const prototypeBcOutcomeIds = flattenOutcomes(outcomesTree).map((outcome) => outcome.id);
+  const PROTOTYPE_BC_OUTCOME_IDS = ["B2a"];
+  const prototypeBcOutcomeIds = PROTOTYPE_BC_OUTCOME_IDS;
   const totalPerSystem = prototypeBcOutcomeIds.length;
   const systems = selectedSystems.map((system) => {
     const systemData =
       assessment.selfAssess && assessment.selfAssess.bc && assessment.selfAssess.bc[system.id]
         ? assessment.selfAssess.bc[system.id]
         : { outcomes: {} };
-    const primarySaved = systemData.outcomes && systemData.outcomes.B1a ? systemData.outcomes.B1a : {};
+    const primarySaved = (systemData.outcomes && systemData.outcomes["B2a"]) || {};
     const judged = countBCJudgedForSystems(assessment, [system.id], prototypeBcOutcomeIds);
     const mapping = getMapping(scope, system.id);
     const mappedServices = (mapping && Array.isArray(mapping.serviceIds) ? mapping.serviceIds : [])
@@ -3792,7 +3774,10 @@ function buildBCSystemList(assessment, outcomesTree) {
       .map((service) => service.name);
     const priority = getPriority(scope, system.id);
     const priorityLevel = priority && priority.level ? priority.level : "";
-    const started = hasStartedIgpAssessmentRow(primarySaved);
+    const started = Boolean(
+      (primarySaved.status && primarySaved.status !== "not_started") ||
+      hasStartedIgpAssessmentRow(primarySaved)
+    );
     const status = primarySaved.carriedForward && primarySaved.reviewRequired
       ? "Carried forward - review needed"
       : judged >= totalPerSystem ? "Complete" : judged > 0 || started ? "In progress" : "Not started";
@@ -4846,6 +4831,9 @@ function buildADJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
 
   const ad = (assessment.selfAssess && assessment.selfAssess.ad) || {};
   const needsReviewCount = Object.values(ad).filter((o) => o.carriedForward && o.reviewRequired).length;
+  const anyAdStarted = Object.values(ad).some(
+    (o) => (o.igpAssessments || []).some((i) => (i.response || "").toString().trim())
+  );
 
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
@@ -4853,7 +4841,7 @@ function buildADJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     if (reviewState.completed) {
       statusText = "Complete";
       statusClass = "govuk-tag--green";
-    } else if (judged > 0) {
+    } else if (judged > 0 || anyAdStarted) {
       statusText = "In progress";
       statusClass = "govuk-tag--blue";
     } else if (needsReviewCount > 0) {
@@ -4895,7 +4883,7 @@ function buildBCJourneySummary(assessment, outcomesTree, { roundTwo = false } = 
     };
   }
 
-  const PROTOTYPE_BC_OUTCOME_IDS = ["B2a", "B2b", "B3a", "B4a"];
+  const PROTOTYPE_BC_OUTCOME_IDS = ["B1a", "B1b", "B2a", "B2b", "B2c", "B2d", "B3a", "B3b", "B3c", "B3d", "B3e", "B4a", "B4b", "B4c", "B4d", "B5a", "B5b", "B5c", "B6a", "B6b", "C1a", "C1b", "C1c", "C2a", "C2b"];
   const prototypeOutcomeIds = flattenAllOutcomes(outcomesTree)
     .filter((o) => PROTOTYPE_BC_OUTCOME_IDS.includes(o.id))
     .map((o) => o.id);
@@ -5354,7 +5342,7 @@ function buildSendToAssurerSummary(assessment) {
 
   if (collaborationState.status === "approved") {
     return {
-      href: "/assessments/current/ready-for-assurance",
+      href: "/assessments/current/send-to-assurer",
       statusText: "Not started",
       statusClass: "govuk-tag--grey",
       hint: "The assessment has been approved and is ready to send to the assurer.",
@@ -5363,7 +5351,7 @@ function buildSendToAssurerSummary(assessment) {
   }
 
   return {
-    href: "/assessments/current/ready-for-assurance",
+    href: "/assessments/current/send-to-assurer",
     statusText: "Not started",
     statusClass: "govuk-tag--grey",
     hint: "Get internal sign-off first.",
@@ -5615,21 +5603,14 @@ function getInternalSignOffState(assessment) {
 }
 
 function getAssessmentCompletionState(assessment) {
-  const { ad, bc } = getOutcomesForVersion(assessment);
+  const { ad } = getOutcomesForVersion(assessment);
   const adTotal = countOutcomesInTree(ad);
   const adJudged = countADJudged(assessment);
-  const scope = assessment && assessment.scope ? assessment.scope : {};
-  const bcSystems = getPrototypeBCSystems(scope, assessment);
-  const PROTOTYPE_BC_OUTCOME_IDS = ["B2a", "B2b", "B3a", "B4a"];
-  const prototypeBcOutcomeIds = flattenAllOutcomes(bc)
-    .filter((o) => PROTOTYPE_BC_OUTCOME_IDS.includes(o.id))
-    .map((o) => o.id);
-  const bcTotal = bcSystems.length * prototypeBcOutcomeIds.length;
-  const bcJudged = countBCJudgedForSystems(
-    assessment,
-    bcSystems.map((system) => system.id),
-    prototypeBcOutcomeIds
-  );
+  const prototypeBcOutcomeIds = ["B2a"];
+  const bcData = assessment && assessment.selfAssess && assessment.selfAssess.bc ? assessment.selfAssess.bc : {};
+  const bcSystemIds = Object.keys(bcData);
+  const bcTotal = bcSystemIds.length * prototypeBcOutcomeIds.length;
+  const bcJudged = countBCJudgedForSystems(assessment, bcSystemIds, prototypeBcOutcomeIds);
   const totalOutcomes = adTotal + bcTotal;
   const judgedCount = adJudged + bcJudged;
   const allJudged = totalOutcomes > 0 && judgedCount >= totalOutcomes;
@@ -5656,7 +5637,13 @@ function getSelectedAnnualSystems(assessment) {
   const scope = assessment && assessment.scope ? assessment.scope : {};
   const allSystems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
   const selectedIds = getResolvedBCSystemIds(assessment);
-  return allSystems.filter((system) => selectedIds.includes(system.id));
+  const found = allSystems.filter((system) => selectedIds.includes(system.id));
+  if (found.length > 0) return found;
+  const bcData = assessment && assessment.selfAssess && assessment.selfAssess.bc ? assessment.selfAssess.bc : {};
+  return Object.keys(bcData).map((id) => {
+    const fromScope = allSystems.find((s) => s.id === id);
+    return fromScope || { id, name: id };
+  });
 }
 
 function getResolvedBCSystemIds(assessment) {
@@ -5674,6 +5661,10 @@ function getResolvedBCSystemIds(assessment) {
 
   if (shortlistIds.length > 0) return shortlistIds.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
   if (annualIds.length > 0) return annualIds.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
+  const bcDataIds = Object.keys(
+    assessment && assessment.selfAssess && assessment.selfAssess.bc ? assessment.selfAssess.bc : {}
+  ).filter((id) => validIds.has(id));
+  if (bcDataIds.length > 0) return bcDataIds.slice(0, PROTOTYPE_BC_SYSTEM_LIMIT);
   return [];
 }
 
@@ -6540,7 +6531,15 @@ function ensureProgressTrackerForStart(assessment) {
     assessment.progressTracker,
     prototypeAdIds
   );
-  if (Object.keys(filteredProgressTracker).length !== Object.keys(assessment.progressTracker).length) {
+  const fullTracker = buildInitialProgressTracker({ outcomesTree: ad, users });
+  let changed = Object.keys(filteredProgressTracker).length !== Object.keys(assessment.progressTracker).length;
+  for (const id of prototypeAdIds) {
+    if (!filteredProgressTracker[id]) {
+      filteredProgressTracker[id] = fullTracker[id];
+      changed = true;
+    }
+  }
+  if (changed) {
     assessment.progressTracker = filteredProgressTracker;
     assessment.updatedAt = new Date().toISOString();
   }
@@ -6569,6 +6568,7 @@ function hasStartedIgpAssessmentRow(row) {
   }
   return row.igpAssessments.some((item) =>
     Boolean(
+      (item.response || "").toString().trim() ||
       (item.maturity || "").toString().trim() ||
       (item.rationale || "").toString().trim() ||
       (item.evidenceNote || "").toString().trim() ||
@@ -6609,7 +6609,7 @@ function countBCJudgedForSystems(assessment, systemIds, allowedOutcomeIds = null
 function journeyItem(title, summary, options) {
   const locked = Boolean(options && options.locked);
   const hint = summary.hint || "";
-  const statusText = locked ? "Not started" : summary.statusText;
+  const statusText = locked ? "Cannot start yet" : summary.statusText;
   const statusClass = locked ? "govuk-tag--grey" : summary.statusClass;
   const href = locked ? "" : summary.href;
 

@@ -16,6 +16,7 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
         href: "/mhclg/engagement",
         active: currentPath.startsWith("/mhclg/engagement"),
       },
+      { text: "Sign out", href: "/logout" },
     ];
   }
 
@@ -38,6 +39,7 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
         href: "/assurer/check-ins",
         active: isCheckIns,
       },
+      { text: "Sign out", href: "/logout" },
     ];
   }
 
@@ -63,6 +65,8 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
           currentPath === "/organisation-details" ||
           currentPath.startsWith("/manage-users"),
       },
+      { text: "My account", href: "/my-account" },
+      { text: "Sign out", href: "/logout" },
     ];
   }
 
@@ -78,13 +82,17 @@ function buildNavigation(currentPath, role, researchRound, options = {}) {
     },
   ];
 
-  return items.map((item) => ({
-    text: item.text,
-    href: item.href,
-    active: Boolean(
-      currentPath && item.match.some((prefix) => currentPath === prefix || currentPath.startsWith(prefix + "/"))
-    ),
-  }));
+  return [
+    ...items.map((item) => ({
+      text: item.text,
+      href: item.href,
+      active: Boolean(
+        currentPath && item.match.some((prefix) => currentPath === prefix || currentPath.startsWith(prefix + "/"))
+      ),
+    })),
+    { text: "My account", href: "/entry" },
+    { text: "Sign out", href: "/logout" },
+  ];
 }
 
 function getRoundTwoAccountBackHref(researchRound, onboardingComplete) {

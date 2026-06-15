@@ -1,5 +1,3 @@
-{% from "components/guidance-box.njk" import appGuidanceBox %}
-
 {% macro appPageHeader(params) %}
   {% if params.caption %}
     <span class="govuk-caption-l">{{ params.caption }}</span>
@@ -8,17 +6,27 @@
   {% if params.intro %}
     <p class="{{ params.introClass or 'govuk-body' }}">{{ params.intro }}</p>
   {% endif %}
+  {% if params.intro2 %}
+    <p class="govuk-body">{{ params.intro2 }}</p>
+  {% endif %}
   {% if params.showSaveReassurance %}
-    <p class="govuk-body-s govuk-hint">Your work is saved as you go.</p>
+    <p class="govuk-body-s govuk-hint">Your answers are saved automatically.</p>
   {% endif %}
   {% if params.hint %}
     <p class="govuk-body govuk-hint">{{ params.hint }}</p>
   {% endif %}
   {% if params.guidanceItems and params.guidanceItems.length %}
-    {{ appGuidanceBox({
-      heading: params.guidanceHeading,
-      headingId: params.guidanceHeadingId,
-      items: params.guidanceItems
-    }) }}
+    <details class="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">{{ params.guidanceHeading or "Help with this question" }}</span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+          {% for item in params.guidanceItems %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </details>
   {% endif %}
 {% endmacro %}

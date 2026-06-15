@@ -9,11 +9,7 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
 
 {% block header %}
 
-    {{ govukHeader({
-        serviceName: serviceName,
-        serviceUrl: "/entry",
-        navigation: headerNavigation
-    }) }}
+    {{ govukHeader({}) }}
     {% if showNavigation %}
       {% if currentUser %}
         {% set userIdentityHtml %}
@@ -39,9 +35,9 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
 {% block beforeContent %}
   {{ govukPhaseBanner({
     tag: {
-      text: "Prototype"
+      text: "Alpha"
     },
-    text: "This service is for research only. Do not use it to make real decisions."
+    text: "This is a new service. Your feedback will help us improve it."
   }) }}
 
   {% if showJourney and breadcrumbs.length > 0 %}

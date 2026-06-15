@@ -13,10 +13,11 @@
       {{ appPageHeader({
         caption: "Assessment setup",
         title: "Choose critical systems to assess",
-        guidanceHeading: "Help with this question",
+        guidanceHeading: "Help with this step",
         guidanceItems: [
-          "Focusing on a small number of systems keeps the assessment manageable and gives your assurer enough depth to make a meaningful judgement.",
-          "You can assess different systems in future cycles."
+          "Choose the systems where an incident would have the biggest impact.",
+          "Assessing a small number of systems makes the review easier to manage.",
+          "You can assess more systems in future."
         ]
       }) }}
 
@@ -24,7 +25,10 @@
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" id="annualSystemIds" aria-describedby="annualSystemIds-hint{% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %} annualSystemIds-error{% endif %}">
             <legend class="govuk-fieldset__legend govuk-visually-hidden">Critical systems</legend>
-            <div id="annualSystemIds-hint" class="govuk-hint">Select up to 3, or choose the option below if you are not assessing any critical systems this year. Choose the systems where a cyber incident would have the biggest impact on your essential services.</div>
+            <div id="annualSystemIds-hint" class="govuk-hint">
+              <p class="govuk-hint govuk-!-margin-bottom-1">Select up to 3 critical systems.</p>
+              <p class="govuk-hint govuk-!-margin-bottom-2">Select 'None' if you are only completing the organisation self-assessment.</p>
+            </div>
             {% if error and (error.items | selectattr('field','equalto','annualSystemIds') | list | length) > 0 %}
               <p id="annualSystemIds-error" class="govuk-error-message">
                 <span class="govuk-visually-hidden">Error:</span>
@@ -43,7 +47,7 @@
                         <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Priority: {{ system.priorityLabel | capitalize }}</span>
                       {% endif %}
                       {% if system.mappedServices and system.mappedServices.length > 0 %}
-                        <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Supports: {{ system.mappedServices | join(", ") }}</span>
+                        <span class="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-0 govuk-!-display-block">Used for: {{ system.mappedServices | join(", ") }}</span>
                       {% endif %}
                     </label>
                   </div>
@@ -53,7 +57,7 @@
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
                   <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
-                    We are not assessing any critical systems this year
+                    None
                   </label>
                 </div>
               </div>
@@ -63,7 +67,7 @@
                 <div class="govuk-checkboxes__item">
                   <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
                   <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
-                    We are not assessing any critical systems this year
+                    None
                   </label>
                 </div>
               </div>
@@ -76,6 +80,24 @@
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          var systemCheckboxes = document.querySelectorAll('input[name="annualSystemIds"]');
+          var noneCheckbox = document.getElementById('noSystemsThisYear');
+          if (!noneCheckbox) return;
+          systemCheckboxes.forEach(function (cb) {
+            cb.addEventListener('change', function () {
+              if (this.checked) noneCheckbox.checked = false;
+            });
+          });
+          noneCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+              systemCheckboxes.forEach(function (cb) { cb.checked = false; });
+            }
+          });
+        });
+      </script>
 
     </div>
   </div>

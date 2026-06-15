@@ -14,11 +14,11 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "mission",
     sessionKey: "scopeContextMission",
     contextKey: "mission",
-    question: "What is your mission?",
+    question: "Describe your council's mission",
     guidanceItems: [
-      "Describe the core issues your council addresses and who it serves.",
-      "Mention the main responsibilities or duties the council must fulfil.",
-      "Keep this focused on outcomes and public purpose, not service detail.",
+      "Use your existing strategic plan to help you describe what your council does and who it serves.",
+      "Include the council's main responsibilities.",
+      "Focus on outcomes, not service detail.",
     ],
     type: "textarea",
     rows: 3,
@@ -27,11 +27,11 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "objectives",
     sessionKey: "scopeContextObjectives",
     contextKey: "objectives",
-    question: "What are your objectives?",
+    question: "Summarise your council's objectives",
     guidanceItems: [
-      "List the objectives for the next year that support your overall mission.",
-      "Show the outcomes or results you expect from these objectives.",
-      "Keep them aligned to your strategic priorities rather than team-level tasks.",
+      "List your council's objectives for the next year.",
+      "Describe the outcomes you expect.",
+      "Focus on strategic priorities, not team-level tasks.",
     ],
     type: "textarea",
     rows: 3,
@@ -40,11 +40,11 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "priorities",
     sessionKey: "scopeContextPriorities",
     contextKey: "priorities",
-    question: "What are your priorities?",
+    question: "Summarise your council's priorities",
     guidanceItems: [
-      "State the top priorities that matter most to your council now.",
-      "Base them on existing strategy, plans or stakeholder-reviewed priorities.",
-      "Keep each priority specific enough to help shape later scope decisions.",
+      "List the priorities that matter most now.",
+      "Base them on existing plans or strategy.",
+      "Keep them clear enough to guide later decisions.",
     ],
     type: "textarea",
     rows: 3,
@@ -53,11 +53,11 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "setup",
     sessionKey: "scopeContextSetup",
     contextKey: "setup",
-    question: "How are you currently set up to deliver your mission, objectives and strategy?",
+    question: "Explain how your council delivers its mission, objectives and strategy",
     guidanceItems: [
-      "Summarise the main structures, teams or partnerships used to deliver your objectives.",
-      "Include any arrangements that are essential to delivering frontline or statutory services.",
-      "Focus on how delivery is organised, not every internal reporting line.",
+      "Describe the main teams, structures or partnerships involved.",
+      "Include anything critical to delivering key services.",
+      "Focus on how work is organised.",
     ],
     type: "textarea",
     rows: 3,
@@ -66,12 +66,11 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "operate",
     sessionKey: "scopeContextOperate",
     contextKey: "operate",
-    question: "How does your organisation operate?",
-    hint: "Include whether you run 24/7 services, online delivery or offline services.",
+    question: "Explain how your council's services are delivered",
     guidanceItems: [
-      "Explain how services are delivered across digital, face-to-face and out-of-hours channels.",
-      "Mention any high-availability, emergency or citizen-facing services that must keep running.",
-      "Call out dependencies on partners, suppliers or shared service arrangements where relevant.",
+      "Describe how services are delivered (for example online, in person, or out of hours).",
+      "Include any services that must run at all times.",
+      "Mention any reliance on partners, suppliers or shared services.",
     ],
     type: "textarea",
     rows: 3,
@@ -80,12 +79,13 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "threat",
     sessionKey: "scopeContextThreat",
     contextKey: "threat",
-    question: "Summarise your organisation's current threat landscape",
-    hint: "Include who may target you, why, and what could go wrong.",
+    question: "Summarise your council's current threat landscape",
     guidanceItems: [
-      "Cover who might target the council, why you may be a target and what the impact could be.",
-      "Include recent incidents, known vulnerabilities or relevant external pressures if they matter now.",
-      "Mention how you monitor emerging threats and any key mitigations already in place.",
+      "Describe who may target the council and why.",
+      "Explain the possible impact.",
+      "Include recent incidents or known risks if they are still relevant.",
+      "Mention how you monitor threats and any controls already in place.",
+      "Focus on the main risks that affect your council. You do not need to write a full report.",
     ],
     type: "textarea",
     rows: 4,
@@ -94,12 +94,13 @@ const SCOPE_CONTEXT_STEPS = [
     slug: "appetite",
     sessionKey: "scopeContextAppetite",
     contextKey: "appetite",
-    question: "Summarise your organisation's cyber risk appetite",
-    hint: "Include where it is defined and what level of appetite it is.",
+    question: "Summarise your council's cyber risk appetite",
     guidanceItems: [
-      "State the level of cyber risk the council is willing to accept and where this is defined.",
-      "Note whether some areas have a higher or lower tolerance because of service impact or regulation.",
-      "Reference recent incidents or legal duties if they shape how risk decisions are made.",
+      "Describe the level of risk your council accepts.",
+      "Say where this is defined (for example, in a policy).",
+      "Mention if some areas accept more or less risk (for example, due to service impact or regulation).",
+      "Include anything that affects decisions, such as legal duties or recent incidents.",
+      "Explain how much risk the council accepts before action is needed. If this is defined elsewhere, summarise it and say where it is recorded.",
     ],
     type: "textarea",
     rows: 3,
@@ -1655,10 +1656,8 @@ module.exports = function (router) {
     }
 
     const continueTo = (req.query.continue || "").toString();
-    const continueHref = continueTo || (isRoundTwoRequest(req) ? "/onboarding" : "/assessments/current/journey");
-    const continueText = continueTo
-      ? "Continue to selected self-assessment"
-      : (isRoundTwoRequest(req) ? "Return to onboarding and setup" : "Return to CAF journey");
+    const continueHref = continueTo || "/assessments/current/journey";
+    const continueText = continueTo ? "Continue to selected self-assessment" : "Continue to your assessment";
 
     return res.render("pages/stages/scope-complete", {
       pageTitle: isRoundTwoRequest(req) ? "Scope register complete" : "Scope pack complete",

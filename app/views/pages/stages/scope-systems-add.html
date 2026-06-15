@@ -17,22 +17,6 @@
         intro: "You will then link it to services and set its priority." if (roundTwo and not isEdit) else ""
       }) }}
 
-      <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-        <summary class="govuk-details__summary">
-          <span class="govuk-details__summary-text">What counts as a critical system</span>
-        </summary>
-        <div class="govuk-details__text">
-          <p class="govuk-body">A critical system is a system, platform or technology service that an essential service depends on.</p>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>Use the system name people in the council would recognise.</li>
-            <li>Include supplier-hosted, shared-service and externally managed systems if your council depends on them.</li>
-            <li>Think about what would stop or seriously degrade service delivery if it became unavailable or was compromised.</li>
-            <li>Do not limit this list to systems owned directly by internal IT.</li>
-          </ul>
-          <p class="govuk-body govuk-!-margin-bottom-0"><strong>Example:</strong> a revenues platform managed by a supplier can still be one of your critical systems if residents and staff depend on it.</p>
-        </div>
-      </details>
-
       <form method="post" action="{{ formAction or '/stages/2/scope/systems/add' }}">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','systemName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="systemName">System name</label>
@@ -42,7 +26,7 @@
               {{ (error.items | selectattr('field','equalto','systemName') | list | first).text }}
             </p>
           {% endif %}
-          <div class="govuk-hint">Such as Case Management System or Payments Platform.</div>
+          <div class="govuk-hint">Give the system name people in your council use, not the technical name. For example, case management system or payments platform.</div>
           <input class="govuk-input" id="systemName" name="systemName" type="text" value="{{ data.name }}">
         </div>
 
@@ -54,7 +38,7 @@
               {{ (error.items | selectattr('field','equalto','systemType') | list | first).text }}
             </p>
           {% endif %}
-          <div class="govuk-hint">Such as line-of-business application, shared platform or supplier-managed service.</div>
+          <div class="govuk-hint">For example, line-of-business system, shared platform or supplier-run service.</div>
           <input class="govuk-input" id="systemType" name="systemType" type="text" value="{{ data.systemType }}">
         </div>
 
@@ -66,7 +50,7 @@
               {{ (error.items | selectattr('field','equalto','supplier') | list | first).text }}
             </p>
           {% endif %}
-          <div class="govuk-hint">Enter the name of the external supplier, shared service or internal team responsible for this system.</div>
+          <div class="govuk-hint">For example, a supplier, shared service or internal team.</div>
           <input class="govuk-input" id="supplier" name="supplier" type="text" value="{{ data.supplier }}">
         </div>
 

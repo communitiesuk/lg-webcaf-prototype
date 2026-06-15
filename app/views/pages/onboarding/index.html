@@ -1,44 +1,24 @@
 {% extends "layouts/main.html" %}
-{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
 {% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/entry">Back</a>
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
       {{ appPageHeader({
         caption: councilDisplayName,
-        title: "Set up your account",
-        intro: "Your account setup is complete. You can now start your assessment." if onboardingComplete else "Complete these steps before you start your assessment."
+        title: "Set up what you're assessing"
       }) }}
 
-      {{ govukTaskList({
-        items: [
-          {
-            title: {
-              text: tasks[0].title
-            },
-            href: tasks[0].href,
-            hint: {
-              text: tasks[0].hint
-            },
-            status: {
-              tag: {
-                text: tasks[0].status,
-                classes: "govuk-tag--green" if tasks[0].status == "Complete" else ("govuk-tag--blue" if tasks[0].status == "In progress" else "govuk-tag--grey")
-              }
-            }
-          }
-        ]
-      }) }}
+      <p class="govuk-body">Before you start your assessment, you need to:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>add your council's strategic context</li>
+        <li>list your council's essential services</li>
+        <li>list the critical systems that support them</li>
+      </ul>
 
-      {% if onboardingComplete %}
-        <div class="govuk-button-group">
-          <a class="govuk-button" href="/assessments/current/journey">Go to assessment task list</a>
-        </div>
-      {% endif %}
+      <a class="govuk-button" href="/onboarding/scope">{{ "Continue" if scopeStarted else "Start" }}</a>
+
     </div>
   </div>
 {% endblock %}
