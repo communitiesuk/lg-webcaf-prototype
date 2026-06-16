@@ -19,12 +19,14 @@ https://prototype-kit.service.gov.uk/docs/how-to-use-layouts
         {% endset %}
         {{ govukServiceNavigation({
             serviceName: serviceName,
+            serviceUrl: "/entry",
             navigation: navigation,
             slots: { navigationEnd: userIdentityHtml }
         })}}
       {% else %}
         {{ govukServiceNavigation({
             serviceName: serviceName,
+            serviceUrl: "/entry",
             navigation: navigation
         })}}
       {% endif %}

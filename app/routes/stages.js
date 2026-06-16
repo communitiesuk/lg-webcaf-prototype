@@ -1291,7 +1291,8 @@ module.exports = function (router) {
     ensureScope(assessment);
     assessment.updatedAt = new Date().toISOString();
     syncRoundTwoScopeCompletion(assessment, req);
-    return redirectToScopeReviewReturnOr(req, res, "/onboarding");
+    const fallback = isRoundTwoRequest(req) ? "/assessments/current/journey" : "/onboarding";
+    return redirectToScopeReviewReturnOr(req, res, fallback);
   });
 
   router.get("/stages/2/scope/mapping/:systemId(sys-[^/]+)", (req, res) => {
