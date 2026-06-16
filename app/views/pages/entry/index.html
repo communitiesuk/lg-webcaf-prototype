@@ -36,7 +36,6 @@
         {% if roundTwoEntry.onboardingComplete %}
           <section class="app-entry-dashboard__section govuk-!-margin-bottom-7" aria-labelledby="assessment-heading">
             <h2 id="assessment-heading" class="govuk-heading-m govuk-!-margin-bottom-3">Assessment</h2>
-            <p class="govuk-body">Track the main stages for the {{ roundTwoEntry.year }} assessment.</p>
             {% if roundTwoEntry.assessmentRows and roundTwoEntry.assessmentRows.length > 0 %}
               <dl class="govuk-summary-list govuk-!-margin-bottom-4">
                 {% for row in roundTwoEntry.assessmentRows %}
@@ -56,37 +55,37 @@
             {% endif %}
           </section>
 
-          <section class="app-entry-dashboard__section govuk-!-margin-bottom-7" aria-labelledby="registers-heading">
-            <h2 id="registers-heading" class="govuk-heading-m govuk-!-margin-bottom-2">Setup lists</h2>
-            <p class="govuk-body">Use these lists to review and update the essential services and critical systems your council relies on.</p>
+          <section class="app-entry-dashboard__section govuk-!-margin-bottom-7" aria-labelledby="scope-heading">
+            <h2 id="scope-heading" class="govuk-heading-m govuk-!-margin-bottom-2">Your services and systems</h2>
             <ul class="govuk-list govuk-list--spaced govuk-!-margin-bottom-0">
-              <li>
-                <a class="govuk-link" href="/stages/2/scope/services/review">Essential services list</a>
-              </li>
-              <li>
-                <a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems list</a>
-              </li>
+              <li><a class="govuk-link" href="/stages/2/scope/services/review">Essential services</a></li>
+              <li><a class="govuk-link" href="/stages/2/scope/systems/review">Critical systems</a></li>
             </ul>
           </section>
         {% endif %}
 
-        <section class="app-entry-dashboard__section app-entry-dashboard__section--secondary govuk-!-margin-bottom-0" aria-labelledby="setup-heading">
+        <section class="app-entry-dashboard__section app-entry-dashboard__section--secondary govuk-!-margin-bottom-7" aria-labelledby="setup-heading">
           <h2 id="setup-heading" class="govuk-heading-m govuk-!-margin-bottom-2">Council setup</h2>
-          <p class="govuk-body govuk-!-margin-bottom-3">Complete this once when your council account is first set up.</p>
           <p class="govuk-body govuk-!-margin-bottom-3">
             <strong class="govuk-tag {% if roundTwoEntry.onboardingComplete %}govuk-tag--green{% else %}govuk-tag--blue{% endif %}">
               {{ roundTwoEntry.onboardingStatus }}
             </strong>
           </p>
-          <p class="govuk-body govuk-!-margin-bottom-0">
-            {% if roundTwoEntry.onboardingComplete %}
-              Council setup is complete.
-            {% else %}
-              Finish council setup before starting the assessment.
-            {% endif %}
-            <a class="govuk-link" href="{{ roundTwoEntry.onboardingActionHref }}">{{ roundTwoEntry.onboardingActionText }}</a>.
-          </p>
+          <ul class="govuk-list govuk-!-margin-bottom-0">
+            <li><a class="govuk-link" href="{{ roundTwoEntry.onboardingActionHref }}">{{ roundTwoEntry.onboardingActionText }}</a></li>
+          </ul>
         </section>
+
+        <section class="app-entry-dashboard__section app-entry-dashboard__section--secondary govuk-!-margin-bottom-0" aria-labelledby="account-heading">
+          <h2 id="account-heading" class="govuk-heading-m govuk-!-margin-bottom-2">Your account</h2>
+          <ul class="govuk-list govuk-!-margin-bottom-0">
+            <li><a class="govuk-link" href="/organisation-details">Organisation details</a></li>
+            {% if canManageUsers %}
+              <li><a class="govuk-link" href="/manage-users">Manage users and roles</a></li>
+            {% endif %}
+          </ul>
+        </section>
+
       {% else %}
         <h1 class="govuk-heading-xl">{{ labels.entry.heading }}</h1>
 

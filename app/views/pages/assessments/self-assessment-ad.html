@@ -1,99 +1,78 @@
 {% extends "layouts/main.html" %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
 
 {% block content %}
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
-  <span class="govuk-caption-l">Self-assessment</span>
-  <h1 class="govuk-heading-l">Organisation self-assessment</h1>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  <p class="govuk-body">Assess how well your organisation manages its cyber risks across Objectives A and D.</p>
+      {% if saved == "outcome" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="ad-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="ad-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
+          </div>
+        </div>
+      {% endif %}
 
-  <p class="govuk-hint">Your work saves as you go.</p>
+      <span class="govuk-caption-l">Self-assessment</span>
+      <h1 class="govuk-heading-l">Organisation self-assessment</h1>
 
-  {% if saved == "outcome" %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="ad-saved-title" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header">
-        <h2 class="govuk-notification-banner__title" id="ad-saved-title">Success</h2>
-      </div>
-      <div class="govuk-notification-banner__content">
-        <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} saved.</p>
-      </div>
-    </div>
-  {% endif %}
+      {% if assessment.hasPreviousAdAssessment %}
+        <div class="govuk-inset-text">
+          Some outcomes have been carried forward from the previous assessment. Review them to confirm they still reflect the current position.
+        </div>
+      {% endif %}
 
-  {% if assessment.hasPreviousAdAssessment %}
-    <div class="govuk-inset-text">
-      Some outcomes have been carried forward from the previous assessment. Review them to confirm they still reflect the current position.
-    </div>
-  {% endif %}
-  {% if carriedForwardReviewCount and carriedForwardReviewCount > 0 %}
-    <p class="govuk-body"><strong>{{ carriedForwardReviewCount }}</strong> carried-forward outcome{% if carriedForwardReviewCount != 1 %}s{% endif %} still need review.</p>
-  {% endif %}
+      {% if groups.length > 0 %}
+        {% for group in groups %}
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-1">{{ group.principleCode }}: {{ group.principleTitle }}</h2>
+          <p class="govuk-hint govuk-!-margin-bottom-3">{{ group.judgedCount }} of {{ group.totalCount }} complete</p>
 
-  {% if rows and rows.length > 0 %}
-    <table class="govuk-table govuk-!-margin-bottom-6">
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          <th scope="col" class="govuk-table__header">Outcome</th>
-          <th scope="col" class="govuk-table__header">Status</th>
-          <th scope="col" class="govuk-table__header">Owner</th>
-          <th scope="col" class="govuk-table__header">Action</th>
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        {% for row in rows %}
-          <tr class="govuk-table__row">
-            <td class="govuk-table__cell">
-              <strong>{{ row.code }}</strong> {{ row.title }}
-            </td>
-            <td class="govuk-table__cell">
-              {% if row.status == "Complete" %}
-                <strong class="govuk-tag govuk-tag--green">Complete</strong>
-              {% elif row.status == "In progress" %}
-                <strong class="govuk-tag govuk-tag--blue">In progress</strong>
-              {% elif row.status == "Carried forward - review needed" %}
-                <strong class="govuk-tag govuk-tag--yellow">Review needed</strong>
-              {% else %}
-                <strong class="govuk-tag govuk-tag--grey">Not started</strong>
-              {% endif %}
-            </td>
-            <td class="govuk-table__cell">
-              {{ row.ownerName or "Unassigned" }}
-              <div class="govuk-!-margin-top-1">
-                <a class="govuk-link govuk-link--no-visited-state" href="{{ row.assignmentHref }}">{{ "Change" if row.ownerName else "Assign" }}</a>
-              </div>
-            </td>
-            <td class="govuk-table__cell">
-              <a class="govuk-link" href="{{ row.href }}">{{ row.actionText }}</a>
-            </td>
-          </tr>
+          {% set taskItems = [] %}
+          {% for outcome in group.outcomes %}
+            {% set taskItems = taskItems.concat([{
+              title: { html: "<strong>" + outcome.code + "</strong> " + outcome.title },
+              href: outcome.href,
+              status: {
+                tag: {
+                  text: outcome.statusText,
+                  classes: outcome.statusTagClass
+                }
+              }
+            }]) %}
+          {% endfor %}
+
+          {{ govukTaskList({ idPrefix: group.principleCode, items: taskItems }) }}
         {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
+      {% endif %}
 
-  <p class="govuk-body govuk-!-margin-bottom-6"><a class="govuk-link" href="/assessments/current/start-self-assessment/people?returnTo=%2Fassessments%2Fcurrent%2Fself-assessment%2Fad">Add a person for assignment</a></p>
-
-  {% if readyToComplete or reviewState.completed %}
-    {% if reviewState.completed %}
-      <h2 class="govuk-heading-m">Organisation self-assessment complete</h2>
-      <p class="govuk-body">Marked complete on {{ reviewState.completedAt | ukDate }} by {{ reviewState.completedBy }}.</p>
-      <div class="govuk-button-group">
-        <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
-      </div>
-    {% else %}
-      <h2 class="govuk-heading-m">Mark as complete</h2>
-      <p class="govuk-body">All {{ total }} outcome{% if total != 1 %}s{% endif %} have a final judgement. Confirm the organisation self-assessment is ready before moving on.</p>
-      <form method="post" action="/assessments/current/self-assessment/ad">
+      {% if readyToComplete or reviewState.completed %}
+        {% if reviewState.completed %}
+          <h2 class="govuk-heading-m">Organisation self-assessment complete</h2>
+          <p class="govuk-body">Marked complete on {{ reviewState.completedAt | ukDate }} by {{ reviewState.completedBy }}.</p>
+          <div class="govuk-button-group">
+            <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+          </div>
+        {% else %}
+          <h2 class="govuk-heading-m">Mark as complete</h2>
+          <p class="govuk-body">All {{ total }} outcome{% if total != 1 %}s{% endif %} have a final judgement. Confirm the organisation self-assessment is ready before moving on.</p>
+          <form method="post" action="/assessments/current/self-assessment/ad">
+            <div class="govuk-button-group">
+              <button class="govuk-button" data-module="govuk-button" type="submit" name="completeAdAssessment" value="yes">Mark organisation self-assessment as complete</button>
+              <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+            </div>
+          </form>
+        {% endif %}
+      {% else %}
         <div class="govuk-button-group">
-          <button class="govuk-button" data-module="govuk-button" type="submit" name="completeAdAssessment" value="yes">Mark organisation self-assessment as complete</button>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
-      </form>
-    {% endif %}
-  {% else %}
-    <div class="govuk-button-group">
-      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+      {% endif %}
+
     </div>
-  {% endif %}
+  </div>
 {% endblock %}

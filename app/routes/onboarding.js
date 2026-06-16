@@ -56,32 +56,21 @@ module.exports = function (router) {
       return res.redirect("/assessments/current/journey");
     }
 
-    const account = getCurrentCouncilAccount(req);
-    syncAccountSetupStatus(req.session.data, account);
-    const tasks = buildOnboardingTasks(assessment);
-    const completedCount = tasks.filter((task) => task.status === "Complete").length;
-    const nextTask = tasks.find((task) => task.status !== "Complete") || null;
-    const onboardingComplete = tasks.every((task) => task.status === "Complete");
-    const onboardingProgressBase = buildRoundTwoSetupProgress(assessment);
-    const onboardingProgress = {
-      ...onboardingProgressBase,
-      milestones: onboardingProgressBase.milestones.map((milestone, index) => ({
-        ...milestone,
-        href: tasks[index] && tasks[index].status !== "Cannot start yet" ? tasks[index].href : "",
-      })),
-    };
+    if (isRoundTwoOnboardingComplete(assessment)) {
+      return res.redirect("/assessments/current/journey");
+    }
+
+    const scope = assessment.scope || {};
+    const scopeStarted = Boolean(
+      (scope.context && Object.values(scope.context).some(Boolean)) ||
+      (Array.isArray(scope.essentialServices) && scope.essentialServices.length > 0) ||
+      (Array.isArray(scope.criticalSystems) && scope.criticalSystems.length > 0)
+    );
 
     return res.render("pages/onboarding/index", {
-      pageTitle: "Set up your account",
-      account,
+      pageTitle: "Set up what you're assessing",
       councilDisplayName: getCouncilDisplayName(req.session.data),
-      currentUser: req.session.data.user || null,
-      tasks,
-      completedCount,
-      nextTask,
-      onboardingComplete,
-      onboardingProgress,
-      canManageSetup: canManageCouncilSetup(req.session.data.user || null),
+      scopeStarted,
     });
   });
 
@@ -140,32 +129,44 @@ module.exports = function (router) {
     }
 
     return res.render("pages/account/manage-users", {
-      pageTitle: "Manage users",
+      pageTitle: "Manage users and roles",
       account,
       backHref: getRoundTwoAccountBackHref(
         req.session.data.researchRound,
         isOnboardingComplete(req.session.data.assessment)
       ),
       councilDisplayName: getCouncilDisplayName(req.session.data),
-      councilEmailDomain: getCouncilEmailDomain(req.session.data),
-      currentUser: syncUserRoleState(req.session.data.user || null),
-      cafLead: getCafLead(req.session.data),
       canManageUsers: canManageUsers(req.session.data.user || null),
-      addUserDefaults: buildAddUserDefaults(req.session.data),
-      addUserError: null,
       addUserSuccess: (req.query.added || "").toString(),
       roleUpdateSuccess: (req.query.updated || "").toString(),
+    });
+  });
+
+  router.get("/manage-users/add", (req, res) => {
+    const account = getCurrentCouncilAccount(req);
+    if (!account) {
+      return res.redirect("/entry");
+    }
+    if (!canManageUsers(req.session.data.user || null)) {
+      return res.status(403).render("pages/errors/restricted", {
+        pageTitle: "Access restricted",
+      });
+    }
+    return res.render("pages/account/add-user", {
+      pageTitle: "Add a user",
+      councilEmailDomain: getCouncilEmailDomain(req.session.data),
+      addUserDefaults: buildAddUserDefaults(req.session.data),
+      addUserError: null,
       roleOptions: getSupportedRoles(),
       rolePermissionRows: getRolePermissionRows(),
     });
   });
 
-  router.post("/manage-users", (req, res) => {
+  router.post("/manage-users/add", (req, res) => {
     const account = getCurrentCouncilAccount(req);
     if (!account) {
       return res.redirect("/entry");
     }
-
     if (!canManageUsers(req.session.data.user || null)) {
       return res.status(403).render("pages/errors/restricted", {
         pageTitle: "Access restricted",
@@ -202,21 +203,11 @@ module.exports = function (router) {
     }
 
     if (errors.length > 0) {
-      return res.render("pages/account/manage-users", {
-        pageTitle: "Manage users",
-        account,
-        backHref: getRoundTwoAccountBackHref(
-          req.session.data.researchRound,
-          isOnboardingComplete(req.session.data.assessment)
-        ),
-        councilDisplayName: getCouncilDisplayName(req.session.data),
+      return res.render("pages/account/add-user", {
+        pageTitle: "Add a user",
         councilEmailDomain: getCouncilEmailDomain(req.session.data),
-        currentUser: req.session.data.user || null,
-        cafLead: getCafLead(req.session.data),
-        canManageUsers: true,
         addUserDefaults: buildAddUserDefaults(req.session.data),
         addUserError: { items: errors },
-        addUserSuccess: "",
         roleOptions: getSupportedRoles(),
         rolePermissionRows: getRolePermissionRows(),
       });

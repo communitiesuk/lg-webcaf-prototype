@@ -2,115 +2,83 @@
 {% from "components/page-header.njk" import appPageHeader %}
 
 {% block content %}
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 
-  {% if error %}
-    <div class="govuk-error-summary" data-module="govuk-error-summary">
-      <div role="alert">
-        <h2 class="govuk-error-summary__title">There is a problem</h2>
-        <div class="govuk-error-summary__body">
-          <ul class="govuk-list govuk-error-summary__list">
-            {% for item in error.items %}
-              <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  {% endif %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  {{ appPageHeader({
-    title: "Review your services and systems lists",
-    intro: "Check your current services and systems lists and update them if anything has changed before setting up this assessment.",
-    showSaveReassurance: true
-  }) }}
-  <details class="govuk-details govuk-!-margin-bottom-6" data-module="govuk-details">
-    <summary class="govuk-details__summary">
-        <span class="govuk-details__summary-text">Help with this step</span>
-    </summary>
-    <div class="govuk-details__text">
-      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-        <li>Only update these lists if your context, essential services or critical systems have changed.</li>
-        <li>If something has changed, you will update that part before continuing.</li>
-      </ul>
-      <p class="govuk-body govuk-!-margin-top-3">A change here usually means a real change in services, systems, suppliers, delivery model or risk context, not just a wording tidy-up.</p>
-    </div>
-  </details>
-
-  <h2 class="govuk-heading-m">Current setup summary</h2>
-  <dl class="govuk-summary-list govuk-!-margin-bottom-6">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Organisational context</dt>
-      <dd class="govuk-summary-list__value">{{ scopeSummary.contextStatus }}</dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Essential services</dt>
-      <dd class="govuk-summary-list__value">{{ scopeSummary.essentialServicesCount }} in list</dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Critical systems</dt>
-      <dd class="govuk-summary-list__value">{{ scopeSummary.criticalSystemsCount }} in list</dd>
-    </div>
-  </dl>
-
-  <form method="post" action="/assessments/current/review-scope">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset" id="scopeChanged"{% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %} aria-describedby="scopeChanged-error"{% endif %}>
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do these setup details need updating for this assessment?</legend>
-        {% if error and (error.items | selectattr('field','equalto','scopeChanged') | list | length) > 0 %}
-          <p id="scopeChanged-error" class="govuk-error-message">
-            <span class="govuk-visually-hidden">Error:</span>
-            {{ (error.items | selectattr('field','equalto','scopeChanged') | list | first).text }}
-          </p>
-        {% endif %}
-        <div class="govuk-radios" data-module="govuk-radios">
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="scopeChanged-no" name="scopeChanged" type="radio" value="no" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "no" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="scopeChanged-no">No, these details are up to date</label>
-          </div>
-          <div class="govuk-radios__item">
-            <input class="govuk-radios__input" id="scopeChanged-yes" name="scopeChanged" type="radio" value="yes" data-aria-controls="conditional-scopeChanged" {% if form.scopeChanged == "yes" %}checked{% endif %}>
-            <label class="govuk-label govuk-radios__label" for="scopeChanged-yes">Yes, I need to make changes</label>
-          </div>
-          <div class="govuk-radios__conditional {% if form.scopeChanged != 'yes' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-scopeChanged">
-            <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-              <fieldset class="govuk-fieldset" id="scopeUpdateArea"{% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %} aria-describedby="scopeUpdateArea-error"{% endif %}>
-                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which part do you need to update?</legend>
-                {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}
-                  <p id="scopeUpdateArea-error" class="govuk-error-message">
-                    <span class="govuk-visually-hidden">Error:</span>
-                    {{ (error.items | selectattr('field','equalto','scopeUpdateArea') | list | first).text }}
-                  </p>
-                {% endif %}
-                <div class="govuk-radios">
-                  <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="scopeUpdateArea-context" name="scopeUpdateArea" type="radio" value="context" {% if form.scopeUpdateArea == "context" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-context">Organisational context</label>
-                  </div>
-                  <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="scopeUpdateArea-services" name="scopeUpdateArea" type="radio" value="services" {% if form.scopeUpdateArea == "services" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-services">Essential services list</label>
-                  </div>
-                  <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="scopeUpdateArea-systems" name="scopeUpdateArea" type="radio" value="systems" {% if form.scopeUpdateArea == "systems" %}checked{% endif %}>
-                    <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-systems">Critical systems list</label>
-                  </div>
-                </div>
-                <div class="govuk-hint govuk-!-margin-top-3">For example: a new major supplier platform, a service redesign, a shared service arrangement, or a significant shift in cyber risk.</div>
-              </fieldset>
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for item in error.items %}
+                  <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+                {% endfor %}
+              </ul>
             </div>
           </div>
         </div>
-      </fieldset>
-    </div>
+      {% endif %}
 
-    <div class="govuk-button-group">
-      <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
-      <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
-    </div>
-  </form>
+      {{ appPageHeader({
+        title: "Review your services and systems lists"
+      }) }}
+
+      <h2 class="govuk-heading-m">Your current setup</h2>
+      <ul class="govuk-list govuk-!-margin-bottom-6">
+        <li>Organisational context: {{ scopeSummary.contextStatus }}</li>
+        <li>Essential services: {{ scopeSummary.essentialServicesCount }} in list</li>
+        <li>Critical systems: {{ scopeSummary.criticalSystemsCount }} in list</li>
+      </ul>
+
+      <form method="post" action="/assessments/current/review-scope">
+        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="scopeUpdateArea"{% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %} aria-describedby="scopeUpdateArea-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do these setup details need updating for this assessment?</legend>
+            <details class="govuk-details">
+              <summary class="govuk-details__summary">
+                <span class="govuk-details__summary-text">When do I need to update these details?</span>
+              </summary>
+              <div class="govuk-details__text">
+                Update if something has genuinely changed, such as a new supplier platform, a service redesign, a shared service arrangement, or a significant shift in cyber risk. A wording tidy-up is not a reason to update.
+              </div>
+            </details>
+            {% if error and (error.items | selectattr('field','equalto','scopeUpdateArea') | list | length) > 0 %}
+              <p id="scopeUpdateArea-error" class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (error.items | selectattr('field','equalto','scopeUpdateArea') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeUpdateArea-no" name="scopeUpdateArea" type="radio" value="no" {% if form.scopeUpdateArea == "no" or (not form.scopeUpdateArea and form.scopeChanged == "no") %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-no">No, these details are up to date</label>
+              </div>
+              <div class="govuk-radios__divider">or</div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeUpdateArea-context" name="scopeUpdateArea" type="radio" value="context" {% if form.scopeUpdateArea == "context" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-context">Yes, I need to update my organisational context</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeUpdateArea-services" name="scopeUpdateArea" type="radio" value="services" {% if form.scopeUpdateArea == "services" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-services">Yes, I need to update my essential services list</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="scopeUpdateArea-systems" name="scopeUpdateArea" type="radio" value="systems" {% if form.scopeUpdateArea == "systems" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="scopeUpdateArea-systems">Yes, I need to update my critical systems list</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+          <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
+        </div>
+      </form>
+
     </div>
   </div>
 {% endblock %}

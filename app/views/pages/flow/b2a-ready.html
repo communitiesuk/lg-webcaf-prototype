@@ -1,59 +1,64 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
-  <div class="govuk-panel govuk-panel--confirmation">
-    <h1 class="govuk-panel__title">Outcome ready for internal review</h1>
-    <div class="govuk-panel__body">{{ outcome.code }} {{ outcome.title }}</div>
-  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
 
-  <p class="govuk-hint">{{ context.systemName }}</p>
-  <p class="govuk-body">This contributing outcome is now ready for internal review. After internal review and approval, it will count towards the wider assessment being ready for independent assurance.</p>
+      {% if outcome %}
+        <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}{% if context.systemName %} — {{ context.systemName }}{% endif %}</span>
+      {% endif %}
+      <h1 class="govuk-heading-l">Outcome ready for internal review</h1>
 
-  <dl class="govuk-summary-list">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">IGP responses</dt>
-      <dd class="govuk-summary-list__value">Completed</dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Evidence references</dt>
-      <dd class="govuk-summary-list__value">{{ summary.evidenceCount }} added</dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Indicative judgement</dt>
-      <dd class="govuk-summary-list__value">
-        {% if summary.indicativeJudgement == "Achieved" %}
-          <strong class="govuk-tag govuk-tag--green">{{ summary.indicativeJudgement }}</strong>
-        {% elif summary.indicativeJudgement == "Partially achieved" %}
-          <strong class="govuk-tag govuk-tag--yellow">{{ summary.indicativeJudgement }}</strong>
-        {% elif summary.indicativeJudgement == "Not achieved" %}
-          <strong class="govuk-tag govuk-tag--red">{{ summary.indicativeJudgement }}</strong>
-        {% else %}
-          <span class="govuk-hint">Not captured</span>
-        {% endif %}
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Final judgement</dt>
-      <dd class="govuk-summary-list__value">
-        {% if summary.judgement == "Achieved" %}
-          <strong class="govuk-tag govuk-tag--green">{{ summary.judgement }}</strong>
-        {% elif summary.judgement == "Partially achieved" %}
-          <strong class="govuk-tag govuk-tag--yellow">{{ summary.judgement }}</strong>
-        {% elif summary.judgement == "Not achieved" %}
-          <strong class="govuk-tag govuk-tag--red">{{ summary.judgement }}</strong>
-        {% else %}
-          {{ summary.judgement }}
-        {% endif %}
-      </dd>
-    </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">Reason</dt>
-      <dd class="govuk-summary-list__value">{{ summary.rationale }}</dd>
-    </div>
-  </dl>
+      <p class="govuk-body">Your self-assessment for this outcome is saved. It will be reviewed as part of the overall assessment sign-off.</p>
 
-  <div class="govuk-button-group">
-    <a class="govuk-button" href="/assessments/current/journey">Return to task list</a>
-    <a class="govuk-link" href="{{ systemHref }}">Return to outcomes list</a>
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">IGP responses</dt>
+          <dd class="govuk-summary-list__value">Completed</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Evidence references</dt>
+          <dd class="govuk-summary-list__value">{{ summary.evidenceCount }} added</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Indicative judgement</dt>
+          <dd class="govuk-summary-list__value">
+            {% if summary.indicativeJudgement == "Achieved" %}
+              <strong class="govuk-tag govuk-tag--green">{{ summary.indicativeJudgement }}</strong>
+            {% elif summary.indicativeJudgement == "Partially achieved" %}
+              <strong class="govuk-tag govuk-tag--yellow">{{ summary.indicativeJudgement }}</strong>
+            {% elif summary.indicativeJudgement == "Not achieved" %}
+              <strong class="govuk-tag govuk-tag--red">{{ summary.indicativeJudgement }}</strong>
+            {% else %}
+              <span class="govuk-hint">Not captured</span>
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Final judgement</dt>
+          <dd class="govuk-summary-list__value">
+            {% if summary.judgement == "Achieved" %}
+              <strong class="govuk-tag govuk-tag--green">{{ summary.judgement }}</strong>
+            {% elif summary.judgement == "Partially achieved" %}
+              <strong class="govuk-tag govuk-tag--yellow">{{ summary.judgement }}</strong>
+            {% elif summary.judgement == "Not achieved" %}
+              <strong class="govuk-tag govuk-tag--red">{{ summary.judgement }}</strong>
+            {% else %}
+              {{ summary.judgement }}
+            {% endif %}
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Reason</dt>
+          <dd class="govuk-summary-list__value">{{ summary.rationale }}</dd>
+        </div>
+      </dl>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="/assessments/current/journey">Return to task list</a>
+        <a class="govuk-link" href="{{ systemHref }}">Return to outcomes list</a>
+      </div>
+
+    </div>
   </div>
 {% endblock %}

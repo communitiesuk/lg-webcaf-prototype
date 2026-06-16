@@ -8,7 +8,7 @@ const { isRoundTwoOnboardingComplete } = require("../data/helpers/phase-progress
 const { requireSignedIn } = require("../data/helpers/session");
 const { canManageUsers } = require("../data/helpers/round-two-access");
 const { getCouncilDisplayName, getStoredCouncilName, isCouncilSetupComplete } = require("../data/helpers/council-context");
-const { buildCouncilAccount, getCouncilUsers } = require("../data/helpers/prototype-session");
+const { getCouncilUsers } = require("../data/helpers/prototype-session");
 
 module.exports = function (router) {
   router.get("/entry", (req, res) => {
@@ -24,7 +24,6 @@ module.exports = function (router) {
       ? Boolean(assessment && assessment.id && assessment.startedFromEntry)
       : Boolean(assessment && assessment.id);
     const roundTwoEntry = roundTwo ? buildRoundTwoEntrySummary(assessment, req.session.data) : null;
-    const accessAccount = roundTwo ? buildCouncilAccount(req.session.data) : null;
 
     const viewModel = {
       pageTitle: roundTwo ? "Your WebCAF account" : labels.entry.pageTitle,
@@ -33,7 +32,6 @@ module.exports = function (router) {
       hasInProgress,
       roundTwo,
       roundTwoEntry,
-      accessAccount,
       canManageUsers: canManageUsers(req.session.data.user || null),
     };
 
@@ -266,9 +264,6 @@ function buildRoundTwoEntrySummary(assessment, sessionData) {
   const assessmentLinks = [];
   if (onboardingComplete) {
     assessmentLinks.push({ text: "Open assessment task list", href: "/assessments/current/journey" });
-  }
-  if (annualSetupComplete) {
-    assessmentLinks.push({ text: "Open assessment dashboard", href: "/assessments/current/dashboard?view=my" });
   }
 
   const statusTagClass = (assurerSubmitted || selfAssessApproved) ? "govuk-tag--green" : "govuk-tag--blue";

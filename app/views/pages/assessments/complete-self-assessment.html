@@ -1,9 +1,22 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
+
+      {% if collaborationState.status === "approved" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="region" aria-labelledby="signoff-success-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="signoff-success-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">Internal sign-off confirmed.</p>
+            <p class="govuk-body">The self-assessment is ready to send to the assurer.</p>
+          </div>
+        </div>
+      {% endif %}
 
       {% if error %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -49,17 +62,8 @@
       </p>
 
       {% if collaborationState.status === "approved" %}
-        <div class="govuk-notification-banner govuk-notification-banner--success" role="region" aria-labelledby="signoff-success-title" data-module="govuk-notification-banner">
-          <div class="govuk-notification-banner__header">
-            <h2 class="govuk-notification-banner__title" id="signoff-success-title">Success</h2>
-          </div>
-          <div class="govuk-notification-banner__content">
-            <p class="govuk-notification-banner__heading">Internal sign-off confirmed.</p>
-            <p class="govuk-body">The self-assessment is ready to send to the assurer.</p>
-          </div>
-        </div>
         <div class="govuk-button-group">
-          <a class="govuk-button" href="/assessments/current/ready-for-assurance">Continue to send to assurer</a>
+          <a class="govuk-button" href="/assessments/current/send-to-assurer">Continue to send to assurer</a>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       {% else %}

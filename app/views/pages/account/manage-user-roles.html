@@ -1,9 +1,11 @@
 {% extends "layouts/main.html" %}
 
 {% block content %}
+  <a class="govuk-back-link" href="{{ backHref or '/manage-users' }}">Back</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
-  <a class="govuk-back-link" href="{{ backHref or '/manage-users' }}">Back</a>
+
   <p class="govuk-caption-l">{{ councilDisplayName }}</p>
 
   {% if error %}
@@ -22,7 +24,6 @@
   {% endif %}
 
   <h1 class="govuk-heading-l">Change roles for {{ member.name }}</h1>
-  <p class="govuk-body">Use this page to change this user's WebCAF roles and choose which role opens by default when they sign in.</p>
 
   <dl class="govuk-summary-list govuk-!-margin-bottom-6">
     <div class="govuk-summary-list__row">

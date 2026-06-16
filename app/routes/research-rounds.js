@@ -64,7 +64,7 @@ module.exports = function (router) {
     if (!req.session) req.session = {};
     if (!req.session.data) req.session.data = {};
     initialiseDemoScene(req.session.data, "dashboard");
-    return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+    return res.redirect("/assessments/current/journey");
   });
 
   router.get("/research-rounds/alpha-demo/context", (req, res) => {
@@ -100,13 +100,6 @@ module.exports = function (router) {
     if (!req.session.data) req.session.data = {};
     initialiseDemoScene(req.session.data, "review");
     return res.redirect("/assessments/current/complete-self-assessment");
-  });
-
-  router.get("/research-rounds/alpha-demo/ready-for-assurance", (req, res) => {
-    if (!req.session) req.session = {};
-    if (!req.session.data) req.session.data = {};
-    initialiseDemoScene(req.session.data, "send-to-assurer");
-    return res.redirect("/assessments/current/ready-for-assurance");
   });
 
   router.get("/research-rounds/alpha-demo/send-to-assurer", (req, res) => {

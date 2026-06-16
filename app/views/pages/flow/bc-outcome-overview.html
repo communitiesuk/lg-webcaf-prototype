@@ -1,0 +1,50 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if saved == "assignment" %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="bc-assignment-saved-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="bc-assignment-saved-title">Success</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ savedName or "Outcome" }} assigned.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l">{{ system.name }}</span>
+      <h1 class="govuk-heading-l"><strong>{{ outcome.code }}</strong> {{ outcome.title }}</h1>
+
+      {% if outcome.description %}
+        <p class="govuk-body">{{ outcome.description }}</p>
+      {% endif %}
+
+      <dl class="govuk-summary-list govuk-!-margin-bottom-6">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Status</dt>
+          <dd class="govuk-summary-list__value">
+            <strong class="govuk-tag {{ statusTagClass }}">{{ statusText }}</strong>
+          </dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assigned to</dt>
+          <dd class="govuk-summary-list__value">{{ ownerName or "Not assigned" }}</dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="{{ assignHref }}">{{ "Change" if ownerName else "Assign" }}<span class="govuk-visually-hidden"> person for this outcome</span></a>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" href="{{ assessHref }}">{{ ctaText }}</a>
+        <a class="govuk-link" href="{{ backHref }}">Return to outcomes list</a>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

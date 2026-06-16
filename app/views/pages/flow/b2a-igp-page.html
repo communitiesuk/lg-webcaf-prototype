@@ -23,18 +23,43 @@
   {% endif %}
   <h1 class="govuk-heading-l">{{ page.heading }}</h1>
 
+  {% if page.intro %}
+    <p class="govuk-body">{{ page.intro }}</p>
+  {% endif %}
+
+  {% if page.pageHint %}
+    <p class="govuk-hint">{{ page.pageHint }}</p>
+  {% endif %}
+
+  {% if page.guidanceSummary and page.guidanceBody %}
+    <details class="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">{{ page.guidanceSummary }}</span>
+      </summary>
+      <div class="govuk-details__text">
+        <p class="govuk-body govuk-!-margin-bottom-0">{{ page.guidanceBody }}</p>
+      </div>
+    </details>
+  {% endif %}
+
   <form method="post" action="{{ formAction }}">
     {% for row in page.rows %}
       {% set responseField = page.stepKey ~ '-' ~ row.id ~ '-yes' %}
       {% set explanationNaField = page.stepKey ~ '-' ~ row.id ~ '-explanation-na' %}
       {% set explanationAltField = page.stepKey ~ '-' ~ row.id ~ '-explanation-alt' %}
-      <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', responseField) | list | length) > 0 %}govuk-form-group--error{% endif %}">
-        <fieldset class="govuk-fieldset">
+      {% set hasError = error and (error.items | selectattr('field', 'equalto', responseField) | list | length) > 0 %}
+
+      {% set ariaDescBy = "" %}
+      {% if row.mirrorHint %}{% set ariaDescBy = ariaDescBy ~ page.stepKey ~ "-" ~ row.id ~ "-mirror-hint " %}{% endif %}
+      {% if hasError %}{% set ariaDescBy = ariaDescBy ~ responseField ~ "-error " %}{% endif %}
+
+      <div class="govuk-form-group {% if hasError %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset"{% if ariaDescBy %} aria-describedby="{{ ariaDescBy | trim }}"{% endif %}>
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">{{ row.statement }}</legend>
           {% if row.mirrorHint %}
             <div id="{{ page.stepKey }}-{{ row.id }}-mirror-hint" class="govuk-hint">{{ row.mirrorHint }}</div>
           {% endif %}
-          {% if error and (error.items | selectattr('field', 'equalto', responseField) | list | length) > 0 %}
+          {% if hasError %}
             <p class="govuk-error-message" id="{{ responseField }}-error">
               <span class="govuk-visually-hidden">Error:</span>
               {{ (error.items | selectattr('field', 'equalto', responseField) | list | first).text }}
@@ -85,7 +110,7 @@
       </div>
 
       <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ page.stepKey }}-{{ row.id }}-note">Supporting note for yes or no (optional)</label>
+        <label class="govuk-label" for="{{ page.stepKey }}-{{ row.id }}-note">Supporting note (optional)</label>
         <input class="govuk-input" id="{{ page.stepKey }}-{{ row.id }}-note" name="{{ page.stepKey }}-{{ row.id }}-note" type="text" value="{{ row.note }}">
       </div>
 
@@ -95,7 +120,8 @@
     {% endfor %}
 
     <div class="govuk-button-group">
-      <button class="govuk-button" type="submit" data-module="govuk-button">{{ nextLabel }}</button>
+      <button class="govuk-button" type="submit" name="igpStepAction" value="continue" data-module="govuk-button">{{ nextLabel }}</button>
+      <button class="govuk-button govuk-button--secondary" type="submit" name="igpStepAction" value="save" data-module="govuk-button">Save and come back later</button>
     </div>
   </form>
 {% endblock %}

@@ -1,5 +1,5 @@
 {
-  "serviceName": "WebCAF for Local Government",
+  "serviceName": "CAF for Local Government",
   "plugins": {
     "govuk-frontend": {
       "rebrand": true

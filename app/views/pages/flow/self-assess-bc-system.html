@@ -1,15 +1,12 @@
 {# app/views/pages/flow/self-assess-bc-system.html #}
 {% extends "layouts/main.html" %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
 
 {% block content %}
-  {% if roundTwo %}
-    <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
-  {% else %}
-    <a class="govuk-back-link" href="/self-assess/bc/select-system">Back</a>
-  {% endif %}
+  <a class="govuk-back-link" href="/assessments/current/self-assessment/bc">Back</a>
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
 
       {% if saved == "outcome" %}
         <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="bc-system-saved-title" data-module="govuk-notification-banner">
@@ -27,47 +24,30 @@
 
       {% if groups.length > 0 %}
         {% for group in groups %}
-          <h2 class="govuk-heading-s govuk-!-margin-bottom-1">{{ group.principleCode }} {{ group.principleTitle }}</h2>
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-1">{{ group.principleCode }}: {{ group.principleTitle }}</h2>
           <p class="govuk-hint govuk-!-margin-bottom-3">{{ group.judgedCount }} of {{ group.totalCount }} complete</p>
-          <table class="govuk-table govuk-!-margin-bottom-6">
-            <thead class="govuk-table__head">
-              <tr class="govuk-table__row">
-                <th scope="col" class="govuk-table__header">Outcome</th>
-                <th scope="col" class="govuk-table__header">Status</th>
-                <th scope="col" class="govuk-table__header">Action</th>
-              </tr>
-            </thead>
-            <tbody class="govuk-table__body">
-              {% for row in group.outcomes %}
-                <tr class="govuk-table__row">
-                  <td class="govuk-table__cell">
-                    <strong>{{ row.code }}</strong> {{ row.title }}
-                    {% if row.carriedForward %}
-                      <div class="govuk-!-margin-top-1"><strong class="govuk-tag govuk-tag--turquoise">Carried forward</strong></div>
-                    {% endif %}
-                  </td>
-                  <td class="govuk-table__cell">
-                    <strong class="govuk-tag {{ row.statusTagClass }}">{{ row.status }}</strong>
-                  </td>
-                  <td class="govuk-table__cell">
-                    {% if row.judgement or row.carriedForward %}
-                      <a class="govuk-link" href="{{ row.actionHref }}">Review</a>
-                    {% elif row.status == "In progress" %}
-                      <a class="govuk-link" href="{{ row.actionHref }}">Continue</a>
-                    {% else %}
-                      <a class="govuk-link" href="{{ row.actionHref }}">Start</a>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+
+          {% set taskItems = [] %}
+          {% for outcome in group.outcomes %}
+            {% set taskItems = taskItems.concat([{
+              title: { html: "<strong>" + outcome.code + "</strong> " + outcome.title },
+              href: outcome.actionHref,
+              status: {
+                tag: {
+                  text: outcome.status,
+                  classes: outcome.statusTagClass
+                }
+              }
+            }]) %}
+          {% endfor %}
+
+          {{ govukTaskList({ idPrefix: group.principleCode, items: taskItems }) }}
         {% endfor %}
       {% endif %}
 
-      {% if not roundTwo %}
-        <a class="govuk-button govuk-button--secondary" href="/assessments/current/dashboard">Return to dashboard</a>
-      {% endif %}
+      <div class="govuk-button-group">
+        <a class="govuk-link" href="/assessments/current/self-assessment/bc">Return to critical systems</a>
+      </div>
 
     </div>
   </div>

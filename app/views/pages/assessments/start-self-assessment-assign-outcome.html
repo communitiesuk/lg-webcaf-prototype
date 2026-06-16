@@ -20,7 +20,7 @@
         <input type="hidden" name="returnTo" value="{{ returnTo }}">
 
         <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="ownerId">Owner</label>
+          <label class="govuk-label" for="ownerId">Outcome owner</label>
           {% if error and (error.items | selectattr('field','equalto','ownerId') | list | length) > 0 %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
@@ -38,10 +38,12 @@
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset" aria-describedby="collaboratorIds-hint">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Other contributors</legend>
-            <div id="collaboratorIds-hint" class="govuk-hint">Select people who will help with this outcome. The owner cannot also be a contributor.</div>
-            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-              {% for u in councilUsers %}
-                {% if u.id != row.ownerId %}
+            <div id="collaboratorIds-hint" class="govuk-hint">Select people who will help with this outcome.</div>
+            {% if contributorUsers.length == 0 %}
+              <p class="govuk-body govuk-!-margin-bottom-0">No other people have been added to this assessment yet. <a class="govuk-link" href="/assessments/current/start-self-assessment/people?returnTo={{ returnTo | urlencode }}">Add someone</a>.</p>
+            {% else %}
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                {% for u in contributorUsers %}
                   <div class="govuk-checkboxes__item">
                     <input
                       class="govuk-checkboxes__input"
@@ -55,16 +57,10 @@
                       {{ u.name }}
                     </label>
                   </div>
-                {% endif %}
-              {% endfor %}
-            </div>
+                {% endfor %}
+              </div>
+            {% endif %}
           </fieldset>
-        </div>
-
-        <div class="govuk-form-group">
-          <label class="govuk-label" for="additionalCollaborators">Additional contributors (optional)</label>
-          <div id="additionalCollaborators-hint" class="govuk-hint">Add names or email addresses separated by commas or new lines.</div>
-          <textarea class="govuk-textarea" id="additionalCollaborators" name="additionalCollaborators" rows="3" aria-describedby="additionalCollaborators-hint">{{ row.additionalCollaborators or "" }}</textarea>
         </div>
 
         <div class="govuk-button-group">
@@ -73,9 +69,11 @@
         </div>
       </form>
 
-      <p class="govuk-body govuk-!-margin-top-3">
-        <a class="govuk-link" href="/assessments/current/start-self-assessment/people?returnTo={{ returnTo | urlencode }}">Add someone to help with this outcome</a>
-      </p>
+      {% if contributorUsers.length > 0 %}
+        <p class="govuk-body govuk-!-margin-top-3">
+          <a class="govuk-link" href="/assessments/current/start-self-assessment/people?returnTo={{ returnTo | urlencode }}">Add someone to help with this outcome</a>
+        </p>
+      {% endif %}
 
     </div>
   </div>

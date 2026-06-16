@@ -24,8 +24,9 @@
   <h1 class="govuk-heading-l">Record your judgement</h1>
 
   {% if summary and summary.judgement %}
-    <p class="govuk-body">Indicative judgement from your responses:
-      <strong class="govuk-tag {% if summary.judgement == 'Achieved' %}govuk-tag--green{% elif summary.judgement == 'Partially achieved' %}govuk-tag--yellow{% elif summary.judgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-left-1">{{ summary.judgement }}</strong>
+    <p class="govuk-body govuk-!-margin-bottom-6">
+      <strong>Indicative judgement:</strong>
+      <strong class="govuk-tag govuk-!-margin-left-1 {% if summary.judgement == 'Achieved' %}govuk-tag--green{% elif summary.judgement == 'Partially achieved' %}govuk-tag--yellow{% elif summary.judgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %}">{{ summary.judgement }}</strong>
     </p>
   {% endif %}
 

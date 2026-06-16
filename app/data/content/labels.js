@@ -2,7 +2,7 @@
 // Centralised copy/labels (adds export copy label)
 
 module.exports = {
-  serviceName: "WebCAF for local government",
+  serviceName: "CAF for Local Government",
 
   entry: {
     pageTitle: "CAF for Local Government",

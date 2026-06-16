@@ -3,29 +3,17 @@
 {% from "components/feedback-message.njk" import appConfirmationPanel %}
 
 {% block beforeContent %}
-  {% set backHref = "/stages/2/scope" %}
-  {% set pageTitle = "Scope pack complete" %}
-  {% if researchRound == "round-2" %}
-    {% set backHref = "/assessments/current/journey" %}
-    {% set pageTitle = "Setup lists complete" %}
-  {% endif %}
-  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+  <a class="govuk-back-link" href="/assessments/current/journey">Back</a>
 {% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
   {{ appConfirmationPanel({
-    title: pageTitle,
-    body: "You have completed the initial setup lists for this council." if researchRound == "round-2" else "You have completed setup for this assessment period."
+    title: "Setup complete",
+    body: "You have added your essential services and critical systems."
   }) }}
-  <p class="govuk-body">
-    {% if researchRound == "round-2" %}
-      You can now move into assessment setup.
-    {% else %}
-      You can now continue your CAF journey.
-    {% endif %}
-  </p>
+  <p class="govuk-body">You can now start your assessment.</p>
 
   <p class="govuk-body">
     <a class="govuk-button" href="{{ continueHref }}">{{ continueText }}</a>

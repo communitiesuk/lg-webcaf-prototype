@@ -3,8 +3,10 @@
 
 const labels = require("../data/content/labels");
 const statuses = require("../data/content/statuses");
+const { statements: igpStatements } = require("../data/content/igp-statements");
 const { getOutcomesForVersion } = require("../data/helpers/caf-version");
 const profileTargets = require("../data/seed/profile-targets");
+const seedUsers = require("../data/seed/users");
 
 const {
   requireSignedIn,
@@ -24,13 +26,13 @@ const { PERMISSIONS, userHasPermission } = require("../data/helpers/roles");
 const { getRoundTwoOutcomeReturnContext } = require("../data/helpers/navigation");
 
 const PROTOTYPE_OUTCOME_LIMITS = {
-  AD: 2,
-  BC: 1,
+  AD: 12,
+  BC: 25,
 };
 
 const PROTOTYPE_OUTCOME_IDS = {
-  AD: ["A1a", "A1b"],
-  BC: ["B2a", "B2b", "B3a", "B4a"],
+  AD: ["A1a", "A1b", "A1c", "A2a", "A2b", "A3a", "A4a", "D1a", "D1b", "D1c", "D2a", "D2b"],
+  BC: ["B1a", "B1b", "B2a", "B2b", "B2c", "B2d", "B3a", "B3b", "B3c", "B3d", "B3e", "B4a", "B4b", "B4c", "B4d", "B5a", "B5b", "B5c", "B6a", "B6b", "C1a", "C1b", "C1c", "C2a", "C2b"],
 };
 
 const B2A_OUTCOME_ID = "B2a";
@@ -296,8 +298,9 @@ module.exports = function (router) {
     return res.redirect("/assessments/current/dashboard");
   });
 
-  registerAdIgpOutcomeRoutes(router, "A1a");
-  registerAdIgpOutcomeRoutes(router, "A1b");
+  for (const id of PROTOTYPE_OUTCOME_IDS.AD) {
+    registerAdIgpOutcomeRoutes(router, id);
+  }
 
   router.get("/self-assess/ad", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
@@ -337,7 +340,35 @@ module.exports = function (router) {
 
     const roundTwo = isRoundTwoRequest(req);
     if (roundTwo) {
-      return res.redirect(buildAdIgpStepPath(outcome.id, "achieved"));
+      const tracker = (assessment.progressTracker && assessment.progressTracker[outcome.id]) || {};
+      const ownerId = tracker.ownerId || "";
+      const allUsers = [
+        ...(Array.isArray(assessment.selfAssessContributors) ? assessment.selfAssessContributors : []),
+        ...seedUsers,
+      ];
+      const ownerName = ownerId ? (allUsers.find((u) => u.id === ownerId) || {}).name || "" : "";
+      const hasIgpData = (saved.igpAssessments || []).some((i) => i.response);
+      const started = Boolean((saved.status && saved.status !== "not_started") || hasIgpData);
+      const statusText = saved.judgement ? "Complete" : started ? "In progress" : "Not started";
+      const statusTagClass = saved.judgement ? "govuk-tag--green" : started ? "govuk-tag--blue" : "govuk-tag--grey";
+      const assessHref = buildAdIgpStepPath(outcome.id, "achieved");
+      const ctaText = saved.judgement ? "Review assessment" : started ? "Continue assessment" : "Start assessment";
+      const assignHref = `/assessments/current/start-self-assessment/assignments/${encodeURIComponent(outcome.id)}?returnTo=${encodeURIComponent(`/self-assess/ad/${outcome.id}`)}`;
+
+      return res.render("pages/flow/ad-outcome-overview", {
+        pageTitle: `${outcome.code} ${outcome.title}`,
+        assessment,
+        outcome,
+        statusText,
+        statusTagClass,
+        ownerName,
+        assignHref,
+        assessHref,
+        ctaText,
+        backHref: "/assessments/current/self-assessment/ad",
+        saved: (req.query.saved || "").toString(),
+        savedName: (req.query.name || "").toString(),
+      });
     }
     const nextOutcomeId = getNextPrototypeOutcomeId(ad, outcome.id);
     const context = roundTwo
@@ -983,12 +1014,7 @@ module.exports = function (router) {
         description: outcome.description || "",
         principle: outcome.principle,
         judgement: saved.judgement || "",
-        actionHref:
-          outcome.id === B2A_OUTCOME_ID
-            ? buildB2aStepPath(system.id, "achieved")
-            : PROTOTYPE_OUTCOME_IDS.BC.includes(outcome.id)
-              ? buildIgpStepPath(outcome.id, system.id, "achieved")
-              : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`,
+        actionHref: `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`,
         carriedForward,
         status,
         statusTagClass,
@@ -1025,65 +1051,14 @@ module.exports = function (router) {
   });
 
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-context`, (req, res) => {
-    const assessment = getAssessmentOrRedirect(req, res);
-    if (!assessment) return;
-
-    ensureFlowData(assessment);
-    if (
-      redirectIfScopeNotReady(
-        req,
-        res,
-        assessment,
-        `/self-assess/bc/${req.params.systemId}/outcomes/${B2A_OUTCOME_ID}/b2a-context`
-      )
-    ) return;
-    if (!isRoundTwoRequest(req)) {
-      return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${B2A_OUTCOME_ID}`);
-    }
-
-    const system = findBCSystemForJourney(assessment, req.params.systemId);
-    if (!system) return renderNotFound(res);
-
-    const { bc } = getOutcomesForVersion(assessment);
-    const outcome = findOutcome(bc, B2A_OUTCOME_ID);
-    if (!outcome) return renderNotFound(res);
-
-    const saved = getBCOutcome(assessment, system.id, outcome.id);
-    const journey = normaliseB2aJourney(saved.b2aJourney);
-    const igpProgress = buildB2aIgpProgressSummary(journey);
-    const evidenceCount = Array.isArray(saved.evidenceRefs)
-      ? saved.evidenceRefs.filter((item) => Boolean(item && (item.title || item.link || item.description))).length
-      : 0;
-    const nextAction = !saved.judgement
-      ? "Continue the IGP responses and set the final judgement."
-      : !saved.rationale
-      ? "Set the final judgement and rationale, then add supporting evidence."
-      : "Review the remaining gaps and mark the outcome ready for internal review.";
-
-    return res.render("pages/flow/b2a-context", {
-      pageTitle: `${outcome.code} ${outcome.title}`,
-      assessment,
-      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
-      outcome,
-      backHref: `/self-assess/bc/${encodeURIComponent(system.id)}`,
-      startHref: buildB2aStepPath(system.id, "achieved"),
-      startLabel: igpProgress.completed > 0 ? "Continue B2.a" : "Start B2.a",
-      progressSummary: {
-        statusLabel: formatB2aStatusLabel((saved.status || "").toString() || "in_progress"),
-        igpsAnswered: `${igpProgress.completed} of ${igpProgress.total}`,
-        evidenceCount,
-        judgement: saved.judgement || "Not set",
-        rationaleStarted: Boolean((saved.rationale || "").toString().trim()),
-        nextAction,
-      },
-    });
+    return res.redirect(`/self-assess/bc/${encodeURIComponent(req.params.systemId)}/outcomes/${B2A_OUTCOME_ID}`);
   });
 
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-achieved`, (req, res) => {
     renderB2aIgpStep(req, res, {
       stepKey: "achieved",
-      pageTitle: "Achieved IGPs",
-      heading: "Achieved IGPs",
+      pageTitle: "Achieved indicators of good practice (IGPs)",
+      heading: "Achieved indicators of good practice (IGPs)",
       intro:
         "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
       guidanceSummary: "How to answer these statements",
@@ -1097,8 +1072,8 @@ module.exports = function (router) {
   router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-achieved`, (req, res) => {
     handleB2aIgpStepPost(req, res, {
       stepKey: "achieved",
-      pageTitle: "Achieved IGPs",
-      heading: "Achieved IGPs",
+      pageTitle: "Achieved indicators of good practice (IGPs)",
+      heading: "Achieved indicators of good practice (IGPs)",
       intro:
         "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
       guidanceSummary: "How to answer these statements",
@@ -1112,8 +1087,8 @@ module.exports = function (router) {
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-not-achieved`, (req, res) => {
     renderB2aIgpStep(req, res, {
       stepKey: "notAchieved",
-      pageTitle: "Not achieved IGPs",
-      heading: "Not achieved IGPs",
+      pageTitle: "Not achieved indicators of good practice (IGPs)",
+      heading: "Not achieved indicators of good practice (IGPs)",
       intro:
         "Now review indicators that would usually suggest this contributing outcome is not achieved.",
       pageHint: "Some statements on this page relate to controls you reviewed earlier.",
@@ -1128,8 +1103,8 @@ module.exports = function (router) {
   router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-not-achieved`, (req, res) => {
     handleB2aIgpStepPost(req, res, {
       stepKey: "notAchieved",
-      pageTitle: "Not achieved IGPs",
-      heading: "Not achieved IGPs",
+      pageTitle: "Not achieved indicators of good practice (IGPs)",
+      heading: "Not achieved indicators of good practice (IGPs)",
       intro:
         "Now review indicators that would usually suggest this contributing outcome is not achieved.",
       pageHint: "Some statements on this page relate to controls you reviewed earlier.",
@@ -1144,8 +1119,8 @@ module.exports = function (router) {
   router.get(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-partially-achieved`, (req, res) => {
     renderB2aIgpStep(req, res, {
       stepKey: "partiallyAchieved",
-      pageTitle: "Partially achieved IGPs",
-      heading: "Partially achieved IGPs",
+      pageTitle: "Partially achieved indicators of good practice (IGPs)",
+      heading: "Partially achieved indicators of good practice (IGPs)",
       intro:
         "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
       guidanceSummary: "How to use these statements",
@@ -1159,8 +1134,8 @@ module.exports = function (router) {
   router.post(`/self-assess/bc/:systemId/outcomes/${B2A_OUTCOME_ID}/b2a-partially-achieved`, (req, res) => {
     handleB2aIgpStepPost(req, res, {
       stepKey: "partiallyAchieved",
-      pageTitle: "Partially achieved IGPs",
-      heading: "Partially achieved IGPs",
+      pageTitle: "Partially achieved indicators of good practice (IGPs)",
+      heading: "Partially achieved indicators of good practice (IGPs)",
       intro:
         "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
       guidanceSummary: "How to use these statements",
@@ -1248,7 +1223,6 @@ module.exports = function (router) {
         evidenceCount: evidenceRefs.length,
         indicativeJudgement: journey.indicativeJudgement || "",
       },
-      dashboardHref: "/assessments/current/dashboard?lens=bc&view=all",
       systemHref: `/self-assess/bc/${encodeURIComponent(system.id)}`,
     });
   });
@@ -1265,9 +1239,9 @@ module.exports = function (router) {
     return res.redirect(buildB2aStepPath(req.params.systemId, "ready"));
   });
 
-  registerIgpOutcomeRoutes(router, "B2b");
-  registerIgpOutcomeRoutes(router, "B3a");
-  registerIgpOutcomeRoutes(router, "B4a");
+  for (const id of PROTOTYPE_OUTCOME_IDS.BC.filter((id) => id !== B2A_OUTCOME_ID)) {
+    registerIgpOutcomeRoutes(router, id);
+  }
 
   router.get("/self-assess/bc/:systemId/outcomes/:outcomeId", (req, res) => {
     const assessment = getAssessmentOrRedirect(req, res);
@@ -1302,25 +1276,45 @@ module.exports = function (router) {
     const outcome = findOutcome(bc, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
 
-    if (isRoundTwoRequest(req) && outcome.id === B2A_OUTCOME_ID) {
-      return res.redirect(buildB2aStepPath(system.id, "context"));
-    }
-    if (isRoundTwoRequest(req) && PROTOTYPE_OUTCOME_IDS.BC.includes(outcome.id)) {
-      return res.redirect(buildIgpStepPath(outcome.id, system.id, "achieved"));
+    if (isRoundTwoRequest(req)) {
+      const saved = getBCOutcome(assessment, system.id, outcome.id);
+      const allUsers = [
+        ...(Array.isArray(assessment.selfAssessContributors) ? assessment.selfAssessContributors : []),
+        ...seedUsers,
+      ];
+      const ownerId = saved.ownerId || "";
+      const ownerName = ownerId ? (allUsers.find((u) => u.id === ownerId) || {}).name || "" : "";
+      const started = Boolean(saved.judgement || (saved.status && saved.status !== "not_started"));
+      const statusText = saved.judgement ? "Complete" : started ? "In progress" : "Not started";
+      const statusTagClass = saved.judgement ? "govuk-tag--green" : started ? "govuk-tag--blue" : "govuk-tag--grey";
+      const assessHref =
+        outcome.id === B2A_OUTCOME_ID
+          ? buildB2aStepPath(system.id, "achieved")
+          : buildIgpStepPath(outcome.id, system.id, "achieved");
+      const ctaText = saved.judgement ? "Review assessment" : started ? "Continue assessment" : "Start assessment";
+      const overviewHref = `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}`;
+      const assignHref = `/assessments/current/start-self-assessment/assignments/${encodeURIComponent(`${system.id}:${outcome.id}`)}?returnTo=${encodeURIComponent(overviewHref)}`;
+
+      return res.render("pages/flow/bc-outcome-overview", {
+        pageTitle: `${outcome.code} ${outcome.title}`,
+        assessment,
+        outcome,
+        system,
+        statusText,
+        statusTagClass,
+        ownerName,
+        assignHref,
+        assessHref,
+        ctaText,
+        backHref: `/self-assess/bc/${encodeURIComponent(system.id)}`,
+        saved: (req.query.saved || "").toString(),
+        savedName: (req.query.name || "").toString(),
+      });
     }
 
     const saved = getBCOutcome(assessment, system.id, outcome.id);
     const evidenceRefs = ensureAtLeastOneEvidenceRow(normaliseEvidenceRefs(saved.evidenceRefs));
-
-    const roundTwo = isRoundTwoRequest(req);
-    if (roundTwo) {
-      const igpAssessments = buildIgpAssessmentForm(saved.igpAssessments, outcome);
-      const firstIncompleteIndex = findFirstIncompleteIgpIndex(igpAssessments);
-      const destination = igpAssessments.every(hasCompletedIgpResponse)
-        ? `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/check-answers`
-        : `/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${encodeURIComponent(outcome.id)}/statements/${firstIncompleteIndex + 1}`;
-      return res.redirect(destination);
-    }
+    const roundTwo = false;
     const nextOutcomeId = getNextPrototypeOutcomeId(bc, outcome.id);
     const context = roundTwo
       ? buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId })
@@ -1623,7 +1617,11 @@ module.exports = function (router) {
     const { bc } = getOutcomesForVersion(assessment);
     const allowedIds = getPrototypeOutcomeIds(bc);
     if (!allowedIds.includes(req.params.outcomeId)) {
-      return res.redirect("/assessments/current/dashboard?lens=bc&view=all");
+      return res.redirect(
+        isRoundTwoRequest(req)
+          ? `/self-assess/bc/${encodeURIComponent(system.id)}`
+          : "/assessments/current/dashboard?lens=bc&view=all"
+      );
     }
     const outcome = findOutcome(bc, req.params.outcomeId);
     if (!outcome) return renderNotFound(res);
@@ -3379,29 +3377,32 @@ function handleB2aIgpStepPost(req, res, options) {
   if (!routeContext) return;
   const { assessment, system, outcome, saved, bc } = routeContext;
   const rows = parseB2aStepForm(req.body, options.stepKey);
-  const errors = validateB2aStepRows(rows);
+  const isSave = ((req.body && req.body.igpStepAction) || "").toString() === "save";
 
-  if (errors.length > 0) {
-    const returnToReview = isB2aReviewReturn(req);
-    return res.render("pages/flow/b2a-igp-page", {
-      pageTitle: options.pageTitle,
-      assessment,
-      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
-      outcome,
-      backHref: returnToReview ? buildB2aStepPath(system.id, "review") : options.backHrefBuilder(system.id),
-      formAction: withB2aReviewReturn(buildB2aStepRoute(options.stepKey, system.id), req),
-      nextLabel: "Continue",
-      page: {
-        heading: options.heading,
-        intro: options.intro,
-        pageHint: options.pageHint || "",
-        guidanceSummary: options.guidanceSummary,
-        guidanceBody: options.guidanceBody,
-        stepKey: options.stepKey,
-        rows,
-      },
-      error: { items: errors },
-    });
+  if (!isSave) {
+    const errors = validateB2aStepRows(rows);
+    if (errors.length > 0) {
+      const returnToReview = isB2aReviewReturn(req);
+      return res.render("pages/flow/b2a-igp-page", {
+        pageTitle: options.pageTitle,
+        assessment,
+        context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+        outcome,
+        backHref: returnToReview ? buildB2aStepPath(system.id, "review") : options.backHrefBuilder(system.id),
+        formAction: withB2aReviewReturn(buildB2aStepRoute(options.stepKey, system.id), req),
+        nextLabel: "Continue",
+        page: {
+          heading: options.heading,
+          intro: options.intro,
+          pageHint: options.pageHint || "",
+          guidanceSummary: options.guidanceSummary,
+          guidanceBody: options.guidanceBody,
+          stepKey: options.stepKey,
+          rows,
+        },
+        error: { items: errors },
+      });
+    }
   }
 
   const journey = updateB2aJourneySection(saved.b2aJourney, options.stepKey, rows);
@@ -3411,6 +3412,9 @@ function handleB2aIgpStepPost(req, res, options) {
     status: "in_progress",
   });
 
+  if (isSave) {
+    return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}/outcomes/${B2A_OUTCOME_ID}`);
+  }
   return res.redirect(options.nextHrefBuilder(system.id));
 }
 
@@ -5139,132 +5143,9 @@ function getAuditActor(user) {
 
 // ─── Generic IGP outcome flow (B2b, B3a, B4a) ───────────────────────────────
 
-function getA1aStatements() {
-  return {
-    achieved: [
-      { id: "policy-owned-board", statement: "Your organisation's approach and policy relating to the security of network and information systems supporting the operation of essential function(s) are owned and managed at board-level. These are communicated, in a meaningful way, to risk management decision-makers across the organisation." },
-      { id: "regular-board-discussions", statement: "Regular board-level discussions on the security of network and information systems supporting the operation of your essential function(s) take place, based on timely and accurate information and informed by expert guidance." },
-      { id: "board-accountable-individual", statement: "There is a board-level individual who has overall accountability for the security of network and information systems and drives regular discussion at board-level." },
-      { id: "direction-translated", statement: "Direction set at board-level is translated into effective organisational practices that direct and control the security of the network and information systems supporting your essential functions(s)." },
-    ],
-    notAchieved: [
-      { id: "not-reported-regularly", statement: "The security of network and information systems related to the operation of essential function(s) is not discussed or reported on regularly at board-level." },
-      { id: "partial-out-of-date-info", statement: "Board-level discussions on the security of network and information systems are based on partial or out-of-date information, without the benefit of expert guidance." },
-      { id: "direction-not-effective", statement: "The security of network and information systems supporting your essential function(s) are not driven effectively by the direction set at board-level." },
-      { id: "senior-management-exempt", statement: "Senior management or other pockets of the organisation consider themselves exempt from some policies or expect special accommodations to be made." },
-    ],
-    partiallyAchieved: [
-      { id: "board-informed", statement: "The board has the information and understanding needed in order to effectively discuss how the security and resilience of network and information systems contributes to the delivery of essential function(s) and what the potential impact from compromise of those systems would be." },
-      { id: "security-recognised-enabler", statement: "Security is recognised as an important enabler for the resilience of your essential function(s) and considered in all relevant discussions." },
-    ],
-  };
-}
-
-function getA1bStatements() {
-  return {
-    achieved: [
-      { id: "roles-defined", statement: "Responsibility for the security of network and information systems supporting your essential functions is clearly defined and assigned to named individuals." },
-      { id: "accountability-senior", statement: "Accountability for cyber risk is assigned to an appropriately senior individual with the authority to act." },
-      { id: "responsibilities-communicated", statement: "All staff with relevant responsibilities understand their specific security duties and how they apply to their role." },
-      { id: "reporting-lines-clear", statement: "Clear reporting lines exist for security issues to reach decision-making levels quickly." },
-    ],
-    notAchieved: [
-      { id: "responsibility-unclear", statement: "Responsibility for the security of network and information systems is unclear or effectively unassigned." },
-      { id: "no-accountable-individual", statement: "There is no named individual with overall accountability for cyber risk across the organisation." },
-      { id: "responsibilities-not-communicated", statement: "Security responsibilities are not communicated to staff in a way that they can understand and act on." },
-      { id: "no-review-process", statement: "There is no formal process for reviewing or updating security roles and responsibilities." },
-    ],
-    partiallyAchieved: [
-      { id: "roles-exist-not-resourced", statement: "Key security roles exist but may not be fully resourced or empowered to act effectively." },
-      { id: "inconsistent-awareness", statement: "Some staff are aware of their security responsibilities but this awareness is inconsistent across the organisation." },
-      { id: "accountability-not-acted-on", statement: "Accountability for cyber risk has been assigned but is not consistently acted on in practice." },
-      { id: "partial-coverage", statement: "Roles and responsibilities are defined for some areas but may not cover all systems supporting essential functions." },
-    ],
-  };
-}
-
-function getB2bStatements() {
-  return {
-    achieved: [
-      { id: "paw-privileged-ops", statement: "Privileged operations are only carried out from highly trusted devices (Privileged Access Workstations)." },
-      { id: "third-party-assurance", statement: "Independent assurance has been sought on the security of third-party devices used with this system." },
-      { id: "certificate-identity", statement: "Certificate-based device identity management ensures only corporate devices can connect to this system." },
-      { id: "unknown-device-scans", statement: "Regular scans for unknown devices connecting to this system are carried out." },
-    ],
-    notAchieved: [
-      { id: "non-corporate-users", statement: "Users connect to this system using non-corporate devices." },
-      { id: "non-corporate-privileged", statement: "Privileged users carry out privileged operations using non-corporate devices." },
-      { id: "no-third-party-assurance", statement: "No assurance has been sought on the security of third-party devices." },
-      { id: "port-grants-access", statement: "Connecting to this system's network port grants access without authentication." },
-    ],
-    partiallyAchieved: [
-      { id: "corporate-essential-only", statement: "Only corporate devices are used to access the essential functions of this system." },
-      { id: "corporate-privileged-ops", statement: "Privileged operations are carried out from corporate devices." },
-      { id: "third-party-understood", statement: "The council has sought to understand the security controls on third-party devices." },
-      { id: "port-no-auto-access", statement: "Connecting to this system's network port does not automatically grant access." },
-      { id: "unknown-device-detection", statement: "Unknown devices connecting to this system can be detected." },
-    ],
-  };
-}
-
-function getB3aStatements() {
-  return {
-    achieved: [
-      { id: "current-data-understanding", statement: "A current understanding of all important data relating to this system is maintained." },
-      { id: "remove-unnecessary-copies", statement: "Steps are taken to remove unnecessary copies of important data." },
-      { id: "data-links-understood", statement: "A current understanding of data links for this system is maintained, including third-party data processors." },
-      { id: "data-context-understood", statement: "The context, limitations and dependencies of important data are understood." },
-      { id: "annual-impact-validation", statement: "Impact statements are validated regularly, at least annually." },
-    ],
-    notAchieved: [
-      { id: "incomplete-data-knowledge", statement: "The council has incomplete knowledge of the data it holds relating to this system." },
-      { id: "important-data-unidentified", statement: "Important data relating to this system has not been identified." },
-      { id: "access-unidentified", statement: "The council has not identified who has access to important data for this system." },
-      { id: "impact-not-articulated", statement: "The impact of compromise of the important data has not been articulated." },
-    ],
-    partiallyAchieved: [
-      { id: "data-catalogued", statement: "Important data relating to this system has been identified and catalogued." },
-      { id: "access-catalogued", statement: "Who has access to important data for this system has been catalogued." },
-      { id: "data-location-reviewed", statement: "The location, transmission, quantity and quality of important data is regularly reviewed." },
-      { id: "mobile-media-identified", statement: "Mobile devices and removable media used with this system have been identified." },
-      { id: "impact-documented", statement: "The impact of data compromise has been understood and documented." },
-      { id: "impact-occasionally-validated", statement: "Impact statements are occasionally validated." },
-    ],
-  };
-}
-
-function getB4aStatements() {
-  return {
-    achieved: [
-      { id: "security-zones", statement: "Systems supporting this essential function are segregated into security zones." },
-      { id: "simple-data-flows", statement: "Data flows between system components are simple and well-understood." },
-      { id: "easy-to-recover", statement: "Systems supporting this essential function are designed to be easy to recover." },
-      { id: "content-attacks-mitigated", statement: "Content-based attacks are mitigated for all inputs to this system." },
-    ],
-    notAchieved: [
-      { id: "not-segregated", statement: "Systems supporting this essential function are not segregated from other systems." },
-      { id: "internet-access", statement: "Internet access is possible from systems directly supporting this essential function." },
-      { id: "complex-data-flows", statement: "Data flows supporting this essential function are complex and poorly understood." },
-      { id: "remote-access-bypasses-controls", statement: "Remote or third-party access to this system circumvents network controls." },
-    ],
-    partiallyAchieved: [
-      { id: "appropriate-expertise", statement: "Appropriate expertise is employed in the design of systems supporting this essential function." },
-      { id: "boundary-defences", statement: "Strong boundary defences are designed for systems supporting this essential function." },
-      { id: "simple-design", statement: "Data flows are designed to be simple." },
-      { id: "recovery-design", statement: "Systems supporting this essential function are designed to be easy to recover." },
-      { id: "input-validation", statement: "Inputs are validated at the network boundary." },
-    ],
-  };
-}
-
 function getIgpStatements(outcomeId) {
-  if (outcomeId === "A1a") return getA1aStatements();
-  if (outcomeId === "A1b") return getA1bStatements();
   if (outcomeId === "B2a") return getB2aStatements();
-  if (outcomeId === "B2b") return getB2bStatements();
-  if (outcomeId === "B3a") return getB3aStatements();
-  if (outcomeId === "B4a") return getB4aStatements();
-  return { achieved: [], notAchieved: [], partiallyAchieved: [] };
+  return igpStatements[outcomeId] || { achieved: [], notAchieved: [], partiallyAchieved: [] };
 }
 
 function getIgpJourneyKey(outcomeId) {
@@ -5442,34 +5323,43 @@ function handleIgpStepPost(req, res, outcomeId, options) {
   if (!routeContext) return;
   const { assessment, system, outcome, saved, bc, journeyKey } = routeContext;
   const rows = parseIgpStepForm(req.body, options.stepKey, outcomeId);
-  const errors = validateB2aStepRows(rows);
-  if (errors.length > 0) {
-    return res.render("pages/flow/b2a-igp-page", {
-      pageTitle: options.pageTitle,
-      assessment,
-      context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
-      outcome,
-      backHref: options.backHrefBuilder(system.id),
-      formAction: options.formAction(system.id),
-      nextLabel: "Continue",
-      page: {
-        heading: options.heading,
-        intro: options.intro,
-        pageHint: options.pageHint || "",
-        guidanceSummary: options.guidanceSummary,
-        guidanceBody: options.guidanceBody,
-        stepKey: options.stepKey,
-        rows,
-      },
-      error: { items: errors },
-    });
+  const isSave = ((req.body && req.body.igpStepAction) || "").toString() === "save";
+
+  if (!isSave) {
+    const errors = validateB2aStepRows(rows);
+    if (errors.length > 0) {
+      return res.render("pages/flow/b2a-igp-page", {
+        pageTitle: options.pageTitle,
+        assessment,
+        context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
+        outcome,
+        backHref: options.backHrefBuilder(system.id),
+        formAction: options.formAction(system.id),
+        nextLabel: "Continue",
+        page: {
+          heading: options.heading,
+          intro: options.intro,
+          pageHint: options.pageHint || "",
+          guidanceSummary: options.guidanceSummary,
+          guidanceBody: options.guidanceBody,
+          stepKey: options.stepKey,
+          rows,
+        },
+        error: { items: errors },
+      });
+    }
   }
+
   const journey = updateB2aJourneySection(saved[journeyKey], options.stepKey, rows);
   syncIgpOutcomeData(assessment, system.id, outcomeId, {
     ...saved,
     [journeyKey]: journey,
     status: "in_progress",
   });
+
+  if (isSave) {
+    return res.redirect(`/self-assess/bc/${encodeURIComponent(system.id)}`);
+  }
   return res.redirect(options.nextHrefBuilder(system.id));
 }
 
@@ -5522,8 +5412,8 @@ function registerIgpOutcomeRoutes(router, outcomeId) {
 
   const igpStepOptions = {
     achieved: {
-      pageTitle: "Achieved IGPs",
-      heading: "Achieved IGPs",
+      pageTitle: "Achieved indicators of good practice (IGPs)",
+      heading: "Achieved indicators of good practice (IGPs)",
       intro: "Start with the indicators of good practice that would usually be present if this contributing outcome is achieved.",
       guidanceSummary: "How to answer these statements",
       guidanceBody: "Answer based on how the system works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
@@ -5533,8 +5423,8 @@ function registerIgpOutcomeRoutes(router, outcomeId) {
       nextHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "not-achieved"),
     },
     notAchieved: {
-      pageTitle: "Not achieved IGPs",
-      heading: "Not achieved IGPs",
+      pageTitle: "Not achieved indicators of good practice (IGPs)",
+      heading: "Not achieved indicators of good practice (IGPs)",
       intro: "Now review indicators that would usually suggest this contributing outcome is not achieved.",
       pageHint: "Some statements on this page relate to controls you reviewed earlier.",
       guidanceSummary: "How to use this page",
@@ -5545,8 +5435,8 @@ function registerIgpOutcomeRoutes(router, outcomeId) {
       nextHrefBuilder: (systemId) => buildIgpStepPath(outcomeId, systemId, "partially-achieved"),
     },
     partiallyAchieved: {
-      pageTitle: "Partially achieved IGPs",
-      heading: "Partially achieved IGPs",
+      pageTitle: "Partially achieved indicators of good practice (IGPs)",
+      heading: "Partially achieved indicators of good practice (IGPs)",
       intro: "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
       guidanceSummary: "How to use these statements",
       guidanceBody: "These statements help you consider whether the council is getting worthwhile security benefit, while still having gaps to address.",
@@ -5687,6 +5577,10 @@ function renderAdIgpStep(req, res, outcomeId, options) {
   if (!routeContext) return;
   const { assessment, outcome, saved, ad, journeyKey } = routeContext;
   const journey = normaliseB2aJourney(saved[journeyKey]);
+  const rows = getIgpStepForm(journey, options.stepKey, outcomeId);
+  if (rows.length === 0) {
+    return res.redirect(options.nextHref);
+  }
   return res.render("pages/flow/b2a-igp-page", {
     pageTitle: options.pageTitle,
     assessment,
@@ -5702,7 +5596,7 @@ function renderAdIgpStep(req, res, outcomeId, options) {
       guidanceSummary: options.guidanceSummary,
       guidanceBody: options.guidanceBody,
       stepKey: options.stepKey,
-      rows: getIgpStepForm(journey, options.stepKey, outcomeId),
+      rows,
     },
     error: null,
   });
@@ -5713,34 +5607,46 @@ function handleAdIgpStepPost(req, res, outcomeId, options) {
   if (!routeContext) return;
   const { assessment, outcome, saved, ad, journeyKey } = routeContext;
   const rows = parseIgpStepForm(req.body, options.stepKey, outcomeId);
-  const errors = validateB2aStepRows(rows);
-  if (errors.length > 0) {
-    return res.render("pages/flow/b2a-igp-page", {
-      pageTitle: options.pageTitle,
-      assessment,
-      context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
-      outcome,
-      backHref: options.backHref,
-      formAction: options.formAction,
-      nextLabel: "Continue",
-      page: {
-        heading: options.heading,
-        intro: options.intro,
-        pageHint: options.pageHint || "",
-        guidanceSummary: options.guidanceSummary,
-        guidanceBody: options.guidanceBody,
-        stepKey: options.stepKey,
-        rows,
-      },
-      error: { items: errors },
-    });
+  const isSave = ((req.body && req.body.igpStepAction) || "").toString() === "save";
+  if (rows.length === 0) {
+    return res.redirect(isSave ? "/assessments/current/self-assessment/ad" : options.nextHref);
   }
+
+  if (!isSave) {
+    const errors = validateB2aStepRows(rows);
+    if (errors.length > 0) {
+      return res.render("pages/flow/b2a-igp-page", {
+        pageTitle: options.pageTitle,
+        assessment,
+        context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
+        outcome,
+        backHref: options.backHref,
+        formAction: options.formAction,
+        nextLabel: "Continue",
+        page: {
+          heading: options.heading,
+          intro: options.intro,
+          pageHint: options.pageHint || "",
+          guidanceSummary: options.guidanceSummary,
+          guidanceBody: options.guidanceBody,
+          stepKey: options.stepKey,
+          rows,
+        },
+        error: { items: errors },
+      });
+    }
+  }
+
   const journey = updateB2aJourneySection(saved[journeyKey], options.stepKey, rows);
   syncAdIgpOutcomeData(assessment, outcomeId, {
     ...saved,
     [journeyKey]: journey,
     status: "in_progress",
   });
+
+  if (isSave) {
+    return res.redirect("/assessments/current/self-assessment/ad");
+  }
   return res.redirect(options.nextHref);
 }
 
@@ -5790,11 +5696,13 @@ function handleAdIgpFinalJudgementPost(req, res, outcomeId) {
 function registerAdIgpOutcomeRoutes(router, outcomeId) {
   const slug = outcomeId.toLowerCase();
   const base = `/self-assess/ad/${outcomeId}`;
+  const outcomeStatements = getIgpStatements(outcomeId);
+  const hasPartiallyAchieved = (outcomeStatements.partiallyAchieved || []).length > 0;
 
   const igpStepOptions = {
     achieved: {
-      pageTitle: "Achieved IGPs",
-      heading: "Achieved IGPs",
+      pageTitle: "Achieved indicators of good practice (IGPs)",
+      heading: "Achieved indicators of good practice (IGPs)",
       intro: "Start with the indicators of good practice that would usually be present if this outcome is achieved.",
       guidanceSummary: "How to answer these statements",
       guidanceBody: "Answer based on how your organisation works now. Use 'Not applicable' if the statement does not apply in this context. Use 'Alternative control in place' if a different control meets the same need.",
@@ -5804,8 +5712,8 @@ function registerAdIgpOutcomeRoutes(router, outcomeId) {
       nextHref: buildAdIgpStepPath(outcomeId, "not-achieved"),
     },
     notAchieved: {
-      pageTitle: "Not achieved IGPs",
-      heading: "Not achieved IGPs",
+      pageTitle: "Not achieved indicators of good practice (IGPs)",
+      heading: "Not achieved indicators of good practice (IGPs)",
       intro: "Now review indicators that would usually suggest this outcome is not achieved.",
       pageHint: "Some statements on this page relate to controls you reviewed earlier.",
       guidanceSummary: "How to use this page",
@@ -5816,8 +5724,8 @@ function registerAdIgpOutcomeRoutes(router, outcomeId) {
       nextHref: buildAdIgpStepPath(outcomeId, "partially-achieved"),
     },
     partiallyAchieved: {
-      pageTitle: "Partially achieved IGPs",
-      heading: "Partially achieved IGPs",
+      pageTitle: "Partially achieved indicators of good practice (IGPs)",
+      heading: "Partially achieved indicators of good practice (IGPs)",
       intro: "Use these indicators where some controls are in place, but the overall position may not yet support an achieved judgement.",
       guidanceSummary: "How to use these statements",
       guidanceBody: "These statements help you consider whether the organisation is getting worthwhile security benefit, while still having gaps to address.",
@@ -5867,7 +5775,9 @@ function registerAdIgpOutcomeRoutes(router, outcomeId) {
       assessment,
       context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
       outcome,
-      backHref: buildAdIgpStepPath(outcomeId, "partially-achieved"),
+      backHref: hasPartiallyAchieved
+        ? buildAdIgpStepPath(outcomeId, "partially-achieved")
+        : buildAdIgpStepPath(outcomeId, "not-achieved"),
       nextHref: buildAdIgpStepPath(outcomeId, "final-judgement"),
       summary,
     });

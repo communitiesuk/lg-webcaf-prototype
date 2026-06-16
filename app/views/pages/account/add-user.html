@@ -1,0 +1,98 @@
+{% extends "layouts/main.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/manage-users">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if addUserError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for item in addUserError.items %}
+                  <li><a href="#{{ item.field }}">{{ item.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l">Add a user</h1>
+
+      <form method="post" action="/manage-users/add">
+
+        <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="manageUserName">Full name</label>
+          {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserName') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (addUserError.items | selectattr('field','equalto','manageUserName') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="manageUserName" name="manageUserName" type="text" value="{{ addUserDefaults.name }}">
+        </div>
+
+        <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="manageUserEmail">Email address</label>
+          <div class="govuk-hint">Use your council email domain: {{ councilEmailDomain }}</div>
+          {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | length) > 0 %}
+            <p class="govuk-error-message">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ (addUserError.items | selectattr('field','equalto','manageUserEmail') | list | first).text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input govuk-!-width-two-thirds" id="manageUserEmail" name="manageUserEmail" type="email" value="{{ addUserDefaults.email }}">
+        </div>
+
+        <div class="govuk-form-group {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Roles</legend>
+            <div class="govuk-hint">Select every role this user needs. The first role becomes their default when they sign in.</div>
+            {% if addUserError and (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | length) > 0 %}
+              <p class="govuk-error-message">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ (addUserError.items | selectattr('field','equalto','manageUserRoles') | list | first).text }}
+              </p>
+            {% endif %}
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              {% for role in roleOptions %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="manageUserRoles-{{ role.id }}" name="manageUserRoles" type="checkbox" value="{{ role.id }}" {% if role.id in addUserDefaults.roles %}checked{% endif %}>
+                  <label class="govuk-label govuk-checkboxes__label" for="manageUserRoles-{{ role.id }}">{{ role.label }}</label>
+                  <div class="govuk-hint govuk-checkboxes__hint">{{ role.description }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <details class="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">What each role can do</span>
+          </summary>
+          <div class="govuk-details__text">
+            <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+              {% for role in rolePermissionRows %}
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ role.label }}</dt>
+                  <dd class="govuk-summary-list__value">{{ role.description }}</dd>
+                </div>
+              {% endfor %}
+            </dl>
+          </div>
+        </details>
+
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Add user</button>
+          <a class="govuk-link" href="/manage-users">Cancel</a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

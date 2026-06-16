@@ -3,9 +3,10 @@
 {% from "components/status-summary.njk" import appStatusSummary %}
 
 {% block content %}
+  <a class="govuk-back-link" href="{{ backHref or '/assessments/current/journey' }}">Back</a>
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-  <a class="govuk-back-link" href="{{ backHref or '/assessments/current/journey' }}">Back</a>
 
   {% if saved == "approved" %}
     <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="approved-title" data-module="govuk-notification-banner">
@@ -35,8 +36,7 @@
 
   {{ appPageHeader({
     caption: "Self-assessment approval",
-    title: "Approve the self-assessment",
-    intro: "This is the final approval step after review. Use the summary to sense-check the assessment before you approve it."
+    title: "Approve the self-assessment"
   }) }}
 
   <div class="govuk-inset-text">
@@ -122,19 +122,19 @@
   {% else %}
     <h2 class="govuk-heading-m">Approval decision</h2>
     <form method="post" action="/assessments/current/approve-self-assessment">
-      <div id="approveSelfAssessmentConfirm" class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | length) > 0 %}govuk-form-group--error{% endif %}">
         <fieldset class="govuk-fieldset">
-          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you approve this self-assessment?</legend>
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Declaration</legend>
           {% if error and (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | length) > 0 %}
-            <p class="govuk-error-message">
+            <p id="approveSelfAssessmentConfirm-error" class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
               {{ (error.items | selectattr('field','equalto','approveSelfAssessmentConfirm') | list | first).text }}
             </p>
           {% endif %}
-          <div class="govuk-radios">
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" id="approveSelfAssessmentConfirm-yes" name="approveSelfAssessmentConfirm" type="radio" value="yes">
-              <label class="govuk-label govuk-radios__label" for="approveSelfAssessmentConfirm-yes">Yes, approve this self-assessment</label>
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="approveSelfAssessmentConfirm" name="approveSelfAssessmentConfirm" type="checkbox" value="yes">
+              <label class="govuk-label govuk-checkboxes__label" for="approveSelfAssessmentConfirm">I confirm this self-assessment is ready for independent assurance</label>
             </div>
           </div>
         </fieldset>
