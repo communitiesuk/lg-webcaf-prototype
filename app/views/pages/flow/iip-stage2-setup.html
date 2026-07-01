@@ -4,15 +4,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/improvement-plan/stage-2">Back</a>
-  <h1 class="govuk-heading-l">Set owners and deadlines</h1>
-  <p class="govuk-body">CAF Lead assigns an owner and due date for each contributing outcome row.</p>
-
-  {% if saved %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
-      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Assignments saved.</p></div>
-    </div>
-  {% endif %}
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -24,6 +15,16 @@
           </ul>
         </div>
       </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">Set owners and deadlines</h1>
+  <p class="govuk-body">CAF Lead assigns an owner and due date for each contributing outcome row.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Assignments saved.</p></div>
     </div>
   {% endif %}
 

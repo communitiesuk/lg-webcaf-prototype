@@ -6,12 +6,6 @@
     <div class="govuk-grid-column-two-thirds">
       <a class="govuk-back-link" href="/assessments/current/journey">Back to task list</a>
 
-      {{ appPageHeader({
-        caption: councilName,
-        title: "Finalise assessment record",
-        intro: "Confirm that the assured assessment and Improvement & Implementation Plan are complete and accurate. This declares them as the official final records for this assessment year."
-      }) }}
-
       {% if errors and errors.length > 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
           <div role="alert">
@@ -26,6 +20,12 @@
           </div>
         </div>
       {% endif %}
+
+      {{ appPageHeader({
+        caption: councilName,
+        title: "Finalise assessment record",
+        intro: "Confirm that the assured assessment and Improvement & Implementation Plan are complete and accurate. This declares them as the official final records for this assessment year."
+      }) }}
 
       {% if alreadyFinalised %}
         <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">

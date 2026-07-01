@@ -4,15 +4,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
-  <h1 class="govuk-heading-l">IIP Stage 2 queue</h1>
-  <p class="govuk-body">Review submitted Stage 2 IIP, schedule the session, and record outcome.</p>
-
-  {% if saved %}
-    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
-      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
-      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">IIP Stage 2 updated.</p></div>
-    </div>
-  {% endif %}
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -20,6 +11,16 @@
         <h2 class="govuk-error-summary__title">There is a problem</h2>
         <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list">{% for item in error.items %}<li>{{ item.text }}</li>{% endfor %}</ul></div>
       </div>
+    </div>
+  {% endif %}
+
+  <h1 class="govuk-heading-l">IIP Stage 2 queue</h1>
+  <p class="govuk-body">Review submitted Stage 2 IIP, schedule the session, and record outcome.</p>
+
+  {% if saved %}
+    <div class="govuk-notification-banner govuk-notification-banner--success" data-module="govuk-notification-banner">
+      <div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">Success</h2></div>
+      <div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">IIP Stage 2 updated.</p></div>
     </div>
   {% endif %}
 

@@ -2,13 +2,6 @@
 
 {% block content %}
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
-  <h1 class="govuk-heading-l">Record of Audit</h1>
-  <p class="govuk-body">Record assurer ratings and IGP assessments for each contributing outcome.</p>
-  <p class="govuk-body govuk-!-margin-bottom-6">
-    <a class="govuk-link" href="/assurer/workshops">Objective workshops</a>
-    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
-    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
-  </p>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -24,6 +17,14 @@
       </div>
     </div>
   {% endif %}
+
+  <h1 class="govuk-heading-l">Record of Audit</h1>
+  <p class="govuk-body">Record assurer ratings and IGP assessments for each contributing outcome.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assurer/workshops">Objective workshops</a>
+    <span class="govuk-!-margin-left-2 govuk-!-margin-right-2">|</span>
+    <a class="govuk-link" href="/assurer/report-stage-1">Open Stage 1 report</a>
+  </p>
 
   {% if saved %}
     <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">

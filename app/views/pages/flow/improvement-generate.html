@@ -6,11 +6,6 @@
     <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/assurer/queue">Back</a>
 
-  <h1 class="govuk-heading-l">{{ labels.flow.improvement.generate.heading }}</h1>
-  <p class="govuk-body">{{ labels.flow.improvement.generate.intro }}</p>
-  <p class="govuk-hint">{{ labels.flow.improvement.generate.roleHint }}</p>
-  <p class="govuk-hint">{{ labels.flow.improvement.generate.actionHint }}</p>
-
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
       <div role="alert">
@@ -25,6 +20,11 @@
       </div>
     </div>
   {% endif %}
+
+  <h1 class="govuk-heading-l">{{ labels.flow.improvement.generate.heading }}</h1>
+  <p class="govuk-body">{{ labels.flow.improvement.generate.intro }}</p>
+  <p class="govuk-hint">{{ labels.flow.improvement.generate.roleHint }}</p>
+  <p class="govuk-hint">{{ labels.flow.improvement.generate.actionHint }}</p>
 
   {% if showSizeWarning %}
     <div class="govuk-inset-text">There are more than 10 gaps. Keep the plan small and focused.</div>

@@ -4,19 +4,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
   <a class="govuk-back-link" href="/assessments/current/dashboard">Back</a>
-  <h1 class="govuk-heading-l">Assurance report</h1>
-  <p class="govuk-body">Review the Record of Audit and Stage 1 assurer report, then submit council amendments within the window.</p>
-  <p class="govuk-body govuk-!-margin-bottom-6">
-    <a class="govuk-link" href="/assessments/current/evidence-requests">View evidence requests</a>
-  </p>
-  <div class="govuk-inset-text">
-    <p class="govuk-body"><strong>How to use this report</strong></p>
-    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-      <li>The record of audit shows how the assurer reviewed and tested your assessment.</li>
-      <li>The report highlights where the assurer needs changes, clarification or follow-up.</li>
-      <li>Use amendments to correct or clarify the council's position, not to reopen settled areas without reason.</li>
-    </ul>
-  </div>
 
   {% if error %}
     <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -34,6 +21,20 @@
       </div>
     </div>
   {% endif %}
+
+  <h1 class="govuk-heading-l">Assurance report</h1>
+  <p class="govuk-body">Review the Record of Audit and Stage 1 assurer report, then submit council amendments within the window.</p>
+  <p class="govuk-body govuk-!-margin-bottom-6">
+    <a class="govuk-link" href="/assessments/current/evidence-requests">View evidence requests</a>
+  </p>
+  <div class="govuk-inset-text">
+    <p class="govuk-body"><strong>How to use this report</strong></p>
+    <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+      <li>The record of audit shows how the assurer reviewed and tested your assessment.</li>
+      <li>The report highlights where the assurer needs changes, clarification or follow-up.</li>
+      <li>Use amendments to correct or clarify the council's position, not to reopen settled areas without reason.</li>
+    </ul>
+  </div>
 
   {% if saved %}
     <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" data-module="govuk-notification-banner">
