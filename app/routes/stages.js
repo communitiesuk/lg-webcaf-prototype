@@ -21,7 +21,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Focus on outcomes, not service detail.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "objectives",
@@ -34,7 +35,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Focus on strategic priorities, not team-level tasks.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "priorities",
@@ -47,7 +49,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Keep them clear enough to guide later decisions.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "setup",
@@ -60,7 +63,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Focus on how work is organised.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "operate",
@@ -73,7 +77,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Mention any reliance on partners, suppliers or shared services.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "threat",
@@ -88,7 +93,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Focus on the main risks that affect your council. You do not need to write a full report.",
     ],
     type: "textarea",
-    rows: 4,
+    rows: 6,
+    maxlength: 1500,
   },
   {
     slug: "appetite",
@@ -103,7 +109,8 @@ const SCOPE_CONTEXT_STEPS = [
       "Explain how much risk the council accepts before action is needed. If this is defined elsewhere, summarise it and say where it is recorded.",
     ],
     type: "textarea",
-    rows: 3,
+    rows: 6,
+    maxlength: 1500,
   },
 ];
 

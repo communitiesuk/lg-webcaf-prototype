@@ -51,16 +51,21 @@
       </fieldset>
     </div>
 
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label govuk-label--m" for="b2aRationale">Reason for your judgement</label>
-      <div id="b2aRationale-hint" class="govuk-hint">Explain why you have selected this judgement. Consider the evidence you have and how it relates to what the indicators suggest.</div>
-      {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
-        </p>
-      {% endif %}
-      <textarea class="govuk-textarea" id="b2aRationale" name="b2aRationale" rows="10" aria-describedby="b2aRationale-hint">{{ form.rationale }}</textarea>
+    <div class="govuk-character-count" data-module="govuk-character-count" data-maxlength="1500">
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label govuk-label--m" for="b2aRationale">Reason for your judgement</label>
+        <div id="b2aRationale-hint" class="govuk-hint">Explain why you have selected this judgement. Consider the evidence you have and how it relates to what the indicators suggest.</div>
+        {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
+          </p>
+        {% endif %}
+        <textarea class="govuk-textarea govuk-js-character-count" id="b2aRationale" name="b2aRationale" rows="10" aria-describedby="b2aRationale-hint b2aRationale-info">{{ form.rationale }}</textarea>
+      </div>
+      <div id="b2aRationale-info" class="govuk-hint govuk-character-count__message">
+        You can enter up to 1500 characters
+      </div>
     </div>
 
     <div class="govuk-button-group">

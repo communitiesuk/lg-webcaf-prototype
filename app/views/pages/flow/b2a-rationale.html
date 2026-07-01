@@ -26,16 +26,21 @@
   </p>
 
   <form method="post" action="{{ formAction }}">
-    <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
-      <label class="govuk-label" for="b2aRationale">Outcome rationale</label>
-      <div class="govuk-hint">Focus on the judgement for the outcome as a whole, rather than repeating each IGP response.</div>
-      {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
-        <p class="govuk-error-message">
-          <span class="govuk-visually-hidden">Error:</span>
-          {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
-        </p>
-      {% endif %}
-      <textarea class="govuk-textarea" id="b2aRationale" name="b2aRationale" rows="10">{{ form.rationale }}</textarea>
+    <div class="govuk-character-count" data-module="govuk-character-count" data-maxlength="1500">
+      <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <label class="govuk-label" for="b2aRationale">Outcome rationale</label>
+        <div id="b2aRationale-hint" class="govuk-hint">Focus on the judgement for the outcome as a whole, rather than repeating each IGP response.</div>
+        {% if error and (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | length) > 0 %}
+          <p class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span>
+            {{ (error.items | selectattr('field', 'equalto', 'b2aRationale') | list | first).text }}
+          </p>
+        {% endif %}
+        <textarea class="govuk-textarea govuk-js-character-count" id="b2aRationale" name="b2aRationale" rows="10" aria-describedby="b2aRationale-hint b2aRationale-info">{{ form.rationale }}</textarea>
+      </div>
+      <div id="b2aRationale-info" class="govuk-hint govuk-character-count__message">
+        You can enter up to 1500 characters
+      </div>
     </div>
 
     <div class="govuk-button-group">

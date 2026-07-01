@@ -109,9 +109,14 @@
         </fieldset>
       </div>
 
-      <div class="govuk-form-group">
-        <label class="govuk-label" for="{{ page.stepKey }}-{{ row.id }}-note">Supporting note (optional)</label>
-        <input class="govuk-input" id="{{ page.stepKey }}-{{ row.id }}-note" name="{{ page.stepKey }}-{{ row.id }}-note" type="text" value="{{ row.note }}">
+      <div class="govuk-character-count" data-module="govuk-character-count" data-maxlength="300">
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="{{ page.stepKey }}-{{ row.id }}-note">Supporting note (optional)</label>
+          <textarea class="govuk-textarea govuk-js-character-count" id="{{ page.stepKey }}-{{ row.id }}-note" name="{{ page.stepKey }}-{{ row.id }}-note" rows="2" aria-describedby="{{ page.stepKey }}-{{ row.id }}-note-info">{{ row.note or "" }}</textarea>
+        </div>
+        <div id="{{ page.stepKey }}-{{ row.id }}-note-info" class="govuk-hint govuk-character-count__message">
+          You can enter up to 300 characters
+        </div>
       </div>
 
       {% if not loop.last %}

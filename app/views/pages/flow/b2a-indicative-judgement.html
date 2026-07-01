@@ -6,14 +6,14 @@
   {% if outcome %}
     <span class="govuk-caption-l">{{ outcome.code }} {{ outcome.title }}{% if context.systemName %} — {{ context.systemName }}{% endif %}</span>
   {% endif %}
-  <h1 class="govuk-heading-l">Indicative judgement</h1>
+  <h1 class="govuk-heading-l">Suggested judgement</h1>
 
-  <p class="govuk-body-l">Based on your responses, this contributing outcome is likely to be:
+  <p class="govuk-body-l">Based on your answers, this outcome is likely:
     <strong class="govuk-tag {% if summary.judgement == 'Achieved' %}govuk-tag--green{% elif summary.judgement == 'Partially achieved' %}govuk-tag--yellow{% elif summary.judgement == 'Not achieved' %}govuk-tag--red{% else %}govuk-tag--grey{% endif %} govuk-!-margin-left-1">{{ summary.judgement }}</strong>
   </p>
-  <p class="govuk-body">This is not the final judgement. Review the summary below before recording your assessment on the next page.</p>
+  <p class="govuk-body">Check the summary before you record your final judgement.</p>
 
-  <h2 class="govuk-heading-m">What appears strong</h2>
+  <h2 class="govuk-heading-m">What is working well</h2>
   {% if summary.strengths.length > 0 %}
     <ul class="govuk-list govuk-list--bullet">
       {% for item in summary.strengths %}
@@ -21,10 +21,10 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body">No clear strengths stand out from the responses so far.</p>
+    <p class="govuk-body">Nothing identified from your answers.</p>
   {% endif %}
 
-  <h2 class="govuk-heading-m">Areas to address</h2>
+  <h2 class="govuk-heading-m">Areas to improve</h2>
   {% if summary.weaknesses.length > 0 %}
     <ul class="govuk-list govuk-list--bullet">
       {% for item in summary.weaknesses %}
@@ -32,7 +32,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body">No indicators of non-achievement stand out from the responses so far.</p>
+    <p class="govuk-body">No issues identified from your answers.</p>
   {% endif %}
 
   <h2 class="govuk-heading-m">Gaps or uncertainty</h2>
@@ -43,7 +43,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body">No obvious gaps or uncertainty have been identified from the responses so far.</p>
+    <p class="govuk-body">No obvious gaps or uncertainty identified.</p>
   {% endif %}
 
   <div class="govuk-button-group">

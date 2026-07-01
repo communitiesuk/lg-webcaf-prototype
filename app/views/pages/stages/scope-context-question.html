@@ -19,15 +19,33 @@
 
       <form method="post" action="{{ formAction }}">
         {% if contextStep.type == "textarea" %}
-          <div class="govuk-form-group">
-            <label class="govuk-label govuk-visually-hidden" for="{{ contextStep.sessionKey }}">{{ contextStep.question }}</label>
-            <textarea
-              class="govuk-textarea"
-              id="{{ contextStep.sessionKey }}"
-              name="{{ contextStep.sessionKey }}"
-              rows="{{ contextStep.rows or 3 }}"
-            >{{ assessment.scope.context[contextStep.contextKey] or '' }}</textarea>
-          </div>
+          {% if contextStep.maxlength %}
+            <div class="govuk-character-count" data-module="govuk-character-count" data-maxlength="{{ contextStep.maxlength }}">
+              <div class="govuk-form-group">
+                <label class="govuk-label govuk-visually-hidden" for="{{ contextStep.sessionKey }}">{{ contextStep.question }}</label>
+                <textarea
+                  class="govuk-textarea govuk-js-character-count"
+                  id="{{ contextStep.sessionKey }}"
+                  name="{{ contextStep.sessionKey }}"
+                  rows="{{ contextStep.rows or 3 }}"
+                  aria-describedby="{{ contextStep.sessionKey }}-info"
+                >{{ assessment.scope.context[contextStep.contextKey] or '' }}</textarea>
+              </div>
+              <div id="{{ contextStep.sessionKey }}-info" class="govuk-hint govuk-character-count__message">
+                You can enter up to {{ contextStep.maxlength }} characters
+              </div>
+            </div>
+          {% else %}
+            <div class="govuk-form-group">
+              <label class="govuk-label govuk-visually-hidden" for="{{ contextStep.sessionKey }}">{{ contextStep.question }}</label>
+              <textarea
+                class="govuk-textarea"
+                id="{{ contextStep.sessionKey }}"
+                name="{{ contextStep.sessionKey }}"
+                rows="{{ contextStep.rows or 3 }}"
+              >{{ assessment.scope.context[contextStep.contextKey] or '' }}</textarea>
+            </div>
+          {% endif %}
         {% elif contextStep.type == "date" %}
           {% set dateValue = assessment.scope.context[contextStep.contextKey] or {} %}
           <div class="govuk-form-group">

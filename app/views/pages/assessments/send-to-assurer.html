@@ -22,7 +22,7 @@
       {% endif %}
 
       <span class="govuk-caption-l">Assessment</span>
-      <h1 class="govuk-heading-l">Confirm and send to assurer</h1>
+      <h1 class="govuk-heading-l">Send to assurer</h1>
 
       <h2 class="govuk-heading-m">What you are sending</h2>
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
@@ -59,15 +59,16 @@
       </dl>
 
       <div class="govuk-inset-text">
-        Independent assurance reviews the completed assessment as a whole. You cannot make changes to the self-assessment once it has been sent.
+        <p class="govuk-body">Your independent assurer will review your full assessment.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">You cannot make changes after you send it.</p>
       </div>
 
       <form method="post" action="/assessments/current/send-to-assurer">
         <div class="govuk-form-group {% if error and (error.items | selectattr('field', 'equalto', 'sendToAssurerDeclaration') | list | length) > 0 %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" aria-describedby="sendToAssurerDeclaration-hint{% if error %} sendToAssurerDeclaration-error{% endif %}">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Declaration</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Confirm and send</legend>
             <div id="sendToAssurerDeclaration-hint" class="govuk-hint">
-              By confirming, you are submitting this assessment on behalf of your council.
+              By confirming, you are submitting this assessment for your council.
             </div>
             {% if error and (error.items | selectattr('field', 'equalto', 'sendToAssurerDeclaration') | list | length) > 0 %}
               <p id="sendToAssurerDeclaration-error" class="govuk-error-message">
@@ -85,7 +86,7 @@
                   value="yes"
                   {% if declarationChecked %}checked{% endif %}>
                 <label class="govuk-label govuk-checkboxes__label" for="sendToAssurerDeclaration-yes">
-                  I confirm this is our council's final assessment position and it is ready for independent assurance.
+                  I confirm this is the final version and it is ready to send.
                 </label>
               </div>
             </div>
@@ -93,7 +94,7 @@
         </div>
 
         <div class="govuk-button-group">
-          <button class="govuk-button" data-module="govuk-button" type="submit">Send to assurer</button>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Send assessment to assurer</button>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       </form>

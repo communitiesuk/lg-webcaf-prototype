@@ -12,8 +12,7 @@
             <h2 class="govuk-notification-banner__title" id="signoff-success-title">Success</h2>
           </div>
           <div class="govuk-notification-banner__content">
-            <p class="govuk-notification-banner__heading">Internal sign-off confirmed.</p>
-            <p class="govuk-body">The self-assessment is ready to send to the assurer.</p>
+            <p class="govuk-notification-banner__heading">Internal sign-off confirmed. Your self-assessment is ready to send.</p>
           </div>
         </div>
       {% endif %}
@@ -36,10 +35,6 @@
       <span class="govuk-caption-l">Assessment</span>
       <h1 class="govuk-heading-l">Get internal sign-off</h1>
 
-      <p class="govuk-body">Before sending your self-assessment for independent assurance, it must be reviewed and approved internally.</p>
-      <p class="govuk-body">Download the draft below and share it with your reviewer and approver. Once they have signed it off, confirm this below to continue.</p>
-
-      <h2 class="govuk-heading-m">Assessment summary</h2>
       <dl class="govuk-summary-list govuk-!-margin-bottom-6">
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Outcomes judged</dt>
@@ -57,13 +52,21 @@
         </div>
       </dl>
 
+      {% if collaborationState.status !== "approved" %}
+        <p class="govuk-body">Before you send your self-assessment, it must be reviewed and approved.</p>
+      {% endif %}
+
+      <p class="govuk-body">Download the draft assessment and share it with your reviewer.</p>
+
       <p class="govuk-body">
         <a class="govuk-link" href="/assessments/current/export-assessment">Download draft assessment</a>
       </p>
 
+      <p class="govuk-body">When the draft has been signed off, continue to the next screen to confirm that it is ready to send to your assurer.</p>
+
       {% if collaborationState.status === "approved" %}
         <div class="govuk-button-group">
-          <a class="govuk-button" href="/assessments/current/send-to-assurer">Continue to send to assurer</a>
+          <a class="govuk-button" href="/assessments/current/send-to-assurer">Confirm and send to assurer</a>
           <a class="govuk-link" href="/assessments/current/journey">Return to task list</a>
         </div>
       {% else %}
@@ -96,6 +99,7 @@
           </div>
         </form>
       {% endif %}
+
     </div>
   </div>
 {% endblock %}

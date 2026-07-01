@@ -407,6 +407,7 @@
       </div>
     {% endif %}
 
+    <div class="govuk-character-count" data-module="govuk-character-count" data-maxlength="1500">
     <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','rationale') | list | length) > 0 %}govuk-form-group--error{% endif %}">
       {% if context.cafJudgementPage %}
         <h2 class="govuk-heading-m">Reason</h2>
@@ -448,7 +449,11 @@
           {{ (error.items | selectattr('field','equalto','rationale') | list | first).text }}
         </p>
       {% endif %}
-      <textarea class="govuk-textarea" id="rationale" name="rationale" rows="4">{{ form.rationale }}</textarea>
+      <textarea class="govuk-textarea govuk-js-character-count" id="rationale" name="rationale" rows="6" aria-describedby="rationale-info">{{ form.rationale }}</textarea>
+    </div>
+    <div id="rationale-info" class="govuk-hint govuk-character-count__message">
+      You can enter up to 1500 characters
+    </div>
     </div>
 
     {% if context.roundTwo and form.evidenceRefs %}

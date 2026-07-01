@@ -143,8 +143,13 @@
   <body>
     <main class="app-export-shell">
       <div class="app-export-actions">
-        <button class="app-export-button" type="button" onclick="window.print()">Print or save as PDF</button>
-        <a class="app-export-link" href="/assessments/current/export-assessment">Change scope</a>
+        {% if format == "odt" %}
+          <button class="app-export-button" type="button" onclick="window.print()">Print</button>
+          <span style="font-size:16px;color:#505a5f;">To save as .odt, open this page in LibreOffice Writer or Microsoft Word using File &gt; Open from URL, then save as Open Document Format.</span>
+        {% else %}
+          <button class="app-export-button" type="button" onclick="window.print()">Print or save as PDF</button>
+        {% endif %}
+        <a class="app-export-link" href="/assessments/current/export-assessment{% if format == 'odt' %}?format=odt{% endif %}">Change scope</a>
         <a class="app-export-link" href="/assessments/current/dashboard">Return to dashboard</a>
       </div>
 

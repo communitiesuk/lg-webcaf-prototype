@@ -1109,6 +1109,7 @@ module.exports = function (router) {
       pageTitle: `${exportSummary.title} - printable summary`,
       assessment,
       exportSummary,
+      format: selection.format || "pdf",
       printGeneratedAt: formatDateTimeDisplay(new Date().toISOString()),
     });
   });
@@ -1574,7 +1575,7 @@ module.exports = function (router) {
     const selectedSystems = getSelectedAnnualSystems(assessment);
 
     return res.render("pages/assessments/send-to-assurer", {
-      pageTitle: "Confirm and send assessment to assurer",
+      pageTitle: "Send to assurer",
       assessment,
       collaborationState,
       completion,
@@ -1603,7 +1604,7 @@ module.exports = function (router) {
       const completion = getAssessmentCompletionState(assessment);
       const selectedSystems = getSelectedAnnualSystems(assessment);
       return res.render("pages/assessments/send-to-assurer", {
-        pageTitle: "Confirm and send assessment to assurer",
+        pageTitle: "Send to assurer",
         assessment,
         collaborationState,
         completion,
@@ -2192,7 +2193,7 @@ module.exports = function (router) {
     }));
 
     return res.render("pages/assessments/start-self-assessment-people", {
-      pageTitle: "Add people where they are needed",
+      pageTitle: "Add people to outcomes",
       labels,
       assessment,
       contributors,
@@ -2222,7 +2223,7 @@ module.exports = function (router) {
 
     if (errors.length > 0) {
       return res.render("pages/assessments/start-self-assessment-people", {
-        pageTitle: "Add people where they are needed",
+        pageTitle: "Add people to outcomes",
         labels,
         assessment,
         contributors: contributors.map((person) => ({
@@ -2377,7 +2378,7 @@ module.exports = function (router) {
     const contributorUsers = councilUsers.filter((u) => u.id !== (row.ownerId || ""));
 
     return res.render("pages/assessments/start-self-assessment-assign-outcome", {
-      pageTitle: `Assign this outcome: ${row.outcomeCode}`,
+      pageTitle: `Assign outcome ${row.outcomeCode}`,
       labels,
       assessment,
       row,
@@ -2419,7 +2420,7 @@ module.exports = function (router) {
     if (errors.length > 0) {
       const contributorUsers = councilUsers.filter((u) => u.id !== ownerId);
       return res.render("pages/assessments/start-self-assessment-assign-outcome", {
-        pageTitle: `Assign this outcome: ${row.outcomeCode}`,
+        pageTitle: `Assign outcome ${row.outcomeCode}`,
         labels,
         assessment,
         row: {
@@ -5723,11 +5724,13 @@ function getAssessmentExportSelection(source, exportOptions) {
   const query = source || {};
   const defaultSection = exportOptions.sections[0] ? exportOptions.sections[0].id : "ad";
   const defaultOutcome = exportOptions.outcomes[0] ? exportOptions.outcomes[0].id : "";
+  const rawFormat = (query.format || "pdf").toString().toLowerCase();
 
   return {
     scopeType: ((query.scopeType || query.scope || "full").toString() || "full"),
     sectionId: ((query.sectionId || defaultSection).toString() || defaultSection),
     outcomeId: ((query.outcomeId || defaultOutcome).toString() || defaultOutcome),
+    format: rawFormat === "odt" ? "odt" : "pdf",
   };
 }
 

@@ -1161,7 +1161,7 @@ module.exports = function (router) {
     });
 
     return res.render("pages/flow/b2a-indicative-judgement", {
-      pageTitle: "Indicative judgement",
+      pageTitle: "Suggested judgement",
       assessment,
       context: buildRoundTwoOutcomeContext({ lens: "bc", tree: routeContext.bc, outcome, system, nextOutcomeId: null }),
       outcome,
@@ -5482,7 +5482,7 @@ function registerIgpOutcomeRoutes(router, outcomeId) {
       },
     });
     return res.render("pages/flow/b2a-indicative-judgement", {
-      pageTitle: "Indicative judgement",
+      pageTitle: "Suggested judgement",
       assessment,
       context: buildRoundTwoOutcomeContext({ lens: "bc", tree: bc, outcome, system, nextOutcomeId: null }),
       outcome,
@@ -5771,7 +5771,7 @@ function registerAdIgpOutcomeRoutes(router, outcomeId) {
       },
     });
     return res.render("pages/flow/b2a-indicative-judgement", {
-      pageTitle: "Indicative judgement",
+      pageTitle: "Suggested judgement",
       assessment,
       context: buildRoundTwoOutcomeContext({ lens: "ad", tree: ad, outcome, nextOutcomeId: null }),
       outcome,

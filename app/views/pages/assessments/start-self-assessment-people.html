@@ -34,18 +34,10 @@
         </div>
       {% endif %}
 
-      {{ appPageHeader({
-        caption: "Assessment setup",
-        title: "Add people where they are needed",
-        guidanceHeadingId: "self-assessment-people-guidance",
-        guidanceItems: [
-          "You do not need to add everyone now.",
-          "Only add people when they are needed for a specific outcome.",
-          "You can return and change these names later."
-        ]
-      }) }}
+      <h1 class="govuk-heading-l">Add people to outcomes</h1>
+      <p class="govuk-body">Add people who will complete or support each outcome.</p>
 
-      <h2 class="govuk-heading-m">People available for assignment</h2>
+      <h2 class="govuk-heading-m">People you can assign</h2>
       {% if contributors.length > 0 %}
         <table class="govuk-table">
           <thead class="govuk-table__head">
@@ -115,7 +107,7 @@
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
       <div class="govuk-button-group">
-        <a class="govuk-link" href="/assessments/current/start-self-assessment/assignments">Return to outcome assignments</a>
+        <a class="govuk-button" href="/assessments/current/start-self-assessment/assignments">Save and return to outcome list</a>
       </div>
 
     </div>
