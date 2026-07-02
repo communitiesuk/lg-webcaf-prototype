@@ -125,7 +125,7 @@
         <form method="post" action="/stages/2/scope/services/review">
           <div class="govuk-button-group">
             <button class="govuk-button" name="servicesReviewAction" value="continue" type="submit">Continue to critical systems</button>
-            <button class="govuk-link app-link-button" type="submit">Save and return to task list</button>
+            <button class="govuk-link app-link-button" type="submit">{{ returnText or "Save and return to task list" }}</button>
           </div>
         </form>
       {% else %}

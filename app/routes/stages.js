@@ -901,15 +901,19 @@ module.exports = function (router) {
 
     ensureScope(assessment);
 
+    const backHref = getScopeServicesReviewBackHref(req);
     res.render("pages/stages/scope-services-review", {
       pageTitle: isRoundTwoRequest(req) ? "List your essential services" : labels.stages.scope.services.reviewTitle,
       labels,
       assessment,
-      backHref: getScopeServicesReviewBackHref(req),
+      backHref,
       services: assessment.scope.essentialServices,
       roundTwo: isRoundTwoRequest(req),
       saved: (req.query.saved || "").toString(),
       savedName: (req.query.name || "").toString(),
+      returnText: backHref === "/assessments/current/review-scope"
+        ? "Save and return to scope review"
+        : "Save and return to task list",
     });
   });
 
