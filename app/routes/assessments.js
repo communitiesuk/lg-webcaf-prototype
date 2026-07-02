@@ -4634,7 +4634,7 @@ function buildAnnualSetupSummary(assessment, currentUser) {
 
   let statusText = "Not started";
   let statusClass = "govuk-tag--grey";
-  let href = scopeReview.completed ? "/assessments/current/annual-setup" : "/assessments/current/review-scope";
+  let href = "/assessments/current/annual-setup";
   let hint = "Choose what you will assess this year.";
   if (state.completed) {
     statusText = "Complete";
