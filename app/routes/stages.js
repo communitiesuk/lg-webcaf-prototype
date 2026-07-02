@@ -932,7 +932,7 @@ module.exports = function (router) {
     if (isRoundTwoRequest(req) && servicesAction === "continue") {
       return res.redirect("/stages/2/scope/systems/review");
     }
-    return redirectToScopeReviewReturnOr(req, res, "/onboarding");
+    return redirectToScopeReviewReturnOr(req, res, isRoundTwoRequest(req) ? "/assessments/current/journey" : "/onboarding");
   });
 
   router.get("/stages/2/scope/services/confirm", (req, res) => {
@@ -958,7 +958,7 @@ module.exports = function (router) {
       assessment.scope.servicesConfirmed = assessment.scope.essentialServices.length > 0;
       assessment.updatedAt = new Date().toISOString();
       syncRoundTwoScopeCompletion(assessment, req);
-      return redirectToScopeReviewReturnOr(req, res, "/onboarding");
+      return redirectToScopeReviewReturnOr(req, res, "/assessments/current/journey");
     }
     assessment.scope.servicesConfirmed = true;
     assessment.updatedAt = new Date().toISOString();
