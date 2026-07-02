@@ -1869,6 +1869,15 @@ function syncRoundTwoScopeCompletion(assessment, req) {
   if (assessment.scopeReview.completed) {
     assessment.scopeReview.updatedAt = new Date().toISOString();
   }
+  if (!assessment.scopeReview.decision) {
+    const scope = assessment.scope || {};
+    const services = Array.isArray(scope.essentialServices) ? scope.essentialServices : [];
+    const systems = Array.isArray(scope.criticalSystems) ? scope.criticalSystems : [];
+    const contextDone = Boolean(scope.context && scope.context.completed);
+    if (services.length > 0 || systems.length > 0 || contextDone) {
+      assessment.scopeReview.decision = "in_progress";
+    }
+  }
 }
 
 function ensureScope(assessment) {
