@@ -337,9 +337,6 @@ module.exports = function (router) {
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
-      return res.redirect("/assessments/current/review-scope");
-    }
     return res.render("pages/assessments/annual-setup-start", {
       pageTitle: "Choose what to assess",
       assessment,
@@ -356,9 +353,6 @@ module.exports = function (router) {
 
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
-      return res.redirect("/assessments/current/review-scope");
-    }
     return res.redirect(getAnnualSetupNextStep(assessment));
   });
 
@@ -370,9 +364,6 @@ module.exports = function (router) {
     if (!assessment) return;
     ensureAnnualSetupData(assessment);
     ensureScopeReviewState(assessment);
-    if (!hasRoundTwoScopeSummaryComplete(assessment)) {
-      return res.redirect("/assessments/current/review-scope");
-    }
     const currentApproach = assessment.annualSetup.adApproach || "";
     // If already a returning user, send them straight to the approach selection page
     if (currentApproach && currentApproach !== "first_time") {
