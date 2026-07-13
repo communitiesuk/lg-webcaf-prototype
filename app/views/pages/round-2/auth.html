@@ -36,16 +36,16 @@
 
       <form method="post" action="{{ formAction }}">
         {% if mode == "register" %}
-          <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AccessPath') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <div class="govuk-form-group {% if error and error.byField and error.byField.round2AccessPath %}govuk-form-group--error{% endif %}">
             <fieldset class="govuk-fieldset" aria-describedby="round2AccessPath-hint">
               <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">What do you need to do?</legend>
               <div id="round2AccessPath-hint" class="govuk-hint">
                 Choose one option. If your council already uses webCAF, ask to join that council instead of creating a new account.
               </div>
-              {% if error and (error.items | selectattr('field','equalto','round2AccessPath') | list | length) > 0 %}
+              {% if error and error.byField and error.byField.round2AccessPath %}
                 <p class="govuk-error-message">
                   <span class="govuk-visually-hidden">Error:</span>
-                  {{ (error.items | selectattr('field','equalto','round2AccessPath') | list | first).text }}
+                  {{ error.byField.round2AccessPath }}
                 </p>
               {% endif %}
               <div class="govuk-radios" data-module="govuk-radios">
@@ -72,38 +72,38 @@
           </div>
         {% endif %}
 
-        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <div class="govuk-form-group {% if error and error.byField and error.byField.round2AuthName %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="round2AuthName">Name</label>
           <div class="govuk-hint">Enter your full name as you want it to appear.</div>
-          {% if error and (error.items | selectattr('field','equalto','round2AuthName') | list | length) > 0 %}
+          {% if error and error.byField and error.byField.round2AuthName %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
-              {{ (error.items | selectattr('field','equalto','round2AuthName') | list | first).text }}
+              {{ error.byField.round2AuthName }}
             </p>
           {% endif %}
           <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthName" name="round2AuthName" type="text" autocomplete="name" spellcheck="false" value="{{ defaults.name }}">
         </div>
 
-        <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+        <div class="govuk-form-group {% if error and error.byField and error.byField.round2AuthEmail %}govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="round2AuthEmail">Email address</label>
           <div class="govuk-hint">Use your council, government or other public sector work email address.</div>
-          {% if error and (error.items | selectattr('field','equalto','round2AuthEmail') | list | length) > 0 %}
+          {% if error and error.byField and error.byField.round2AuthEmail %}
             <p class="govuk-error-message">
               <span class="govuk-visually-hidden">Error:</span>
-              {{ (error.items | selectattr('field','equalto','round2AuthEmail') | list | first).text }}
+              {{ error.byField.round2AuthEmail }}
             </p>
           {% endif %}
           <input class="govuk-input govuk-!-width-two-thirds" id="round2AuthEmail" name="round2AuthEmail" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="{{ defaults.email }}">
         </div>
 
         {% if mode == "register" %}
-          <div class="govuk-form-group {% if error and (error.items | selectattr('field','equalto','round2CouncilName') | list | length) > 0 %}govuk-form-group--error{% endif %}">
+          <div class="govuk-form-group {% if error and error.byField and error.byField.round2CouncilName %}govuk-form-group--error{% endif %}">
             <label class="govuk-label" for="round2CouncilName">Council</label>
             <div id="round2CouncilName-hint" class="govuk-hint">Enter the name of the council you need to join or request access for.</div>
-            {% if error and (error.items | selectattr('field','equalto','round2CouncilName') | list | length) > 0 %}
+            {% if error and error.byField and error.byField.round2CouncilName %}
               <p class="govuk-error-message">
                 <span class="govuk-visually-hidden">Error:</span>
-                {{ (error.items | selectattr('field','equalto','round2CouncilName') | list | first).text }}
+                {{ error.byField.round2CouncilName }}
               </p>
             {% endif %}
             <input class="govuk-input govuk-!-width-two-thirds" id="round2CouncilName" name="round2CouncilName" type="text" aria-describedby="round2CouncilName-hint" value="{{ defaults.councilName }}">

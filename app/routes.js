@@ -329,7 +329,7 @@ router.post("/round-2/sign-in", (req, res) => {
       submitText: "Continue",
       secondaryLinks: [],
       defaults: { name, email, councilName: "", accessPath: "join-existing" },
-      error: { items: errors },
+      error: { items: errors, byField: errors.reduce((acc, e) => { acc[e.field] = e.text; return acc; }, {}) },
     });
   }
 
@@ -396,7 +396,7 @@ router.post("/round-2/register", (req, res) => {
         { href: "/round-2/sign-in", text: "Sign in instead" },
       ],
       defaults: { name, email, councilName, accessPath },
-      error: { items: errors },
+      error: { items: errors, byField: errors.reduce((acc, e) => { acc[e.field] = e.text; return acc; }, {}) },
     });
   }
 
