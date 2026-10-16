@@ -1,0 +1,26 @@
+{# D26a — decide / remove a CNI designation (confirm). Matches the service's remove pattern:
+   GET shows this page, POST performs the removal. Removes the CNI designation, not the system. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "Are you sure you want to remove " + system.name + " as critical national infrastructure?"
+      }) }}
+
+      <p class="govuk-body">This removes the CNI designation from {{ system.name }}. The system stays in your council record, and you can add it back as CNI later.</p>
+
+      <form method="post" action="/decide/cni/added/{{ system.id }}/remove" novalidate>
+        <div class="govuk-button-group">
+          <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ backHref }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

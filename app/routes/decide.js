@@ -130,10 +130,22 @@ module.exports = function (router) {
     return res.redirect("/decide/systems"); // D02 (Batch 2)
   });
 
-  // Remove a CNI system from the D26 list.
+  // Remove a CNI designation from the D26 list — confirm first (GET), then remove (POST),
+  // matching every other "remove" in the service. The destructive action is never a GET link.
   router.get("/decide/cni/added/:systemId/remove", (req, res) => {
-    ensureDecide(req.session.data);
-    const system = getSystem(req.session.data.setup, req.params.systemId);
+    const setup = ensureDecide(req.session.data) && req.session.data.setup;
+    const system = getSystem(setup, req.params.systemId);
+    if (!system || !system.cni) return res.redirect("/decide/cni/added");
+    res.render("pages/decide/cni-remove", {
+      pageTitle: `Are you sure you want to remove ${system.name} as critical national infrastructure?`,
+      backHref: "/decide/cni/added",
+      system,
+    });
+  });
+
+  router.post("/decide/cni/added/:systemId/remove", (req, res) => {
+    const setup = ensureDecide(req.session.data) && req.session.data.setup;
+    const system = getSystem(setup, req.params.systemId);
     if (system) system.cni = false;
     return res.redirect("/decide/cni/added");
   });
