@@ -379,6 +379,15 @@ module.exports = function (router) {
       });
     }
     setApprover(access, name, role);
+    // Write through to Setup so task 7 "Confirm your Approver" completes and check-your-setup
+    // reflects it (the Approver is one concept shared by both sections).
+    const setup = ensureSetup(req.session.data);
+    if (setup.people && setup.people.approver) {
+      setup.people.approver.name = name;
+      setup.people.approver.jobTitle = role;
+      setup.people.approver.confirmed = true;
+      setup.people.approver.hasAccount = false; // recorded, not invited
+    }
     return res.redirect("/access");
   });
 

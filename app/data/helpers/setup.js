@@ -153,7 +153,7 @@ function buildSetupTaskList(setup) {
       title: { text: "7. Confirm your Approver" },
       href: "/access/approver",
       hint: { text: "Who signs off each cycle's plan" },
-      status: notStarted,
+      status: (setup.people && setup.people.approver && setup.people.approver.confirmed) ? completed : notStarted,
     },
     {
       title: { text: "8. Check and confirm" },
@@ -584,7 +584,9 @@ function buildSetupSummary(setup) {
   const allComplete = systems.length > 0 && systems.every((s) => s.detailsComplete);
   return {
     cafLead: setup.people.cafLead.name,
+    cafLeadConfirmed: setup.people.cafLead.confirmed,
     approver: setup.people.approver.name,
+    approverConfirmed: setup.people.approver.confirmed,
     sectorConfirmed: setup.sectorContext.confirmed,
     councilContextProvided: setup.councilContext.completed,
     methodology:

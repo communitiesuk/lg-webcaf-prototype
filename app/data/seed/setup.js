@@ -316,8 +316,9 @@ function buildSetupSeed() {
 }
 
 // --- Empty Setup state (build from scratch) ------------------------------------------
-// Account-level data (the claimed council, CAF Lead, Approver, assigned assurer) is kept,
-// but every setup task is undone: no confirmed context, no methodology, no services,
+// The claimed council, CAF Lead (the claimant) and assigned assurer are account-level and
+// kept, but every setup task is undone: the Approver is NOT yet confirmed (task 7 does it,
+// via /access/approver), and there is no confirmed context, methodology, services,
 // platforms, suppliers or critical systems. Used by the "/beta" Start empty (Setup) mode.
 function buildSetupSeedEmpty() {
   return {
@@ -331,7 +332,8 @@ function buildSetupSeedEmpty() {
 
     people: {
       cafLead: { name: "Jo Hart", confirmed: true },
-      approver: { name: "Cllr M Devlin", jobTitle: "Cabinet Member for Resources", confirmed: true, hasAccount: true },
+      // Approver not yet confirmed — the user records it in task 7 (Access A27).
+      approver: { name: "", jobTitle: "", confirmed: false, hasAccount: false },
     },
 
     assurer: { name: "K Osei", organisation: "Bridewell", assigned: true },

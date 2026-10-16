@@ -1169,6 +1169,23 @@ module.exports = function (router) {
 
   router.post("/setup/check-your-setup", (req, res) => {
     const setup = ensureSetup(req.session.data);
+    // Setup is only complete once both a CAF Lead and an Approver are confirmed (stated on S30).
+    const people = setup.people || {};
+    const errorList = [];
+    if (!(people.cafLead && people.cafLead.confirmed)) {
+      errorList.push({ text: "Confirm your CAF Lead before you finish setup", href: "#cafLead-change" });
+    }
+    if (!(people.approver && people.approver.confirmed)) {
+      errorList.push({ text: "Confirm your Approver before you finish setup", href: "#approver-change" });
+    }
+    if (errorList.length) {
+      return res.render("pages/setup/check-your-setup", {
+        pageTitle: "Error: Check your setup",
+        backHref: "/setup/coverage-check",
+        summary: buildSetupSummary(setup),
+        errorList: errorList,
+      });
+    }
     setup.completed = true;
     return res.redirect("/setup/complete");
   });

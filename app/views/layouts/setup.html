@@ -11,6 +11,10 @@
 {% extends "layouts/main.html" %}
 {% from "govuk/components/footer/macro.njk" import govukFooter %}
 
+{# Wire the page <title> to pageTitle for pages that extend this base directly (e.g. Setup).
+   Child layouts (dashboard.html, get-started.html) override this block with their own. #}
+{% block pageTitle %}{{ pageTitle }} - Assess and manage your council’s cyber resilience - GOV.UK{% endblock %}
+
 {# Cookie banner sits after the header, OUTSIDE govuk-width-container, so its grey background
    spans the full page width (only the message inside is constrained to the container). #}
 {% block header %}
