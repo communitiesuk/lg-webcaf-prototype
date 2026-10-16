@@ -120,7 +120,15 @@ module.exports = function (router) {
     delete req.session.data.cafLeadChoice;
     delete req.session.data.cafLeadPerson;
 
-    if (choice === "someone-new") return res.redirect("/access/invite"); // A05 (Batch 3)
+    if (choice === "someone-new") {
+      const invite = ensureInvite(access);
+      invite.role = "full"; // a new CAF Lead needs full access
+      // Carry the Setup return and mark this invite as naming the CAF Lead, so sending it records
+      // a pending CAF Lead in Setup and returns the user there.
+      req.session.data.setupInvite = { kind: "cafLead", return: req.session.data.cafLeadReturn || "" };
+      delete req.session.data.cafLeadReturn;
+      return res.redirect("/access/invite"); // A05 (Batch 3)
+    }
 
     // A31 — nothing chosen (no outer choice, or "someone with access" but no person).
     if (!choice || (choice === "someone-with-access" && !personId)) {
@@ -206,9 +214,18 @@ module.exports = function (router) {
   });
 
   router.post("/access/approver", (req, res) => {
+    const access = ensureAccess(req.session.data);
     const choice = (req.session.data.approverChoice || "").toString();
     delete req.session.data.approverChoice;
-    if (choice === "invitation") return res.redirect("/access/invite"); // A05 as Approver
+    if (choice === "invitation") {
+      const invite = ensureInvite(access);
+      invite.role = "approver";
+      // Carry the Setup return and mark this invite as naming the Approver, so sending it records
+      // a pending Approver in Setup and returns the user there.
+      req.session.data.setupInvite = { kind: "approver", return: req.session.data.approverReturn || "" };
+      delete req.session.data.approverReturn;
+      return res.redirect("/access/invite"); // A05 as Approver
+    }
     return res.redirect("/access/approver-details"); // A27
   });
 
@@ -326,6 +343,26 @@ module.exports = function (router) {
     const invite = ensureInvite(access);
     addInvitation(access, invite);
     req.session.data.lastInvitedName = invite.name;
+    // If this invitation names a Setup Approver or CAF Lead, record a pending (invited, not yet
+    // accepted) entry in Setup and carry the return so the user gets back to finish setup.
+    const ctx = req.session.data.setupInvite;
+    if (ctx) {
+      const setup = ensureSetup(req.session.data);
+      if (ctx.kind === "approver" && setup.people && setup.people.approver) {
+        setup.people.approver.name = invite.name;
+        setup.people.approver.jobTitle = "";
+        setup.people.approver.confirmed = false;
+        setup.people.approver.pending = true; // invitation sent, awaiting acceptance
+        setup.people.approver.hasAccount = true;
+      }
+      if (ctx.kind === "cafLead" && setup.people && setup.people.cafLead) {
+        setup.people.cafLead.name = invite.name;
+        setup.people.cafLead.confirmed = false;
+        setup.people.cafLead.pending = true;
+      }
+      req.session.data.setupInviteReturn = ctx.return || "";
+      delete req.session.data.setupInvite;
+    }
     delete access.invite; // clear the draft
     return res.redirect("/access/invite/sent");
   });
@@ -334,10 +371,13 @@ module.exports = function (router) {
   router.get("/access/invite/sent", (req, res) => {
     ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
+    const setupReturn = req.session.data.setupInviteReturn || "";
+    delete req.session.data.setupInviteReturn;
     res.render("pages/access/invite-sent", {
       pageTitle: "Invitation sent",
       councilName: COUNCIL_NAME,
       name: (req.session.data.lastInvitedName || "Sam Okoro").toString(),
+      setupReturn: setupReturn, // when the invite named a Setup Approver/CAF Lead
     });
   });
 

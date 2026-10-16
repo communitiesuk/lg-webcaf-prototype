@@ -682,15 +682,19 @@ module.exports = function (router) {
   // S13 empty state (Figma 393:316) / S23 hub (Figma 393:535) — two states of one page.
   router.get("/setup/critical-systems", (req, res) => {
     const setup = ensureSetup(req.session.data);
+    // Honour a return target (e.g. reached from Decide's "nothing left" page) so the back link
+    // goes where the user came from. Only internal /setup/ or /decide/ paths are accepted.
+    const ret = clean(req.query.return);
+    const backHref = (ret.startsWith("/setup/") || ret.startsWith("/decide/")) ? ret : "/setup/task-list";
     if ((setup.criticalSystems || []).length === 0) {
       return res.render("pages/setup/critical-systems/empty", {
         pageTitle: "Your critical systems",
-        backHref: "/setup/task-list",
+        backHref: backHref,
       });
     }
     res.render("pages/setup/critical-systems/index", {
       pageTitle: "Your critical systems",
-      backHref: "/setup/task-list",
+      backHref: backHref,
       rows: buildCriticalSystemsHubRows(setup),
     });
   });
@@ -1170,12 +1174,15 @@ module.exports = function (router) {
   router.post("/setup/check-your-setup", (req, res) => {
     const setup = ensureSetup(req.session.data);
     // Setup is only complete once both a CAF Lead and an Approver are confirmed (stated on S30).
+    // Named counts as confirmed (recorded / existing user) OR pending (invited, awaiting
+    // acceptance). Only a completely unnamed person blocks finishing.
     const people = setup.people || {};
+    const named = (p) => Boolean(p && (p.confirmed || p.pending));
     const errorList = [];
-    if (!(people.cafLead && people.cafLead.confirmed)) {
+    if (!named(people.cafLead)) {
       errorList.push({ text: "Confirm your CAF Lead before you finish setup", href: "#cafLead-change" });
     }
-    if (!(people.approver && people.approver.confirmed)) {
+    if (!named(people.approver)) {
       errorList.push({ text: "Confirm your Approver before you finish setup", href: "#approver-change" });
     }
     if (errorList.length) {

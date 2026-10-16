@@ -13,6 +13,9 @@
       <p class="govuk-body">The invitation expires after 30 days. You can resend or cancel it from People and governance.</p>
 
       <div class="govuk-button-group">
+        {% if setupReturn %}
+          {{ govukButton({ text: "Back to your setup", href: setupReturn }) }}
+        {% endif %}
         {{ govukButton({ text: "Invite someone else", href: "/access/invite", classes: "govuk-button--secondary" }) }}
         {{ govukButton({ text: "Back to people and governance", href: "/access", classes: "govuk-button--secondary" }) }}
       </div>

@@ -76,6 +76,12 @@ function buildSetupTaskList(setup) {
   const ctx = setup.councilContext || {};
   const sector = setup.sectorContext || {};
   const method = setup.methodology || {};
+  const people = setup.people || {};
+  const cafLead = people.cafLead || {};
+  const approver = people.approver || {};
+  // People tasks: confirmed (recorded / existing user) -> Completed; pending (invited, awaiting
+  // acceptance) -> In progress; otherwise Not started.
+  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? inProgress : notStarted);
 
   // The Figma design renders all three status tags in the same blue (the default
   // govuk-tag colour), not green/blue/grey. Matched here per design fidelity.
@@ -99,7 +105,7 @@ function buildSetupTaskList(setup) {
       title: { text: "1. Confirm your CAF Lead" },
       href: "/access/caf-lead?return=/setup/task-list",
       hint: { text: "Who is accountable for your council's CAF" },
-      status: completed,
+      status: peopleStatus(cafLead),
     },
     {
       title: { text: "2. Organisational context" },
@@ -153,7 +159,7 @@ function buildSetupTaskList(setup) {
       title: { text: "7. Confirm your Approver" },
       href: "/access/approver?return=/setup/task-list",
       hint: { text: "Who signs off each cycle's plan" },
-      status: (setup.people && setup.people.approver && setup.people.approver.confirmed) ? completed : notStarted,
+      status: peopleStatus(approver),
     },
     {
       title: { text: "8. Check and confirm" },
@@ -585,8 +591,10 @@ function buildSetupSummary(setup) {
   return {
     cafLead: setup.people.cafLead.name,
     cafLeadConfirmed: setup.people.cafLead.confirmed,
+    cafLeadPending: setup.people.cafLead.pending,
     approver: setup.people.approver.name,
     approverConfirmed: setup.people.approver.confirmed,
+    approverPending: setup.people.approver.pending,
     sectorConfirmed: setup.sectorContext.confirmed,
     councilContextProvided: setup.councilContext.completed,
     methodology:
