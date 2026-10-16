@@ -1,0 +1,19 @@
+{# Prototype-only: stand-in for returning from GOV.UK One Login when accepting an invitation. Mocks
+   the domain check — matching council email → A13, non-matching → A12. NOT part of the service. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prototype only</span>
+      <h1 class="govuk-heading-l">Accept your invitation</h1>
+      <p class="govuk-body">In the real service you would sign in with GOV.UK One Login, and the service would check your email against the council. This prototype lets you pick which path to see.</p>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="/access/accept/confirm-name">Sign in with a matching council email (s.okoro@westborough.gov.uk)</a></li>
+        <li><a class="govuk-link" href="/access/accept/email-mismatch">Sign in with a non-matching email (s.okoro@gmail.com)</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

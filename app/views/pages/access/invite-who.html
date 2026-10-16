@@ -1,0 +1,41 @@
+{# A05 Who do you want to invite? — Figma node 209:880. A19 (node 209:1258) is its error state.
+   Quality Assurer / System Mapper are inset-only, unconfirmed (Private Beta scope). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {% set errorList = [] %}
+        {% for e in error.items %}{% set _ = errorList.push({ text: e.text, href: "#" + e.field }) %}{% endfor %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">Invite someone</span>
+      <h1 class="govuk-heading-xl">Who do you want to invite?</h1>
+
+      <form method="post" action="/access/invite" novalidate>
+        {{ govukInput({ name: "inviteName", id: "inviteName", label: { text: "Their name", classes: "govuk-label--s" }, hint: { text: "As you know it. They can correct it when they join" }, value: invite.name, errorMessage: { text: errorByField.inviteName } if errorByField.inviteName else null }) }}
+        {{ govukInput({ name: "inviteEmail", id: "inviteEmail", label: { text: "Their work email address", classes: "govuk-label--s" }, value: invite.email, errorMessage: { text: errorByField.inviteEmail } if errorByField.inviteEmail else null }) }}
+        {{ govukRadios({
+          name: "inviteRole",
+          fieldset: { legend: { text: "What do you need them to do?", classes: "govuk-fieldset__legend--s" } },
+          errorMessage: { text: errorByField.inviteRole } if errorByField.inviteRole else null,
+          items: [
+            { value: "collaborator", text: "Work on specific outcomes (Collaborator)", checked: invite.role == "collaborator" },
+            { value: "full", text: "Everything, the same as you (full access)", checked: invite.role == "full" },
+            { value: "approver", text: "Approve the assessment plan (Approver)", checked: invite.role == "approver" }
+          ]
+        }) }}
+        {{ govukInsetText({ text: "Quality Assurer is not available yet. System Mapper is not part of this service." }) }}
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

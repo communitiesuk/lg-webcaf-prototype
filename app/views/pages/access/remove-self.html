@@ -1,0 +1,33 @@
+{# A21 Removing your own access (edge) — Figma node 209:1312. CAF Lead names a successor first
+   (hard rule — the CAF Lead cannot be left unset). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ person.name }}</span>
+      <h1 class="govuk-heading-xl">You are about to remove your own access</h1>
+      <p class="govuk-body">You will be signed out and will not be able to see {{ councilName }}’s CAF record again unless someone invites you back.</p>
+      <p class="govuk-body">{{ othersSummary }} will still have access.</p>
+
+      {% if person.isCafLead %}
+        {{ govukWarningText({ text: "You are the CAF Lead. Name a new CAF Lead before you remove your own access.", iconFallbackText: "Warning" }) }}
+      {% endif %}
+
+      <form method="post" action="/access/people/{{ person.id }}/remove-self" novalidate>
+        <div class="govuk-button-group">
+          {% if person.isCafLead %}
+            {{ govukButton({ text: "Name a new CAF Lead", href: "/access/caf-lead" }) }}
+            {{ govukButton({ text: "Remove my access", classes: "govuk-button--secondary" }) }}
+          {% else %}
+            {{ govukButton({ text: "Remove my access", classes: "govuk-button--warning" }) }}
+          {% endif %}
+          {{ govukButton({ text: "Cancel", href: "/access", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

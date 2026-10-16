@@ -1,0 +1,21 @@
+{# A30 cancel an invitation — Figma node 246:1368. Confirm, then → A10 with a success banner. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/invitations">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Pending invitations</span>
+      <h1 class="govuk-heading-xl">Are you sure you want to cancel {{ invitation.name }}’s invitation?</h1>
+      <p class="govuk-body">The link in their email will stop working. You can invite them again later.</p>
+
+      <form method="post" action="/access/invitations/{{ invitation.id }}/cancel" novalidate>
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Yes, cancel the invitation", classes: "govuk-button--warning" }) }}
+          {{ govukButton({ text: "Go back", href: "/access/invitations", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

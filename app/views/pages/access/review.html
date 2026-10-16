@@ -1,0 +1,36 @@
+{# A03 Periodic access review — Figma node 209:826. Unticking someone starts a removal. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">People and governance</span>
+      <h1 class="govuk-heading-xl">Check who still needs access</h1>
+      <p class="govuk-body">We ask every 4 to 6 months. It takes a minute and it catches people who have moved on.</p>
+
+      <form method="post" action="/access/review" novalidate>
+        {{ govukCheckboxes({
+          name: "reviewStillNeeded",
+          fieldset: { legend: { text: "Tick everyone who still needs access to this council’s CAF record", classes: "govuk-fieldset__legend--s" } },
+          items: model.items
+        }) }}
+
+        {{ govukRadios({
+          name: "approverStillRight",
+          fieldset: { legend: { text: "Is " + model.approver.name + " still your Approver?", classes: "govuk-fieldset__legend--s" } },
+          hint: { text: "They do not use the service, so they do not have access. This only checks you still have the right Approver." },
+          items: [
+            { value: "yes", text: "Yes", checked: true },
+            { value: "no", text: "No, it is someone else now" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save and confirm" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

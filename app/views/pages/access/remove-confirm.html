@@ -1,0 +1,26 @@
+{# A15 Remove access, confirm — Figma node 209:1154. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/people/{{ person.id }}/change">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ person.name }}</span>
+      <h1 class="govuk-heading-xl">Are you sure you want to remove {{ person.firstName or person.name }}’s access?</h1>
+      <p class="govuk-body">They will lose access straight away. Anything they have already saved stays on the record.</p>
+
+      {% if person.outcomeCount %}
+        {{ govukWarningText({ text: (person.firstName or person.name) + " is part-way through " + person.outcomeCount + " outcomes. You will need to assign those to someone else.", iconFallbackText: "Warning" }) }}
+      {% endif %}
+
+      <form method="post" action="/access/people/{{ person.id }}/remove" novalidate>
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Remove access", classes: "govuk-button--warning" }) }}
+          {{ govukButton({ text: "Cancel", href: "/access/people/" + person.id + "/change", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

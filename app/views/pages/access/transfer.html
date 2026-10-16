@@ -1,0 +1,20 @@
+{# A17 Transfer full access — Figma node 209:1210. PROPOSAL (last-person case). → A21. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/people/{{ selfId }}/remove">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ selfName }}</span>
+      <h1 class="govuk-heading-xl">Who should take over?</h1>
+      <p class="govuk-body">They will get full access immediately. You can then remove your own access.</p>
+
+      <form method="post" action="/access/people/{{ selfId }}/transfer" novalidate>
+        {{ govukRadios({ name: "transferTo", items: model.items }) }}
+        {{ govukButton({ text: "Give them full access" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{# A28 Reassign outcomes — Figma node 210:778. A33 (node 246:1613) is its error state. The outcome
+   description is the drawn Priya example. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/removed">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#reassignTo" }] }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">{{ removed.name }}</span>
+      <h1 class="govuk-heading-xl">Who will take over {{ removed.firstName or removed.name }}’s outcomes?</h1>
+      <p class="govuk-body">{{ removed.firstName or removed.name }} was part-way through A3 Asset management and A4 Supply chain, in the organisation assessment. Their work so far is kept.</p>
+
+      <form method="post" action="/access/reassign" novalidate>
+        {{ govukRadios({ name: "reassignTo", errorMessage: { text: error.text } if error else null, items: model.items }) }}
+        {{ govukButton({ text: "Save" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

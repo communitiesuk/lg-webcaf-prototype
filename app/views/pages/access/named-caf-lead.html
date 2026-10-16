@@ -1,0 +1,21 @@
+{# A24 You have been named CAF Lead — Figma node 213:747. The named person's dashboard with an
+   Important banner. Reached via a prototype control (named person = Marcus Webb, the alt example). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% set bannerHtml %}
+        <h3 class="govuk-notification-banner__heading">You have been named CAF Lead</h3>
+        <p class="govuk-body">{{ namedBy }} named you CAF Lead for {{ councilName }} on {{ namedDate }}.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Your CAF dashboard</h1>
+      <p class="govuk-body">As CAF Lead, you are accountable for your council’s CAF, and MHCLG and your assurer will contact you first.</p>
+      <p class="govuk-body"><a class="govuk-link" href="/access/not-caf-lead">This is not me</a></p>
+    </div>
+  </div>
+{% endblock %}

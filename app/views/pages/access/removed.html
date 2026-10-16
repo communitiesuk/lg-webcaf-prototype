@@ -1,0 +1,28 @@
+{# A18 Access removed — Figma node 209:1236. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% set bannerHtml %}
+        <h3 class="govuk-notification-banner__heading">{{ removed.name }}’s access has been removed</h3>
+        <p class="govuk-body">This is recorded in the audit trail.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-xl">Access removed</h1>
+      <p class="govuk-body">{{ removed.name }} can no longer see {{ councilName }}’s CAF record.{% if removed.outcomeCount %} The {{ removed.outcomeCount }} outcomes they were working on are now unassigned.{% endif %}</p>
+
+      <div class="govuk-button-group">
+        {% if removed.outcomeCount %}
+          {{ govukButton({ text: "Assign those outcomes to someone else", href: "/access/reassign" }) }}
+          {{ govukButton({ text: "Back to people and governance", href: "/access", classes: "govuk-button--secondary" }) }}
+        {% else %}
+          {{ govukButton({ text: "Back to people and governance", href: "/access" }) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

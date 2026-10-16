@@ -1,0 +1,52 @@
+{# A22 Who is your CAF Lead? — Figma node 213:633. A31 (node 246:1483) is this page's error state.
+   CAF Lead model agreed with Rosa — no proposal label (the Figma proposal tags are stale). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#cafLeadChoice" }] }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">Set up your council</span>
+      <h1 class="govuk-heading-xl">Who is your council’s CAF Lead?</h1>
+      <p class="govuk-body">The CAF Lead is accountable for your council’s CAF, and is who MHCLG and your assurer contact first. It does not give them any extra access.</p>
+
+      {{ govukInsetText({ text: "MHCLG has " + model.currentUserName + " as your council’s CAF contact. Change this if it is someone else." }) }}
+
+      {% set innerItems = [] %}
+      {% for it in model.innerItems %}
+        {% set _ = innerItems.push({ value: it.value, text: it.text, checked: current.personId == it.value }) %}
+      {% endfor %}
+
+      <form method="post" action="/access/caf-lead" novalidate>
+        {% set someoneReveal %}
+          {{ govukRadios({
+            name: "cafLeadPerson",
+            fieldset: { legend: { text: "Who already has access?", classes: "govuk-visually-hidden" } },
+            hint: { text: "A Collaborator named as CAF Lead is given full access." },
+            items: innerItems
+          }) }}
+        {% endset %}
+
+        {{ govukRadios({
+          name: "cafLeadChoice",
+          errorMessage: { text: error.text } if error else null,
+          items: [
+            { value: "me", text: "Me, " + model.currentUserName, checked: current.choice == "me" },
+            { value: "someone-with-access", text: "Someone else who already has access", checked: current.choice == "someone-with-access", conditional: { html: someoneReveal } },
+            { value: "someone-new", text: "Someone who does not have access yet", checked: current.choice == "someone-new" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

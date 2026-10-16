@@ -1,0 +1,29 @@
+{# A29 Who is your Approver — Figma node 213:828. Three routes: already has access / will not use
+   (→ A27) / needs an invitation (→ invite as Approver). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Set up your council</span>
+      <h1 class="govuk-heading-xl">Who approves your council’s CAF plan?</h1>
+      <p class="govuk-body">One Approver signs off each cycle’s plan. It is usually a senior manager or a councillor.</p>
+
+      <form method="post" action="/access/approver" novalidate>
+        {{ govukRadios({
+          name: "approverChoice",
+          items: [
+            { value: "has-access", text: "Someone who already has access" },
+            { value: "will-not-use", text: "Someone who will not use the service; I will record their decision", checked: true },
+            { value: "invitation", text: "Someone who needs an invitation to use the service" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

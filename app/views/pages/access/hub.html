@@ -1,0 +1,23 @@
+{# A01 People and governance (hub) — Figma node 209:767. The dashboard "People" nav lands here.
+   Roles render as inline plain text (as drawn), not coloured govuk-tags. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">People and governance</h1>
+      <p class="govuk-body">Everyone who has access to this council’s CAF record, and how they got it.</p>
+
+      {{ govukSummaryList({ rows: peopleRows }) }}
+
+      {# Stacked secondary actions, as drawn. #}
+      <div>{{ govukButton({ text: "Invite someone", href: "/access/invite", classes: "govuk-button--secondary" }) }}</div>
+      <div>{{ govukButton({ text: "Change CAF Lead", href: "/access/caf-lead", classes: "govuk-button--secondary" }) }}</div>
+      <div>{{ govukButton({ text: "View audit trail", href: "/access/audit-trail", classes: "govuk-button--secondary" }) }}</div>
+    </div>
+  </div>
+{% endblock %}

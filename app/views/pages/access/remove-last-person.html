@@ -1,0 +1,31 @@
+{# A16 Last person with full access — Figma node 209:1181. PROPOSAL (last-person case). Email swapped
+   to the fictional example.gov.uk (decision 1). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/people/{{ person.id }}/change">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ person.name }}</span>
+      <h1 class="govuk-heading-xl">You are the only person with full access</h1>
+
+      {{ govukWarningText({ text: "If you remove your own access now, nobody at " + councilName + " will be able to manage the CAF record.", iconFallbackText: "Warning" }) }}
+      <p class="govuk-body">If you are also the CAF Lead, you will be asked to name a new one at the same time.</p>
+
+      <h2 class="govuk-heading-m">What you can do</h2>
+      <p class="govuk-body">Give someone else full access first, then remove your own. That way there is never a gap.</p>
+      <p class="govuk-body">If there is nobody to hand over to, email cafsupport@example.gov.uk and MHCLG will help.</p>
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Give someone else full access", href: "/access/people/" + person.id + "/transfer" }) }}
+        {{ govukButton({ text: "Email the CAF team", href: "/external", classes: "govuk-button--secondary" }) }}
+      </div>
+
+      <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 20px;">
+        <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Proposal, not agreed.</strong> What happens when the last person with full access leaves is still being confirmed.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

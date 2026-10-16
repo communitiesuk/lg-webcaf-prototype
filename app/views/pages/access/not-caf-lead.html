@@ -1,0 +1,21 @@
+{# A25 Not the CAF Lead — Figma node 213:788. Declining clears the CAF Lead (Setup task 1 reopens). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/named-caf-lead">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Are you sure you are not the CAF Lead?</h1>
+      <p class="govuk-body">Your council will have no CAF Lead until someone else is named. We will tell {{ namedBy }}, who named you.</p>
+
+      <form method="post" action="/access/not-caf-lead" novalidate>
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Yes, I am not the CAF Lead" }) }}
+          {{ govukButton({ text: "Cancel", href: "/access/named-caf-lead", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

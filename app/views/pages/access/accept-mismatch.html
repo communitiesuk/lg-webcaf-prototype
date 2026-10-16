@@ -1,0 +1,25 @@
+{# A12 email does not match — Figma node 209:1080. PROPOSAL: domain match on invitation acceptance
+   (still being confirmed with Rosa). "Signed in, no council" chrome. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">This invitation is for a Westborough Borough Council email address</h1>
+      <p class="govuk-body">You signed in as s.okoro@gmail.com. We can only accept invitations from an email address we recognise for this council.</p>
+
+      <h2 class="govuk-heading-m">What you can do</h2>
+      <p class="govuk-body">Sign in again with your council email address, or ask Jo Hart to send the invitation to a different address.</p>
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Sign in with a different account", href: "/access/accept" }) }}
+        {{ govukButton({ text: "Back", href: "/access/accept", classes: "govuk-button--secondary" }) }}
+      </div>
+
+      <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 20px;">
+        <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Proposal, not agreed.</strong> The domain-match rule on invitation acceptance (which lets a colleague accept a forwarded invitation) is still being confirmed.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

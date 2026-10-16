@@ -1,0 +1,29 @@
+{# A11 invitation email — Figma node 209:1052. Prototype PREVIEW of an email, not a real send. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prototype preview</span>
+      <h1 class="govuk-heading-l">Invitation email</h1>
+      <p class="govuk-body">This is a preview of the email the service sends to an invited person. It is not a page in the service.</p>
+
+      <div style="border: 1px solid #b1b4b6; border-radius: 4px; overflow: hidden;">
+        <div style="background: #f3f2f1; border-bottom: 1px solid #b1b4b6; padding: 15px 20px;">
+          <p class="govuk-body-s govuk-!-margin-bottom-2" style="letter-spacing: .05em; color: #505a5f;"><strong>EMAIL — NOT A WEB PAGE</strong></p>
+          <p class="govuk-body-s govuk-!-margin-bottom-1">From: Assess and manage your council’s cyber resilience</p>
+          <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Subject: Jo Hart has asked for your help with Westborough Borough Council’s CAF</strong></p>
+        </div>
+        <div style="padding: 20px;">
+          <p class="govuk-body">Dear Sam,</p>
+          <p class="govuk-body">Jo Hart has asked you to help with Westborough Borough Council’s Cyber Assessment Framework. You have been asked to work on asset management and supply chain.</p>
+          <p class="govuk-body"><a class="govuk-link" href="/access/accept">Accept this invitation</a></p>
+          <p class="govuk-body">You will sign in with GOV.UK One Login using your Westborough Borough Council email address. This invitation expires on 22 October 2026.</p>
+          <p class="govuk-body govuk-!-margin-bottom-0">If this is not for you, you can forward it to a colleague at the council who can help instead.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

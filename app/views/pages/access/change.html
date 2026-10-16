@@ -1,0 +1,36 @@
+{# A14 Change access — Figma node 209:1125. Save changes → A01; Remove their access → A15/A16/A21. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ person.name }}</span>
+      <h1 class="govuk-heading-xl">Change what {{ person.firstName or person.name }} can do</h1>
+
+      <form method="post" action="/access/people/{{ person.id }}/change" novalidate>
+        {{ govukRadios({
+          name: "changeRole",
+          items: [
+            { value: "collaborator", text: "Work on specific outcomes (Collaborator)", checked: person.role == "collaborator" },
+            { value: "full", text: "Everything, the same as you (full access)", checked: person.role == "full" }
+          ]
+        }) }}
+
+        {% if person.role == "collaborator" %}
+          {{ govukSummaryList({ rows: [
+            { key: { text: "Outcomes" }, value: { text: person.outcomesDisplay }, actions: { items: [{ href: "/access/invite/outcomes", text: "Change", visuallyHiddenText: "outcomes" }] } }
+          ] }) }}
+        {% endif %}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Save changes" }) }}
+          {{ govukButton({ text: "Remove their access", href: "/access/people/" + person.id + "/remove", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

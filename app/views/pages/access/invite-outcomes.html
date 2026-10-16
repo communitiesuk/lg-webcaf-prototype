@@ -1,0 +1,44 @@
+{# A06 Assign outcomes — Figma node 209:915. A20 (node 209:1288) is its error state. Live-driven:
+   organisation assessment + each selected system (first expanded, the rest in a details). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/invite">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#inviteOutcomes" }] }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">Inviting {{ invite.name }}</span>
+      <h1 class="govuk-heading-xl">What will {{ invite.name }} work on?</h1>
+      <p class="govuk-body">Collaborators only see the outcomes you assign to them.</p>
+
+      <form method="post" action="/access/invite/outcomes" novalidate>
+        {% for group in groups %}
+          {% set gid = "inviteOutcomes" if loop.first else ("outcomes-sys-" + loop.index) %}
+          {% if group.expanded %}
+            {{ govukCheckboxes({
+              name: "inviteOutcomes",
+              idPrefix: gid,
+              fieldset: { legend: { text: group.heading, classes: "govuk-fieldset__legend--m" } },
+              errorMessage: ({ text: error.text } if (error and loop.first) else null),
+              items: group.items
+            }) }}
+          {% else %}
+            {% set detailHtml %}
+              {{ govukCheckboxes({ name: "inviteOutcomes", idPrefix: gid, items: group.items }) }}
+            {% endset %}
+            {{ govukDetails({ summaryText: group.heading + ", " + (group.items | length) + " outcomes", html: detailHtml }) }}
+          {% endif %}
+        {% endfor %}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{# A27 Your Approver's details — Figma node 210:727. A32 (node 246:1549) is its error state. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {% set errorList = [] %}
+        {% for e in error.items %}{% set _ = errorList.push({ text: e.text, href: "#" + e.field }) %}{% endfor %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">People and governance</span>
+      <h1 class="govuk-heading-xl">Your Approver’s details</h1>
+      <p class="govuk-body">Your Approver will not use the service, so you will record their decision yourself. We show their name and role on the plan they approve.</p>
+
+      <form method="post" action="/access/approver-details" novalidate>
+        {{ govukInput({ name: "approverName", id: "approverName", label: { text: "Full name", classes: "govuk-label--s" }, value: current.name, errorMessage: { text: errorByField.approverName } if errorByField.approverName else null }) }}
+        {{ govukInput({ name: "approverRole", id: "approverRole", label: { text: "Role", classes: "govuk-label--s" }, hint: { text: "For example, Cabinet Member for Resources, or Chief Executive" }, value: current.role, errorMessage: { text: errorByField.approverRole } if errorByField.approverRole else null }) }}
+        {{ govukButton({ text: "Save" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

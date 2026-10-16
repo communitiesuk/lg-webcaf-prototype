@@ -1,0 +1,23 @@
+{# A04 Review confirmed — Figma node 209:858. Counts are computed from the review (the drawn example
+   shows "4 people" with A Mensah removed, which is internally inconsistent — see build notes). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% set bannerHtml %}
+        <h3 class="govuk-notification-banner__heading">Access review complete</h3>
+        <p class="govuk-body">We will ask again in about 6 months.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-xl">Access review complete</h1>
+      <p class="govuk-body">You confirmed that {{ confirmedCount }} {{ "person" if confirmedCount == 1 else "people" }} still need access.{% if removedNames.length %} {{ removedNames | join(", ") }} {{ "has" if removedNames.length == 1 else "have" }} been removed.{% endif %}</p>
+      <p class="govuk-body">This is recorded in the audit trail.</p>
+
+      {{ govukButton({ text: "Back to people and governance", href: "/access" }) }}
+    </div>
+  </div>
+{% endblock %}

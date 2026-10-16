@@ -1,0 +1,27 @@
+{# A07 Does your Approver need to use the service? — Figma node 209:944. No → A27; Yes → A08. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/access/invite">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Inviting {{ invite.name }}</span>
+      <h1 class="govuk-heading-xl">Does your Approver need to use the service?</h1>
+
+      <form method="post" action="/access/invite/approver-account" novalidate>
+        {{ govukRadios({
+          name: "approverAccount",
+          items: [
+            { value: "no", text: "No, I will record their approval myself", checked: true },
+            { value: "yes", text: "Yes, send them an invitation" }
+          ]
+        }) }}
+        {{ govukInsetText({ text: "Many Approvers sign off in a meeting or by email. If so, you record their decision and we keep their name on the record." }) }}
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}
