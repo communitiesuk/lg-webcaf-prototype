@@ -1,0 +1,49 @@
+{# Beta prototype index — demo launcher for the Beta journeys (Claim, Setup, Decide) #}
+{% extends "layouts/main.html" %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
+
+{# Launcher page, not service content — no service phase banner. #}
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  {% if resetSuccess %}
+    {{ appNotificationBanner({
+      type: "success",
+      titleId: "beta-reset-success",
+      heading: "Prototype data cleared.",
+      body: "Each link re-seeds the example data when you open it."
+    }) }}
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <span class="govuk-caption-l">Prototype</span>
+      <h1 class="govuk-heading-l">Beta prototype</h1>
+      <p class="govuk-body">Jump into a journey. Each link re-seeds the example data, so a screen always looks right no matter what you clicked before.</p>
+
+      {% for section in sections %}
+        <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
+
+        <h2 class="govuk-heading-m govuk-!-margin-bottom-1">{{ section.title }}</h2>
+        <p class="govuk-hint govuk-!-margin-bottom-3">{{ section.description }}</p>
+
+        {% for group in section.groups %}
+          {% if group.subtitle %}
+            <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ group.subtitle }}</h3>
+          {% endif %}
+          <ul class="govuk-list govuk-!-margin-bottom-4">
+            {% for link in group.links %}
+              <li class="govuk-!-margin-bottom-1">
+                <a class="govuk-link govuk-link--no-visited-state" href="{{ group.base }}{{ link.key }}">{{ link.label }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% endfor %}
+
+      <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
+      <p class="govuk-body-s"><a class="govuk-link" href="/beta/reset">Clear all prototype data</a></p>
+    </div>
+  </div>
+{% endblock %}
