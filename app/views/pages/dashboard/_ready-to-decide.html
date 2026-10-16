@@ -1,0 +1,26 @@
+{# R04 dashboard state — ready to decide — Figma node 209:175 #}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+<h2 class="govuk-heading-m">What to do next</h2>
+{{ govukTaskList({ items: [ model.decideTask ] }) }}
+{{ govukButton({ text: "Start this cycle", href: "/decide" }) }}
+
+<h2 class="govuk-heading-m">Your council record</h2>
+{{ govukSummaryList({
+  rows: [
+    {
+      key: { text: "Setup" },
+      value: { text: model.record.setupValue },
+      actions: { items: [{ href: "/setup/complete", text: "View", visuallyHiddenText: "your setup" }] }
+    },
+    {
+      key: { text: "Last assessment" },
+      value: { text: model.record.lastAssessmentValue },
+      actions: { items: [{ href: "/dashboard/previous-results", text: "View", visuallyHiddenText: "previous CAF results" }] }
+    }
+  ]
+}) }}
+
+{% include "components/dashboard-also-on-this-page.njk" %}

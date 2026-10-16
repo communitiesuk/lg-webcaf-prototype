@@ -1,0 +1,17 @@
+{# R03 dashboard state — setup in progress — Figma node 209:142 #}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+<h2 class="govuk-heading-m">What to do next</h2>
+{{ govukTaskList({ items: [ model.setupTask ] }) }}
+{{ govukButton({ text: "Continue setting up", href: "/setup/task-list" }) }}
+
+{% if model.nudges.length %}
+  <h2 class="govuk-heading-m">Things that might help</h2>
+  {% for nudge in model.nudges %}
+    {{ govukWarningText({ text: nudge, iconFallbackText: "Warning" }) }}
+  {% endfor %}
+{% endif %}
+
+{% include "components/dashboard-also-on-this-page.njk" %}

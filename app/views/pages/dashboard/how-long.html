@@ -1,0 +1,30 @@
+{# R08 how-long-the-caf-takes — Figma node 209:283. Durations and "around 26 weeks" are unconfirmed
+   placeholders, reproduced exactly as drawn. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">How long the CAF takes</h1>
+      <p class="govuk-body">A full cycle takes most councils around 26 weeks, including assurance. Roughly how that splits:</p>
+
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "Set up your council" }, value: { text: "Once only, then reused every cycle" } },
+          { key: { text: "Decide what to assess" }, value: { text: "1 to 2 weeks, including approval" } },
+          { key: { text: "Prepare" }, value: { text: "1 to 2 weeks" } },
+          { key: { text: "Self-assessment" }, value: { text: "8 to 12 weeks, the largest part" } },
+          { key: { text: "Assurance and workshops" }, value: { text: "6 to 8 weeks" } },
+          { key: { text: "Improvement plan" }, value: { text: "2 to 4 weeks after the report" } }
+        ]
+      }) }}
+
+      <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 20px;">
+        <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Prototype note.</strong> The durations and “around 26 weeks” are unconfirmed placeholders, awaiting MHCLG sign-off.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{# R01 readiness-check — Figma node 209:72. Optional: Save and continue, or Skip for now. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Before you start, a few optional questions</h1>
+      <p class="govuk-body">These help us point you at the right guidance. Nothing here is required, and skipping has no consequence.</p>
+
+      <form method="post" action="/readiness" novalidate>
+        {{ govukRadios({
+          name: "readiness[seniorSponsor]",
+          classes: "govuk-radios--inline",
+          fieldset: { legend: { text: "Do you have a senior sponsor?", classes: "govuk-fieldset__legend--s" } },
+          items: [
+            { value: "yes", text: "Yes", checked: readiness.seniorSponsor == "yes" },
+            { value: "notYet", text: "Not yet", checked: readiness.seniorSponsor == "notYet" }
+          ]
+        }) }}
+
+        {{ govukRadios({
+          name: "readiness[teamsInvolved]",
+          classes: "govuk-radios--inline",
+          fieldset: { legend: { text: "Do you know which teams are likely to be involved?", classes: "govuk-fieldset__legend--s" } },
+          items: [
+            { value: "yes", text: "Yes", checked: readiness.teamsInvolved == "yes" },
+            { value: "notYet", text: "Not yet", checked: readiness.teamsInvolved == "notYet" }
+          ]
+        }) }}
+
+        {{ govukRadios({
+          name: "readiness[secureEvidence]",
+          classes: "govuk-radios--inline",
+          fieldset: { legend: { text: "Do you have a secure way to share evidence with your assurer?", classes: "govuk-fieldset__legend--s" } },
+          items: [
+            { value: "yes", text: "Yes", checked: readiness.secureEvidence == "yes" },
+            { value: "notYet", text: "Not yet", checked: readiness.secureEvidence == "notYet" }
+          ]
+        }) }}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Save and continue", name: "readinessAction", value: "save" }) }}
+          {{ govukButton({ text: "Skip for now", name: "readinessAction", value: "skip", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

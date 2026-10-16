@@ -1,0 +1,41 @@
+{# Dashboard — one route, several states (Figma R03 209:142, R04 209:175, R05 209:200, R09 209:313,
+   R06 209:226). The state is chosen from LIVE Setup/Decide session data in app/routes/readiness.js.
+   Batch 1 builds the R03 (setup-in-progress) state; other states show a placeholder for now. #}
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">{{ "Your tasks" if state == "collaborator" else "Your CAF dashboard" }}</h1>
+
+      {% if state == "setup-in-progress" %}
+        {% include "pages/dashboard/_setup-in-progress.html" %}
+      {% elif state == "ready-to-decide" %}
+        {% include "pages/dashboard/_ready-to-decide.html" %}
+      {% elif state == "cycle-in-progress" %}
+        {% include "pages/dashboard/_cycle-in-progress.html" %}
+      {% elif state == "several-reminders" %}
+        {% include "pages/dashboard/_several-reminders.html" %}
+      {% elif state == "collaborator" %}
+        {% include "pages/dashboard/_collaborator.html" %}
+      {% else %}
+        {% include "pages/dashboard/_state-pending.html" %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if prototypeNotes and prototypeNotes.length %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 10px;">
+          {% for note in prototypeNotes %}
+            <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Prototype note.</strong> {{ note }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% include "pages/dashboard/_state-switcher.html" %}
+{% endblock %}

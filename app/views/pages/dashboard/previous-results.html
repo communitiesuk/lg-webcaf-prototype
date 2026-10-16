@@ -1,0 +1,33 @@
+{# R07 previous-caf-results — Figma node 209:253. Example history, dated March 2025 throughout
+   (decision #3 — the drawn H2 "March 2024" is corrected to match the inset, README and R04). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Previous CAF results</h1>
+
+      {{ govukInsetText({ text: "Council website and forms, assured March 2025 against CAF version 3.2. These are held for reference only. They are never used to fill in a new assessment." }) }}
+
+      <h2 class="govuk-heading-m">Assured March 2025, against CAF v3.2</h2>
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "B2. Identity and access control" }, value: { text: "Achieved" } },
+          { key: { text: "B4. System security" }, value: { text: "Partially achieved" } },
+          { key: { text: "B5. Resilient networks and systems" }, value: { text: "Not achieved" } },
+          { key: { text: "C1. Security monitoring" }, value: { text: "Partially achieved" } }
+        ]
+      }) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="/support">Something look wrong? Tell MHCLG and they will check it.</a></p>
+
+      <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 20px;">
+        <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Prototype note.</strong> Example data, not real.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{# R06 dashboard state — collaborator view — Figma node 209:226. H1 "Your tasks" comes from the shell. #}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+
+<p class="govuk-body">{{ model.inviter }} has asked you to work on these outcomes.</p>
+{{ govukTaskList({ items: model.tasks }) }}
+
+<h2 class="govuk-heading-m">Need something else?</h2>
+<p class="govuk-body">You can only see the outcomes assigned to you. Ask {{ model.inviter }} if you need access to more.</p>

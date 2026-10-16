@@ -1,0 +1,43 @@
+{# R02 update-readiness-answers — Figma node 209:116. Change links go back to R01; Save changes → dashboard. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% set sponsorVal = "Yes" if readiness.seniorSponsor == "yes" else ("Not yet" if readiness.seniorSponsor == "notYet" else "Not answered") %}
+{% set teamsVal = "Yes" if readiness.teamsInvolved == "yes" else ("Not yet" if readiness.teamsInvolved == "notYet" else "Not answered") %}
+{% set evidenceVal = "Yes" if readiness.secureEvidence == "yes" else ("Not yet" if readiness.secureEvidence == "notYet" else "Not answered") %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Your readiness answers</h1>
+      <p class="govuk-body">{% if answeredAt %}You answered these on {{ answeredAt }}. {% endif %}Update them whenever something changes.</p>
+
+      <form method="post" action="/readiness/answers" novalidate>
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: "Senior sponsor" },
+              value: { text: sponsorVal },
+              actions: { items: [{ href: "/readiness", text: "Change", visuallyHiddenText: "your answer on senior sponsor" }] }
+            },
+            {
+              key: { text: "Teams involved" },
+              value: { text: teamsVal },
+              actions: { items: [{ href: "/readiness", text: "Change", visuallyHiddenText: "your answer on teams involved" }] }
+            },
+            {
+              key: { text: "Secure way to share evidence" },
+              value: { text: evidenceVal },
+              actions: { items: [{ href: "/readiness", text: "Change", visuallyHiddenText: "your answer on a secure way to share evidence" }] }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save changes" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

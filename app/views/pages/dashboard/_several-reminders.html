@@ -1,0 +1,17 @@
+{# R09 dashboard state — several reminders — Figma node 209:313 #}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+<h2 class="govuk-heading-m">This cycle</h2>
+{{ govukTaskList({ items: model.assessments }) }}
+
+<h2 class="govuk-heading-m">Reminders</h2>
+{% for reminder in model.reminders %}
+  {{ govukWarningText({ text: reminder, iconFallbackText: "Warning" }) }}
+{% endfor %}
+
+<p class="govuk-body">{{ model.closing }}</p>
+
+{% include "components/assurance-summary.njk" %}
+
+{% include "components/dashboard-also-on-this-page.njk" %}

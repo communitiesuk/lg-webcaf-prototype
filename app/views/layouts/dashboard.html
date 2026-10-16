@@ -1,0 +1,9 @@
+{#
+  Readiness and dashboard section (Figma page 209:56, v3) base layout.
+  Inherits the Beta phase banner, cookie banner and footer from the shared Setup base layout.
+  The signed-in chrome (three service-navigation variants) is set in res.locals by
+  app/routes/readiness.js. Sets the page <title> to match the H1.
+#}
+{% extends "layouts/setup.html" %}
+
+{% block pageTitle %}{{ pageTitle }} - Assess and manage your council’s cyber resilience - GOV.UK{% endblock %}

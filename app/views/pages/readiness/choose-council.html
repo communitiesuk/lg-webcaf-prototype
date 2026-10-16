@@ -1,0 +1,37 @@
+{# R10 choose-a-council — Figma node 209:341. "Signed in, no council" chrome (Sign out only).
+   Example councils, matching claim-example-data. "Open" opens that council's dashboard. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Which council do you want to work on?</h1>
+      <p class="govuk-body">You have access to more than one council.</p>
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: "Westborough Borough Council" },
+            value: { text: "Cycle in progress · 4 of 12 outcomes done" },
+            actions: { items: [{ href: "/choose-council/open/westborough", text: "Open", visuallyHiddenText: "Westborough Borough Council" }] }
+          },
+          {
+            key: { text: "Eastvale District Council" },
+            value: { text: "Setup in progress" },
+            actions: { items: [{ href: "/choose-council/open/eastvale", text: "Open", visuallyHiddenText: "Eastvale District Council" }] }
+          },
+          {
+            key: { text: "Northmoor County Council" },
+            value: { text: "No cycle started" },
+            actions: { items: [{ href: "/choose-council/open/northmoor", text: "Open", visuallyHiddenText: "Northmoor County Council" }] }
+          }
+        ]
+      }) }}
+
+      <div style="border-left: 5px solid #f47738; background: #fff7e6; padding: 12px 16px; margin-top: 20px;">
+        <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Prototype note.</strong> Example data, not real. Only Westborough has full data in this prototype, so all three open the same dashboard in the state shown against their name.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

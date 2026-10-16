@@ -1,0 +1,17 @@
+{# Prototype-only control — NOT part of the service. Switches the dashboard's LIVE state by setting
+   the Setup/Decide flags the selector reads. Clearly labelled and visually separated. #}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--l govuk-!-margin-top-8">
+    <div style="border: 1px solid #b1b4b6; padding: 15px 20px; background: #f3f2f1;">
+      <p class="govuk-body-s govuk-!-margin-bottom-2"><strong>Prototype control — not part of the service.</strong> Switch the dashboard state:</p>
+      <ul class="govuk-list govuk-!-margin-bottom-0">
+        <li><a class="govuk-link govuk-link--no-visited-state" href="/dashboard/show/setup-in-progress">Setup in progress (R03)</a>{% if state == "setup-in-progress" %} — showing now{% endif %}</li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="/dashboard/show/ready-to-decide">Ready to decide (R04)</a>{% if state == "ready-to-decide" %} — showing now{% endif %}</li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="/dashboard/show/cycle-in-progress">Cycle in progress (R05)</a>{% if state == "cycle-in-progress" %} — showing now{% endif %}</li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="/dashboard/show/several-reminders">Several reminders (R09)</a>{% if state == "several-reminders" %} — showing now{% endif %}</li>
+        <li><a class="govuk-link govuk-link--no-visited-state" href="/dashboard/show/collaborator">Collaborator view (R06)</a>{% if state == "collaborator" %} — showing now{% endif %}</li>
+      </ul>
+    </div>
+  </div>
+</div>

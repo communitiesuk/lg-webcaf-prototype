@@ -1,0 +1,16 @@
+{# R05 dashboard state — cycle in progress — Figma node 209:200. The "Assurance activities" summary
+   is the shared AA01 partial (Assurance activities v3, node 447:2709). #}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+<h2 class="govuk-heading-m">This cycle</h2>
+{{ govukTaskList({ items: model.assessments }) }}
+
+<h2 class="govuk-heading-m">Reminders</h2>
+{% for reminder in model.reminders %}
+  {{ govukWarningText({ text: reminder, iconFallbackText: "Warning" }) }}
+{% endfor %}
+
+{% include "components/assurance-summary.njk" %}
+
+{% include "components/dashboard-also-on-this-page.njk" %}
