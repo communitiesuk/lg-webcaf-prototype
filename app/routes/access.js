@@ -53,6 +53,12 @@ module.exports = function (router) {
   // A01 — People and governance (hub). The dashboard "People" nav lands here.
   router.get("/access", (req, res) => {
     ensureAccess(req.session.data);
+    // Landing on the People hub ends any in-flight Setup-origin flow, so drop its return/context
+    // to prevent a stale value attaching to a later unrelated visit.
+    delete req.session.data.approverReturn;
+    delete req.session.data.cafLeadReturn;
+    delete req.session.data.setupInvite;
+    delete req.session.data.setupInviteReturn;
     applyFullAccessChrome(req, res);
     res.render("pages/access/hub", {
       pageTitle: "People and governance",
@@ -403,6 +409,13 @@ module.exports = function (router) {
   });
 
   // A27 — Approver details. A32 is its error state.
+  // Back steps to the choice page (/access/approver), carrying the Setup return so the chain is
+  // Setup -> choose -> details. Avoids a direct (and potentially stale) leap into Setup.
+  const approverDetailsBack = (req) => {
+    const ret = req.session.data.approverReturn;
+    return "/access/approver" + (ret ? "?return=" + encodeURIComponent(ret) : "");
+  };
+
   router.get("/access/approver-details", (req, res) => {
     const access = ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
@@ -411,7 +424,7 @@ module.exports = function (router) {
       current: { name: access.approver.name || "", role: access.approver.role || "" },
       error: null,
       errorByField: {},
-      backHref: req.session.data.approverReturn || "/access",
+      backHref: approverDetailsBack(req),
     });
   });
 
@@ -432,7 +445,7 @@ module.exports = function (router) {
         current: { name, role },
         error: { items: errors },
         errorByField: errors.reduce((a, e) => { a[e.field] = e.text; return a; }, {}),
-        backHref: req.session.data.approverReturn || "/access",
+        backHref: approverDetailsBack(req),
       });
     }
     setApprover(access, name, role);
