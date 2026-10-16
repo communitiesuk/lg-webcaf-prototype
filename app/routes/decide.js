@@ -351,7 +351,7 @@ module.exports = function (router) {
     if (orgIncluded) rows.push(bookingRow("Step 1: Onboarding, organisation assessment", booking.organisation));
     if (hasSystems) rows.push(bookingRow("Step 1: Onboarding, critical systems", booking.systems));
     res.render("pages/decide/sent", {
-      pageTitle: "Book your onboarding calls",
+      pageTitle: "Plan sent to your assurer",
       backHref: "/decide/review",
       rows,
     });

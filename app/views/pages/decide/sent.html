@@ -1,18 +1,18 @@
-{# D09 — decide / sent — Figma node 393:3103 — book onboarding calls #}
+{# D09 — decide / sent — Figma node 393:3103 — book onboarding calls.
+   Leads with a confirmation panel so the "plan sent to your assurer" action is clearly
+   acknowledged before the onboarding booking, which is the next step. #}
 {% extends "layouts/decide.html" %}
-{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: "Start a cycle",
-        title: "Book your onboarding calls"
-      }) }}
+      {{ govukPanel({ titleText: "Plan sent to your assurer" }) }}
 
-      <p class="govuk-body">Your plan has been sent to your assurer. Book your onboarding calls now, so you can talk the plan through with them and resolve anything difficult. You or your assurer can book them, and one call is needed for each type of assessment in your plan. If no assurer is assigned yet, one is assigned after you book.</p>
+      <h2 class="govuk-heading-m">Book your onboarding calls</h2>
+      <p class="govuk-body">Book your onboarding calls now, so you can talk the plan through with your assurer and resolve anything difficult. You or your assurer can book them, and one call is needed for each type of assessment in your plan. If no assurer is assigned yet, one is assigned after you book.</p>
 
       <dl class="govuk-summary-list">
         {% for row in rows %}
