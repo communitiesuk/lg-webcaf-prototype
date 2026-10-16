@@ -1,0 +1,20 @@
+{# AA02 assurance activities — Figma node 447:2747. Driven from the live cycle (organisation
+   assessment + each selected critical system). No status tags — values are plain text. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Assurance activities</h1>
+      <p class="govuk-body">You or your assurer can book. Bookings are made in Microsoft Bookings. Come back here to record them, so your dashboard stays up to date.</p>
+
+      {% for group in groups %}
+        <h2 class="govuk-heading-m">{{ group.heading }}</h2>
+        {{ govukSummaryList({ rows: group.rows }) }}
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

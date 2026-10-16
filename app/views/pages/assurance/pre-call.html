@@ -1,0 +1,20 @@
+{# AA06 book your pre self-assessment call — Figma node 447:2937. Would replace P08 (Prepare v4);
+   built as a separate route. "Back to prepare" → the Prepare v4 stand-in. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prepare for your assessment</span>
+      <h1 class="govuk-heading-xl">Book your pre self-assessment call</h1>
+      <p class="govuk-body">An optional one-hour call with your assurer, once per assessment. You complete two or three outcomes first. Your assurer checks you are on the right path and answers your questions before you complete the rest. You do not need this call to carry on.</p>
+
+      {{ govukSummaryList({ rows: rows }) }}
+
+      {{ govukButton({ text: "Back to prepare", href: "/assurance-activities/prepare-stand-in", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

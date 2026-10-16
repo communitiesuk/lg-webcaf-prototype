@@ -1,0 +1,39 @@
+{# AA03 before you book — Figma node 447:2802. Workshops show the readiness + earliest date;
+   onboarding / pre-call do not. Opens the live Microsoft Bookings form in a new tab. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurance-activities">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ activity.caption }}</span>
+      <h1 class="govuk-heading-xl">{{ activity.h1 }}</h1>
+
+      {% if activity.isWorkshop %}
+        <p class="govuk-body">A one-hour session with your assurer to discuss your self-assessment and evidence for Objective {{ activity.objective }}. Your Objective {{ activity.objective }} information has been ready for assurer review since {{ activity.readyDate }}, so the earliest date you can book is {{ activity.earliestDate }}. Your assurer usually needs about five working days to review it, and will confirm this with you.</p>
+      {% endif %}
+
+      <h2 class="govuk-heading-m">In Microsoft Bookings</h2>
+      <ol class="govuk-list govuk-list--number">
+        <li>Choose "{{ activity.serviceName }}".</li>
+        <li>For staff, leave it as "Anyone", or choose "Local Digital CAF Assurance". Your request goes to a shared mailbox, and your assurer is assigned afterwards.</li>
+        <li>When it asks for your council, enter exactly:</li>
+      </ol>
+
+      {{ govukInsetText({ text: activity.councilName }) }}
+      <p class="govuk-body"><a class="govuk-link" href="#" data-copy-council-name data-council-name="{{ activity.councilName }}">Copy council name</a></p>
+
+      <p class="govuk-body">Then come back here to record the booking, so your dashboard stays up to date. Your assurer can record it too.</p>
+
+      {{ govukButton({
+        text: "Open Microsoft Bookings (opens in a new tab)",
+        href: "/assurance-activities/bookings-external",
+        attributes: { target: "_blank", rel: "noopener noreferrer" }
+      }) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="/assurance-activities/update/{{ activity.activityId }}">I have already booked this</a></p>
+    </div>
+  </div>
+{% endblock %}

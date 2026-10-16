@@ -1,0 +1,33 @@
+{# AA08 mark your information as ready — Figma node 447:3124. Advice route: this does not block
+   booking. Only the "All complete" state is drawn. Objective parameterised (decision 1). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurance-activities">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ activity.caption }}</span>
+      <h1 class="govuk-heading-xl">{{ activity.h1 }}</h1>
+      <p class="govuk-body">Your assurer reviews your self-assessment and evidence before the workshop. Tell them it is ready, and you can book. You can take this back until your assurer opens it.</p>
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: activity.rowKey },
+            value: { text: "All complete" },
+            actions: { items: [{ href: "/self-assessment", text: "Review", visuallyHiddenText: activity.rowKey }] }
+          }
+        ]
+      }) }}
+
+      {{ govukInsetText({ text: "Your assurer usually needs about five working days to review your information before the workshop, and will confirm this with you. After you continue, you will see the earliest date you can book." }) }}
+
+      <form method="post" action="/assurance-activities/mark-ready/{{ activity.activityId }}" novalidate>
+        {{ govukButton({ text: "Mark as ready and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

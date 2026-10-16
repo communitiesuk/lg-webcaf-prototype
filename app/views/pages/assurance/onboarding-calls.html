@@ -1,0 +1,23 @@
+{# AA05 book your onboarding calls — Figma node 447:2901. Would replace D09 (Decide v6); built as a
+   separate route. "Continue" → the dashboard (decision 3). #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/dashboard">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Start a cycle</span>
+      <h1 class="govuk-heading-xl">Book your onboarding calls</h1>
+      <p class="govuk-body">This is your first cycle with your assurer, so there is an onboarding call for each type of assessment in your plan. You or your assurer can book these. Requests go to a shared mailbox and a technical lead assigns your assurer, so you may not have a named assurer yet.</p>
+
+      {{ govukSummaryList({ rows: rows }) }}
+
+      {{ govukInsetText({ text: "This does not stop you sending your plan for approval. Your dashboard will remind you until both calls have happened." }) }}
+
+      {{ govukButton({ text: "Continue", href: "/dashboard" }) }}
+    </div>
+  </div>
+{% endblock %}

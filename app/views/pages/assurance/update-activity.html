@@ -1,0 +1,53 @@
+{# AA04 update an activity — Figma node 447:2851. AA07 (node 447:3071) is this page's error state
+   (chose "Booked" with no date). Records booked / happened in the session. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/date-input/macro.njk" import govukDateInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/assurance-activities">Back</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: error.text, href: "#bookedDate-day" }]
+        }) }}
+      {% endif %}
+
+      <span class="govuk-caption-l">{{ activity.caption }}</span>
+      <h1 class="govuk-heading-xl">Update your {{ activity.name }}</h1>
+
+      <form method="post" action="/assurance-activities/update/{{ activity.id }}" novalidate>
+        {% set dateHtml %}
+          {{ govukDateInput({
+            id: "bookedDate",
+            namePrefix: "bookedDate",
+            fieldset: { legend: { text: "When is it?", classes: "govuk-fieldset__legend--s" } },
+            hint: { text: "For example, 3 5 2027" },
+            errorMessage: { text: error.text } if error else null,
+            items: [
+              { name: "day", classes: "govuk-input--width-2" + (" govuk-input--error" if error else ""), value: current.day },
+              { name: "month", classes: "govuk-input--width-2" + (" govuk-input--error" if error else ""), value: current.month },
+              { name: "year", classes: "govuk-input--width-4" + (" govuk-input--error" if error else ""), value: current.year }
+            ]
+          }) }}
+        {% endset %}
+
+        {{ govukRadios({
+          name: "activityStatus",
+          items: [
+            { value: "not-booked", text: "Not booked yet", checked: current.status == "not-booked" },
+            { value: "booked", text: "Booked", checked: current.status == "booked", conditional: { html: dateHtml } },
+            { value: "happened", text: "It has happened", checked: current.status == "happened" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{# AA01 dashboard assurance summary — Figma nodes 447:2709 / 447:2726. Shared by the R05 and R09
+   dashboard states. Reads `assuranceSummary` (built from the assurance session in the route). #}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+<h2 class="govuk-heading-m">Assurance activities</h2>
+<p class="govuk-body">{{ assuranceSummary.intro }}</p>
+{% if assuranceSummary.rows.length %}
+  {{ govukSummaryList({ rows: assuranceSummary.rows }) }}
+{% endif %}
+<p class="govuk-body"><a class="govuk-link" href="/assurance-activities">View all assurance activities</a></p>
