@@ -1,0 +1,31 @@
+{# D14 — decide / returned — Figma node 393:2800 — plan returned by the Approver #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+        <div class="govuk-notification-banner__header">
+          <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Important</h2>
+        </div>
+        <div class="govuk-notification-banner__content">
+          <p class="govuk-notification-banner__heading">Your Approver has returned the plan</p>
+          <p class="govuk-body">{{ approverName }} returned it on {{ returnedDate }}.</p>
+        </div>
+      </div>
+
+      {{ appPageHeader({
+        title: "Your plan has been returned"
+      }) }}
+
+      <div class="govuk-inset-text">"{{ returnReason }}"</div>
+
+      <h2 class="govuk-heading-m">What you can do</h2>
+      <p class="govuk-body">Change your plan and send it for approval again. Your assurer will see it again if the change affects what they commented on.</p>
+
+      <a class="govuk-button" data-module="govuk-button" href="/decide/systems">Change my plan</a>
+    </div>
+  </div>
+{% endblock %}

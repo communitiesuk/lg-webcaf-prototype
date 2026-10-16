@@ -1,0 +1,20 @@
+{# D13 — decide / approved — Figma node 393:2769 — cycle approved confirmation #}
+{% extends "layouts/decide.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <div class="govuk-panel govuk-panel--confirmation">
+        <h1 class="govuk-panel__title">Cycle approved</h1>
+        <div class="govuk-panel__body">Approved by {{ approvedBy }} on {{ approvedDate }}</div>
+      </div>
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">Your assessments are now open. You can confirm who is doing what, set up your evidence location, and start whenever you are ready.</p>
+      <p class="govuk-body">Nothing here is locked. If something changes, speak to your assurer.</p>
+
+      <a class="govuk-button" data-module="govuk-button" href="/setup/not-in-this-prototype">Prepare for assessment</a>
+    </div>
+  </div>
+{% endblock %}

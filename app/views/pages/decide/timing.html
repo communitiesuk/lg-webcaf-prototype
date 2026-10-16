@@ -1,0 +1,86 @@
+{# D04 / D16 — decide / timing — Figma nodes 393:2447 (base) / 393:2871 (error) #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if errors.length %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="#timing-{{ error.id }}">{{ error.message }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Roughly when will each assessment happen?"
+      }) }}
+
+      {% set proposalText = "The \"To be confirmed\" timing option is a v6 proposal — the data tracker currently expects a month." %}
+      {% include "components/setup-proposal.njk" %}
+
+      <p class="govuk-body">Your CAF Lead and Approver are the same for every assessment this cycle. A rough month is enough, and you can change it later.</p>
+
+      <form method="post" action="/decide/timing" novalidate>
+        {% for a in assessments %}
+          {% set err = errorById[a.id] %}
+          <div class="govuk-form-group {% if err %}govuk-form-group--error{% endif %}">
+            <fieldset class="govuk-fieldset" aria-describedby="{% if err %}timing-{{ a.id }}-error{% endif %}">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{ a.name }}</legend>
+
+              {% if err %}
+                <p id="timing-{{ a.id }}-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ err }}
+                </p>
+              {% endif %}
+
+              <div class="govuk-radios" data-module="govuk-radios">
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="timing-{{ a.id }}" name="timing-{{ a.id }}" type="radio" value="month" data-aria-controls="timing-{{ a.id }}-reveal" {% if a.choice == "month" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}">Give a month</label>
+                </div>
+                <div class="govuk-radios__conditional {% if a.choice != 'month' %}govuk-radios__conditional--hidden{% endif %}" id="timing-{{ a.id }}-reveal">
+                  <div id="timing-{{ a.id }}-hint" class="govuk-hint">For example, 3 2027</div>
+                  <div class="govuk-date-input">
+                    <div class="govuk-date-input__item">
+                      <div class="govuk-form-group">
+                        <label class="govuk-label govuk-label--s" for="timing-{{ a.id }}-month">Month</label>
+                        <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="timing-{{ a.id }}-month" name="timing-{{ a.id }}-month" type="text" inputmode="numeric" value="{{ a.month }}">
+                      </div>
+                    </div>
+                    <div class="govuk-date-input__item">
+                      <div class="govuk-form-group">
+                        <label class="govuk-label govuk-label--s" for="timing-{{ a.id }}-year">Year</label>
+                        <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="timing-{{ a.id }}-year" name="timing-{{ a.id }}-year" type="text" inputmode="numeric" value="{{ a.year }}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="timing-{{ a.id }}-2" name="timing-{{ a.id }}" type="radio" value="tbc" {% if a.choice == "tbc" %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}-2">To be confirmed</label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        {% endfor %}
+
+        <div class="govuk-inset-text">MHCLG uses timings to plan assurer capacity. A rough month helps them, but "to be confirmed" is a real answer if you do not know yet.</div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

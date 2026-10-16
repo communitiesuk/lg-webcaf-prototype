@@ -1,0 +1,25 @@
+{# D20 — decide / systems-nothing-left — Figma node 393:2977 — edge: nothing new to assess #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "There is nothing new to assess this cycle"
+      }) }}
+
+      <p class="govuk-body">Your organisation assessment and every critical system in scope have already been assessed.</p>
+      <p class="govuk-body">Updating an assessment is not available yet. It will come in a later version of the service.</p>
+      <p class="govuk-body">If you have added a new critical system since your last assessment, check it is in scope in Set up your council.</p>
+
+      <div class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Review your critical systems</a>
+      </div>
+      <a class="govuk-button" data-module="govuk-button" href="/setup/not-in-this-prototype">Back to your dashboard</a>
+    </div>
+  </div>
+{% endblock %}

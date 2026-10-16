@@ -1,0 +1,36 @@
+{# D25 — decide / cni-add — Figma node 393:3212 — PROPOSAL (v4) #}
+{# "Critical system" is a GDS accessible autocomplete (progressive enhancement of the
+   <select>). The confirmed option is submitted as cniSystemId. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Which critical system is CNI?"
+      }) }}
+
+      <form method="post" action="/decide/cni/add" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="cniSystem-select">Critical system</label>
+          <div id="cniSystem-hint" class="govuk-hint">Start typing the system's name, then choose it from the list</div>
+          <select class="govuk-select" id="cniSystem-select" name="cniSystemId" aria-describedby="cniSystem-hint" data-system-autocomplete>
+            <option value="">Select a critical system</option>
+            {% for option in options %}
+              <option value="{{ option.id }}">{{ option.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Add system</button>
+      </form>
+    </div>
+  </div>
+
+  {# accessible-autocomplete UMD global, enhanced by app/assets/javascripts/application.js #}
+  <script src="/public/javascripts/accessible-autocomplete.min.js"></script>
+{% endblock %}

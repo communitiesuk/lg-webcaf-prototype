@@ -1,0 +1,24 @@
+{# D05 — decide / review — Figma node 393:2504 — review and send to assurer #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Review your plan for this cycle"
+      }) }}
+
+      {% include "components/plan-summary.njk" %}
+
+      <p class="govuk-body">Your assurer will look at this before it goes for approval.</p>
+
+      <form method="post" action="/decide/review" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Send to your assurer</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

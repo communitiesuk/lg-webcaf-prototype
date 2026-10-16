@@ -1,0 +1,50 @@
+{# D03 — decide / confirm — Figma node 393:2415 — check answers for the cycle #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Confirm what this cycle covers"
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% if orgIncluded %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Organisation assessment</dt>
+            <dd class="govuk-summary-list__value">Included, not done before</dd>
+            <dd class="govuk-summary-list__actions"></dd>
+          </div>
+        {% endif %}
+
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Critical systems</dt>
+          <dd class="govuk-summary-list__value">
+            {% if selectedNames.length %}{{ selectedNames | join(", ") }}{% else %}None this cycle, the organisation assessment only{% endif %}
+          </dd>
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="/decide/systems">Change<span class="govuk-visually-hidden"> which critical systems you will assess</span></a>
+          </dd>
+        </div>
+
+        {% if notIncludedNames.length %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Not included this cycle</dt>
+            <dd class="govuk-summary-list__value">{{ notIncludedNames | join(", ") }}</dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/decide/systems">Change<span class="govuk-visually-hidden"> what is not included this cycle</span></a>
+            </dd>
+          </div>
+        {% endif %}
+      </dl>
+
+      <form method="post" action="/decide/confirm" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

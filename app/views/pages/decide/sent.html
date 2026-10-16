@@ -1,0 +1,34 @@
+{# D09 — decide / sent — Figma node 393:3103 — book onboarding calls #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Book your onboarding calls"
+      }) }}
+
+      <p class="govuk-body">Your plan has been sent to your assurer. Book your onboarding calls now, so you can talk the plan through with them and resolve anything difficult. You or your assurer can book them, and one call is needed for each type of assessment in your plan. If no assurer is assigned yet, one is assigned after you book.</p>
+
+      <dl class="govuk-summary-list">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ row.label }}</dt>
+            <dd class="govuk-summary-list__value">{{ row.value }}</dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/setup/not-in-this-prototype">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.label }}</span></a>
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <div class="govuk-inset-text">Booking the calls does not hold up your plan. Your assurer can start reviewing it straight away.</div>
+
+      <a class="govuk-button" data-module="govuk-button" href="/decide/assurer-review">Continue</a>
+    </div>
+  </div>
+{% endblock %}

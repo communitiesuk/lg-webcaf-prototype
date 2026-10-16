@@ -1,0 +1,41 @@
+{# D19 — decide / systems-too-many — Figma node 393:2938 — warning: more than three chosen #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Which critical systems will you assess?"
+      }) }}
+
+      {% set proposalText = "The \"three is the recommended maximum\" guidance is a v6 proposal, not yet agreed. It is guidance, not a limit." %}
+      {% include "components/setup-proposal.njk" %}
+
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          You have chosen {{ count }} systems. Three is the recommended maximum for one cycle, because each system is 27 outcomes. You can continue if you have the capacity.
+        </strong>
+      </div>
+
+      <div class="govuk-checkboxes govuk-!-margin-bottom-6" data-module="govuk-checkboxes">
+        {% for row in rows %}
+          <div class="govuk-checkboxes__item">
+            <input class="govuk-checkboxes__input" id="chosen-{{ loop.index }}" name="chosenSystems" type="checkbox" value="{{ row.id }}" checked>
+            <label class="govuk-label govuk-checkboxes__label" for="chosen-{{ loop.index }}">{{ row.name }} — {{ row.criticalityLabel }}</label>
+          </div>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="/decide/systems/too-many" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Continue with {{ count }} systems</button>
+      </form>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change my choices</a>
+    </div>
+  </div>
+{% endblock %}

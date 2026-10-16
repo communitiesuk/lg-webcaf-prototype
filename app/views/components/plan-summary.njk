@@ -1,0 +1,58 @@
+{#
+  Plan summary (Figma Decide component 316:1278, "Plan summary v2").
+  Shared read-only summary of a cycle's plan. Used by D05, and later D07/D11/D21.
+
+  Set `planSummary` (from buildPlanSummary) before including. Optionally set `planWarning`
+  (a string) to render a warning-text block in the slot between "Not included" and
+  "Already assessed" — each screen supplies its own warning text there.
+
+    {% set planWarning = "..." %}
+    {% include "components/plan-summary.njk" %}
+#}
+{% if planSummary %}
+
+  <h2 class="govuk-heading-m">Included this cycle</h2>
+  <dl class="govuk-summary-list">
+    {% for row in planSummary.included %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ row.name }}</dt>
+        <dd class="govuk-summary-list__value">{{ row.detail }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+
+  {% if planSummary.notIncluded.length %}
+    <h2 class="govuk-heading-m">Not included this cycle</h2>
+    <dl class="govuk-summary-list">
+      {% for row in planSummary.notIncluded %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ row.name }}</dt>
+          <dd class="govuk-summary-list__value">{{ row.detail }}</dd>
+        </div>
+      {% endfor %}
+    </dl>
+  {% endif %}
+
+  {% if planWarning %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-visually-hidden">Warning</span>
+        {{ planWarning }}
+      </strong>
+    </div>
+  {% endif %}
+
+  {% if planSummary.assessed.length %}
+    <h2 class="govuk-heading-m">Already assessed</h2>
+    <dl class="govuk-summary-list">
+      {% for row in planSummary.assessed %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ row.name }}</dt>
+          <dd class="govuk-summary-list__value">{{ row.detail }}</dd>
+        </div>
+      {% endfor %}
+    </dl>
+  {% endif %}
+
+{% endif %}

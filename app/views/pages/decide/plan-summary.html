@@ -1,0 +1,34 @@
+{# D21 — decide / plan-summary — Figma node 393:3013 — printable plan summary #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        title: "Plan summary",
+        intro: councilName + ", cycle starting 2026. Prepared by " + cafLeadName + ", CAF Lead, for approval by " + approverName + "."
+      }) }}
+
+      {% include "components/plan-summary.njk" %}
+
+      <h2 class="govuk-heading-m">People</h2>
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">CAF Lead</dt>
+          <dd class="govuk-summary-list__value">{{ cafLeadName }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Approver</dt>
+          <dd class="govuk-summary-list__value">{{ approverName }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assurer</dt>
+          <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
+        </div>
+      </dl>
+
+      <button class="govuk-button govuk-button--secondary" data-module="govuk-button" data-print-page>Print this page</button>
+    </div>
+  </div>
+{% endblock %}

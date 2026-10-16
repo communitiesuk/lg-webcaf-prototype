@@ -1,0 +1,52 @@
+{# D07 — decide / assurer-review — Figma node 393:2572 — ASSURER view (uses plan summary) #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "ASSURER VIEW · " + councilName,
+        title: "Review their setup and plan",
+        intro: "You can read and comment. You are not signing anything off, and the council's own Approver does that next."
+      }) }}
+
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Organisational context</dt>
+          <dd class="govuk-summary-list__value">Read</dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View<span class="govuk-visually-hidden"> organisational context</span></a></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Essential services</dt>
+          <dd class="govuk-summary-list__value">{{ serviceSummary }}</dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View<span class="govuk-visually-hidden"> essential services</span></a></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Critical systems</dt>
+          <dd class="govuk-summary-list__value">{{ systemSummary }}</dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View<span class="govuk-visually-hidden"> critical systems</span></a></dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m">The plan for this cycle</h2>
+      <p class="govuk-body">Including the council's rough timings, which help you plan your own time.</p>
+
+      {% include "components/plan-summary.njk" %}
+
+      <p class="govuk-body">If a CNI system has been left out of the plan, you can challenge that here.</p>
+
+      <form method="post" action="/decide/assurer-review" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="assurerFeedback">Any feedback on the plan? (optional)</label>
+          <div id="assurerFeedback-hint" class="govuk-hint">The council sees this before they send the plan for approval</div>
+          <textarea class="govuk-textarea" id="assurerFeedback" name="assurerFeedback" rows="4" aria-describedby="assurerFeedback-hint">{{ feedback }}</textarea>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Send feedback</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

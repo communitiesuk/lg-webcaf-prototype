@@ -1,0 +1,63 @@
+{# D12 — decide / record-approval — Figma node 393:2726 — council records an offline decision #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Record your Approver's decision",
+        intro: approverName + " does not use the service. Record their decision here so it is on the record."
+      }) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">Print a plan summary to share with your Approver</a></p>
+
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Approver</dt>
+          <dd class="govuk-summary-list__value">{{ approverLine }}</dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">Change<span class="govuk-visually-hidden"> the Approver</span></a></dd>
+        </div>
+      </dl>
+
+      <form method="post" action="/decide/record-approval" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="approvalDate">When did they approve it?</label>
+          <div id="approvalDate-hint" class="govuk-hint">For example, 18 3 2027</div>
+          <input class="govuk-input govuk-input--width-10" id="approvalDate" name="approvalDate" type="text" aria-describedby="approvalDate-hint" value="{{ date }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">How did they approve it?</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="approvalHow" name="approvalHow" type="radio" value="at-meeting" {% if how == "at-meeting" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="approvalHow">At a meeting</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="approvalHow-2" name="approvalHow" type="radio" value="by-email" {% if how == "by-email" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="approvalHow-2">By email</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="approvalHow-3" name="approvalHow" type="radio" value="another" {% if how == "another" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="approvalHow-3">Another way</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="approvalLink">Link to the record (optional)</label>
+          <div id="approvalLink-hint" class="govuk-hint">For example, minutes or an email saved in SharePoint</div>
+          <input class="govuk-input" id="approvalLink" name="approvalLink" type="text" aria-describedby="approvalLink-hint" value="{{ link }}">
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Record the approval</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

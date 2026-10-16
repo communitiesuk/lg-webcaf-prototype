@@ -1,0 +1,50 @@
+{# D26 — decide / cni-added — Figma node 393:3229 — PROPOSAL (v4, add-another) #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: pageTitle
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% for system in added %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ system.name }}</dt>
+            <dd class="govuk-summary-list__value">{{ system.criticality }}</dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/decide/cni/added/{{ system.id }}/remove">Remove<span class="govuk-visually-hidden"> {{ system.name }}</span></a>
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <form method="post" action="/decide/cni/added" novalidate>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+              <h2 class="govuk-fieldset__heading">Do you need to add another CNI system?</h2>
+            </legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="addAnotherCni" name="addAnotherCni" type="radio" value="yes">
+                <label class="govuk-label govuk-radios__label" for="addAnotherCni">Yes</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="addAnotherCni-2" name="addAnotherCni" type="radio" value="no" checked>
+                <label class="govuk-label govuk-radios__label" for="addAnotherCni-2">No</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

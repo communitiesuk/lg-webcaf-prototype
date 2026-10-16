@@ -1,0 +1,27 @@
+{# D08 — decide / feedback — Figma node 393:2617 — council sees assurer's comment #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Your assurer has commented on your plan"
+      }) }}
+
+      <div class="govuk-inset-text">{{ assurerName }}: {{ feedback }}</div>
+
+      <p class="govuk-body">This is advice, not a requirement. You can change your plan or carry on as it is.</p>
+
+      <div class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change my plan</a>
+      </div>
+      <form method="post" action="/decide/feedback" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Carry on, send for approval</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

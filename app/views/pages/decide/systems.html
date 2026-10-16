@@ -1,0 +1,85 @@
+{# D02 / D22 / D15 — decide / systems — Figma nodes 393:2337 (base), 393:3058 (unrated), 393:2834 (error) #}
+{# One screen, three states: base, unrated-system variant, and the no-selection error.
+   Content-rich page: H1 is the page heading; the checkboxes carry a visually-hidden legend. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if showError %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: "Select at least one critical system, or choose to assess none this cycle", href: "#whichSystems" }]
+        }) }}
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Which critical systems will you assess?"
+      }) }}
+
+      {% if unrated %}
+        {{ govukInsetText({ text: "Your organisation assessment is included, because your council has not done one yet." }) }}
+      {% else %}
+        {{ govukInsetText({ text: "These systems have not been assessed yet. The most critical are listed first, and within each level, any that are CNI. Up to three is recommended." }) }}
+      {% endif %}
+
+      <p class="govuk-body">These systems have not been assessed yet. They are listed by how critical they are. Up to three is recommended.</p>
+
+      {% set systemItems = [] %}
+      {% for row in rows %}
+        {% set _ = systemItems.push({ value: row.id, text: row.name + " — " + row.criticalityLabel, checked: row.checked }) %}
+      {% endfor %}
+      {% if orgIncluded %}
+        {% set _ = systemItems.push({ value: "none", text: "None this cycle, the organisation assessment only", checked: noneOnly, behaviour: "exclusive" }) %}
+      {% endif %}
+
+      <form method="post" action="/decide/systems" novalidate>
+        {{ govukCheckboxes({
+          name: "whichSystems",
+          fieldset: { legend: { text: "Which critical systems will you assess?", classes: "govuk-visually-hidden" } },
+          errorMessage: { text: "Select at least one critical system, or choose to assess none this cycle" } if showError else undefined,
+          items: systemItems
+        }) }}
+
+        {% if showCapHint %}
+          <p id="whichSystems-hint" class="govuk-hint">Showing your {{ rows.length }} highest-ranked systems.</p>
+          <p class="govuk-body"><a class="govuk-link" href="#">Show all systems</a></p>
+        {% endif %}
+
+        {% if unrated and unratedName %}
+          {{ govukWarningText({
+            text: unratedName + " has not been rated yet, so it is listed last. Rate it in Setup to rank it properly.",
+            iconFallbackText: "Warning"
+          }) }}
+        {% endif %}
+
+        {% if assessed.length %}
+          <h2 class="govuk-heading-m">Already assessed</h2>
+          <dl class="govuk-summary-list">
+            {% for item in assessed %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ item.name }}</dt>
+                <dd class="govuk-summary-list__value">Assessed {{ item.assessedDate }}</dd>
+              </div>
+            {% endfor %}
+          </dl>
+        {% endif %}
+
+        {{ govukInsetText({ text: "Updating an assessment is not available yet. It will come in a later version of the service." }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

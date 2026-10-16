@@ -1,0 +1,41 @@
+{# D23 — decide / cni — Figma node 393:3118 #}
+{# Content-rich question page (reminder inset + body before the radios): H1 is the page
+   heading; the radios carry a visually-hidden legend, per the GDS multi-content pattern. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Are any of your critical systems critical national infrastructure (CNI)?"
+      }) }}
+
+      {% if cniFlaggedInSetup %}
+        {{ govukInsetText({ text: "You previously told us your council delivers services in a critical national infrastructure (CNI) sector. It is important these systems are prioritised for a CAF for LG assessment." }) }}
+      {% endif %}
+
+      <p class="govuk-body">Your assurer and MHCLG need to know which systems are CNI. It also helps us rank your systems when you choose what to assess.</p>
+
+      <form method="post" action="/decide/cni" novalidate>
+        {{ govukRadios({
+          name: "cniAnswer",
+          fieldset: { legend: { text: "Are any of your critical systems critical national infrastructure (CNI)?", classes: "govuk-visually-hidden" } },
+          items: [
+            { value: "yes", text: "Yes", checked: answer == "yes" },
+            { value: "no", text: "No", checked: answer == "no" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}
