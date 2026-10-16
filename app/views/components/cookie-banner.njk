@@ -1,0 +1,50 @@
+{#
+  Service-wide cookie banner (GOV.UK cookie-banner component markup).
+  Three states, driven by session data (req.session.data.cookies):
+    - no choice yet            -> question banner (Accept / Reject / View cookies)
+    - choice made, confirm on  -> confirmation banner (+ "Hide cookie message")
+    - choice made, confirm off -> nothing
+  Accept/Reject post to /cookies/choose; Hide goes to /cookies/hide. Both carry the
+  current path so the user returns to the page they were on. See routes/get-started.js.
+#}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% set cookieState = data.cookies or {} %}
+{% set cookieServiceName = "Assess and manage your council’s cyber resilience" %}
+
+{% if not cookieState.choiceMade %}
+  <div class="govuk-cookie-banner" data-nosnippet role="region" aria-label="Cookies on {{ cookieServiceName }}">
+    <div class="govuk-cookie-banner__message govuk-width-container">
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <h2 class="govuk-cookie-banner__heading govuk-heading-m">Cookies on {{ cookieServiceName }}</h2>
+          <div class="govuk-cookie-banner__content">
+            <p class="govuk-body">We use some essential cookies to make this service work. We would also like to use analytics cookies so we can understand how you use the service and make improvements.</p>
+          </div>
+        </div>
+      </div>
+      <form method="post" action="/cookies/choose">
+        <input type="hidden" name="cookiesReturnUrl" value="{{ currentPath }}">
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Accept analytics cookies", name: "cookiesConsent", value: "accept" }) }}
+          {{ govukButton({ text: "Reject analytics cookies", name: "cookiesConsent", value: "reject" }) }}
+          <a class="govuk-link" href="/cookies">View cookies</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% elif cookieState.confirmationVisible %}
+  <div class="govuk-cookie-banner" data-nosnippet role="region" aria-label="Cookies on {{ cookieServiceName }}">
+    <div class="govuk-cookie-banner__message govuk-width-container">
+      <div class="govuk-grid-row">
+        <div class="govuk-grid-column-two-thirds">
+          <div class="govuk-cookie-banner__content">
+            <p class="govuk-body">You’ve {{ "accepted" if cookieState.analyticsConsent == "accepted" else "rejected" }} analytics cookies. You can <a class="govuk-link" href="/cookies">change your cookie settings</a> at any time.</p>
+          </div>
+        </div>
+      </div>
+      <div class="govuk-button-group">
+        <a class="govuk-button" role="button" data-module="govuk-button" href="/cookies/hide?returnUrl={{ currentPath | urlencode }}">Hide cookie message</a>
+      </div>
+    </div>
+  </div>
+{% endif %}

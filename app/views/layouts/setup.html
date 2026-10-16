@@ -1,0 +1,39 @@
+{#
+  Base layout shared by the Beta sections (Setup v6, Decide v6, Claim v3, Get started v3).
+  Owns the Beta chrome that sits apart from the older Alpha journey:
+  - A service-wide cookie banner (first visit only), above the phase banner.
+  - Phase banner shows "Beta" with a "feedback" link to the Give feedback page (G11).
+  - Footer shows the design's support links, wired to their real targets. Accessibility
+    statement and Privacy notice point to the holding page until that content is ready.
+  The service name, navigation and signed-in persona are set in res.locals by each
+  section's route module (applySetupChrome / applyClaimChrome / applyGetStartedChrome).
+#}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/footer/macro.njk" import govukFooter %}
+
+{# Cookie banner sits after the header, OUTSIDE govuk-width-container, so its grey background
+   spans the full page width (only the message inside is constrained to the container). #}
+{% block header %}
+  {{ super() }}
+  {% include "components/cookie-banner.njk" %}
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukPhaseBanner({
+    tag: { text: "Beta" },
+    html: 'This is a new service. Your <a class="govuk-link" href="/feedback">feedback</a> will help us improve it.'
+  }) }}
+{% endblock %}
+
+{% block footer %}
+  {{ govukFooter({
+    meta: {
+      items: [
+        { href: "/support", text: "Get help with the CAF" },
+        { href: "/cookies", text: "Cookies" },
+        { href: "/setup/not-in-this-prototype", text: "Accessibility statement" },
+        { href: "/setup/not-in-this-prototype", text: "Privacy notice" }
+      ]
+    }
+  }) }}
+{% endblock %}

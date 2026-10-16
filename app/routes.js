@@ -254,6 +254,14 @@ require("./routes/stages")(router);
 require("./routes/assessments")(router);
 require("./routes/council-context")(router);
 require("./routes/onboarding")(router);
+require("./routes/setup")(router);
+require("./routes/decide")(router);
+require("./routes/claim")(router);
+require("./routes/get-started")(router);
+require("./routes/readiness")(router);
+require("./routes/assurance")(router);
+require("./routes/access")(router);
+require("./routes/beta")(router);
 require("./routes/assurer")(router);
 require("./routes/assurer-alpha")(router);
 require("./routes/mhclg")(router);
@@ -261,8 +269,8 @@ require("./routes/engagement")(router);
 require("./routes/cycles")(router);
 require("./routes/export")(router);
 
-// Root redirect
-router.get("/", (req, res) => res.redirect("/round-2/start"));
+// Root redirect — Beta prototype index
+router.get("/", (req, res) => res.redirect("/beta"));
 
 router.get("/round-2/start", (req, res) => {
   if (!req.session) req.session = {};
@@ -845,5 +853,22 @@ function getPrototypeWorkEmailError(email) {
 function normaliseResearchRound(input) {
   return input === "round-2" ? "round-2" : "round-1";
 }
+
+// 404 catch-all — render the Get started "Page not found" (G07) with signed-out service chrome.
+// Registered last so it only runs when no route matched. Asset / kit-management paths fall
+// through to the kit's own handling.
+router.use((req, res, next) => {
+  const skip = ["/public", "/plugin-assets", "/manage-prototype", "/govuk", "/assets", "/images", "/javascripts", "/stylesheets", "/dist"];
+  if (skip.some((p) => req.path === p || req.path.startsWith(p + "/"))) return next();
+  res.locals.serviceName = "Assess and manage your council’s cyber resilience";
+  res.locals.serviceUrl = "/get-started";
+  res.locals.showNavigation = true;
+  res.locals.currentUser = null;
+  res.locals.navigation = [];
+  res.locals.showJourney = false;
+  res.locals.breadcrumbs = [];
+  res.locals.progress = null;
+  return res.status(404).render("pages/getstarted/page-not-found", { pageTitle: "Page not found" });
+});
 
 module.exports = router;
