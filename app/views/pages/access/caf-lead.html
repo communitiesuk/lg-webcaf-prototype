@@ -7,7 +7,7 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/access">Back</a>
+  <a class="govuk-back-link" href="{{ backHref or '/access' }}">Back</a>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {% if error %}

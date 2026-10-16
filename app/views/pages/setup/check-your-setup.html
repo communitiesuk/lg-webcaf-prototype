@@ -33,8 +33,8 @@
 
       <h2 class="govuk-heading-m">People</h2>
       <dl class="govuk-summary-list">
-        {{ row("CAF Lead", (summary.cafLead + ", confirmed") if summary.cafLeadConfirmed else "Not confirmed yet", "/access/caf-lead", "cafLead-change") }}
-        {{ row("Approver", (summary.approver + ", confirmed") if summary.approverConfirmed else "Not confirmed yet", "/access/approver", "approver-change") }}
+        {{ row("CAF Lead", (summary.cafLead + ", confirmed") if summary.cafLeadConfirmed else "Not confirmed yet", "/access/caf-lead?return=/setup/check-your-setup", "cafLead-change") }}
+        {{ row("Approver", (summary.approver + ", confirmed") if summary.approverConfirmed else "Not confirmed yet", "/access/approver?return=/setup/check-your-setup", "approver-change") }}
       </dl>
       <div class="govuk-inset-text">Setup is only complete once both a CAF Lead and an Approver are confirmed.</div>
 

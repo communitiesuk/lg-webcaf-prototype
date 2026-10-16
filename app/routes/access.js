@@ -100,11 +100,16 @@ module.exports = function (router) {
   router.get("/access/caf-lead", (req, res) => {
     const access = ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
+    // Carry a Setup return target (task 1 / check-your-setup Change), same as the Approver flow.
+    const ret = (req.query.return || "").toString();
+    if (ret.startsWith("/setup/")) req.session.data.cafLeadReturn = ret;
+    else delete req.session.data.cafLeadReturn;
     res.render("pages/access/caf-lead", {
       pageTitle: "Who is your council’s CAF Lead?",
       model: buildCafLeadModel(access),
       current: { choice: "me" }, // "Me, Jo Hart" selected by default, as drawn
       error: null,
+      backHref: req.session.data.cafLeadReturn || "/access",
     });
   });
 
@@ -125,6 +130,7 @@ module.exports = function (router) {
         model: buildCafLeadModel(access),
         current: { choice, personId },
         error: { text: "Select who your CAF Lead is" },
+        backHref: req.session.data.cafLeadReturn || "/access",
       });
     }
 
@@ -145,6 +151,7 @@ module.exports = function (router) {
       pageTitle: `${person ? person.name : "Jo Hart"} is now your council’s CAF Lead`,
       name: person ? person.name : "Jo Hart",
       isSelf,
+      continueHref: req.session.data.cafLeadReturn || "/setup/task-list",
     });
   });
 
@@ -184,9 +191,17 @@ module.exports = function (router) {
   router.get("/access/approver", (req, res) => {
     const access = ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
+    // When arriving from Setup (task 7 or the check-your-setup Change link), carry a return
+    // target so recording the Approver sends the user back to finish setup. Only internal
+    // Setup paths are honoured. Set fresh on each entry so a People-section visit does not
+    // inherit a stale return.
+    const ret = (req.query.return || "").toString();
+    if (ret.startsWith("/setup/")) req.session.data.approverReturn = ret;
+    else delete req.session.data.approverReturn;
     res.render("pages/access/approver", {
       pageTitle: "Who approves your council’s CAF plan?",
       model: buildApproverModel(access),
+      backHref: req.session.data.approverReturn || "/access",
     });
   });
 
@@ -356,6 +371,7 @@ module.exports = function (router) {
       current: { name: access.approver.name || "", role: access.approver.role || "" },
       error: null,
       errorByField: {},
+      backHref: req.session.data.approverReturn || "/access",
     });
   });
 
@@ -376,6 +392,7 @@ module.exports = function (router) {
         current: { name, role },
         error: { items: errors },
         errorByField: errors.reduce((a, e) => { a[e.field] = e.text; return a; }, {}),
+        backHref: req.session.data.approverReturn || "/access",
       });
     }
     setApprover(access, name, role);
@@ -388,7 +405,10 @@ module.exports = function (router) {
       setup.people.approver.confirmed = true;
       setup.people.approver.hasAccount = false; // recorded, not invited
     }
-    return res.redirect("/access");
+    // Return to Setup if the user came from there (task 7 / check-your-setup), else the People hub.
+    const ret = req.session.data.approverReturn;
+    delete req.session.data.approverReturn;
+    return res.redirect(ret || "/access");
   });
 
   // A11 — invitation email. Prototype PREVIEW of an email (not a real send).

@@ -97,7 +97,7 @@ function buildSetupTaskList(setup) {
   const preServices = [
     {
       title: { text: "1. Confirm your CAF Lead" },
-      href: "/access/caf-lead",
+      href: "/access/caf-lead?return=/setup/task-list",
       hint: { text: "Who is accountable for your council's CAF" },
       status: completed,
     },
@@ -151,7 +151,7 @@ function buildSetupTaskList(setup) {
   const finish = [
     {
       title: { text: "7. Confirm your Approver" },
-      href: "/access/approver",
+      href: "/access/approver?return=/setup/task-list",
       hint: { text: "Who signs off each cycle's plan" },
       status: (setup.people && setup.people.approver && setup.people.approver.confirmed) ? completed : notStarted,
     },

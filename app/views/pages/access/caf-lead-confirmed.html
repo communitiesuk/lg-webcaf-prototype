@@ -23,7 +23,7 @@
       <h1 class="govuk-heading-xl">{{ name }} is now your council’s CAF Lead</h1>
       <p class="govuk-body">You can carry on setting up your council. There is always exactly one CAF Lead. You can change it at any time from People and governance.</p>
 
-      {{ govukButton({ text: "Continue setting up", href: "/setup/task-list" }) }}
+      {{ govukButton({ text: "Continue setting up", href: continueHref or "/setup/task-list" }) }}
     </div>
   </div>
 {% endblock %}
