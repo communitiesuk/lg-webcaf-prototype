@@ -1,0 +1,19 @@
+{# G13 feedback sent — confirmation — Figma node 246:3403 #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        titleText: "Thank you for your feedback",
+        text: "We read every response."
+      }) }}
+
+      <p class="govuk-body">If you gave an email address, we may contact you about what you said.</p>
+
+      {{ govukButton({ text: "Back to the service", href: backHref, classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

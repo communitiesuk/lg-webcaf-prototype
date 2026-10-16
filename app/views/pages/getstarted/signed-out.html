@@ -1,0 +1,13 @@
+{# G10 you have signed out (chose to) — Figma node 212:92. "Sign in again" returns to One Login. #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">You have signed out</h1>
+      <p class="govuk-body">Anything you saved has been kept.</p>
+      {{ govukButton({ text: "Sign in again", href: "/prototype-sign-in" }) }}
+    </div>
+  </div>
+{% endblock %}

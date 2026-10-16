@@ -1,0 +1,31 @@
+{# G04 MHCLG invitation email — Figma node 209:2077. Prototype-only PREVIEW of an email, not a
+   web page in the service. "Register ..." goes to the Claim first-to-join scenario (decision §6b.6). #}
+{% extends "layouts/main.html" %}
+
+{# Prototype preview wrapper — no service phase banner. #}
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prototype preview</span>
+      <h1 class="govuk-heading-l">Invitation email</h1>
+      <p class="govuk-body">This is a preview of the email MHCLG sends to a council’s CAF contact. It is not a page in the service.</p>
+
+      <div style="border: 1px solid #b1b4b6; border-radius: 4px; overflow: hidden;">
+        <div style="background: #f3f2f1; border-bottom: 1px solid #b1b4b6; padding: 15px 20px;">
+          <p class="govuk-body-s govuk-!-margin-bottom-2" style="letter-spacing: .05em; color: #505a5f;"><strong>EMAIL — NOT A WEB PAGE</strong></p>
+          <p class="govuk-body-s govuk-!-margin-bottom-1">From: MHCLG Local Digital Cyber &lt;cyber@example.gov.uk&gt;</p>
+          <p class="govuk-body-s govuk-!-margin-bottom-0"><strong>Subject: Register Westborough Borough Council for the CAF service</strong></p>
+        </div>
+        <div style="padding: 20px;">
+          <p class="govuk-body">Dear Jo,</p>
+          <p class="govuk-body">You are listed as the CAF contact for Westborough Borough Council. You can now register your council on the new service to complete and manage your CAF assessments.</p>
+          <p class="govuk-body"><a class="govuk-link" href="/prototype-scenarios/first-to-join">Register Westborough Borough Council</a></p>
+          <p class="govuk-body">If you are no longer the right person, please forward this to whoever is. They will need a Westborough Borough Council email address to register.</p>
+          <p class="govuk-body govuk-!-margin-bottom-0">MHCLG Local Digital Cyber team</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

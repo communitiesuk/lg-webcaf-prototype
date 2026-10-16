@@ -1,0 +1,9 @@
+{#
+  Get started ("Get started" section, Figma Get started v3, page 209:1927) base layout.
+  Inherits the Beta phase banner, cookie banner and design footer from the Setup base layout.
+  Signed-out chrome (service name only) is set in res.locals by app/routes/get-started.js.
+  Sets the page <title> to match the H1 (the kit's default block renders only "GOV.UK").
+#}
+{% extends "layouts/setup.html" %}
+
+{% block pageTitle %}{% if pageTitle == "Assess and manage your council’s cyber resilience" %}{{ pageTitle }} - GOV.UK{% else %}{{ pageTitle }} - Assess and manage your council’s cyber resilience - GOV.UK{% endif %}{% endblock %}

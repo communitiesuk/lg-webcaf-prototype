@@ -1,0 +1,44 @@
+{# G11 give feedback — "Give feedback on this service" — Figma node 212:121.
+   Nothing is sent or stored (prototype). Fields auto-save to data.feedback via name="feedback[...]". #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#" + error.field }] }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">Give feedback on this service</h1>
+      <p class="govuk-body">Tell us what worked, what did not, or what is missing. We read every response.</p>
+
+      <form method="post" action="/feedback" novalidate>
+        {{ govukTextarea({
+          name: "feedback[message]",
+          id: "feedback-message",
+          label: { text: "Your feedback", classes: "govuk-label--s" },
+          hint: { text: "Do not include personal or security-sensitive information" },
+          value: data.feedback.message,
+          errorMessage: { text: error.text } if error else null
+        }) }}
+
+        {{ govukInput({
+          name: "feedback[email]",
+          id: "feedback-email",
+          type: "email",
+          autocomplete: "email",
+          spellcheck: false,
+          label: { text: "Email address (optional)", classes: "govuk-label--s" },
+          hint: { text: "If you would like us to reply" },
+          value: data.feedback.email
+        }) }}
+
+        {{ govukButton({ text: "Send feedback" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

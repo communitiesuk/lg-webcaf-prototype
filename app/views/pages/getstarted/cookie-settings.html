@@ -1,0 +1,46 @@
+{# G03 cookie settings (Figma node 209:2004). Save stays on this page and shows the success
+   banner, matching the rendered screen. Analytics section uses the content-rich pattern:
+   H2 heading + descriptive body + radios with a visually-hidden legend. #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if saved %}
+        {% set savedHtml %}
+          <h3 class="govuk-notification-banner__heading">Your cookie settings were saved</h3>
+          <p class="govuk-body">Government services may set additional cookies and, if so, will have their own cookie policy and banner.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ type: "success", html: savedHtml }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">Cookies</h1>
+      <p class="govuk-body">Cookies are small files saved on your phone, tablet or computer when you visit a website. We use cookies to make this service work and collect information about how you use it.</p>
+
+      <h2 class="govuk-heading-m">Essential cookies</h2>
+      <p class="govuk-body">Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them.</p>
+
+      <h2 class="govuk-heading-m">Analytics cookies (optional)</h2>
+      <p class="govuk-body">With your permission, we use Google Analytics to collect data about how you use this service. This helps us make it better.</p>
+
+      <form method="post" action="/cookies" novalidate>
+        {{ govukRadios({
+          name: "cookiesAnalytics",
+          fieldset: {
+            legend: { text: "Analytics cookies (optional)", classes: "govuk-visually-hidden" }
+          },
+          items: [
+            { value: "yes", text: "Use cookies that measure my website use", checked: analyticsOn },
+            { value: "no", text: "Do not use cookies that measure my website use", checked: not analyticsOn }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save cookie settings" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

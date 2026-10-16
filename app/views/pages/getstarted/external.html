@@ -1,0 +1,13 @@
+{# Shared external placeholder — a single holding page for every link that leaves this
+   prototype (the security.gov.uk guidance links on G01, and G05's external references). #}
+{% extends "layouts/get-started.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">External page, not part of this service</h1>
+      <p class="govuk-body">This link would open a page on another website, such as security.gov.uk or the Local Digital website. Those pages are outside this prototype.</p>
+      <p class="govuk-body"><a class="govuk-link" href="/get-started">Back to the service</a></p>
+    </div>
+  </div>
+{% endblock %}

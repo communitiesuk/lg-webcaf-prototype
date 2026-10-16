@@ -1,0 +1,40 @@
+{# G01 service start page (Figma node 209:1943); G02 is the same page with the first-visit
+   cookie banner (209:1980), which the shared layout renders. #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Assess and manage your council’s cyber resilience</h1>
+
+      <p class="govuk-body">Use this service to complete the Cyber Assessment Framework (CAF) for your council, share it with an independent assurer, and plan the improvements that follow.</p>
+
+      <p class="govuk-body">You can:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>record your essential services and the systems they depend on</li>
+        <li>complete your self-assessment with colleagues</li>
+        <li>share evidence securely with your assurer</li>
+        <li>keep your improvement plan in one place</li>
+      </ul>
+
+      {{ govukButton({ text: "Start now", href: startHref, isStartButton: true }) }}
+
+      <h2 class="govuk-heading-m">Before you start</h2>
+      <p class="govuk-body">You will need:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>a work email address at your council</li>
+        <li>a GOV.UK One Login, or you can create one when you start</li>
+        <li>roughly 26 weeks to complete a full cycle, including assurance</li>
+        <li>time for calls and workshops with your assurer, which you book through Microsoft Bookings</li>
+      </ul>
+
+      <h2 class="govuk-heading-m">Before you begin, you may want to read</h2>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="/external">How the CAF works and what is involved (security.gov.uk)</a></li>
+        <li><a class="govuk-link" href="/external">Making the case to your leadership team (security.gov.uk)</a></li>
+        <li><a class="govuk-link" href="/external">Who to involve at your council (security.gov.uk)</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

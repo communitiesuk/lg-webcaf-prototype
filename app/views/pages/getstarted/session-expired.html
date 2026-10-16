@@ -1,0 +1,14 @@
+{# G09 signed out after inactivity — Figma node 209:2209. "Sign in again" returns to the start page. #}
+{% extends "layouts/get-started.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">You have been signed out</h1>
+      <p class="govuk-body">To protect your council’s information, we sign you out after a period of inactivity.</p>
+      <p class="govuk-body">Anything you saved has been kept. Anything you were part-way through typing has not.</p>
+      {{ govukButton({ text: "Sign in again", href: "/get-started" }) }}
+    </div>
+  </div>
+{% endblock %}
