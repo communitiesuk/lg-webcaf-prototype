@@ -1,0 +1,26 @@
+{# S10b — setup / add-a-function — Figma node 393:1080 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: service.name,
+        title: "Add a function",
+        intro: "Functions are the parts that deliver this service. A critical system can be linked to a whole service, or to one function within it."
+      }) }}
+
+      <form method="post" action="/setup/essential-services/{{ service.id }}/functions/add" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="newFunctionName">Name of the function</label>
+          <input class="govuk-input" id="newFunctionName" name="newFunctionName" type="text" value="">
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

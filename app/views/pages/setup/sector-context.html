@@ -1,0 +1,37 @@
+{# S02 — setup / sector-context — Figma node 481:2362.
+   Also serves S02b (node 482:2340): same page with a success banner when commentReceived is set. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if commentReceived %}
+        {% set commentBannerHtml %}
+          <h3 class="govuk-notification-banner__heading">We have received your comment</h3>
+          <p class="govuk-body">We will review what you told us about your sector context. You can still confirm it and carry on.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ type: "success", html: commentBannerHtml }) }}
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Organisational context",
+        title: "Your sector context",
+        intro: "MHCLG has filled this in for all metropolitan borough councils. You cannot change it here. Read it, then confirm it looks right, or tell us if it does not."
+      }) }}
+
+      <div class="govuk-inset-text">
+        Metropolitan borough councils deliver services such as adult and children's social care, housing, benefits, waste and planning. Cyber attacks on councils of this type have most often affected social care, revenue and benefits, and public-facing portals.
+      </div>
+
+      <p class="govuk-body"><a class="govuk-link" href="/setup/sector-context/wrong">Tell us if this is wrong</a></p>
+
+      <form method="post" action="/setup/sector-context" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{# S17 — setup / shared-with-councils — Figma node 393:433 #}
+{% extends "layouts/setup.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">{{ system.name }}</span>
+        <h1 class="govuk-fieldset__heading">Is this system shared with other councils?</h1>
+      {% endset %}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/shared-with-councils" novalidate>
+        {{ govukRadios({
+          name: "sharedWithCouncils",
+          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          items: [
+            { value: "yes", text: "Yes", checked: system.sharedWithCouncils },
+            { value: "no", text: "No" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

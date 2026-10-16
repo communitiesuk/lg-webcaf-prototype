@@ -1,0 +1,28 @@
+{# S47 — setup / remove-a-critical-system — Figma node 393:1501 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "Are you sure you want to remove " + system.name + "?",
+        intro: "It is not in this cycle's plan. Removing it will:"
+      }) }}
+
+      <ul class="govuk-list govuk-list--bullet">
+        {% for bullet in consequences.bullets %}
+          <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/remove" novalidate>
+        <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
+      </form>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/{{ system.id }}/edit">Cancel</a>
+    </div>
+  </div>
+{% endblock %}

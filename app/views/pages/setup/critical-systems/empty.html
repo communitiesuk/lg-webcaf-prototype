@@ -1,0 +1,20 @@
+{# S13 — setup / critical-systems (empty) — Figma node 393:316 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Your critical systems",
+        title: "Your critical systems",
+        intro: "Add every critical system, whether or not you have added your essential services yet. You can link each system to the services it supports now, or later.",
+        intro2: "A critical system is a network or information system your essential services depend on."
+      }) }}
+
+      <a class="govuk-button" data-module="govuk-button" href="/setup/critical-systems/add">Add a critical system</a>
+    </div>
+  </div>
+{% endblock %}

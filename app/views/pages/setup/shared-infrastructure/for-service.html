@@ -1,0 +1,47 @@
+{# S38 — setup / core-infrastructure-for-this-service — Figma node 393:1238 #}
+{% extends "layouts/setup.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">{{ service.name }}</span>
+        <h1 class="govuk-fieldset__heading">What core infrastructure supports {{ service.name }}?</h1>
+      {% endset %}
+
+      {% set platformItems = [] %}
+      {% for p in platforms %}
+        {% set _ = platformItems.push({ value: p.id, text: p.name, checked: p.checked }) %}
+      {% endfor %}
+
+      <form method="post" action="/setup/essential-services/{{ service.id }}/core-infrastructure" novalidate>
+        {{ govukCheckboxes({
+          name: "servicePlatforms",
+          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          hint: { text: "Shared platforms such as identity, network, hosting, integration and monitoring. Tick any you have already listed for other services, or add a new one." },
+          items: platformItems
+        }) }}
+
+        {{ govukDetails({
+          summaryText: "What counts as core infrastructure?",
+          text: "Core infrastructure is the shared platforms your services and systems depend on, such as identity, network, hosting, integration and monitoring."
+        }) }}
+
+        <div class="govuk-!-margin-bottom-3">
+          {{ govukButton({ text: "Add a platform", href: "/setup/shared-infrastructure/add-platform?return=service:" + service.id, classes: "govuk-button--secondary" }) }}
+        </div>
+        <div class="govuk-!-margin-bottom-3">
+          {{ govukButton({ text: "Save and continue", name: "action", value: "continue" }) }}
+        </div>
+        {{ govukButton({ text: "Link infrastructure later", name: "action", value: "later", classes: "govuk-button--secondary" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

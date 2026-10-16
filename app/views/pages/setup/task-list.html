@@ -1,0 +1,27 @@
+{# S01 — setup / task-list — Figma node 393:18 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: councilName,
+        title: "Set up your council",
+        intro: "You only do this once. It is reused every time you assess, and you can change it whenever something changes."
+      }) }}
+
+      {{ govukTaskList({ items: tasks.preServices, idPrefix: "setup-task-pre" }) }}
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-8">Your services and systems</h2>
+      <p class="govuk-body">Do these in any order. Start with whatever you already know: if you have a list of critical systems from a business impact analysis or Get CAF Ready, you can start there. You can link things to each other now, or later.</p>
+
+      {{ govukTaskList({ items: tasks.servicesAndSystems, idPrefix: "setup-task-services" }) }}
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-8">Finish setting up</h2>
+
+      {{ govukTaskList({ items: tasks.finish, idPrefix: "setup-task-finish" }) }}
+    </div>
+  </div>
+{% endblock %}

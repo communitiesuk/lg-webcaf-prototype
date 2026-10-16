@@ -1,0 +1,60 @@
+{# S30 — setup / check-your-answers — Figma node 393:759 #}
+{# Note: the design uses H2 section headings above the summary lists and a "Confirm and
+   finish setup" button (diverges from the project's check-answers convention). Built as
+   designed. Values are DERIVED from the current state (mid-journey), so they reflect the
+   real setup rather than the design frame's fully-complete example. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% macro row(key, value, href) %}
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">{{ key }}</dt>
+    <dd class="govuk-summary-list__value">{{ value }}</dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="{{ href }}">Change<span class="govuk-visually-hidden"> {{ key }}</span></a>
+    </dd>
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Check and confirm",
+        title: "Check your setup"
+      }) }}
+
+      <h2 class="govuk-heading-m">People</h2>
+      <dl class="govuk-summary-list">
+        {{ row("CAF Lead", summary.cafLead + ", confirmed", "/setup/not-in-this-prototype") }}
+        {{ row("Approver", summary.approver + ", confirmed", "/setup/not-in-this-prototype") }}
+      </dl>
+      <div class="govuk-inset-text">Setup is only complete once both a CAF Lead and an Approver are confirmed.</div>
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Organisational context</h2>
+      <dl class="govuk-summary-list">
+        {{ row("Sector context", "Read and confirmed" if summary.sectorConfirmed else "Not confirmed", "/setup/sector-context") }}
+        {{ row("Council context", "Provided" if summary.councilContextProvided else "Not provided", "/setup/council-context") }}
+      </dl>
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">How you identify services and systems</h2>
+      <dl class="govuk-summary-list">
+        {{ row("Methodology", summary.methodology, "/setup/methodology") }}
+      </dl>
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Your services and systems</h2>
+      <dl class="govuk-summary-list">
+        {{ row("Essential services", summary.servicesCount + " added", "/setup/essential-services") }}
+        {{ row("Core infrastructure", summary.platformsCount + " shared platforms, linked to your services", "/setup/shared-infrastructure") }}
+        {{ row("Critical systems", (summary.systemsCount + " added, all with owners and ratings") if summary.systemsAllComplete else (summary.systemsCount + " added"), "/setup/critical-systems") }}
+        {{ row("How critical your systems are", summary.criticality, "/setup/critical-systems") }}
+      </dl>
+
+      <form method="post" action="/setup/check-your-setup" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and finish setup</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

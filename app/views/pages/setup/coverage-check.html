@@ -1,0 +1,50 @@
+{# S24 — setup / coverage-check — Figma node 393:591 — PROPOSAL (finish with unlinked items) #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Check and confirm",
+        title: "Check nothing is missing"
+      }) }}
+
+      {{ appNotificationBanner({
+        type: "information",
+        heading: warnings.length + (" thing to look at" if warnings.length == 1 else " things to look at"),
+        body: "You can still carry on. These are reminders, not blockers."
+      }) }}
+
+      {% if concentration %}
+        <div class="govuk-inset-text">{{ concentration }}</div>
+      {% endif %}
+
+      {% for warning in warnings %}
+        <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+            <span class="govuk-visually-hidden">Warning</span>
+            {{ warning }}
+          </strong>
+        </div>
+      {% endfor %}
+
+      <div class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Add the missing details</a>
+      </div>
+      {% if noSystemService %}
+        <div class="govuk-!-margin-bottom-3">
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/add">Add a system for {{ noSystemService.name }}</a>
+        </div>
+        <div class="govuk-!-margin-bottom-3">
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ noSystemService.id }}/no-system-reason">Record why no system is needed</a>
+        </div>
+      {% endif %}
+      <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue anyway</a>
+    </div>
+  </div>
+{% endblock %}

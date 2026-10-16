@@ -1,0 +1,113 @@
+{# S03 — setup / council-context — Figma node 481:3415 (v7).
+   CNI and Operational Technology are now dropdowns, above the checkboxes. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Organisational context",
+        title: "Your council context",
+        intro: "Tell us anything that would help your assurer or MHCLG appropriately contextualise your CAF assessments."
+      }) }}
+
+      <form method="post" action="/setup/council-context" novalidate>
+
+        {#
+          PLACEHOLDER option lists, pending agreement (v7). The CNI and Operational Technology
+          sector/type lists are not agreed. "Placeholder sector/type" values are stand-ins only.
+          Do not treat them as a real list.
+        #}
+        {{ govukSelect({
+          id: "councilContextCni",
+          name: "councilContextCni",
+          label: { text: "Critical national infrastructure (CNI) sector", classes: "govuk-label--s" },
+          hint: { text: "Choose the sector, if any. Option list not yet agreed." },
+          items: [
+            { value: "", text: "Select a sector", selected: not context.cni },
+            { value: "placeholder-sector-1", text: "Placeholder sector 1", selected: context.cni == "placeholder-sector-1" },
+            { value: "placeholder-sector-2", text: "Placeholder sector 2", selected: context.cni == "placeholder-sector-2" }
+          ]
+        }) }}
+
+        {{ govukSelect({
+          id: "councilContextOt",
+          name: "councilContextOt",
+          label: { text: "Operational Technology (OT)", classes: "govuk-label--s" },
+          hint: { text: "Choose the type, if any. Option list not yet agreed." },
+          items: [
+            { value: "", text: "Select a type", selected: not context.ot },
+            { value: "placeholder-ot-1", text: "Placeholder type 1", selected: context.ot == "placeholder-ot-1" },
+            { value: "placeholder-ot-2", text: "Placeholder type 2", selected: context.ot == "placeholder-ot-2" }
+          ]
+        }) }}
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset" aria-describedby="council-context-hint">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+              Do any of these also apply to your council?
+            </legend>
+            <div id="council-context-hint" class="govuk-hint">Select all that apply</div>
+
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="cc-recent-it" name="councilContextApplies" type="checkbox" value="recent-it" data-aria-controls="cc-recent-it-conditional" {% if context.recentIt %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="cc-recent-it">Recent IT transformation</label>
+              </div>
+              <div class="govuk-checkboxes__conditional {% if not context.recentIt %}govuk-checkboxes__conditional--hidden{% endif %}" id="cc-recent-it-conditional">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-label--s" for="recentItDetail">What was it, and roughly when?</label>
+                  <div id="recentItDetail-hint" class="govuk-hint">For example, moved to Microsoft 365 in 2025</div>
+                  <input class="govuk-input" id="recentItDetail" name="recentItDetail" type="text" aria-describedby="recentItDetail-hint" value="{{ context.recentItDetail }}">
+                </div>
+              </div>
+
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="cc-upcoming-it" name="councilContextApplies" type="checkbox" value="upcoming-it" data-aria-controls="cc-upcoming-it-conditional" {% if context.upcomingIt %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="cc-upcoming-it">Upcoming IT transformation</label>
+              </div>
+              <div class="govuk-checkboxes__conditional {% if not context.upcomingIt %}govuk-checkboxes__conditional--hidden{% endif %}" id="cc-upcoming-it-conditional">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-label--s" for="upcomingItDetail">What is planned, and roughly when?</label>
+                  <input class="govuk-input" id="upcomingItDetail" name="upcomingItDetail" type="text" value="{{ context.upcomingItDetail }}">
+                </div>
+              </div>
+
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="cc-lgr" name="councilContextApplies" type="checkbox" value="lgr" data-aria-controls="cc-lgr-conditional" {% if context.lgr %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="cc-lgr">Local Government Reorganisation (LGR)</label>
+              </div>
+              <div class="govuk-checkboxes__conditional {% if not context.lgr %}govuk-checkboxes__conditional--hidden{% endif %}" id="cc-lgr-conditional">
+                <div class="govuk-form-group">
+                  <label class="govuk-label govuk-label--s" for="lgrDetail">What is changing, and roughly when?</label>
+                  <div id="lgrDetail-hint" class="govuk-hint">For example, merging with two district councils in April 2028</div>
+                  <input class="govuk-input" id="lgrDetail" name="lgrDetail" type="text" aria-describedby="lgrDetail-hint" value="{{ context.lgrDetail }}">
+                </div>
+              </div>
+
+              <div class="govuk-checkboxes__divider">or</div>
+
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="cc-none" name="councilContextNone" type="checkbox" value="none" data-behaviour="exclusive" {% if context["none"] %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="cc-none">None of these</label>
+              </div>
+
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="ccAnythingElse">Anything else your assurer or MHCLG should know? (optional)</label>
+          <textarea class="govuk-textarea" id="ccAnythingElse" name="ccAnythingElse" rows="3">{{ context.anythingElse }}</textarea>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

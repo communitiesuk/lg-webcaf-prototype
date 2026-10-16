@@ -1,0 +1,17 @@
+{#
+  Setup proposal note (Figma Setup v6).
+  Flags an un-agreed design proposal (S03 CNI wording, S12c, S15, S16, S24).
+  Set `proposalText` before including, e.g.
+    {% set proposalText = "..." %}
+    {% include "components/setup-proposal.njk" %}
+
+  Proposal notes are OFF — the prototype presents as a real service. To re-enable all
+  proposal notes in one place (e.g. for a design review), set the line below to true.
+#}
+{% set showSetupProposal = false %}
+{% if showSetupProposal and proposalText %}
+  <div class="app-proposal-note" role="note">
+    <span class="app-proposal-note__tag">Proposal</span>
+    <span class="app-proposal-note__text">{{ proposalText }}</span>
+  </div>
+{% endif %}

@@ -1,0 +1,42 @@
+{# S39 — setup / your-shared-infrastructure (hub) — Figma node 393:886 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Your core infrastructure",
+        title: "Your shared infrastructure",
+        intro: "Platforms your services and systems rely on, such as identity, network, hosting and monitoring. Add them here, or while you add a service or system. Each is recorded once."
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ row.name }}</dt>
+            <dd class="govuk-summary-list__value">{{ row.summary }}</dd>
+            <dd class="govuk-summary-list__actions">
+              {% if row.action == "Change" %}
+                <a class="govuk-link" href="/setup/shared-infrastructure/{{ row.id }}/edit">Change<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
+              {% else %}
+                <a class="govuk-link" href="/setup/shared-infrastructure/{{ row.id }}/relies">Link it<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
+              {% endif %}
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <div class="govuk-inset-text">
+        The counts show what relies on each platform. They become more useful once your critical systems are added.
+      </div>
+
+      <p class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=hub">Add a platform</a>
+      </p>
+      <a class="govuk-button" data-module="govuk-button" href="/setup/task-list">Back to set up your council</a>
+    </div>
+  </div>
+{% endblock %}

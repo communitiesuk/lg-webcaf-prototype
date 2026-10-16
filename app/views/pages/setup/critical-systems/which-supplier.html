@@ -1,0 +1,51 @@
+{# S16 — setup / which-supplier — Figma node 393:393 #}
+{# Multi-field page (supplier choice + optional note): H1 is the page heading; the radios
+   carry a visually-hidden legend, per the GDS pattern for pages with more than one question. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "Which supplier manages all or part of this system?"
+      }) }}
+
+      {% set supplierItems = [] %}
+      {% for s in suppliers %}
+        {% set _ = supplierItems.push({ value: s.id, text: s.name, checked: system.supplierId == s.id }) %}
+      {% endfor %}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/which-supplier" novalidate>
+        {{ govukRadios({
+          name: "whichSupplier",
+          fieldset: { legend: { text: "Which supplier manages all or part of this system?", classes: "govuk-visually-hidden" } },
+          hint: { text: "Suppliers you have already added" },
+          items: supplierItems
+        }) }}
+
+        <div class="govuk-!-margin-bottom-5">
+          {{ govukButton({ text: "Add a supplier that is not listed", href: "/setup/suppliers/add?return=system:" + system.id, classes: "govuk-button--secondary" }) }}
+        </div>
+
+        {{ govukTextarea({
+          id: "supplierNote",
+          name: "supplierNote",
+          label: { text: "What does the supplier manage, and what does the council manage? (optional)", classes: "govuk-label--s" },
+          hint: { text: "For example, the supplier hosts and patches the application, and the council manages user access." },
+          rows: 3,
+          value: system.supplierNote
+        }) }}
+
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

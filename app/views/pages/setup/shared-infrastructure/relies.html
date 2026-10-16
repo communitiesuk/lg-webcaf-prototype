@@ -1,0 +1,47 @@
+{# S45 — setup / what-relies-on-this-platform — Figma node 393:1415 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: platform.name,
+        title: "What relies on " + platform.name + "?",
+        intro: "Tick the services and systems that use it. Only what you have already added is listed; you can link more later."
+      }) }}
+
+      <form method="post" action="/setup/shared-infrastructure/{{ platform.id }}/relies" novalidate>
+        <div class="govuk-form-group">
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Essential services</h2>
+            {% for s in model.services %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="reliesServices-{{ loop.index }}" name="reliesServices" type="checkbox" value="{{ s.id }}" {% if s.checked %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="reliesServices-{{ loop.index }}">{{ s.name }}</label>
+              </div>
+            {% endfor %}
+
+            <h2 class="govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-2">Critical systems</h2>
+            {% for s in model.systems %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="reliesSystems-{{ loop.index }}" name="reliesSystems" type="checkbox" value="{{ s.id }}" {% if s.checked %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="reliesSystems-{{ loop.index }}">{{ s.name }}</label>
+              </div>
+            {% endfor %}
+
+            <div class="govuk-checkboxes__divider">or</div>
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="reliesLater" name="reliesLater" type="checkbox" value="later" data-behaviour="exclusive">
+              <label class="govuk-label govuk-checkboxes__label" for="reliesLater">Nothing yet, I'll link this later</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

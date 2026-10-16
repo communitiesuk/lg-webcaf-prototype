@@ -1,0 +1,40 @@
+{# S20 — setup / shared-platforms-it-relies-on — Figma node 393:1031 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "Check the shared platforms this system relies on",
+        intro: "We have ticked the platforms that support the services this system is linked to. Untick any it does not use, or tick others it does."
+      }) }}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/platforms" novalidate>
+        <div class="govuk-form-group">
+          <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+            {% for p in platforms %}
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="systemPlatforms-{{ loop.index }}" name="systemPlatforms" type="checkbox" value="{{ p.id }}" {% if p.checked %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="systemPlatforms-{{ loop.index }}">{{ p.name }}</label>
+              </div>
+            {% endfor %}
+            <div class="govuk-checkboxes__divider">or</div>
+            <div class="govuk-checkboxes__item">
+              <input class="govuk-checkboxes__input" id="systemPlatformsLater" name="systemPlatformsLater" type="checkbox" value="later" data-behaviour="exclusive">
+              <label class="govuk-label govuk-checkboxes__label" for="systemPlatformsLater">Nothing yet, I'll link this later</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="govuk-!-margin-bottom-3">
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=system:{{ system.id }}">Add a platform that is not listed</a>
+        </div>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

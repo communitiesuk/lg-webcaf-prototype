@@ -1,0 +1,49 @@
+{# S35 — setup / choose-your-essential-services — Figma node 393:1189 #}
+{# S40 error state (nothing selected) — Figma node 393:1290 #}
+{% extends "layouts/setup.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {% set errText = (error.items | selectattr('field','equalto','essentialServiceChoices') | list | first).text %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: errText, href: "#essentialServiceChoices" }]
+        }) }}
+      {% endif %}
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">Your essential services</span>
+        <h1 class="govuk-fieldset__heading">Which essential services does your council deliver?</h1>
+      {% endset %}
+
+      {% set checkboxItems = [] %}
+      {% for option in options %}
+        {% set _ = checkboxItems.push({ value: option.name, text: option.name, checked: option.checked }) %}
+      {% endfor %}
+
+      <form method="post" action="/setup/essential-services/choose" novalidate>
+        {{ govukCheckboxes({
+          name: "essentialServiceChoices",
+          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          hint: { text: "These are the services metropolitan borough councils usually deliver. Select all that apply." },
+          errorMessage: { text: errText } if error else undefined,
+          items: checkboxItems
+        }) }}
+
+        <p class="govuk-!-margin-bottom-3">
+          {{ govukButton({ text: "Add a service that is not on the list", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
+        </p>
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

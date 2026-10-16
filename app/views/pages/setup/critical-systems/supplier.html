@@ -1,0 +1,37 @@
+{# S15 — setup / system-supplier — Figma node 393:356 #}
+{% extends "layouts/setup.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">{{ system.name }}</span>
+        <h1 class="govuk-fieldset__heading">Is this system managed by a third-party supplier?</h1>
+      {% endset %}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/supplier" novalidate>
+        {{ govukRadios({
+          name: "managedBySupplier",
+          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          items: [
+            { value: "fully", text: "Yes, fully", checked: system.managedBySupplier == "fully" },
+            { value: "partially", text: "Yes, partially", checked: system.managedBySupplier == "partially" },
+            { value: "council", text: "No, the council manages it", checked: system.managedBySupplier == "council" },
+            { value: "dontknow", text: "I don't know", checked: system.managedBySupplier == "dontknow" }
+          ]
+        }) }}
+
+        {{ govukInsetText({ text: "A supplier managing the system does not put it out of scope. You will be asked about scope separately." }) }}
+
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

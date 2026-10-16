@@ -1,0 +1,44 @@
+{# S28 — setup / impact-ratings — Figma node 393:676 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% macro ratingGroup(legend, name, selected) %}
+  <div class="govuk-form-group">
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{ legend }}</legend>
+      <div class="govuk-radios" data-module="govuk-radios">
+        {% for level in [["low", "Low"], ["medium", "Medium"], ["high", "High"]] %}
+          <div class="govuk-radios__item">
+            <input class="govuk-radios__input" id="{{ name }}-{{ level[0] }}" name="{{ name }}" type="radio" value="{{ level[0] }}" data-impact-input {% if selected == level[0] %}checked{% endif %}>
+            <label class="govuk-label govuk-radios__label" for="{{ name }}-{{ level[0] }}">{{ level[1] }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name + " · " + counter,
+        title: "What would the impact be if this system were compromised?"
+      }) }}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/impact" data-impact-form novalidate>
+        {{ ratingGroup("Confidentiality", "impactConfidentiality", system.impact.confidentiality) }}
+        {{ ratingGroup("Integrity", "impactIntegrity", system.impact.integrity) }}
+        {{ ratingGroup("Availability", "impactAvailability", system.impact.availability) }}
+
+        <div class="govuk-inset-text">
+          Overall criticality: <span data-criticality-output>{{ criticality or "not yet worked out" }}</span>. This is worked out from your three answers; you do not set it yourself. The four levels are Mission critical, Business critical, Business supporting and Non-critical.
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

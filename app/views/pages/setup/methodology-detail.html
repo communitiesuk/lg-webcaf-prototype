@@ -1,0 +1,36 @@
+{# S05 — setup / methodology-detail — Figma node 481:2429 (v7) #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "How you identify services and systems",
+        title: "Tell us about your methodology"
+      }) }}
+
+      <div class="govuk-inset-text">
+        Your own methodology is fine as long as it gives the same level of detail as the five-lens approach, and you explain it to your independent assurer.
+      </div>
+
+      <form method="post" action="/setup/methodology-detail" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="methodologyDetail">How do you identify your essential services and critical systems?</label>
+          <div id="methodologyDetail-hint" class="govuk-hint">Your assurer needs enough detail to follow what you did</div>
+          <textarea class="govuk-textarea" id="methodologyDetail" name="methodologyDetail" rows="5" aria-describedby="methodologyDetail-hint">{{ methodology.detail }}</textarea>
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="methodologyLink">Link to your methodology document (optional)</label>
+          <div id="methodologyLink-hint" class="govuk-hint">A link your assurer can open</div>
+          <input class="govuk-input" id="methodologyLink" name="methodologyLink" type="text" aria-describedby="methodologyLink-hint" value="{{ methodology.link }}">
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

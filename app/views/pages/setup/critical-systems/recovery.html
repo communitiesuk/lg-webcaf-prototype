@@ -1,0 +1,41 @@
+{# S29 — setup / recovery-objectives (under review) — Figma node 393:723 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name + " · " + counter,
+        title: "Recovery requirements"
+      }) }}
+
+      {{ appNotificationBanner({
+        type: "information",
+        title: "Under review",
+        heading: "This page may not stay here",
+        body: "Pending Rhys. Now asked for every in-scope system rather than two or three priority systems, which is a much bigger ask. It may move to the organisation assessment instead."
+      }) }}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/recovery" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="recoveryMtd">Maximum tolerable downtime (MTD)</label>
+          <input class="govuk-input" id="recoveryMtd" name="recoveryMtd" type="text" value="{{ system.recovery.mtd }}">
+        </div>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="recoveryRto">Recovery time objective (RTO)</label>
+          <input class="govuk-input" id="recoveryRto" name="recoveryRto" type="text" value="{{ system.recovery.rto }}">
+        </div>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="recoveryRpo">Recovery point objective (RPO)</label>
+          <input class="govuk-input" id="recoveryRpo" name="recoveryRpo" type="text" value="{{ system.recovery.rpo }}">
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

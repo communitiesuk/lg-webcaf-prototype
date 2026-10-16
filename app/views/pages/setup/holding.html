@@ -1,0 +1,19 @@
+{# Setup — out-of-scope holding page (links that leave the Setup section) #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  {% if backHref %}<a class="govuk-back-link" href="{{ backHref }}">Back</a>{% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        title: "This part is not built in this prototype"
+      }) }}
+
+      <p class="govuk-body">You followed a link to a part of the service that is outside this prototype.</p>
+
+      <p class="govuk-body"><a class="govuk-link" href="/setup/task-list">Return to set up your council</a></p>
+    </div>
+  </div>
+{% endblock %}

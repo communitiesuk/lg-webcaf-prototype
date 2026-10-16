@@ -1,0 +1,31 @@
+{# S02a — setup / tell us what looks wrong — Figma node 482:2291. Free text only. Does not change
+   the sector context; the user can go back and still confirm. Send → S02b (comment received). #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/setup/sector-context">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Organisational context",
+        title: "Tell us what looks wrong",
+        intro: "MHCLG fills in your sector context, so you cannot change it here. We will review what you tell us. You can still confirm your sector context and carry on."
+      }) }}
+
+      <form method="post" action="/setup/sector-context/wrong" novalidate>
+        {{ govukTextarea({
+          name: "sectorContextComment",
+          id: "sectorContextComment",
+          label: { text: "What looks wrong?", classes: "govuk-label--s" },
+          hint: { text: "For example, a service your council does not deliver, or one that is missing." },
+          value: comment
+        }) }}
+        {{ govukButton({ text: "Send" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

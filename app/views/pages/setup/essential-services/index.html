@@ -1,0 +1,43 @@
+{# S36 — setup / essential-services-hub — Figma node 393:261 #}
+{# S50 success state after a removal — Figma node 393:1600 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if removed %}
+        {{ appNotificationBanner({
+          type: "success",
+          heading: removed + " has been removed",
+          body: (orphan + " is no longer linked to any essential service.") if orphan else null
+        }) }}
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "Your essential services",
+        title: "Your essential services"
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ row.name }}</dt>
+            <dd class="govuk-summary-list__value">{{ row.summary }}</dd>
+            <dd class="govuk-summary-list__actions">
+              <a class="govuk-link" href="/setup/essential-services/{{ row.id }}/functions">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
+            </dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <p class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/add">Add a service that is not on the list</a>
+      </p>
+      <a class="govuk-button" data-module="govuk-button" href="/setup/shared-infrastructure">Save and continue</a>
+    </div>
+  </div>
+{% endblock %}

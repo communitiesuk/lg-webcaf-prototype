@@ -1,0 +1,50 @@
+{# S18 — setup / which-councils — Figma node 393:463 #}
+{# "Search for a council" is a GDS accessible autocomplete (progressive enhancement of
+   the <select> below). Selecting a council appends it to "Councils you have added". #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "Which councils share this system?"
+      }) }}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/councils" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="councilSearch-select">Search for a council</label>
+          <div id="councilSearch-hint" class="govuk-hint">Start typing, then choose from the list</div>
+          <select class="govuk-select" id="councilSearch-select" name="councilSearchSelect" aria-describedby="councilSearch-hint" data-council-autocomplete>
+            <option value="">Select a council</option>
+            {% for c in register %}
+              <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Councils you have added</legend>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="added-councils">
+              {% for council in system.councils %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="whichCouncils-{{ loop.index }}" name="whichCouncils" type="checkbox" value="{{ council }}" checked>
+                  <label class="govuk-label govuk-checkboxes__label" for="whichCouncils-{{ loop.index }}">{{ council }}</label>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+
+  {# accessible-autocomplete UMD global, enhanced by app/assets/javascripts/application.js #}
+  <script src="/public/javascripts/accessible-autocomplete.min.js"></script>
+{% endblock %}

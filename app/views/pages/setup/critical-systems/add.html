@@ -1,0 +1,80 @@
+{# S14 — setup / add-critical-system — Figma node 393:1664 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% set formAction = ("/setup/critical-systems/" + system.id + "/edit") if mode == "edit" else "/setup/critical-systems/add" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Your critical systems",
+        title: "Add a critical system"
+      }) }}
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="systemName">Name of the system</label>
+          <div id="systemName-hint" class="govuk-hint">The technical name, and what people call it</div>
+          <input class="govuk-input" id="systemName" name="systemName" type="text" aria-describedby="systemName-hint" value="{{ system.name }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="systemDescription">What does it do, and what would happen if it were compromised?</label>
+          <div id="systemDescription-hint" class="govuk-hint">For example, what would stop working, and who would be affected</div>
+          <textarea class="govuk-textarea" id="systemDescription" name="systemDescription" rows="4" aria-describedby="systemDescription-hint">{{ system.description }}</textarea>
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which essential services or functions does it support?</legend>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              {% for o in serviceOptions %}
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input" id="supportedServices-{{ loop.index }}" name="supportedServices" type="checkbox" value="{{ o.value }}" {% if o.value in system.supportedServices %}checked{% endif %}>
+                  <label class="govuk-label govuk-checkboxes__label" for="supportedServices-{{ loop.index }}">{{ o.label }}</label>
+                </div>
+              {% endfor %}
+              <div class="govuk-checkboxes__divider">or</div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="notSureServices" name="notSureServices" type="checkbox" value="later" data-behaviour="exclusive">
+                <label class="govuk-label govuk-checkboxes__label" for="notSureServices">Not sure yet, I'll link it later</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset" aria-describedby="assessedBefore-hint">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Has this system had a CAF assessment before?</legend>
+            <div id="assessedBefore-hint" class="govuk-hint">Including assessments done before this service existed</div>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assessedBefore-yes" name="assessedBefore" type="radio" value="yes" {% if system.assessedBefore == "yes" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assessedBefore-yes">Yes</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assessedBefore-no" name="assessedBefore" type="radio" value="no" {% if system.assessedBefore == "no" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assessedBefore-no">No</label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assessedBefore-dontknow" name="assessedBefore" type="radio" value="dontknow" {% if system.assessedBefore == "dontknow" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assessedBefore-dontknow">I don't know</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+
+      {% if mode == "edit" %}
+        <p class="govuk-body govuk-!-margin-top-4">
+          <a class="govuk-link" href="/setup/critical-systems/{{ system.id }}/remove">Remove this critical system</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

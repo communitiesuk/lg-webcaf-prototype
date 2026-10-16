@@ -1,0 +1,89 @@
+{# S12c — setup / add-core-infrastructure-platform — Figma node 393:937 — PROPOSAL (who manages) #}
+{# Built with nothing pre-selected and the "Which supplier?" reveal collapsed, per brief
+   (the design frame shows two radios selected at once, which is an illustration quirk). #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% set formAction = ("/setup/shared-infrastructure/" + platformId + "/edit") if mode == "edit" else "/setup/shared-infrastructure/add-platform" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: caption,
+        title: "Add a platform"
+      }) }}
+
+      {% set proposalText = "The \"who manages it?\" fully and partly options are a v6 proposal, not yet agreed." %}
+      {% include "components/setup-proposal.njk" %}
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        {% if mode != "edit" %}<input type="hidden" name="returnTo" value="{{ returnTo }}">{% endif %}
+
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="platformName">What is it called?</label>
+          <input class="govuk-input" id="platformName" name="platformName" type="text" value="{{ platform.name }}">
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">What type of platform is it?</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              {% for type in typeOptions %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="platformType-{{ loop.index }}" name="platformType" type="radio" value="{{ type }}" {% if platform.type == type %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="platformType-{{ loop.index }}">{{ type }}</label>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Who manages it?</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="platformManager-council" name="platformManager" type="radio" value="council" {% if platform.managedBy == "council" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="platformManager-council">The council</label>
+              </div>
+
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="platformManager-fully" name="platformManager" type="radio" value="supplier-fully" data-aria-controls="which-supplier-fully" {% if platform.managedBy == "supplier-fully" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="platformManager-fully">A third-party supplier, fully</label>
+              </div>
+              <div class="govuk-radios__conditional {% if platform.managedBy != 'supplier-fully' %}govuk-radios__conditional--hidden{% endif %}" id="which-supplier-fully">
+                {% set supplierGroup = "fully" %}
+                {% include "pages/setup/shared-infrastructure/_which-supplier.njk" %}
+              </div>
+
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="platformManager-partly" name="platformManager" type="radio" value="supplier-partly" data-aria-controls="which-supplier-partly" {% if platform.managedBy == "supplier-partly" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="platformManager-partly">A third-party supplier, partly</label>
+              </div>
+              <div class="govuk-radios__conditional {% if platform.managedBy != 'supplier-partly' %}govuk-radios__conditional--hidden{% endif %}" id="which-supplier-partly">
+                {% set supplierGroup = "partly" %}
+                {% include "pages/setup/shared-infrastructure/_which-supplier.njk" %}
+              </div>
+
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="platformManager-shared" name="platformManager" type="radio" value="shared" {% if platform.managedBy == "shared" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="platformManager-shared">A shared service</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and continue" if mode == "edit" else "Add" }}</button>
+      </form>
+
+      {% if mode == "edit" %}
+        <p class="govuk-body">
+          <a class="govuk-link" href="/setup/shared-infrastructure/{{ platformId }}/remove">Remove this platform</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

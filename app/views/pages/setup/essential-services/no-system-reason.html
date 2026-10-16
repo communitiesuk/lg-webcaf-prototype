@@ -1,0 +1,26 @@
+{# S42 — setup / why-no-critical-system — Figma node 393:1378 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: service.name,
+        title: "Why does " + service.name + " not need a critical system?"
+      }) }}
+
+      <form method="post" action="/setup/essential-services/{{ service.id }}/no-system-reason" novalidate>
+        <div class="govuk-form-group">
+          <label class="govuk-label govuk-label--s" for="noSystemReason">Reason</label>
+          <div id="noSystemReason-hint" class="govuk-hint">For example, it is run entirely by a contractor on their own systems, and assurance comes through the contract</div>
+          <textarea class="govuk-textarea" id="noSystemReason" name="noSystemReason" rows="4" aria-describedby="noSystemReason-hint">{{ service.noSystemReason }}</textarea>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and return</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

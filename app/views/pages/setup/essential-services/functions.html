@@ -1,0 +1,42 @@
+{# S10 — setup / service-functions — Figma node 393:214 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: service.name,
+        title: "What are the key functions of this service?",
+        intro: "Functions are the parts that deliver the service. Critical systems can be linked to a whole service, or to one function within it."
+      }) }}
+
+      {% if service.functions.length %}
+        <dl class="govuk-summary-list">
+          {% for fn in service.functions %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ fn.name }}</dt>
+              <dd class="govuk-summary-list__value">
+                <a class="govuk-link" href="/setup/essential-services/{{ service.id }}/functions/{{ fn.id }}/remove">Remove<span class="govuk-visually-hidden"> {{ fn.name }}</span></a>
+              </dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% endif %}
+
+      <p class="govuk-!-margin-bottom-3">
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ service.id }}/functions/add">Add a function</a>
+      </p>
+
+      <form method="post" action="/setup/essential-services/{{ service.id }}/functions" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+
+      <p class="govuk-body">
+        <a class="govuk-link" href="/setup/essential-services/{{ service.id }}/remove">Remove this service</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

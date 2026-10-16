@@ -1,0 +1,53 @@
+{# S19 — setup / corporate-services-provided — Figma node 393:1729 #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: system.name,
+        title: "What else does this system do for the council?",
+        intro: "Some systems also provide corporate or internal services. Knowing this early means nothing surprises you during an incident."
+      }) }}
+
+      <form method="post" action="/setup/critical-systems/{{ system.id }}/corporate-services" novalidate>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Select all that apply</legend>
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+              {% for o in options %}
+                {% if o.value == "other" %}
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" id="corporateServices-other" name="corporateServices" type="checkbox" value="other" data-aria-controls="corporate-other-conditional" {% if o.checked %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="corporateServices-other">Other</label>
+                  </div>
+                  <div class="govuk-checkboxes__conditional {% if not o.checked %}govuk-checkboxes__conditional--hidden{% endif %}" id="corporate-other-conditional">
+                    <div class="govuk-form-group">
+                      <label class="govuk-label" for="corporateServicesOther">What other service does it provide?</label>
+                      <input class="govuk-input" id="corporateServicesOther" name="corporateServicesOther" type="text" value="{{ system.corporateServicesOther }}">
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" id="corporateServices-{{ loop.index }}" name="corporateServices" type="checkbox" value="{{ o.value }}" {% if o.checked %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="corporateServices-{{ loop.index }}">{{ o.label }}</label>
+                  </div>
+                {% endif %}
+              {% endfor %}
+              <div class="govuk-checkboxes__divider">or</div>
+              <div class="govuk-checkboxes__item">
+                <input class="govuk-checkboxes__input" id="noneCorporate" name="noneCorporate" type="checkbox" value="none" data-behaviour="exclusive">
+                <label class="govuk-label govuk-checkboxes__label" for="noneCorporate">None of these</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
