@@ -1,0 +1,43 @@
+{# Prototype-only: stand-in for returning from GOV.UK One Login. NOT part of the service. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prototype only</span>
+      <h1 class="govuk-heading-l">Simulates returning from GOV.UK One Login</h1>
+      <p class="govuk-body">GOV.UK One Login is an external service and is not built here. Choose the signed-in email address to continue with. One Login only returns a verified email address.</p>
+
+      <form method="post" action="/prototype-sign-in" novalidate>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Signed-in email address (example data, not real)</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="email" name="oneLoginEmailInput" type="radio" value="{{ emails.recognised }}" {% if currentEmail == emails.recognised or not currentEmail %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="email">{{ emails.recognised }}</label>
+                <div class="govuk-hint govuk-radios__hint">Recognised for a council</div>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="email-2" name="oneLoginEmailInput" type="radio" value="{{ emails.unrecognised }}" {% if currentEmail == emails.unrecognised %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="email-2">{{ emails.unrecognised }}</label>
+                <div class="govuk-hint govuk-radios__hint">Not recognised for any council</div>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="email-3" name="oneLoginEmailInput" type="radio" value="{{ emails.sharedService }}" {% if currentEmail == emails.sharedService %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="email-3">{{ emails.sharedService }}</label>
+                <div class="govuk-hint govuk-radios__hint">Shared-service domain, recognised for more than one council</div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Continue to the service</button>
+      </form>
+
+      <p class="govuk-body"><a class="govuk-link" href="/prototype-scenarios">Choose a research scenario instead</a></p>
+    </div>
+  </div>
+{% endblock %}

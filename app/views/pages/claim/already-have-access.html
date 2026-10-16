@@ -1,0 +1,27 @@
+{# 17 claim / already-have-access — Figma node 209:3009 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">You already have access</p>
+        <p class="govuk-body">There is nothing else to do here.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ type: "success", titleText: "Success", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">You already have access to {{ councilName }}</h1>
+
+      <p class="govuk-body">You claimed this council on {{ registeredDate }}. You do not need to claim again.</p>
+      <p class="govuk-body">If you need access to a different council as well, you can claim that one separately.</p>
+
+      <div class="govuk-!-margin-bottom-3">
+        {{ govukButton({ text: "Go to your dashboard", href: "/setup/not-in-this-prototype" }) }}
+      </div>
+      {{ govukButton({ text: "Claim a different council", href: "/claim/find", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

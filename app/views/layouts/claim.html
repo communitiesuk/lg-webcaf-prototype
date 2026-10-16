@@ -1,0 +1,10 @@
+{#
+  Claim ("Claim your council") base layout (Figma Claim v3, page 209:2382).
+  Inherits the Beta phase banner and the design footer from the Setup base layout.
+  Service name, navigation and persona are set in res.locals by app/routes/claim.js
+  (pre-access "signed in, no council" vs post-access "access granted" chrome).
+#}
+{% extends "layouts/setup.html" %}
+
+{# Browser <title> must match the H1 (with "Error:" prefix on error pages). #}
+{% block pageTitle %}{{ pageTitle }} - Assess and manage your council's cyber resilience - GOV.UK{% endblock %}

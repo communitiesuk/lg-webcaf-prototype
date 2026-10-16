@@ -1,0 +1,32 @@
+{# 16 claim / registration-not-approved — Figma node 209:2913 — PROPOSAL #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">Your claim was not approved</p>
+        <p class="govuk-body">MHCLG could not confirm your connection to this council.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">Your claim was not approved</h1>
+
+      {% set proposalLabel = "Proposal" %}
+      {% set proposalText = "How MHCLG words the reasons, and whether a decision can be challenged, are not yet agreed." %}
+      {% include "components/claim-proposal.njk" %}
+
+      <p class="govuk-body">MHCLG could not confirm that {{ email }} is connected to {{ councilName }}.</p>
+
+      <h2 class="govuk-heading-m">What you can do</h2>
+      <p class="govuk-body">If your council has not registered your email domain, ask your IT team to arrange that, then claim again.</p>
+      <p class="govuk-body">If you chose the wrong council, you can start again and claim a different one.</p>
+      <p class="govuk-body">If you think this is wrong, email the CAF team at cafsupport@example.gov.uk.</p>
+
+      {{ govukButton({ text: "Claim a different council", href: "/claim/find", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

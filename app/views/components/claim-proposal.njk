@@ -1,0 +1,18 @@
+{#
+  Claim open-question / proposal note (Figma Claim v3).
+  Flags a screen or element the design has NOT agreed (e.g. frame 19 "domain matches more
+  than one council", frame 16 rejection wording). Set `proposalText`, and optionally
+  `proposalLabel` ("Proposal" by default, or "Open question"), before including:
+    {% set proposalLabel = "Open question" %}
+    {% set proposalText = "..." %}
+    {% include "components/claim-proposal.njk" %}
+
+  TO REMOVE ALL CLAIM PROPOSAL/OPEN-QUESTION NOTES IN ONE PLACE: set the line below to false.
+#}
+{% set showClaimProposal = true %}
+{% if showClaimProposal and proposalText %}
+  <div class="app-proposal-note" role="note">
+    <span class="app-proposal-note__tag">{{ proposalLabel or "Proposal" }}</span>
+    <span class="app-proposal-note__text">{{ proposalText }}</span>
+  </div>
+{% endif %}

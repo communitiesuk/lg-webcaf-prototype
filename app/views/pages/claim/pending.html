@@ -1,0 +1,34 @@
+{# 06 claim / registration-pending — Figma node 209:2573 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">We are checking your claim</p>
+        <p class="govuk-body">You will get an email when MHCLG has checked it.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">We are checking your claim</h1>
+
+      <p class="govuk-body">This is a one-time check because you are the first person from {{ councilName }} to claim it. It is not a check on you personally.</p>
+      <p class="govuk-body">While you wait, you can read the guidance on how the CAF works. You will not be able to see your council record until the check is done.</p>
+
+      {{ govukButton({ text: "Read the guidance", href: "/setup/not-in-this-prototype", classes: "govuk-button--secondary" }) }}
+
+      {# Prototype-only control (not part of the service). #}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+      <p class="govuk-caption-m">Prototype only</p>
+      <p class="govuk-body">Simulate the MHCLG decision. This is not part of the service.</p>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="/claim/pending/approve">Approve this claim</a>. Access granted (frame 07).</li>
+        <li><a class="govuk-link" href="/claim/pending/reject">Do not approve</a>. Claim not approved (frame 16).</li>
+        <li><a class="govuk-link" href="/claim/pending/still-checking">Sign in again while pending</a>. Still checking (frame 18).</li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

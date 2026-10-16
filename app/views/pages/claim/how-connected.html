@@ -1,0 +1,43 @@
+{# 08 claim / how-are-you-connected — Figma node 209:2646 ; 15 error — node 209:2882 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: error.message, href: "#connection" }]
+        }) }}
+      {% endif %}
+
+      {% set legendHtml %}
+        <span class="govuk-caption-l">Claim your council</span>
+        <h1 class="govuk-fieldset__heading">How are you connected to {{ councilName }}?</h1>
+      {% endset %}
+
+      <form method="post" action="/claim/how-connected" novalidate>
+        {{ govukRadios({
+          name: "connection",
+          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          hint: { text: "We did not recognise " + domain + " as an email address for this council. That is common, and it does not stop you claiming." },
+          errorMessage: { text: error.message } if error else undefined,
+          items: [
+            { value: "direct", text: "I work for the council directly", checked: connection == "direct" },
+            { value: "shared-managed", text: "I work for a shared service or managed service provider that supports the council", checked: connection == "shared-managed" },
+            { value: "something-else", text: "Something else", checked: connection == "something-else" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{# 18 claim / still-checking — Figma node 209:3045 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">We are still checking your claim</p>
+        <p class="govuk-body">You will get an email when MHCLG has checked it.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">We are still checking your claim</h1>
+
+      <p class="govuk-body">You claimed {{ councilName }} on {{ registeredDate }}. MHCLG has not finished checking it yet.</p>
+      <p class="govuk-body">You can read the guidance on how the CAF works while you wait. You will not be able to see your council record until the check is done.</p>
+
+      {{ govukButton({ text: "Read the guidance", href: "/setup/not-in-this-prototype", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

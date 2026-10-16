@@ -1,0 +1,59 @@
+{# 11 claim / check-answers (email not recognised) — Figma node 209:2747 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Claim your council</span>
+      <h1 class="govuk-heading-l">Check your answers</h1>
+
+      {% set rows = [
+        {
+          key: { text: "Council" },
+          value: { text: council.name },
+          actions: { items: [{ href: "/claim/find", text: "Change", visuallyHiddenText: "council" }] }
+        },
+        {
+          key: { text: "Your name" },
+          value: { text: person.fullName },
+          actions: { items: [{ href: "/claim/your-details", text: "Change", visuallyHiddenText: "your name" }] }
+        },
+        {
+          key: { text: "Job title" },
+          value: { text: person.jobTitle },
+          actions: { items: [{ href: "/claim/your-details", text: "Change", visuallyHiddenText: "job title" }] }
+        },
+        {
+          key: { text: "Email address" },
+          value: { text: email }
+        },
+        {
+          key: { text: "How you are connected" },
+          value: { text: connectionLabel },
+          actions: { items: [{ href: "/claim/how-connected", text: "Change", visuallyHiddenText: "how you are connected" }] }
+        }
+      ] %}
+      {% if isShared %}
+        {% set _ = rows.push({
+          key: { text: "Organisation" },
+          value: { text: organisation },
+          actions: { items: [{ href: "/claim/which-organisation", text: "Change", visuallyHiddenText: "organisation" }] }
+        }) %}
+      {% endif %}
+
+      {{ govukSummaryList({ rows: rows }) }}
+
+      {{ govukInsetText({ text: "MHCLG will check this claim before you get access, because we could not recognise your email address for this council." }) }}
+
+      <form method="post" action="/claim/check-unrecognised" novalidate>
+        {{ govukButton({ text: "Confirm and claim" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{# 07b claim / access-granted (joined existing) — Figma node 209:2977 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ govukPanel({
+        titleText: "Claim complete",
+        text: "You have joined " + councilName
+      }) }}
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">You now share the same council record as the {{ existingUserCount }} people already working on the CAF here.</p>
+      <p class="govuk-body">Your claim was not checked by MHCLG because your council is already using the service and we recognised your email address.</p>
+
+      {{ govukButton({ text: "Go to your dashboard", href: "/setup/not-in-this-prototype" }) }}
+    </div>
+  </div>
+{% endblock %}

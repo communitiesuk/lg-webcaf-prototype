@@ -1,0 +1,22 @@
+{# 07 claim / access-granted (first to join) — Figma node 209:2608 #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ govukPanel({
+        titleText: "Claim complete",
+        text: "Next, set up your council. The first task is confirming who your council's CAF Lead is. You can also invite colleagues, and see anything MHCLG already holds about your previous CAF assessments."
+      }) }}
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">You can set up your council, invite colleagues, and see anything MHCLG already holds about your previous CAF assessments.</p>
+      <p class="govuk-body">You have full access to this council record. Anyone else who claims with a recognised email address will join the same record.</p>
+
+      {{ govukButton({ text: "Go to your dashboard", href: "/setup/not-in-this-prototype" }) }}
+    </div>
+  </div>
+{% endblock %}

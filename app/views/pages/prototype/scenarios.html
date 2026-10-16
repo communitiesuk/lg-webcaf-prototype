@@ -1,0 +1,33 @@
+{# Prototype-only: research scenario switcher for Claim. NOT part of the service design. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Prototype only</span>
+      <h1 class="govuk-heading-l">Claim your council: research scenarios</h1>
+      <p class="govuk-body">Choose a scenario to jump into. Each one sets the example sign-in email and council state, then starts the Claim journey. This page is not part of the service.</p>
+
+      <form method="post" action="/prototype-scenarios" novalidate>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Scenario</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              {% for s in scenarios %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="scenario{% if not loop.first %}-{{ loop.index }}{% endif %}" name="scenario" type="radio" value="{{ s.key }}" {% if loop.first %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="scenario{% if not loop.first %}-{{ loop.index }}{% endif %}">{{ s.label }}</label>
+                  <div class="govuk-hint govuk-radios__hint">{{ s.detail }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="govuk-button" data-module="govuk-button" type="submit">Start scenario</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
