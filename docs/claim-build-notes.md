@@ -186,3 +186,48 @@ matches (unrecognised, shared-service) stay blank. Implemented on the native `<s
 **Verified (no regressions):** joining-others now flows find → your-details → check → **07b joined**;
 first-to-join still skips find → confirm; unrecognised stays blank → 08; domain-matches-many stays
 blank → 19 which-council; already-have-access pre-selects but still routes to 17.
+
+## Open questions
+
+### Prefilling the name on `/claim/your-details`
+
+**Question raised:** since users arrive via GOV.UK One Login, should "Full name" on
+`/claim/your-details` be prepopulated — either from One Login itself, or derived from the sign-in
+email address (kept editable)?
+
+**Finding — what One Login gives us:** on the default **authentication-only** integration (email +
+password + 2FA), One Login returns a verified **email address and a stable user ID, but no name** —
+it never collects one. A name is only available if the service adopts One Login **identity proving**
+(prove-your-identity with a passport or driving licence), which returns the person's *legal* name.
+For a council-staff service that would be disproportionate and is almost certainly not in scope. The
+job title is never from One Login in any case — it is council-specific and always asked.
+
+**Finding — deriving the name from the email is unreliable.** Tested against the prototype's own
+example emails:
+
+| Email | Derived name | Reality |
+|---|---|---|
+| `j.hart@westborough.gov.uk` | "J Hart" | user is **Jo Hart** — wrong |
+| `a.mensah@consultancy-cyber.co.uk` | "A Mensah" | initial only — incomplete |
+| `sam.okafor@novatech-services.co.uk` | "Sam Okafor" | correct |
+
+Two of the three demo scenarios would prefill a wrong or incomplete name. Real-world emails are
+worse (initials `jhart@`, capitalisation `mcdonald`→"Mcdonald" / `oneill`→"Oneill", role mailboxes
+`it.security@`, `cafteam@`). A field prefilled with a plausible-but-wrong value is worse than an
+empty one: people skim prefilled fields, so bad guesses get submitted and propagate to the approved
+plan, audit trail and "signed in as" line. This is the GDS anti-pattern of asking the user to check
+work the computer did badly.
+
+**Current behaviour (recommended default, no change):** email is shown (legitimately known); name is
+asked once; the field prefills on **return visits** (from our stored `claim.person`) and for
+**invited users** (the inviter's typed name, access A13). Job title always asked.
+
+**Decision needed:**
+1. Will the service use One Login **identity proving**? If yes, the first-claim name could prefill
+   from the verified identity — labelled "from your GOV.UK One Login identity, change if wrong",
+   still editable, job title still asked. If no (expected), leave `/claim/your-details` as is.
+   This is a service-team / Rosa question.
+2. Separately, do we want to **research** the email-derived-name idea? It is defensible only as a
+   deliberate research probe (a clearly-labelled "we guessed this from your email, check it is right"
+   suggestion), kept behind a scenario so it does not pollute the main walkthrough. Not recommended
+   as a shipped default. Not built.
