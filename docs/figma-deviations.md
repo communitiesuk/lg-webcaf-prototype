@@ -22,6 +22,7 @@ holding verbatim copy and a journey block.
 - Access A05/A19 "Who do you want to invite" — name now required
 - Setup S04 "methodology" — external five-lens guidance link in the details
 - Setup S30 "Check your setup" — read-only view variant when setup is already complete
+- Decide D09 "sent" — onboarding Book/Update wired to the Assurance booking journey (shared data, round-trips, returns to D09); both calls start not-booked
 
 **Journey / routing only (no new screens — update flow arrows and notes):**
 - Approver & CAF Lead change/task links return to Setup; invite path records a pending person
@@ -132,6 +133,14 @@ sign-off" so it's clear these originated in code, not agreed design.
 12. Decide "Nothing left to assess": "Review your critical systems" goes to the
     Setup critical-systems list with a route back to this Decide page.
 
+13. Decide D09 "Book your onboarding calls": the "Book"/"Update" link on each
+    onboarding call goes to the Assurance activities booking journey for that
+    activity (onboarding-org / onboarding-systems), carrying a return so the user
+    comes back to D09 after booking. Booked status is shared with the Assurance
+    section (single source of truth), so a booking made in either place shows in
+    both. D09 now starts with both calls "Not booked yet" (the mock drew the
+    critical-systems call pre-booked), which reads as "you have just sent, book now".
+
 For each, add the "Changed in build — prototype, pending design sign-off" note.
 ```
 
@@ -151,6 +160,7 @@ For each, add the "Changed in build — prototype, pending design sign-off" note
 | 8 | A05/A19 name required | `pages/access/invite-who.html`, `routes/access.js` · build commits |
 | 8a | S04 five-lens guidance link | `pages/setup/methodology.html` |
 | 3a | S30 read-only view when complete + R04 "View" → S30 | `pages/setup/check-your-setup.html`, `routes/setup.js`, `pages/dashboard/_ready-to-decide.html` |
+| 13 | D09 onboarding → Assurance booking journey (unified + return) | `routes/decide.js`, `routes/assurance.js`, `pages/assurance/{before-you-book,update-activity}.html`, `pages/decide/sent.html`, `data/seed/setup.js` · `2e806e0`, `064edf7` |
 | 9 | Return-to-Setup + pending invite | `routes/access.js`, `routes/setup.js`, `helpers/setup.js` · `77e3972`, `58565a2`, `c5e4afd` |
 | 10 | Claim → Dashboard | `pages/claim/{access-granted,joined,already-have-access}.html` · `58565a2` |
 | 11 | Dashboard dead-ends | `pages/decide/{systems-nothing-left,no-assurer}.html`, `pages/setup/complete.html` · `58565a2`, `c5e4afd` |

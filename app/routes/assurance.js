@@ -26,6 +26,8 @@ module.exports = function (router) {
     ensureSetup(req.session.data);
     ensureDecide(req.session.data);
     ensureAssurance(req.session.data);
+    // Landing on the hub ends any booking round-trip started elsewhere (e.g. from D09).
+    delete req.session.data.assuranceReturn;
     applyFullAccessChrome(req, res);
     res.render("pages/assurance/activities", {
       pageTitle: "Assurance activities",
@@ -42,9 +44,19 @@ module.exports = function (router) {
     applyFullAccessChrome(req, res);
     const activity = resolveBookActivity(req.params.activity, req.session.data);
     if (!activity) return res.redirect("/assurance-activities");
+    // When booking was started from another section (e.g. D09), carry a return so the user ends
+    // up back there. Only internal /decide/ returns are honoured.
+    const ret = (req.query.return || "").toString();
+    if (ret.startsWith("/decide/")) req.session.data.assuranceReturn = ret;
+    else delete req.session.data.assuranceReturn;
+    const returnQuery = req.session.data.assuranceReturn
+      ? "?return=" + encodeURIComponent(req.session.data.assuranceReturn)
+      : "";
     res.render("pages/assurance/before-you-book", {
       pageTitle: activity.h1,
       activity,
+      backHref: req.session.data.assuranceReturn || "/assurance-activities",
+      returnQuery,
     });
   });
 
@@ -57,11 +69,15 @@ module.exports = function (router) {
     if (!meta) return res.redirect("/assurance-activities");
     const act = ensureAssurance(req.session.data).activities[req.params.activity] || {};
     const parts = dateToParts(act.date);
+    const ret = (req.query.return || "").toString();
+    if (ret.startsWith("/decide/")) req.session.data.assuranceReturn = ret;
+    else delete req.session.data.assuranceReturn;
     res.render("pages/assurance/update-activity", {
       pageTitle: `Update your ${meta.name}`,
       activity: { id: req.params.activity, caption: meta.caption, name: meta.name },
       current: { status: act.status || "", day: parts.day, month: parts.month, year: parts.year },
       error: null,
+      backHref: req.session.data.assuranceReturn || "/assurance-activities",
     });
   });
 
@@ -84,6 +100,7 @@ module.exports = function (router) {
         activity: { id: req.params.activity, caption: meta.caption, name: meta.name },
         current: { status, day, month, year },
         error: { text: `Enter the date the ${meta.noun} is booked for` },
+        backHref: req.session.data.assuranceReturn || "/assurance-activities",
       });
     }
 
@@ -102,7 +119,10 @@ module.exports = function (router) {
     delete data["bookedDate-day"];
     delete data["bookedDate-month"];
     delete data["bookedDate-year"];
-    return res.redirect("/assurance-activities");
+    // Return to where the booking was started (e.g. D09) if set, else the assurance hub.
+    const ret = data.assuranceReturn;
+    delete data.assuranceReturn;
+    return res.redirect(ret || "/assurance-activities");
   });
 
   // EXTERNAL — Microsoft Bookings. A labelled stand-in: WebCAF does not design this page.

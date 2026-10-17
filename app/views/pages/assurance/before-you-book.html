@@ -5,7 +5,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
-  <a class="govuk-back-link" href="/assurance-activities">Back</a>
+  <a class="govuk-back-link" href="{{ backHref or '/assurance-activities' }}">Back</a>
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l">{{ activity.caption }}</span>
@@ -33,7 +33,7 @@
         attributes: { target: "_blank", rel: "noopener noreferrer" }
       }) }}
 
-      <p class="govuk-body"><a class="govuk-link" href="/assurance-activities/update/{{ activity.activityId }}">I have already booked this</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="/assurance-activities/update/{{ activity.activityId }}{{ returnQuery }}">I have already booked this</a></p>
     </div>
   </div>
 {% endblock %}

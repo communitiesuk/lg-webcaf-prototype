@@ -556,7 +556,7 @@ function bookingRow(activityId, label, entry) {
     label,
     value,
     action: done ? "Update" : "Book",
-    href: (done ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId,
+    href: (done ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId + "?return=/decide/sent",
   };
 }
 
