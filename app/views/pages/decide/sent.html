@@ -20,7 +20,7 @@
             <dt class="govuk-summary-list__key">{{ row.label }}</dt>
             <dd class="govuk-summary-list__value">{{ row.value }}</dd>
             <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="/setup/not-in-this-prototype">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.label }}</span></a>
+              <a class="govuk-link" href="{{ row.href }}">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.label }}</span></a>
             </dd>
           </div>
         {% endfor %}

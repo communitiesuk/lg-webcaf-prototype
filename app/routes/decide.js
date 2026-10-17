@@ -348,8 +348,8 @@ module.exports = function (router) {
     const hasSystems = ((decide.cycle && decide.cycle.selectedSystems) || []).length > 0;
     const booking = decide.onboarding || {};
     const rows = [];
-    if (orgIncluded) rows.push(bookingRow("Step 1: Onboarding, organisation assessment", booking.organisation));
-    if (hasSystems) rows.push(bookingRow("Step 1: Onboarding, critical systems", booking.systems));
+    if (orgIncluded) rows.push(bookingRow("onboarding-org", "Step 1: Onboarding, organisation assessment", booking.organisation));
+    if (hasSystems) rows.push(bookingRow("onboarding-systems", "Step 1: Onboarding, critical systems", booking.systems));
     res.render("pages/decide/sent", {
       pageTitle: "Plan sent to your assurer",
       backHref: "/decide/review",
@@ -535,12 +535,14 @@ function approveModel(setup, decide, opts) {
 }
 
 // A D09 onboarding booking row from a { status, date } entry.
-function bookingRow(label, entry) {
+function bookingRow(activityId, label, entry) {
   const booked = entry && entry.status === "booked";
+  // Link each call to the Assurance activities booking journey for that activity.
   return {
     label,
     value: booked ? "Booked for " + (entry.date || "") : "Not booked yet",
     action: booked ? "Update" : "Book",
+    href: (booked ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId,
   };
 }
 
