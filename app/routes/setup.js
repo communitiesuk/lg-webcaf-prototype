@@ -1164,10 +1164,14 @@ module.exports = function (router) {
   // S30 — Check your setup (Figma 393:759)
   router.get("/setup/check-your-setup", (req, res) => {
     const setup = ensureSetup(req.session.data);
+    // After setup is finished this page is a read-only "view your setup" (reached from the
+    // dashboard council record); before, it is the pre-finish check with the Confirm button.
+    const isComplete = Boolean(setup.completed);
     res.render("pages/setup/check-your-setup", {
       pageTitle: "Check your setup",
-      backHref: "/setup/coverage-check",
+      backHref: isComplete ? "/dashboard" : "/setup/coverage-check",
       summary: buildSetupSummary(setup),
+      isComplete,
     });
   });
 

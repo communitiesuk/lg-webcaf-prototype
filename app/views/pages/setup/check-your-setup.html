@@ -60,9 +60,11 @@
         {{ row("How critical your systems are", summary.criticality, "/setup/critical-systems") }}
       </dl>
 
-      <form method="post" action="/setup/check-your-setup" novalidate>
-        <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and finish setup</button>
-      </form>
+      {% if not isComplete %}
+        <form method="post" action="/setup/check-your-setup" novalidate>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Confirm and finish setup</button>
+        </form>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

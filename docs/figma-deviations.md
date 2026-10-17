@@ -21,6 +21,7 @@ holding verbatim copy and a journey block.
 - Access A13 "Check your details" — error state + "(optional)" job title
 - Access A05/A19 "Who do you want to invite" — name now required
 - Setup S04 "methodology" — external five-lens guidance link in the details
+- Setup S30 "Check your setup" — read-only view variant when setup is already complete
 
 **Journey / routing only (no new screens — update flow arrows and notes):**
 - Approver & CAF Lead change/task links return to Setup; invite path records a pending person
@@ -78,6 +79,14 @@ sign-off" so it's clear these originated in code, not agreed design.
      the "Error:" prefix.
    Reason: the Approver is now confirmed as a real Setup step (recorded = confirmed,
    invited = pending), and finishing is gated on both people being named.
+
+3a. Setup S30 also has a READ-ONLY VIEW variant: when reached after setup is
+   complete (from the dashboard "Your council record -> Setup -> View"), it shows
+   the same summary with Change links but NO "Confirm and finish setup" button,
+   and the back link returns to the dashboard. During setup (not yet complete) it
+   is the pre-finish check as normal. Note: the dashboard R04 "View" link was
+   corrected to point at S30 (the setup summary), per the Figma journey "View
+   setup -> S30"; it previously went to S31 "Setup complete" (the done-page).
 
 4. Access A09 "Invitation sent": add a primary button "Back to your setup" shown
    ONLY when the invite was started from Setup (naming an Approver or new CAF Lead).
@@ -141,6 +150,7 @@ For each, add the "Changed in build — prototype, pending design sign-off" note
 | 7 | A13 error + optional | `pages/access/accept-confirm-name.html`, `routes/access.js` · build commits |
 | 8 | A05/A19 name required | `pages/access/invite-who.html`, `routes/access.js` · build commits |
 | 8a | S04 five-lens guidance link | `pages/setup/methodology.html` |
+| 3a | S30 read-only view when complete + R04 "View" → S30 | `pages/setup/check-your-setup.html`, `routes/setup.js`, `pages/dashboard/_ready-to-decide.html` |
 | 9 | Return-to-Setup + pending invite | `routes/access.js`, `routes/setup.js`, `helpers/setup.js` · `77e3972`, `58565a2`, `c5e4afd` |
 | 10 | Claim → Dashboard | `pages/claim/{access-granted,joined,already-have-access}.html` · `58565a2` |
 | 11 | Dashboard dead-ends | `pages/decide/{systems-nothing-left,no-assurer}.html`, `pages/setup/complete.html` · `58565a2`, `c5e4afd` |
