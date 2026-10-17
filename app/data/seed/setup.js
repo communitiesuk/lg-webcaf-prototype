@@ -385,10 +385,6 @@ function buildDecideSeed() {
     // Pre-filled assurer comment (shown on D07 textarea and quoted on D08). EXAMPLE DATA.
     assurerFeedback:
       "Consider whether Urban traffic control should be in this cycle rather than deferred, given it has never been assessed.",
-    onboarding: {
-      organisation: { status: "not-booked", date: "" },
-      systems: { status: "booked", date: "10 March 2027" },
-    },
     // Approval state (D11–D14). Date/returnReason pre-filled with the design examples so the
     // D12/D13/D14 screens render meaningfully; set for real on D11/D12 submit. EXAMPLE DATA.
     approval: {
@@ -415,10 +411,6 @@ function buildDecideSeedEmpty() {
     timing: {},
     plan: { sentToAssurer: false },
     assurerFeedback: "",
-    onboarding: {
-      organisation: { status: "not-booked", date: "" },
-      systems: { status: "not-booked", date: "" },
-    },
     approval: { decision: "", by: "", date: "", how: "", link: "", returnReason: "" },
   };
 }

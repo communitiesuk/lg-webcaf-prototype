@@ -19,6 +19,8 @@ const {
   buildPlanSummary,
   buildPriorityWarning,
 } = require("../data/helpers/decide");
+// Onboarding bookings are owned by the Assurance activities section (single source of truth).
+const { ensureAssurance } = require("../data/helpers/assurance");
 
 function clean(value) {
   return (value || "").toString().trim();
@@ -323,6 +325,13 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     decide.plan = decide.plan || {};
     decide.plan.sentToAssurer = true;
+    // Sending the plan starts this cycle's onboarding. Reset the cycle's assurance activities to
+    // "not booked yet" (the single source of truth, shared with the Assurance section) so D09
+    // prompts the user to book them. Bookings made afterwards flow back to D09.
+    const assurance = ensureAssurance(req.session.data);
+    ["onboarding-org", "onboarding-systems", "pre-call"].forEach((id) => {
+      assurance.activities[id] = { status: "not-booked", date: "" };
+    });
     // D09 (assurer assigned) vs D06 (no assurer).
     if (setup.assurer && setup.assurer.assigned) {
       return res.redirect("/decide/sent");
@@ -346,10 +355,10 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     const orgIncluded = !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
     const hasSystems = ((decide.cycle && decide.cycle.selectedSystems) || []).length > 0;
-    const booking = decide.onboarding || {};
+    const acts = ensureAssurance(req.session.data).activities || {};
     const rows = [];
-    if (orgIncluded) rows.push(bookingRow("onboarding-org", "Step 1: Onboarding, organisation assessment", booking.organisation));
-    if (hasSystems) rows.push(bookingRow("onboarding-systems", "Step 1: Onboarding, critical systems", booking.systems));
+    if (orgIncluded) rows.push(bookingRow("onboarding-org", "Step 1: Onboarding, organisation assessment", acts["onboarding-org"]));
+    if (hasSystems) rows.push(bookingRow("onboarding-systems", "Step 1: Onboarding, critical systems", acts["onboarding-systems"]));
     res.render("pages/decide/sent", {
       pageTitle: "Plan sent to your assurer",
       backHref: "/decide/review",
@@ -536,13 +545,18 @@ function approveModel(setup, decide, opts) {
 
 // A D09 onboarding booking row from a { status, date } entry.
 function bookingRow(activityId, label, entry) {
-  const booked = entry && entry.status === "booked";
-  // Link each call to the Assurance activities booking journey for that activity.
+  const status = entry && entry.status;
+  const done = status === "booked" || status === "happened";
+  // Status + link come from assurance.activities (shared with the Assurance section), so bookings
+  // made there show here and vice versa. Link to that section's booking journey for this activity.
+  let value = "Not booked yet";
+  if (status === "happened") value = "Call completed";
+  else if (status === "booked") value = "Booked for " + (entry.date || "");
   return {
     label,
-    value: booked ? "Booked for " + (entry.date || "") : "Not booked yet",
-    action: booked ? "Update" : "Book",
-    href: (booked ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId,
+    value,
+    action: done ? "Update" : "Book",
+    href: (done ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId,
   };
 }
 
