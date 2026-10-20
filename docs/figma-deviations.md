@@ -187,6 +187,11 @@ access, 19 which council.
 - **`/beta/reset` "Reset the prototype" control page** — a sign-in scenario picker (invited /
   has access / new user / claim pending / claim rejected / council being checked), a "Clear all
   prototype data" action, and a "View as the CAF Lead" link. Prototype control, not service copy.
+- **Empty council starts with no CAF Lead confirmed** — `buildSetupSeedEmpty` no longer
+  pre-confirms the CAF Lead, so from a fresh claim task 1 "Confirm your CAF Lead" reads "Not
+  started" and the dashboard reads "Not started" (0 of 8), not "in progress". Confirming the CAF
+  Lead (A22) now writes back to Setup's people state, so the task completes and the dashboard moves
+  to "In progress". The populated demo council is unchanged.
 - **`/beta/walkthrough` one-link research journey** — a clean-session link for a brand-new user,
   dropped at the real start page, so a participant goes start → Internal Access → claim a council
   → (prototype "Approve this claim" stands in for MHCLG) → access granted → dashboard → set up,

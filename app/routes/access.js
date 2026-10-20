@@ -151,6 +151,14 @@ module.exports = function (router) {
     const me = currentUser(access);
     const targetId = choice === "me" ? (me ? me.id : "jo-hart") : personId;
     const person = setCafLead(access, targetId);
+    // Recording a CAF Lead completes Setup task 1 — mirror the name into Setup's people state so the
+    // task list and dashboard reflect it. Changed in build, prototype, pending design sign-off.
+    const setup = ensureSetup(req.session.data);
+    if (person && setup.people && setup.people.cafLead) {
+      setup.people.cafLead.name = person.name;
+      setup.people.cafLead.confirmed = true;
+      setup.people.cafLead.pending = false;
+    }
     return res.redirect(`/access/caf-lead/confirmed?who=${person && person.isCurrentUser ? "me" : targetId}`);
   });
 

@@ -331,7 +331,10 @@ function buildSetupSeedEmpty() {
     },
 
     people: {
-      cafLead: { name: "Jo Hart", confirmed: true },
+      // CAF Lead not confirmed — from an empty council the user confirms it in task 1 (Access A22),
+      // so the task list starts "Not started" and the dashboard reads "Not started", not in progress.
+      // Changed in build, prototype, pending design sign-off.
+      cafLead: { name: "", confirmed: false },
       // Approver not yet confirmed — the user records it in task 7 (Access A27).
       approver: { name: "", jobTitle: "", confirmed: false, hasAccount: false },
     },
