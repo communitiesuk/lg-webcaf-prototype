@@ -55,6 +55,23 @@ function ensureAccess(sessionData) {
   return sessionData.access;
 }
 
+// Empty Access state for a brand-new, just-claimed council: only the signed-in person, with no
+// other people, invitations or audit trail. The current user's name and email are filled in from
+// the claim at access-granted (syncAccessCurrentUser in routes/claim.js).
+// Changed in build, prototype, pending design sign-off.
+function buildAccessEmpty() {
+  return {
+    people: [
+      { id: "you", name: "", firstName: "", role: "full", isCurrentUser: true, emailType: "council", email: "", lastActive: "today", hasAccount: true, canChange: true, outcomes: [] },
+    ],
+    invitations: [],
+    auditTrail: [],
+    cafLeadId: "",
+    approver: { name: "", role: "", hasAccount: false },
+    reviewDue: false,
+  };
+}
+
 function getPerson(access, id) {
   return (access.people || []).find((p) => p.id === id) || null;
 }
@@ -369,6 +386,7 @@ module.exports = {
   formatToday,
   roleLabel,
   seedAccess,
+  buildAccessEmpty,
   ensureAccess,
   getPerson,
   addAuditEntry,

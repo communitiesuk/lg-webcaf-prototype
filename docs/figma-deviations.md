@@ -198,6 +198,10 @@ access, 19 which council.
   started" and the dashboard reads "Not started" (0 of 8), not "in progress". Confirming the CAF
   Lead (A22) now writes back to Setup's people state, so the task completes and the dashboard moves
   to "In progress". The populated demo council is unchanged.
+- **Empty council starts with an empty people list** — the `/beta/walkthrough` research flow seeds
+  an empty Access state (only the signed-in claimant; no other people, pending invitations or audit
+  trail), so a brand-new council does not show the demo team (Marcus Webb, Priya Shah, etc.). The
+  populated demos keep the full seeded team.
 - **`/beta/walkthrough` one-link research journey** — a clean-session link for a brand-new user,
   dropped at the real start page, so a participant goes start → Internal Access → claim a council
   → (prototype "Approve this claim" stands in for MHCLG) → access granted → dashboard → set up,

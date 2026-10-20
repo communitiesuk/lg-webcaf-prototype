@@ -5,6 +5,7 @@
 
 const { ensureDecide } = require("../data/helpers/decide");
 const { buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
+const { buildAccessEmpty } = require("../data/helpers/access");
 
 // Sign-in scenarios for the /beta/reset picker. Each key matches a scenario in
 // routes/internal-access.js, which seeds the WebCAF user state so the person lands on the right
@@ -279,6 +280,7 @@ module.exports = function (router) {
     delete req.session.data.iaEmail;
     req.session.data.setup = buildSetupSeedEmpty();
     req.session.data.decide = buildDecideSeedEmpty();
+    req.session.data.access = buildAccessEmpty(); // brand-new council: only the claimant, no one else
     req.session.data.signInScenario = "new-user"; // after Internal Access → Claim 02 Find your council
     return res.redirect("/get-started");
   });
