@@ -1,0 +1,31 @@
+{# IA2 — Enter your one-time code. Internal Access stand-in (prototype only, not our service).
+   Any code is accepted; this is where WebCAF treats the person as signed in.
+   Figma: 02 GOV.UK Internal Access v1, node 510:1679.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/internal-access.html" %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Enter your one-time code</h1>
+
+      <p class="govuk-body">We have sent a one-time code to {% if iaEmail %}{{ iaEmail }}{% else %}your email address{% endif %}.</p>
+      <p class="govuk-body">The code may take a few minutes to arrive. It expires after 10 minutes.</p>
+
+      <form method="post" action="/internal-access/code" novalidate>
+        {{ govukInput({
+          label: { text: "Enter one-time code", classes: "govuk-label--s" },
+          hint: { text: "For example, 123-456-789" },
+          id: "ia-code",
+          name: "iaCode",
+          classes: "govuk-input--width-10",
+          autocomplete: "one-time-code"
+        }) }}
+
+        {{ govukButton({ text: "Sign in" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

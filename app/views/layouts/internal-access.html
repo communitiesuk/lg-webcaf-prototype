@@ -1,0 +1,36 @@
+{# Prototype-only stand-in for GOV.UK Internal Access. NOT our service — we do not design these
+   pages. Internal Access only authenticates; WebCAF decides where the person lands afterwards.
+   The blue header, Private Beta banner and footer mimic Internal Access so research participants
+   can tell they have left WebCAF. Changed in build, prototype, pending design sign-off. #}
+{% extends "govuk-prototype-kit/layouts/govuk-branded.njk" %}
+
+{% block pageTitle %}{{ pageTitle }} - GOV.UK Internal Access{% endblock %}
+
+{% block header %}
+  <header class="app-ia-header" role="banner">
+    <div class="govuk-width-container">
+      <span class="app-ia-header__logo">GOV.UK</span>
+      <span class="app-ia-header__service">Internal Access</span>
+    </div>
+  </header>
+{% endblock %}
+
+{% block beforeContent %}
+  {{ govukPhaseBanner({
+    tag: { text: "Private Beta" },
+    text: "This is a new service – your feedback will help us to improve it."
+  }) }}
+
+  {# Prototype marker: makes clear these pages stand in for Internal Access and are not designed here. #}
+  <div class="app-ia-note">
+    <p class="govuk-body">GOV.UK Internal Access. Not our service: we do not design this page.</p>
+  </div>
+{% endblock %}
+
+{% block footer %}
+  <footer class="app-ia-footer" role="contentinfo">
+    <div class="govuk-width-container">
+      <p class="govuk-body-s">Cookie Policy &middot; Privacy Notice &middot; Terms Of Use &middot; Help &middot; Built by the Government Digital Service &middot; &copy; Crown copyright</p>
+    </div>
+  </footer>
+{% endblock %}

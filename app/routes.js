@@ -257,6 +257,7 @@ require("./routes/onboarding")(router);
 require("./routes/setup")(router);
 require("./routes/decide")(router);
 require("./routes/claim")(router);
+require("./routes/internal-access")(router);
 require("./routes/get-started")(router);
 require("./routes/readiness")(router);
 require("./routes/assurance")(router);

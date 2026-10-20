@@ -1,0 +1,21 @@
+{# Reject — the reject flow (reason screen, emails) is not designed. Prototype-only placeholder.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">This page has not been designed yet</h1>
+
+      {% set proposalLabel = "Prototype only" %}
+      {% set proposalText = "The reject flow — the reason for rejecting, and the emails sent to the person — has not been designed. This placeholder stands in so the rest of the journey can be tested." %}
+      {% include "components/claim-proposal.njk" %}
+
+      <p class="govuk-body">You chose to reject this request to join.</p>
+
+      {{ govukButton({ text: "Back to people and governance", href: "/access" }) }}
+    </div>
+  </div>
+{% endblock %}

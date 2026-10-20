@@ -9,12 +9,14 @@
 
       {{ govukPanel({
         titleText: "Claim complete",
-        text: "Next, set up your council. The first task is confirming who your council's CAF Lead is. You can also invite colleagues, and see anything MHCLG already holds about your previous CAF assessments."
+        text: "You now have access to " + councilName
       }) }}
 
+      {# Body says anyone else can ask to join and the first claimant approves (v6).
+         Changed in build, prototype, pending design sign-off. #}
       <h2 class="govuk-heading-m">What happens next</h2>
       <p class="govuk-body">You can set up your council, invite colleagues, and see anything MHCLG already holds about your previous CAF assessments.</p>
-      <p class="govuk-body">You have full access to this council record. Anyone else who claims with a recognised email address will join the same record.</p>
+      <p class="govuk-body">You have full access to this council record. Anyone else who registers with a recognised email address can ask to join, and you approve each request. You can also invite colleagues.</p>
 
       {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
     </div>

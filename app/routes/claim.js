@@ -16,6 +16,8 @@ const {
   domainOf,
 } = require("../data/helpers/claim");
 const { COUNCILS, EXAMPLE_EMAILS, ORGANISATIONS } = require("../data/claim-example-data");
+// Used by screen 21 to hand an approved "specific outcomes" request to the existing A06 screen.
+const { ensureAccess } = require("../data/helpers/access");
 
 function clean(value) {
   return (value || "").toString().trim();
@@ -109,7 +111,9 @@ module.exports = function (router) {
 
   router.get("/claim", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    if (!claim.oneLoginEmail) return res.redirect("/prototype-sign-in");
+    // Not signed in → Internal Access (replaced the One Login stand-in).
+    // Changed in build, prototype, pending design sign-off.
+    if (!claim.oneLoginEmail) return res.redirect("/internal-access");
     if (claim.arrival === "mhclg-link" && claim.preselectedCouncilId) {
       return res.redirect("/claim/confirm");
     }
@@ -184,6 +188,9 @@ module.exports = function (router) {
     }
 
     claim.council = { id: council.id, name: council.name };
+    // v6: searching for a council whose first claim is still awaiting MHCLG approval → 22.
+    // Changed in build, prototype, pending design sign-off.
+    if (claim.councilBeingChecked) return res.redirect("/claim/cannot-join"); // 22
     if (claim.flagAlreadyHasAccess) return res.redirect("/claim/already-have-access"); // 17 (Batch 5)
     if (emailMatchesManyCouncils(claim.oneLoginEmail)) return res.redirect("/claim/which-council"); // 19 (Batch 5)
     return res.redirect("/claim/your-details"); // 03 (Batch 2)
@@ -242,12 +249,118 @@ module.exports = function (router) {
   router.post("/claim/check", (req, res) => {
     const claim = ensureClaim(req.session.data);
     if (claim.flagCouncilHasUsers) {
-      claim.status = "joined";
-      return res.redirect("/claim/joined"); // 07b
+      // v6: joining others is a REQUEST to the council's CAF Lead, not an instant join. The email
+      // domain only suggested the council — it never creates membership here.
+      // Changed in build, prototype, pending design sign-off.
+      claim.status = "request-sent";
+      claim.joinRequest = {
+        status: "sent",
+        councilName: (claim.council && claim.council.name) || "",
+        approverName: "Jo Hart", // the council's CAF Lead (first claimant) — NOT DECIDED, see Stage 3
+        person: claim.person || {},
+        email: claim.oneLoginEmail || "",
+      };
+      return res.redirect("/claim/request-sent"); // 20
     }
     claim.needsReview = true;
     claim.status = "pending";
     return res.redirect("/claim/pending"); // 06
+  });
+
+  // ----- 20 request-sent (joining others — waiting for CAF Lead approval) — v6 PROPOSAL -------
+  // Reached from 05 "Send request". Pre-access chrome (no membership yet). Screens 21 (review) and
+  // the approval that reaches 07b are wired in Stage 3. Changed in build, prototype, pending design
+  // sign-off.
+  router.get("/claim/request-sent", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = claim.joinRequest || {};
+    res.render("pages/claim/request-sent", {
+      pageTitle: "Your request has been sent",
+      councilName: jr.councilName || (claim.council && claim.council.name) || "your council",
+    });
+  });
+
+  // ----- 21 review-request (the CAF Lead reviews a request to join) — v6 PROPOSAL -----------
+  // Reached from the prototype-only "View as the CAF Lead" link on /beta/reset. Reads the join
+  // request in session (05 sets it); seeds a demo one if there is not a pending request yet, so
+  // the reviewer always has something to act on. Changed in build, prototype, pending design
+  // sign-off.
+  router.get("/claim/review-request", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = ensureReviewRequest(claim);
+    applyClaimGrantedChrome(req, res, { fullName: jr.approverName }, jr.councilName);
+    renderReviewRequest(res, jr, {});
+  });
+
+  router.post("/claim/review-request", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = ensureReviewRequest(claim);
+    const action = clean(req.session.data.reviewAction);
+    const access = clean(req.session.data.reviewAccess);
+    delete req.session.data.reviewAction;
+    delete req.session.data.reviewAccess;
+
+    if (action === "reject") {
+      jr.status = "rejected";
+      return res.redirect("/claim/review-request/rejected"); // prototype-only, not designed
+    }
+
+    // Approve — access level is required.
+    if (access !== "full" && access !== "outcomes") {
+      applyClaimGrantedChrome(req, res, { fullName: jr.approverName }, jr.councilName);
+      return renderReviewRequest(res, jr, { error: { message: "Select what access to give them" } });
+    }
+
+    jr.status = "approved";
+    jr.accessType = access;
+
+    if (access === "outcomes") {
+      // Hand off to the existing A06 "assign outcomes" screen, seeded with the joiner's details.
+      const accessState = ensureAccess(req.session.data);
+      accessState.invite = {
+        name: (jr.person && jr.person.fullName) || "",
+        email: jr.email || "",
+        role: "collaborator",
+        outcomes: [],
+      };
+      return res.redirect("/access/invite/outcomes"); // A06
+    }
+
+    return res.redirect("/claim/review-request/approved"); // Full access → prototype confirmation
+  });
+
+  // Approve + Full access — simple prototype-only confirmation (CAF Lead facing). The joiner's own
+  // "Request approved" screen is 07b (/claim/joined). Changed in build, prototype, pending sign-off.
+  router.get("/claim/review-request/approved", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = claim.joinRequest || {};
+    applyClaimGrantedChrome(req, res, { fullName: jr.approverName || "Jo Hart" }, jr.councilName);
+    res.render("pages/claim/review-request-approved", {
+      pageTitle: "Request approved",
+      name: (jr.person && jr.person.fullName) || "This person",
+      councilName: jr.councilName || "your council",
+    });
+  });
+
+  // Reject — the reject flow (reason screen, emails) is not designed. Prototype-only placeholder.
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/review-request/rejected", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = claim.joinRequest || {};
+    applyClaimGrantedChrome(req, res, { fullName: jr.approverName || "Jo Hart" }, jr.councilName);
+    res.render("pages/claim/review-request-rejected", {
+      pageTitle: "This page has not been designed yet",
+    });
+  });
+
+  // ----- 22 cannot-join (the council's first claim is still being checked by MHCLG) — v6 --------
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/cannot-join", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    res.render("pages/claim/cannot-join", {
+      pageTitle: "You cannot join yet",
+      councilName: (claim.council && claim.council.name) || "this council",
+    });
   });
 
   // ----- 06 registration-pending (209:2573) ------------------------------------------
@@ -280,6 +393,7 @@ module.exports = function (router) {
     applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
     res.render("pages/claim/access-granted", {
       pageTitle: "Claim complete",
+      councilName: (claim.council && claim.council.name) || "",
     });
   });
 
@@ -288,9 +402,10 @@ module.exports = function (router) {
     const claim = ensureClaim(req.session.data);
     applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
     res.render("pages/claim/joined", {
-      pageTitle: "Claim complete",
+      pageTitle: "Request approved",
       councilName: (claim.council && claim.council.name) || "",
       existingUserCount: claim.existingUserCount || 5,
+      approverName: (claim.joinRequest && claim.joinRequest.approverName) || "Jo Hart",
     });
   });
 
@@ -418,7 +533,10 @@ module.exports = function (router) {
     const choice = clean(req.session.data.whichCouncil);
     delete req.session.data.whichCouncil;
 
-    if (choice !== "all" && ids.indexOf(choice) === -1) {
+    // v6: the "all councils" option is removed while a person can be linked to only one council.
+    // Email-domain matching only suggests these councils — it never creates membership.
+    // Changed in build, prototype, pending design sign-off.
+    if (ids.indexOf(choice) === -1) {
       const councils = ids.map((id) => getCouncilById(id)).filter(Boolean);
       return res.render("pages/claim/which-council", {
         pageTitle: "Error: Which council are you claiming for?",
@@ -430,15 +548,8 @@ module.exports = function (router) {
       });
     }
 
-    if (choice === "all") {
-      // PROPOSAL assumption: one claim covers all matching councils. First is the record.
-      const first = getCouncilById(ids[0]);
-      if (first) claim.council = { id: first.id, name: first.name };
-      claim.claimsAllCouncils = true;
-    } else {
-      const c = getCouncilById(choice);
-      if (c) claim.council = { id: c.id, name: c.name };
-    }
+    const c = getCouncilById(choice);
+    if (c) claim.council = { id: c.id, name: c.name };
     return res.redirect("/claim/your-details"); // 03
   });
 };
@@ -512,6 +623,35 @@ function startScenario(req, res, key) {
   req.session.data.claim = {};
   if (scenario) Object.assign(req.session.data.claim, scenario.apply);
   return res.redirect("/claim");
+}
+
+// Seed/return the join request the CAF Lead reviews on screen 21. Keep a pending request from a
+// real 05 flow (so 05 → 20 → 21 → 07b stay consistent in one session); otherwise seed a demo one
+// so the reviewer always has something to act on. Changed in build, prototype, pending sign-off.
+function ensureReviewRequest(claim) {
+  if (claim.joinRequest && claim.joinRequest.status === "sent") return claim.joinRequest;
+  claim.joinRequest = {
+    status: "sent",
+    councilName: "Westborough Borough Council",
+    approverName: "Jo Hart", // the reviewing CAF Lead — who approves is NOT DECIDED
+    person: { fullName: "Priya Shah", jobTitle: "Service Manager" },
+    email: "priya.shah@westborough.gov.uk",
+  };
+  return claim.joinRequest;
+}
+
+// Shared render for screen 21 (base + "select access" error state).
+function renderReviewRequest(res, jr, opts) {
+  const error = opts.error || null;
+  res.render("pages/claim/review-request", {
+    pageTitle: (error ? "Error: " : "") + "Review a request to join",
+    name: (jr.person && jr.person.fullName) || "",
+    jobTitle: (jr.person && jr.person.jobTitle) || "",
+    email: jr.email || "",
+    domain: domainOf(jr.email || ""),
+    councilName: jr.councilName || "",
+    error: error,
+  });
 }
 
 // Back from 02 goes to 01 when the user came via an MHCLG link, else to the prototype entry.

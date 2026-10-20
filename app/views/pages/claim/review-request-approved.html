@@ -1,0 +1,24 @@
+{# Approve + Full access — simple prototype-only confirmation for the CAF Lead.
+   The person's own "Request approved" screen is 07b (/claim/joined).
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {{ govukPanel({ titleText: "Request approved", text: name + " now has full access to " + councilName }) }}
+
+      {% set proposalLabel = "Prototype only" %}
+      {% set proposalText = "A simple confirmation for the CAF Lead. The email sent to the person, and the person's own 'Request approved' screen (07b), are not designed here." %}
+      {% include "components/claim-proposal.njk" %}
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Back to people and governance", href: "/access" }) }}
+        {{ govukButton({ text: "Go to your dashboard", href: "/dashboard", classes: "govuk-button--secondary" }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

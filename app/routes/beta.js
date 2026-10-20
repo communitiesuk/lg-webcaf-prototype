@@ -6,6 +6,19 @@
 const { ensureDecide } = require("../data/helpers/decide");
 const { buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
 
+// Sign-in scenarios for the /beta/reset picker. Each key matches a scenario in
+// routes/internal-access.js, which seeds the WebCAF user state so the person lands on the right
+// screen after Internal Access. Proposal, not agreed.
+// Changed in build, prototype, pending design sign-off.
+const SIGN_IN_SCENARIOS = [
+  { key: "invited", label: "Invited to a council", detail: "A person with a pending invitation. Lands on their task: A13 Confirm your name, then the outcomes assigned to them." },
+  { key: "has-access", label: "Already has access", detail: "A member of a council. Lands on the dashboard, or R10 Choose a council if they belong to more than one." },
+  { key: "new-user", label: "New user, no council yet", detail: "Lands on Claim your council: 02 Find your council." },
+  { key: "claim-pending", label: "Registration being checked", detail: "Their own registration is waiting for MHCLG approval. Lands on 06 We are checking your registration." },
+  { key: "claim-rejected", label: "Registration not approved", detail: "A previous registration was rejected. Lands on 16 Registration not approved." },
+  { key: "council-being-checked", label: "Council being checked", detail: "Searches for a council whose first claim is still awaiting MHCLG approval. Leads to 22 You cannot join yet." },
+];
+
 // Scene key -> the screen it opens. Grouped by journey/role for the index page.
 const SCENES = {
   // Set up your council
@@ -35,6 +48,7 @@ const SECTIONS = [
         base: "",
         links: [
           { key: "/get-started", label: "Service start page" },
+          { key: "/internal-access", label: "Sign in (Internal Access stand-in)" },
           { key: "/cookies", label: "Cookie settings" },
           { key: "/support", label: "Get help with the CAF" },
           { key: "/feedback", label: "Give feedback" },
@@ -49,7 +63,7 @@ const SECTIONS = [
   },
   {
     title: "Claim your council",
-    description: "Getting access to a council after signing in with GOV.UK One Login.",
+    description: "Getting access to a council after signing in with Internal Access.",
     groups: [
       {
         base: "/prototype-scenarios/",
@@ -59,6 +73,15 @@ const SECTIONS = [
           { key: "unrecognised", label: "Email not recognised" },
           { key: "domain-matches-many", label: "Email matches more than one council" },
           { key: "already-have-access", label: "You already have access" },
+        ],
+      },
+      {
+        subtitle: "New in v6 (workshop proposal)",
+        base: "",
+        links: [
+          { key: "/claim/request-sent", label: "Your request has been sent (20)" },
+          { key: "/claim/review-request", label: "Review a request to join, as the CAF Lead (21)" },
+          { key: "/claim/cannot-join", label: "You cannot join yet — council being checked (22)" },
         ],
       },
     ],
@@ -225,12 +248,36 @@ module.exports = function (router) {
     return res.redirect(target);
   });
 
-  // Clear Setup + Decide state and return to the index.
+  // Reset page — reset the prototype and choose who you are when you sign in. The scenario sets
+  // the WebCAF user state; Internal Access then routes the person from that state.
   router.get("/beta/reset", (req, res) => {
+    res.render("pages/beta/reset", {
+      pageTitle: "Reset the prototype",
+      scenarios: SIGN_IN_SCENARIOS,
+      cleared: (req.query.cleared || "").toString() === "1",
+    });
+  });
+
+  // Start a sign-in scenario: store the chosen scenario, re-seed Setup + Decide so the landing
+  // screen renders, clear any prior Claim state, then go through Internal Access.
+  router.post("/beta/reset", (req, res) => {
+    const key = (req.session.data && req.session.data.signInScenario) || "";
+    reseed(req);
+    req.session.data.claim = {};
+    req.session.data.signInScenario = key.toString();
+    delete req.session.data.iaEmail;
+    return res.redirect("/internal-access");
+  });
+
+  // Clear Setup + Decide + Claim state, then return to the reset page with a confirmation.
+  router.get("/beta/reset/clear", (req, res) => {
     if (req.session && req.session.data) {
       delete req.session.data.setup;
       delete req.session.data.decide;
+      delete req.session.data.claim;
+      delete req.session.data.signInScenario;
+      delete req.session.data.iaEmail;
     }
-    return res.redirect("/beta?reset=success");
+    return res.redirect("/beta/reset?cleared=1");
   });
 };

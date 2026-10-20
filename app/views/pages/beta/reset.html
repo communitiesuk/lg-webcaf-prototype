@@ -1,0 +1,62 @@
+{# Prototype-only: reset the Beta prototype and choose who you are when you sign in. NOT part of
+   the service design. The scenario sets the WebCAF user state, so after Internal Access the person
+   lands on the right screen. Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/main.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "components/feedback-message.njk" import appNotificationBanner %}
+
+{# Launcher page, not service content — no service phase banner. #}
+{% block beforeContent %}{% endblock %}
+
+{% block content %}
+  {% if cleared %}
+    {{ appNotificationBanner({
+      type: "success",
+      titleId: "beta-reset-cleared",
+      heading: "Prototype data cleared.",
+      body: "Each link re-seeds the example data when you open it."
+    }) }}
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <span class="govuk-caption-l">Prototype only</span>
+      <h1 class="govuk-heading-l">Reset the prototype</h1>
+      <p class="govuk-body">Choose who you are when you sign in. Each scenario sets the WebCAF user state, then takes you through Internal Access. After you sign in, WebCAF decides where you land. This is a proposal, not agreed.</p>
+
+      <form method="post" action="/beta/reset" novalidate>
+        <div class="govuk-form-group">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Sign-in scenario</legend>
+            <div class="govuk-radios" data-module="govuk-radios">
+              {% for s in scenarios %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="scenario{% if not loop.first %}-{{ loop.index }}{% endif %}" name="signInScenario" type="radio" value="{{ s.key }}" {% if loop.first %}checked{% endif %}>
+                  <label class="govuk-label govuk-radios__label" for="scenario{% if not loop.first %}-{{ loop.index }}{% endif %}">{{ s.label }}</label>
+                  <div class="govuk-hint govuk-radios__hint">{{ s.detail }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        {{ govukButton({ text: "Sign in with this scenario" }) }}
+      </form>
+
+      <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-4 govuk-!-margin-bottom-4">
+
+      <h2 class="govuk-heading-s">Review a request to join</h2>
+      <p class="govuk-body">See the screen the council's CAF Lead uses to approve or reject a request to join (screen 21). Changed in build, prototype, pending design sign-off.</p>
+      <p class="govuk-body"><a class="govuk-link" href="/claim/review-request">View as the CAF Lead</a></p>
+
+      <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-4 govuk-!-margin-bottom-4">
+
+      <h2 class="govuk-heading-s">Clear data</h2>
+      <p class="govuk-body">Clear the setup, decide and claim example data and return to the prototype index.</p>
+      {{ govukButton({ text: "Clear all prototype data", href: "/beta/reset/clear", classes: "govuk-button--secondary" }) }}
+
+      <p class="govuk-body-s"><a class="govuk-link" href="/beta">Back to the prototype index</a></p>
+    </div>
+  </div>
+{% endblock %}

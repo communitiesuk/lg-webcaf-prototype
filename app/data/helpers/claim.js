@@ -47,7 +47,9 @@ function applyClaimGrantedChrome(req, res, person, councilName) {
     { text: "Your council", href: "/setup/task-list" },
     { text: "Assessments", href: "/self-assessment" },
     { text: "People", href: HOLDING_HREF },
-    { text: "Switch council", href: "/choose-council" },
+    // "Switch council" removed from nav — a person can be linked to only one council for now.
+    // Re-add behind a toggle once multi-council support lands. Changed in build, prototype,
+    // pending design sign-off. (R10 /choose-council still exists for the routing proposal.)
     { text: "Sign out", href: CLAIM_SIGN_OUT_HREF },
   ];
   res.locals.showJourney = false;

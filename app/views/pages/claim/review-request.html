@@ -1,0 +1,57 @@
+{# 21 claim / review-request (the CAF Lead reviews a request to join) — v6 PROPOSAL.
+   Reached from the prototype-only "View as the CAF Lead" link on /beta/reset.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: error.message, href: "#reviewAccess" }]
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-l">Review a request to join</h1>
+
+      {% set proposalLabel = "New in v6, workshop proposal" %}
+      {% set proposalText = "This screen is shown to the council's CAF Lead. A real version belongs in Access management, next to A05 and A06. Who approves before a CAF Lead is named, and the reject flow, are not yet decided." %}
+      {% include "components/claim-proposal.njk" %}
+
+      {# Name, job title and email as the person entered them. The council row is not shown. #}
+      {{ govukSummaryList({
+        rows: [
+          { key: { text: "Name" }, value: { text: name } },
+          { key: { text: "Job title" }, value: { text: jobTitle } },
+          { key: { text: "Email address" }, value: { text: email } }
+        ]
+      }) }}
+
+      {{ govukInsetText({ text: "We recognise " + domain + " as an email address for " + councilName + "." }) }}
+
+      <form method="post" action="/claim/review-request" novalidate>
+        {{ govukRadios({
+          name: "reviewAccess",
+          fieldset: { legend: { text: "What access should they have?", classes: "govuk-fieldset__legend--m" } },
+          errorMessage: { text: error.message } if error else undefined,
+          items: [
+            { value: "full", text: "Full access" },
+            { value: "outcomes", text: "Access to specific outcomes, which you choose next" }
+          ]
+        }) }}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Approve request", name: "reviewAction", value: "approve" }) }}
+          {{ govukButton({ text: "Reject request", name: "reviewAction", value: "reject", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

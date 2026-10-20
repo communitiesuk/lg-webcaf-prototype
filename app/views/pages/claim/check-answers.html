@@ -38,14 +38,16 @@
         ]
       }) }}
 
+      {# Joining others is now a request to the CAF Lead, not an instant join (v6).
+         Changed in build, prototype, pending design sign-off. #}
       {% if joining %}
-        {{ govukInsetText({ text: existingUserCount + " people from " + council.name + " already use this service. You will join them and share the same council record." }) }}
+        {{ govukInsetText({ text: existingUserCount + " people from " + council.name + " already use this service. Your request will go to your council’s CAF Lead, who will approve it and decide what you can see. You will get an email when they have decided." }) }}
       {% else %}
         {{ govukInsetText({ text: "You are the first person from this council to claim it. MHCLG will check this claim before you get access." }) }}
       {% endif %}
 
       <form method="post" action="/claim/check" novalidate>
-        {{ govukButton({ text: "Confirm and claim" }) }}
+        {{ govukButton({ text: "Send request" if joining else "Confirm and claim" }) }}
       </form>
     </div>
   </div>

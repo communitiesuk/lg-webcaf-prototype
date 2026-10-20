@@ -1,0 +1,26 @@
+{# IA3 — Continue to LG Web CAF. Internal Access stand-in (prototype only, not our service).
+   Only shown when the person is already signed in to Internal Access.
+   Figma: 02 GOV.UK Internal Access v1, node 510:1706.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/internal-access.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Continue to LG Web CAF</h1>
+
+      <p class="govuk-body">You are already signed in to Internal Access.</p>
+      <p class="govuk-body">You can continue to LG Web CAF without entering your details again.</p>
+      <p class="govuk-body">Signing out will also sign you out of other services that use Internal Access.</p>
+
+      <form method="post" action="/internal-access/continue" novalidate>
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Continue to LG Web CAF" }) }}
+          {{ govukButton({ text: "Cancel", href: "/beta/reset", classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Sign out of Internal Access", href: "/internal-access/sign-out", classes: "govuk-button--warning" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

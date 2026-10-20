@@ -1,0 +1,30 @@
+{# 22 claim / cannot-join (the council's first claim is still being checked by MHCLG) — v6.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">This council’s registration is being checked. MHCLG has not finished checking it yet.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">You cannot join yet</h1>
+
+      {% set proposalLabel = "New in v6" %}
+      {% set proposalText = "The council is marked as claimed and waiting for MHCLG approval, with only the first person attached. Whether and how we tell the second person is not yet decided." %}
+      {% include "components/claim-proposal.njk" %}
+
+      <p class="govuk-body">Someone from {{ councilName }} has already registered. MHCLG is checking that registration, and nobody else can join until it is done. Try again in a few days, or ask your colleague to tell you when it has been approved. You can read the guidance on how the CAF works while you wait.</p>
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Read the guidance", href: "/external" }) }}
+        {{ govukButton({ text: "Try again later", href: "/claim/find", classes: "govuk-button--secondary" }) }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

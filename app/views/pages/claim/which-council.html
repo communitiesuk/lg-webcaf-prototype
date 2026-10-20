@@ -23,8 +23,10 @@
       <span class="govuk-caption-l">Claim your council</span>
       <h1 class="govuk-heading-l">Which council are you claiming for?</h1>
 
+      {# "I support all of these councils" removed while a person can be linked to only one council (v6).
+         Changed in build, prototype, pending design sign-off. #}
       {% set proposalLabel = "Open question" %}
-      {% set proposalText = "Whether a shared-service person claims once for several councils or separately for each is not yet agreed. The last option assumes once. If the answer is separately, this screen changes or disappears." %}
+      {% set proposalText = "The ‘I support all of these councils’ option is removed while a person can be linked to only one council. Whether a shared-service person registers once for several councils or separately for each is not yet agreed." %}
       {% include "components/claim-proposal.njk" %}
 
       <p class="govuk-body">We recognise {{ domain }} as an email address for more than one council.</p>
@@ -33,7 +35,6 @@
       {% for c in councils %}
         {% set _ = councilItems.push({ value: c.id, text: c.name, checked: chosen == c.id }) %}
       {% endfor %}
-      {% set _ = councilItems.push({ value: "all", text: "I support all of these councils" }) %}
 
       <form method="post" action="/claim/which-council" novalidate>
         {{ govukRadios({

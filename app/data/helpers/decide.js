@@ -33,7 +33,8 @@ function buildDecideCouncilNavigation(currentPath) {
     { text: "Your council", href: "/setup/task-list" },
     { text: "Assessments", href: "/decide", active },
     { text: "People", href: HOLDING_HREF },
-    { text: "Switch council", href: "/choose-council" },
+    // "Switch council" removed from nav — one council per person for now (pending multi-council).
+    // Changed in build, prototype, pending design sign-off.
     { text: "Sign out", href: "/get-started/sign-out" },
   ];
 }

@@ -79,7 +79,8 @@ function applyFullAccessChrome(req, res) {
     { text: "Your council", href: "/setup/task-list" },
     { text: "Assessments", href: "/self-assessment" },
     { text: "People", href: "/access", active: path.startsWith("/access") },
-    { text: "Switch council", href: "/choose-council" },
+    // "Switch council" removed from nav — one council per person for now (pending multi-council).
+    // Changed in build, prototype, pending design sign-off.
     { text: "Sign out", href: SIGN_OUT_HREF },
   ];
 }

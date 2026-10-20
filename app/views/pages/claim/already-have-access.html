@@ -16,12 +16,11 @@
       <h1 class="govuk-heading-l">You already have access to {{ councilName }}</h1>
 
       <p class="govuk-body">You claimed this council on {{ registeredDate }}. You do not need to claim again.</p>
-      <p class="govuk-body">If you need access to a different council as well, you can claim that one separately.</p>
+      {# "Claim a different council" removed — a person can be linked to only one council for now (v6).
+         Changed in build, prototype, pending design sign-off. #}
+      <p class="govuk-body">You can only be linked to one council at the moment. If you need access to another council, email the CAF team at <a class="govuk-link" href="mailto:cafsupport@communities.gov.uk">cafsupport@communities.gov.uk</a>.</p>
 
-      <div class="govuk-!-margin-bottom-3">
-        {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
-      </div>
-      {{ govukButton({ text: "Claim a different council", href: "/claim/find", classes: "govuk-button--secondary" }) }}
+      {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
     </div>
   </div>
 {% endblock %}

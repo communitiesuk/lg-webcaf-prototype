@@ -1,0 +1,37 @@
+{# IA1 — Enter your email address. Internal Access stand-in (prototype only, not our service).
+   Any email is accepted. Figma: 02 GOV.UK Internal Access v1, node 510:1652.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/internal-access.html" %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <form method="post" action="/internal-access/email" novalidate>
+
+        {{ govukInput({
+          label: { text: "Enter your email address", classes: "govuk-label--l", isPageHeading: true },
+          hint: { text: "We’ll use this to verify your email address" },
+          id: "ia-email",
+          name: "iaEmail",
+          type: "email",
+          autocomplete: "email",
+          spellcheck: false,
+          value: iaEmail
+        }) }}
+
+        {{ govukCheckboxes({
+          name: "iaRemember",
+          items: [{ value: "yes", text: "Remember me" }]
+        }) }}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Continue" }) }}
+          {{ govukButton({ text: "Cancel", href: "/beta/reset", classes: "govuk-button--secondary" }) }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

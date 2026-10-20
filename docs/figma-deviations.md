@@ -153,15 +153,78 @@ For each, add the "Changed in build — prototype, pending design sign-off" note
 | 1 | CNI remove confirmation | `pages/decide/cni-remove.html`, `routes/decide.js` · `d4ce000` |
 | 2 | D09 confirmation panel | `pages/decide/sent.html`, `routes/decide.js` · `27a82fa` |
 | 3 | S30 states + error + inset | `pages/setup/check-your-setup.html`, `routes/setup.js`, `helpers/setup.js` · `e06b493`, `58565a2` |
+| 3a | S30 read-only view when complete + R04 "View" → S30 | `pages/setup/check-your-setup.html`, `routes/setup.js`, `pages/dashboard/_ready-to-decide.html` |
 | 4 | A09 "Back to your setup" | `pages/access/invite-sent.html`, `routes/access.js` · `58565a2` |
 | 5 | S01 task "In progress" | `helpers/setup.js` · `58565a2` |
 | 6 | G11 feedback error | `pages/getstarted/feedback.html`, `routes/get-started.js` · build commits |
 | 7 | A13 error + optional | `pages/access/accept-confirm-name.html`, `routes/access.js` · build commits |
 | 8 | A05/A19 name required | `pages/access/invite-who.html`, `routes/access.js` · build commits |
 | 8a | S04 five-lens guidance link | `pages/setup/methodology.html` |
-| 3a | S30 read-only view when complete + R04 "View" → S30 | `pages/setup/check-your-setup.html`, `routes/setup.js`, `pages/dashboard/_ready-to-decide.html` |
-| 13 | D09 onboarding → Assurance booking journey (unified + return) | `routes/decide.js`, `routes/assurance.js`, `pages/assurance/{before-you-book,update-activity}.html`, `pages/decide/sent.html`, `data/seed/setup.js` · `2e806e0`, `064edf7` |
 | 9 | Return-to-Setup + pending invite | `routes/access.js`, `routes/setup.js`, `helpers/setup.js` · `77e3972`, `58565a2`, `c5e4afd` |
 | 10 | Claim → Dashboard | `pages/claim/{access-granted,joined,already-have-access}.html` · `58565a2` |
 | 11 | Dashboard dead-ends | `pages/decide/{systems-nothing-left,no-assurer}.html`, `pages/setup/complete.html` · `58565a2`, `c5e4afd` |
 | 12 | Decide → critical-systems return | `pages/decide/systems-nothing-left.html`, `routes/setup.js` · `58565a2` |
+| 13 | D09 onboarding → Assurance booking journey (unified + return) | `routes/decide.js`, `routes/assurance.js`, `pages/assurance/{before-you-book,update-activity}.html`, `pages/decide/sent.html`, `data/seed/setup.js` · `2e806e0`, `064edf7` |
+
+---
+
+## Claim v6 and Internal Access build (20 October)
+
+Built "02 GOV.UK Internal Access · v1" (node `510:1651`) and "03 Claim your council · v6"
+(node `525:2`). Most screens are faithful rebuilds of those Figma pages; the items below are
+the **build-only deviations pending design sign-off**. Sign-in changed from GOV.UK One Login to
+GDS Internal Access, which only authenticates — WebCAF decides where the person lands.
+
+**Built from Figma (no deviation, for reference):** IA1 enter email, IA2 enter one-time code,
+IA3 continue; Claim 20 request sent, 21 review a request to join, 22 you cannot join yet; and the
+v6 copy on 05 check answers (joining), 07 access granted, 07b request approved, 17 already have
+access, 19 which council.
+
+**New in build (not in Figma — add to Figma):**
+- **Internal Access prototype note** — a yellow "GOV.UK Internal Access. Not our service: we do
+  not design this page." strip on IA1–IA3, marking them as a stand-in. Blue IA header + plain
+  footer to look like Internal Access, distinct from WebCAF chrome.
+- **`/beta/reset` "Reset the prototype" control page** — a sign-in scenario picker (invited /
+  has access / new user / claim pending / claim rejected / council being checked), a "Clear all
+  prototype data" action, and a "View as the CAF Lead" link. Prototype control, not service copy.
+- **21 "Approve + Full access" confirmation** — a CAF-Lead-facing "Request approved" page. Figma
+  21's arrow points to 07b (the joiner's screen); the brief asked for a CAF-Lead confirmation, so
+  this is a separate page. 07b stays reachable for the joiner's view.
+- **21 "Reject" placeholder** — a "This page has not been designed yet" page; the reject reason
+  screen and the emails are not designed.
+
+**Modified / routing (update arrows and notes):**
+- **Sign-in replaced** — every "GOV.UK One Login" link and mention in Get started, Claim and
+  Access management now points to / names Internal Access. The old One Login stand-in screen is
+  left untouched but no longer linked.
+- **Routing after Internal Access (proposal)** — decided by WebCAF user state: pending invitation
+  → A13 then their task; membership → dashboard (R10 if more than one council); claim pending →
+  06; claim rejected → 16; otherwise Claim 02. Invitation beats membership.
+- **05 "Send request"** no longer joins instantly — it raises a request to the CAF Lead (20).
+  Email-domain matching only suggests councils; it never creates membership.
+- **07b** reached after approval (not after an instant join); names the approver in the body.
+- **19** "I support all of these councils" option removed; **17** "Claim a different council"
+  button removed (one council per person for now).
+- **"Switch council" removed** from the service navigation on every section (Setup,
+  Readiness/Dashboard, Decide, Claim). R10 `/choose-council` kept as a parked toggle.
+
+**Placeholders / wording to confirm:**
+- Get started "Before you start" bullet reworded to Internal Access ("to sign in with Internal
+  Access, using that email address and a one-time code") — NOT verified against Get started v5 /
+  Access management v5 Figma copy.
+- Approver named "Jo Hart", demo joiner "Priya Shah" — who approves before a CAF Lead is named is
+  not decided (built as the first claimant approves).
+- Terminology: the repo says "claim / claimed"; the Figma v6 Content panels say "registration /
+  registered / request" on several screens (07 "Registration complete", 17 "registered", 06/16).
+  Not yet aligned section-wide.
+
+### Reference — where each change lives in the code
+
+| Area | Files |
+|---|---|
+| Internal Access screens + chrome | `routes/internal-access.js`, `views/layouts/internal-access.html`, `views/pages/internal-access/{email,code,continue}.html`, `assets/sass/application.scss` |
+| Reset scenario picker | `routes/beta.js`, `views/pages/beta/reset.html`, `views/pages/beta.html` |
+| One Login → Internal Access | `routes/get-started.js`, `routes/claim.js`, `views/pages/getstarted/{service-start,signed-out}.html`, `views/pages/claim/your-details.html`, `views/pages/access/{invite-sent,invitation-email,accept-signin}.html` |
+| Claim 05/07/07b/17/19 copy | `views/pages/claim/{check-answers,access-granted,joined,already-have-access,which-council}.html`, `routes/claim.js` |
+| Claim 20/21/22 + review outcomes | `views/pages/claim/{request-sent,review-request,review-request-approved,review-request-rejected,cannot-join}.html`, `routes/claim.js` |
+| "Switch council" removed from nav | `data/helpers/{setup,readiness,decide,claim}.js` |

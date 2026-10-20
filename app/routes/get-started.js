@@ -6,7 +6,9 @@
 
 const GET_STARTED_SERVICE_NAME = "Assess and manage your council’s cyber resilience";
 const START_HREF = "/get-started"; // G01 — the service start page
-const ONE_LOGIN_HREF = "/prototype-sign-in"; // reuse the existing One Login stand-in
+// Sign-in now goes to the Internal Access stand-in (replaced GOV.UK One Login).
+// Changed in build, prototype, pending design sign-off.
+const SIGN_IN_HREF = "/internal-access";
 
 // Signed-out chrome: service-name bar only. currentUser = null so no identity line and no
 // Sign in / Sign out link; navigation empty so only the service name shows.
@@ -65,7 +67,7 @@ module.exports = function (router) {
   router.get("/get-started", (req, res) => {
     res.render("pages/getstarted/service-start", {
       pageTitle: "Assess and manage your council’s cyber resilience",
-      startHref: ONE_LOGIN_HREF,
+      startHref: SIGN_IN_HREF,
     });
   });
 
