@@ -269,6 +269,20 @@ module.exports = function (router) {
     return res.redirect("/internal-access");
   });
 
+  // One-link research walkthrough: a clean session for a brand-new user, dropped at the real start
+  // page, so a participant can go start → Internal Access → claim a council → set it up, end to end.
+  // Seeds an empty council so Setup is built from scratch after the claim. Changed in build,
+  // prototype, pending design sign-off.
+  router.get("/beta/walkthrough", (req, res) => {
+    if (!req.session.data) req.session.data = {};
+    delete req.session.data.claim;
+    delete req.session.data.iaEmail;
+    req.session.data.setup = buildSetupSeedEmpty();
+    req.session.data.decide = buildDecideSeedEmpty();
+    req.session.data.signInScenario = "new-user"; // after Internal Access → Claim 02 Find your council
+    return res.redirect("/get-started");
+  });
+
   // Clear Setup + Decide + Claim state, then return to the reset page with a confirmation.
   router.get("/beta/reset/clear", (req, res) => {
     if (req.session && req.session.data) {

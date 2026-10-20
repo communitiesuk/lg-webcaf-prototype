@@ -187,6 +187,10 @@ access, 19 which council.
 - **`/beta/reset` "Reset the prototype" control page** — a sign-in scenario picker (invited /
   has access / new user / claim pending / claim rejected / council being checked), a "Clear all
   prototype data" action, and a "View as the CAF Lead" link. Prototype control, not service copy.
+- **`/beta/walkthrough` one-link research journey** — a clean-session link for a brand-new user,
+  dropped at the real start page, so a participant goes start → Internal Access → claim a council
+  → (prototype "Approve this claim" stands in for MHCLG) → access granted → dashboard → set up,
+  end to end. Seeds an empty council so Setup is built from scratch. Prototype control.
 - **21 "Approve + Full access" confirmation** — a CAF-Lead-facing "Request approved" page. Figma
   21's arrow points to 07b (the joiner's screen); the brief asked for a CAF-Lead confirmation, so
   this is a separate page. 07b stays reachable for the joiner's view.
