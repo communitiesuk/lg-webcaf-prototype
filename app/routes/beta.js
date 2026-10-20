@@ -192,11 +192,13 @@ const SECTIONS = [
 // Research walkthroughs — each starts at the start page, signs in, then lands in an outcome. The
 // unhappy variants map to sign-in scenarios (routes/internal-access.js) that steer the claim branch.
 // Changed in build, prototype, pending design sign-off.
+// `established: true` seeds the populated demo council (you already have access to a real council);
+// otherwise the brand-new, empty council is seeded (you are blocked or claiming a new one).
 const WALKTHROUGH_VARIANTS = {
-  "already-claimed": "already-claimed",
-  "being-checked": "council-being-checked",
-  "already-have-access": "already-have-access",
-  "not-recognised": "not-recognised",
+  "already-claimed": { scenario: "already-claimed", established: false },
+  "being-checked": { scenario: "council-being-checked", established: false },
+  "already-have-access": { scenario: "already-have-access", established: true },
+  "not-recognised": { scenario: "not-recognised", established: false },
 };
 
 const WALKTHROUGH_LINKS = [
@@ -294,23 +296,32 @@ module.exports = function (router) {
   // participant goes start → Internal Access → claim, then into the happy path or an unhappy outcome.
   // Seeds an empty council. The variant sets the sign-in scenario, which steers the claim branch.
   // Changed in build, prototype, pending design sign-off.
-  function startWalkthrough(req, res, scenario) {
+  function startWalkthrough(req, res, scenario, established) {
     if (!req.session.data) req.session.data = {};
     delete req.session.data.claim;
     delete req.session.data.iaEmail;
-    req.session.data.setup = buildSetupSeedEmpty();
-    req.session.data.decide = buildDecideSeedEmpty();
-    req.session.data.access = buildAccessEmpty(); // brand-new council: only the claimant, no one else
+    if (established) {
+      // You already have access to an established council — clear the state so the populated demo
+      // council (setup, team, decide) re-seeds, instead of an empty new one.
+      delete req.session.data.setup;
+      delete req.session.data.decide;
+      delete req.session.data.access;
+      ensureDecide(req.session.data);
+    } else {
+      req.session.data.setup = buildSetupSeedEmpty();
+      req.session.data.decide = buildDecideSeedEmpty();
+      req.session.data.access = buildAccessEmpty(); // brand-new council: only the claimant, no one else
+    }
     req.session.data.signInScenario = scenario;
     return res.redirect("/get-started");
   }
 
-  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, "new-user"));
+  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, "new-user", false));
 
   router.get("/beta/walkthrough/:variant", (req, res) => {
-    const scenario = WALKTHROUGH_VARIANTS[req.params.variant];
-    if (!scenario) return res.redirect("/beta/walkthrough");
-    return startWalkthrough(req, res, scenario);
+    const v = WALKTHROUGH_VARIANTS[req.params.variant];
+    if (!v) return res.redirect("/beta/walkthrough");
+    return startWalkthrough(req, res, v.scenario, v.established);
   });
 
   // Clear Setup + Decide + Claim state, then return to the reset page with a confirmation.

@@ -210,7 +210,8 @@ access, 19 which council.
     access granted → readiness check → dashboard → set up;
   - `already-claimed` — council already in use → "Send request" → request sent (20);
   - `being-checked` — council's first claim awaiting MHCLG → you cannot join yet (22);
-  - `already-have-access` — you already have access (17);
+  - `already-have-access` — you already have access (17), on the populated/established council (the
+    only unhappy path where you actually have access, so the record behind it is real not empty);
   - `not-recognised` — email not recognised → how are you connected (08).
 - **21 "Approve + Full access" confirmation** — a CAF-Lead-facing "Request approved" page. Figma
   21's arrow points to 07b (the joiner's screen); the brief asked for a CAF-Lead confirmation, so
