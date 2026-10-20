@@ -38,6 +38,27 @@ const SIGN_IN_SCENARIOS = {
     arrival: "independent",
     treatAsRecognised: true, // so the email the person typed flows the recognised claim path
   },
+  // Unhappy paths (research walkthroughs). Each lands in an unhappy outcome during the claim.
+  "already-claimed": {
+    oneLoginEmail: EXAMPLE_EMAILS.recognised,
+    arrival: "independent",
+    treatAsRecognised: true,
+    flagCouncilHasUsers: true, // council already in use → "Send request" (05) → request sent (20)
+    existingUserCount: 5,
+  },
+  "already-have-access": {
+    oneLoginEmail: EXAMPLE_EMAILS.recognised,
+    arrival: "independent",
+    treatAsRecognised: true,
+    flagAlreadyHasAccess: true, // find → "You already have access" (17)
+    existingUserCount: 5,
+    registeredDate: "14 August 2026",
+  },
+  "not-recognised": {
+    oneLoginEmail: EXAMPLE_EMAILS.unrecognised,
+    arrival: "independent",
+    forceUnrecognised: true, // your details → "How are you connected?" (08), whatever email is typed
+  },
   "claim-pending": {
     oneLoginEmail: EXAMPLE_EMAILS.recognised,
     status: "pending",

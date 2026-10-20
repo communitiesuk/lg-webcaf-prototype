@@ -202,10 +202,16 @@ access, 19 which council.
   an empty Access state (only the signed-in claimant; no other people, pending invitations or audit
   trail), so a brand-new council does not show the demo team (Marcus Webb, Priya Shah, etc.). The
   populated demos keep the full seeded team.
-- **`/beta/walkthrough` one-link research journey** — a clean-session link for a brand-new user,
-  dropped at the real start page, so a participant goes start → Internal Access → claim a council
-  → (prototype "Approve this claim" stands in for MHCLG) → access granted → dashboard → set up,
-  end to end. Seeds an empty council so Setup is built from scratch. Prototype control.
+- **Research walkthroughs** (`/beta/walkthrough` and `/beta/walkthrough/:variant`) — clean-session
+  links for a brand-new user, dropped at the real start page, so a participant goes start →
+  Internal Access → claim, then into one outcome. Listed on `/beta` and `/beta/reset`. Prototype
+  controls. The variants:
+  - happy path — claim a new council → (prototype "Approve this claim" stands in for MHCLG) →
+    access granted → readiness check → dashboard → set up;
+  - `already-claimed` — council already in use → "Send request" → request sent (20);
+  - `being-checked` — council's first claim awaiting MHCLG → you cannot join yet (22);
+  - `already-have-access` — you already have access (17);
+  - `not-recognised` — email not recognised → how are you connected (08).
 - **21 "Approve + Full access" confirmation** — a CAF-Lead-facing "Request approved" page. Figma
   21's arrow points to 07b (the joiner's screen); the brief asked for a CAF-Lead confirmation, so
   this is a separate page. 07b stays reachable for the joiner's view.

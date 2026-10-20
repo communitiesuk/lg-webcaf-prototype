@@ -227,9 +227,9 @@ module.exports = function (router) {
     }
 
     claim.person = { fullName: fullName, jobTitle: jobTitle };
-    // treatAsRecognised lets a participant's own typed email flow the recognised path (research
-    // walkthrough). Changed in build, prototype, pending design sign-off.
-    const recognised = claim.treatAsRecognised || (claim.council && isEmailRecognisedForCouncil(claim.oneLoginEmail, claim.council.id));
+    // treatAsRecognised lets a participant's own typed email flow the recognised path; forceUnrecognised
+    // forces the "email not recognised" path for research. Changed in build, prototype, pending sign-off.
+    const recognised = !claim.forceUnrecognised && (claim.treatAsRecognised || (claim.council && isEmailRecognisedForCouncil(claim.oneLoginEmail, claim.council.id)));
     if (!recognised) return res.redirect("/claim/how-connected"); // 08 (Batch 4)
     return res.redirect("/claim/check"); // 04 / 05
   });

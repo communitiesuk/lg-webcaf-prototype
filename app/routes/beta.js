@@ -189,6 +189,24 @@ const SECTIONS = [
   },
 ];
 
+// Research walkthroughs — each starts at the start page, signs in, then lands in an outcome. The
+// unhappy variants map to sign-in scenarios (routes/internal-access.js) that steer the claim branch.
+// Changed in build, prototype, pending design sign-off.
+const WALKTHROUGH_VARIANTS = {
+  "already-claimed": "already-claimed",
+  "being-checked": "council-being-checked",
+  "already-have-access": "already-have-access",
+  "not-recognised": "not-recognised",
+};
+
+const WALKTHROUGH_LINKS = [
+  { href: "/beta/walkthrough", label: "New council: claim it and set it up (happy path)" },
+  { href: "/beta/walkthrough/already-claimed", label: "Council already claimed — send a request to join" },
+  { href: "/beta/walkthrough/being-checked", label: "Council being checked — you cannot join yet" },
+  { href: "/beta/walkthrough/already-have-access", label: "You already have access" },
+  { href: "/beta/walkthrough/not-recognised", label: "Email not recognised for the council" },
+];
+
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.
 function reseed(req) {
   if (!req.session.data) req.session.data = {};
@@ -221,6 +239,7 @@ module.exports = function (router) {
     res.render("pages/beta", {
       pageTitle: "Beta prototype",
       sections: SECTIONS,
+      walkthroughs: WALKTHROUGH_LINKS,
       resetSuccess: (req.query.reset || "").toString() === "success",
     });
   });
@@ -255,6 +274,7 @@ module.exports = function (router) {
     res.render("pages/beta/reset", {
       pageTitle: "Reset the prototype",
       scenarios: SIGN_IN_SCENARIOS,
+      walkthroughs: WALKTHROUGH_LINKS,
       cleared: (req.query.cleared || "").toString() === "1",
     });
   });
@@ -270,19 +290,27 @@ module.exports = function (router) {
     return res.redirect("/internal-access");
   });
 
-  // One-link research walkthrough: a clean session for a brand-new user, dropped at the real start
-  // page, so a participant can go start → Internal Access → claim a council → set it up, end to end.
-  // Seeds an empty council so Setup is built from scratch after the claim. Changed in build,
-  // prototype, pending design sign-off.
-  router.get("/beta/walkthrough", (req, res) => {
+  // Research walkthroughs: a clean session for a brand-new user, dropped at the real start page, so a
+  // participant goes start → Internal Access → claim, then into the happy path or an unhappy outcome.
+  // Seeds an empty council. The variant sets the sign-in scenario, which steers the claim branch.
+  // Changed in build, prototype, pending design sign-off.
+  function startWalkthrough(req, res, scenario) {
     if (!req.session.data) req.session.data = {};
     delete req.session.data.claim;
     delete req.session.data.iaEmail;
     req.session.data.setup = buildSetupSeedEmpty();
     req.session.data.decide = buildDecideSeedEmpty();
     req.session.data.access = buildAccessEmpty(); // brand-new council: only the claimant, no one else
-    req.session.data.signInScenario = "new-user"; // after Internal Access → Claim 02 Find your council
+    req.session.data.signInScenario = scenario;
     return res.redirect("/get-started");
+  }
+
+  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, "new-user"));
+
+  router.get("/beta/walkthrough/:variant", (req, res) => {
+    const scenario = WALKTHROUGH_VARIANTS[req.params.variant];
+    if (!scenario) return res.redirect("/beta/walkthrough");
+    return startWalkthrough(req, res, scenario);
   });
 
   // Clear Setup + Decide + Claim state, then return to the reset page with a confirmation.
