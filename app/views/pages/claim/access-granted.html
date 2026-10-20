@@ -18,7 +18,9 @@
       <p class="govuk-body">You can set up your council, invite colleagues, and see anything MHCLG already holds about your previous CAF assessments.</p>
       <p class="govuk-body">You have full access to this council record. Anyone else who registers with a recognised email address can ask to join, and you approve each request. You can also invite colleagues.</p>
 
-      {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
+      {# After claiming, a new CAF Lead goes through the optional readiness check (R01), which they
+         can skip straight to the dashboard. Changed in build, prototype, pending design sign-off. #}
+      {{ govukButton({ text: "Continue", href: "/readiness" }) }}
     </div>
   </div>
 {% endblock %}

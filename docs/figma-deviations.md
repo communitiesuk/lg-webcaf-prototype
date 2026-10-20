@@ -206,6 +206,10 @@ access, 19 which council.
   06; claim rejected → 16; otherwise Claim 02. Invitation beats membership.
 - **05 "Send request"** no longer joins instantly — it raises a request to the CAF Lead (20).
   Email-domain matching only suggests councils; it never creates membership.
+- **07** "Access granted" now continues to the optional readiness check (R01) — button changed
+  from "Go to your dashboard" to "Continue" → `/readiness`. The check is skippable (Save and
+  continue / Skip for now) and both land on the dashboard, where the user continues setup. 07b
+  (joining an existing, already-set-up council) still goes straight to the dashboard.
 - **07b** reached after approval (not after an instant join); names the approver in the body.
 - **19** "I support all of these councils" option removed; **17** "Claim a different council"
   button removed (one council per person for now).
