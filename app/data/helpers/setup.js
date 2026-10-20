@@ -610,11 +610,22 @@ function buildSetupSummary(setup) {
   };
 }
 
+// The signed-in person's identity, from what they typed when signing in and claiming (name from
+// Claim "Your details"). Falls back to the seeded SETUP_USER for the demo scenarios.
+// Changed in build, prototype, pending design sign-off.
+function signedInSetupUser(req) {
+  const claim = (req.session && req.session.data && req.session.data.claim) || {};
+  if (claim.person && claim.person.fullName) {
+    return { name: claim.person.fullName, orgName: (claim.council && claim.council.name) || SETUP_USER.orgName, role: "council" };
+  }
+  return null;
+}
+
 // Apply Setup chrome to res.locals for a /setup request, without touching session auth.
 function applySetupChrome(req, res) {
   res.locals.serviceName = SETUP_SERVICE_NAME;
   res.locals.showNavigation = true;
-  res.locals.currentUser = SETUP_USER;
+  res.locals.currentUser = signedInSetupUser(req) || SETUP_USER;
   res.locals.navigation = buildSetupNavigation(req.path);
   // Setup owns its own page chrome; suppress the generic journey breadcrumbs/progress.
   res.locals.showJourney = false;

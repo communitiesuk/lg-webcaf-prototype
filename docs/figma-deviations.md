@@ -187,6 +187,12 @@ access, 19 which council.
 - **`/beta/reset` "Reset the prototype" control page** — a sign-in scenario picker (invited /
   has access / new user / claim pending / claim rejected / council being checked), a "Clear all
   prototype data" action, and a "View as the CAF Lead" link. Prototype control, not service copy.
+- **Signed-in identity uses what the person typed** — the email entered at Internal Access and the
+  name entered in Claim "Your details" are carried through as the signed-in person, instead of the
+  hardcoded "Jo Hart". They appear as the nav identity (claim, dashboard, setup, access), as "Me,
+  [name]" on the CAF Lead step (A22), and on the confirmation. Pre-seeded demo scenarios with no
+  Claim journey still fall back to the seeded persona. A `treatAsRecognised` flag lets a
+  participant's own email flow the recognised claim path in the walkthrough.
 - **Empty council starts with no CAF Lead confirmed** — `buildSetupSeedEmpty` no longer
   pre-confirms the CAF Lead, so from a fresh claim task 1 "Confirm your CAF Lead" reads "Not
   started" and the dashboard reads "Not started" (0 of 8), not "in progress". Confirming the CAF

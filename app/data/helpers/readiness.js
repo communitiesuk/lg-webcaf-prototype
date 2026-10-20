@@ -70,9 +70,20 @@ function baseChrome(res) {
 }
 
 // "Service navigation / full access" — R01–R05, R07–R09. Council identity + full nav.
+// The signed-in person's identity, from what they typed when signing in and claiming (name from
+// Claim "Your details", council from the claim). Null if nobody has been through Claim, so the demo
+// scenarios fall back to the seeded persona. Changed in build, prototype, pending design sign-off.
+function signedInIdentity(req) {
+  const claim = (req.session && req.session.data && req.session.data.claim) || {};
+  if (claim.person && claim.person.fullName) {
+    return { name: claim.person.fullName, orgName: (claim.council && claim.council.name) || COUNCIL_NAME };
+  }
+  return null;
+}
+
 function applyFullAccessChrome(req, res) {
   baseChrome(res);
-  res.locals.currentUser = CAF_LEAD;
+  res.locals.currentUser = signedInIdentity(req) || CAF_LEAD;
   const path = req.path;
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard", active: path === "/dashboard" },

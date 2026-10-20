@@ -227,7 +227,9 @@ module.exports = function (router) {
     }
 
     claim.person = { fullName: fullName, jobTitle: jobTitle };
-    const recognised = claim.council && isEmailRecognisedForCouncil(claim.oneLoginEmail, claim.council.id);
+    // treatAsRecognised lets a participant's own typed email flow the recognised path (research
+    // walkthrough). Changed in build, prototype, pending design sign-off.
+    const recognised = claim.treatAsRecognised || (claim.council && isEmailRecognisedForCouncil(claim.oneLoginEmail, claim.council.id));
     if (!recognised) return res.redirect("/claim/how-connected"); // 08 (Batch 4)
     return res.redirect("/claim/check"); // 04 / 05
   });
@@ -390,6 +392,7 @@ module.exports = function (router) {
   // ----- 07 access-granted, first to join (209:2608) ---------------------------------
   router.get("/claim/access-granted", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    syncAccessCurrentUser(req.session.data, claim); // the signed-in "you" is the claimant, not Jo Hart
     applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
     res.render("pages/claim/access-granted", {
       pageTitle: "Claim complete",
@@ -638,6 +641,20 @@ function ensureReviewRequest(claim) {
     email: "priya.shah@westborough.gov.uk",
   };
   return claim.joinRequest;
+}
+
+// Make the signed-in "you" record in Access match the person who signed in and claimed (the name
+// from Your details, the email from Internal Access) instead of the seeded Jo Hart. So "Me, [name]"
+// on the CAF Lead step, the confirmation, and the identity in the nav are the participant.
+// Changed in build, prototype, pending design sign-off.
+function syncAccessCurrentUser(sessionData, claim) {
+  if (!claim || !claim.person || !claim.person.fullName) return;
+  const access = ensureAccess(sessionData);
+  const me = (access.people || []).find((p) => p.isCurrentUser);
+  if (!me) return;
+  me.name = claim.person.fullName;
+  me.firstName = claim.person.fullName.split(" ")[0];
+  if (claim.oneLoginEmail) me.email = claim.oneLoginEmail;
 }
 
 // Shared render for screen 21 (base + "select access" error state).

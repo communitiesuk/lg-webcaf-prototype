@@ -34,8 +34,9 @@ const SIGN_IN_SCENARIOS = {
     councilCount: 1,
   },
   "new-user": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
+    oneLoginEmail: EXAMPLE_EMAILS.recognised, // fallback only — the typed email is kept (see below)
     arrival: "independent",
+    treatAsRecognised: true, // so the email the person typed flows the recognised claim path
   },
   "claim-pending": {
     oneLoginEmail: EXAMPLE_EMAILS.recognised,
@@ -68,11 +69,15 @@ function landingForClaim(claim) {
   return "/claim"; // → 02 Find your council
 }
 
-// Apply the chosen sign-in scenario's seed onto the (already signed-in) Claim state.
+// Apply the chosen sign-in scenario's seed onto the (already signed-in) Claim state, keeping the
+// email the person actually typed into Internal Access (the scenario email is only a fallback).
 function applySignInScenario(sessionData) {
   const claim = ensureClaim(sessionData);
   const seed = SIGN_IN_SCENARIOS[clean(sessionData.signInScenario)];
-  if (seed) Object.assign(claim, seed);
+  if (!seed) return claim;
+  const typedEmail = claim.oneLoginEmail; // set by IA2 from the email the person typed
+  Object.assign(claim, seed);
+  if (typedEmail) claim.oneLoginEmail = typedEmail; // use what they typed, not the persona default
   return claim;
 }
 
@@ -104,9 +109,10 @@ module.exports = function (router) {
 
   router.post("/internal-access/code", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    claim.oneLoginEmail = clean(req.session.data.iaEmail) || EXAMPLE_EMAILS.recognised; // signed in
+    claim.oneLoginEmail = clean(req.session.data.iaEmail); // the email the person typed (may be empty)
     delete req.session.data.iaCode;
-    applySignInScenario(req.session.data); // the scenario persona may override the email
+    applySignInScenario(req.session.data); // scenario flags; keeps the typed email
+    if (!claim.oneLoginEmail) claim.oneLoginEmail = EXAMPLE_EMAILS.recognised; // fallback if none typed
     return res.redirect(landingForClaim(req.session.data.claim));
   });
 
