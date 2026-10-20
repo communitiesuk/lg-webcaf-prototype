@@ -214,9 +214,11 @@ access, 19 which council.
   Access management v5 Figma copy.
 - Approver named "Jo Hart", demo joiner "Priya Shah" — who approves before a CAF Lead is named is
   not decided (built as the first claimant approves).
-- Terminology: the repo says "claim / claimed"; the Figma v6 Content panels say "registration /
-  registered / request" on several screens (07 "Registration complete", 17 "registered", 06/16).
-  Not yet aligned section-wide.
+- Terminology: aligned to "claim / claimed" throughout (20 October decision), not the Figma v6
+  panels' "registration / registered". The distinct "request to join" wording (the join-approval
+  model on 05/20/21) is kept — it is a different action from claiming a council. Figma panels that
+  say "registration" (07 "Registration complete", 17 "registered", 06/16) should be updated to
+  "claim" to match.
 
 ### Reference — where each change lives in the code
 

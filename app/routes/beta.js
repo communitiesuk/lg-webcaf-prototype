@@ -14,8 +14,8 @@ const SIGN_IN_SCENARIOS = [
   { key: "invited", label: "Invited to a council", detail: "A person with a pending invitation. Lands on their task: A13 Confirm your name, then the outcomes assigned to them." },
   { key: "has-access", label: "Already has access", detail: "A member of a council. Lands on the dashboard, or R10 Choose a council if they belong to more than one." },
   { key: "new-user", label: "New user, no council yet", detail: "Lands on Claim your council: 02 Find your council." },
-  { key: "claim-pending", label: "Registration being checked", detail: "Their own registration is waiting for MHCLG approval. Lands on 06 We are checking your registration." },
-  { key: "claim-rejected", label: "Registration not approved", detail: "A previous registration was rejected. Lands on 16 Registration not approved." },
+  { key: "claim-pending", label: "Claim being checked", detail: "Their own claim is waiting for MHCLG approval. Lands on 06 We are checking your claim." },
+  { key: "claim-rejected", label: "Claim not approved", detail: "A previous claim was rejected. Lands on 16 Your claim was not approved." },
   { key: "council-being-checked", label: "Council being checked", detail: "Searches for a council whose first claim is still awaiting MHCLG approval. Leads to 22 You cannot join yet." },
 ];
 
