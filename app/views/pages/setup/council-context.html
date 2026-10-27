@@ -18,32 +18,56 @@
       <form method="post" action="/setup/council-context" novalidate>
 
         {#
-          PLACEHOLDER option lists, pending agreement (v7). The CNI and Operational Technology
-          sector/type lists are not agreed. "Placeholder sector/type" values are stand-ins only.
-          Do not treat them as a real list.
+          Realistic example option lists, pending agreement. The CNI sector list is the UK's
+          Critical National Infrastructure sectors; the OT list is example operational-technology
+          types relevant to local government. Not the agreed list — "Option list not yet agreed".
+          Changed in build, prototype, pending design sign-off.
         #}
+        {% set cniOptions = [
+          { value: "chemicals", text: "Chemicals" },
+          { value: "civil-nuclear", text: "Civil Nuclear" },
+          { value: "communications", text: "Communications" },
+          { value: "defence", text: "Defence" },
+          { value: "emergency-services", text: "Emergency Services" },
+          { value: "energy", text: "Energy" },
+          { value: "finance", text: "Finance" },
+          { value: "food", text: "Food" },
+          { value: "government", text: "Government" },
+          { value: "health", text: "Health" },
+          { value: "space", text: "Space" },
+          { value: "transport", text: "Transport" },
+          { value: "water", text: "Water" }
+        ] %}
+        {% set cniItems = [{ value: "", text: "Select a sector", selected: not context.cni }] %}
+        {% for o in cniOptions %}{% set _ = cniItems.push({ value: o.value, text: o.text, selected: context.cni == o.value }) %}{% endfor %}
         {{ govukSelect({
           id: "councilContextCni",
           name: "councilContextCni",
           label: { text: "Critical national infrastructure (CNI) sector", classes: "govuk-label--s" },
           hint: { text: "Choose the sector, if any. Option list not yet agreed." },
-          items: [
-            { value: "", text: "Select a sector", selected: not context.cni },
-            { value: "placeholder-sector-1", text: "Placeholder sector 1", selected: context.cni == "placeholder-sector-1" },
-            { value: "placeholder-sector-2", text: "Placeholder sector 2", selected: context.cni == "placeholder-sector-2" }
-          ]
+          items: cniItems
         }) }}
 
+        {% set otOptions = [
+          { value: "traffic-control", text: "Traffic management and signalling" },
+          { value: "street-lighting", text: "Street lighting control" },
+          { value: "building-management", text: "Building management systems (BMS)" },
+          { value: "water-wastewater", text: "Water and wastewater treatment control" },
+          { value: "flood-defence", text: "Flood defences and pumping stations" },
+          { value: "cctv-security", text: "CCTV and physical security systems" },
+          { value: "waste-plant", text: "Waste and recycling plant control" },
+          { value: "leisure-plant", text: "Leisure centre and pool plant control" },
+          { value: "car-park", text: "Car park management systems" },
+          { value: "industrial-control", text: "Other industrial control systems (ICS/SCADA)" }
+        ] %}
+        {% set otItems = [{ value: "", text: "Select a type", selected: not context.ot }] %}
+        {% for o in otOptions %}{% set _ = otItems.push({ value: o.value, text: o.text, selected: context.ot == o.value }) %}{% endfor %}
         {{ govukSelect({
           id: "councilContextOt",
           name: "councilContextOt",
           label: { text: "Operational Technology (OT)", classes: "govuk-label--s" },
           hint: { text: "Choose the type, if any. Option list not yet agreed." },
-          items: [
-            { value: "", text: "Select a type", selected: not context.ot },
-            { value: "placeholder-ot-1", text: "Placeholder type 1", selected: context.ot == "placeholder-ot-1" },
-            { value: "placeholder-ot-2", text: "Placeholder type 2", selected: context.ot == "placeholder-ot-2" }
-          ]
+          items: otItems
         }) }}
 
         <div class="govuk-form-group">

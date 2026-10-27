@@ -74,11 +74,11 @@ function buildSetupSeed() {
     // Task 2a — S02 sector context (read-only, confirmed).
     sectorContext: { confirmed: true },
 
-    // Task 2b — S03 council context (v7). CNI/OT are dropdown values (placeholder list); checkboxes
-    // ticked and detail fields empty as drawn. CNI is seeded to a placeholder sector so it stays
+    // Task 2b — S03 council context (v7). CNI/OT are dropdown values (realistic example list);
+    // checkboxes ticked and detail fields empty as drawn. CNI is seeded to a sector so it stays
     // flagged for Decide's D24 CNI consistency check (Boolean(councilContext.cni)).
     councilContext: {
-      cni: "placeholder-sector-1",
+      cni: "emergency-services",
       operationalTechnology: "",
       recentItTransformation: true,
       recentItTransformationDetail: "",
