@@ -26,6 +26,14 @@ function clean(value) {
   return (value || "").toString().trim();
 }
 
+// S03 records a CNI sector as a dropdown value. "none" (explicitly chosen) and "" (not answered)
+// both mean no CNI, so neither flags the Decide CNI consistency check (D24).
+// Changed in build, prototype, pending design sign-off.
+function isCniFlaggedInSetup(setup) {
+  const cni = setup && setup.councilContext && setup.councilContext.cni;
+  return Boolean(cni && cni !== "none");
+}
+
 module.exports = function (router) {
   // Decide chrome + seed for every /decide request (council chrome by default; the
   // assurer/approver screens in later batches override to the minimal nav per-route).
@@ -48,7 +56,7 @@ module.exports = function (router) {
     res.render("pages/decide/cni", {
       pageTitle: "Are any of your critical systems critical national infrastructure (CNI)?",
       backHref: "/setup/task-list",
-      cniFlaggedInSetup: Boolean(setup.councilContext && setup.councilContext.cni),
+      cniFlaggedInSetup: isCniFlaggedInSetup(setup),
       answer: decide.cniAnswer,
     });
   });
@@ -62,7 +70,7 @@ module.exports = function (router) {
     delete req.session.data.cniAnswer;
     if (answer === "yes") return res.redirect("/decide/cni/add");
     // No: if CNI was flagged in Setup (S03), show the consistency check (D24).
-    if (setup.councilContext && setup.councilContext.cni) {
+    if (isCniFlaggedInSetup(setup)) {
       return res.redirect("/decide/cni/check");
     }
     return res.redirect("/decide/systems"); // D02 (Batch 2)

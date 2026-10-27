@@ -24,6 +24,7 @@
           Changed in build, prototype, pending design sign-off.
         #}
         {% set cniOptions = [
+          { value: "none", text: "None" },
           { value: "chemicals", text: "Chemicals" },
           { value: "civil-nuclear", text: "Civil Nuclear" },
           { value: "communications", text: "Communications" },
@@ -49,6 +50,7 @@
         }) }}
 
         {% set otOptions = [
+          { value: "none", text: "None" },
           { value: "traffic-control", text: "Traffic management and signalling" },
           { value: "street-lighting", text: "Street lighting control" },
           { value: "building-management", text: "Building management systems (BMS)" },
