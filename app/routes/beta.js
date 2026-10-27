@@ -192,13 +192,18 @@ const SECTIONS = [
 // 27 Oct: the five research starting points. "Blocked by Internal Access" replaces the old
 // "email not recognised" path (people on an unconfigured domain are stopped at Internal Access);
 // its variant pre-fills a non-configured email so it is one click to the no-access page.
+// Persona (brief): Jo Hart, j.hart@westborough.gov.uk. Pre-fill it on the Internal Access email page
+// for every westborough-based walkthrough, so the researcher can click Continue and land on 01
+// instead of being stopped by Internal Access if they type a non-configured email.
+// Changed in build, prototype, pending design sign-off.
+const PERSONA_EMAIL = "j.hart@westborough.gov.uk";
 const WALKTHROUGH_VARIANTS = {
-  "ask-other-councils": { scenario: "new-user", established: false },         // researcher says Yes on 28
-  "joining-with-caflead": { scenario: "already-claimed", established: false }, // 05 → 20
-  "joining-no-caflead": { scenario: "joining-no-caflead", established: false }, // 05 → 20b
-  "being-checked": { scenario: "council-being-checked", established: false },  // 22
-  "already-have-access": { scenario: "already-have-access", established: true }, // 17
-  "not-my-council": { scenario: "new-user", established: false },             // researcher says No on 01 → 23
+  "ask-other-councils": { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL },   // researcher says Yes on 28
+  "joining-with-caflead": { scenario: "already-claimed", established: false, iaEmail: PERSONA_EMAIL }, // 05 → 20
+  "joining-no-caflead": { scenario: "joining-no-caflead", established: false, iaEmail: PERSONA_EMAIL }, // 05 → 20b
+  "being-checked": { scenario: "council-being-checked", established: false, iaEmail: PERSONA_EMAIL },  // 22
+  "already-have-access": { scenario: "already-have-access", established: true, iaEmail: PERSONA_EMAIL }, // 17
+  "not-my-council": { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL },        // researcher says No on 01 → 23
   "blocked": { scenario: "blocked", established: false, iaEmail: "a.mensah@consultancy-cyber.co.uk" },
   "shared-service": { scenario: "shared-service", established: false, iaEmail: "j.hart@westvale-shared.gov.uk" }, // 19
 };
@@ -328,7 +333,7 @@ module.exports = function (router) {
     return res.redirect("/get-started");
   }
 
-  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, { scenario: "new-user", established: false }));
+  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL }));
 
   router.get("/beta/walkthrough/:variant", (req, res) => {
     const v = WALKTHROUGH_VARIANTS[req.params.variant];
