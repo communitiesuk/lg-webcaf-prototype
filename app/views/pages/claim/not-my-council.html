@@ -1,0 +1,19 @@
+{# not-my-council — reached from "No" on screen 01. 27 Oct: the council is set by the email domain,
+   so a person cannot register for a different one here. Changed in build, prototype, pending sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <span class="govuk-caption-l">Claim your council</span>
+      <h1 class="govuk-heading-l">Your email address is set up for a different council</h1>
+
+      <p class="govuk-body">Your email address is set up for {{ councilName }}, so you cannot register for another council here.</p>
+      <p class="govuk-body">If this is wrong, email the CAF team at <a class="govuk-link" href="mailto:cafsupport@communities.gov.uk">cafsupport@communities.gov.uk</a>. Tell them which council you work for.</p>
+
+      {{ govukButton({ text: "Back", href: "/claim/confirm", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

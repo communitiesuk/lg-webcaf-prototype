@@ -18,27 +18,23 @@
         }) }}
       {% endif %}
 
-      {% set legendHtml %}
-        <span class="govuk-caption-l">Claim your council</span>
-        <h1 class="govuk-fieldset__heading">Is {{ council.name }} your council?</h1>
-      {% endset %}
+      <span class="govuk-caption-l">Claim your council</span>
+      <h1 class="govuk-heading-l">Is {{ council.name }} your council?</h1>
+      <p class="govuk-body">We matched your email address to this council. Check it is right before you continue.</p>
 
       <form method="post" action="/claim/confirm" novalidate>
         {{ govukRadios({
           name: "confirmCouncil",
           fieldset: {
             legend: {
-              html: legendHtml,
-              classes: "govuk-fieldset__legend--l"
+              text: "Is " + council.name + " your council?",
+              classes: "govuk-visually-hidden"
             }
-          },
-          hint: {
-            text: "You followed a link for this council. Check it is the right one before you continue."
           },
           errorMessage: { text: error.message } if error else undefined,
           items: [
             { value: "yes", text: "Yes, this is my council", checked: answer == "yes" },
-            { value: "no", text: "No, I need to find a different council", checked: answer == "no" }
+            { value: "no", text: "No, this is not my council", checked: answer == "no" }
           ]
         }) }}
 

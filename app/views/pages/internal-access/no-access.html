@@ -1,0 +1,18 @@
+{# IA — You do not have access. Internal Access stand-in (prototype only, not our service).
+   Shown when the email entered is not on a configured council domain, so the person is stopped by
+   Internal Access and never reaches WebCAF. Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/internal-access.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <!-- PLACEHOLDER: this stands in for the real GOV.UK Internal Access "no access" page. We do not design it. -->
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">You do not have access</h1>
+      <p class="govuk-body">Your email address is not set up to use this service.</p>
+
+      {{ govukButton({ text: "Back", href: "/internal-access/email" }) }}
+    </div>
+  </div>
+{% endblock %}

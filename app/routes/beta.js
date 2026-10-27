@@ -14,10 +14,10 @@ const { buildAccessEmpty } = require("../data/helpers/access");
 const SIGN_IN_SCENARIOS = [
   { key: "invited", label: "Invited to a council", detail: "A person with a pending invitation. Lands on their task: A13 Confirm your name, then the outcomes assigned to them." },
   { key: "has-access", label: "Already has access", detail: "A member of a council. Lands on the dashboard, or R10 Choose a council if they belong to more than one." },
-  { key: "new-user", label: "New user, no council yet", detail: "Lands on Claim your council: 02 Find your council." },
+  { key: "new-user", label: "New user, no council yet", detail: "Lands on Claim your council: 01 Is this your council? (matched from the email domain)." },
   { key: "claim-pending", label: "Claim being checked", detail: "Their own claim is waiting for MHCLG approval. Lands on 06 We are checking your claim." },
   { key: "claim-rejected", label: "Claim not approved", detail: "A previous claim was rejected. Lands on 16 Your claim was not approved." },
-  { key: "council-being-checked", label: "Council being checked", detail: "Searches for a council whose first claim is still awaiting MHCLG approval. Leads to 22 You cannot join yet." },
+  { key: "council-being-checked", label: "Council being checked", detail: "Confirms the council, whose first claim is still awaiting MHCLG approval. Leads to 22 You cannot join yet." },
 ];
 
 // Scene key -> the screen it opens. Grouped by journey/role for the index page.
@@ -67,17 +67,16 @@ const SECTIONS = [
     description: "Getting access to a council after signing in with Internal Access.",
     groups: [
       {
+        subtitle: "Jump into a scenario (skips Internal Access)",
         base: "/prototype-scenarios/",
         links: [
-          { key: "first-to-join", label: "First to join a council" },
+          { key: "first-to-join", label: "First to claim a council" },
           { key: "joining-others", label: "Join a council already in use" },
-          { key: "unrecognised", label: "Email not recognised" },
-          { key: "domain-matches-many", label: "Email matches more than one council" },
           { key: "already-have-access", label: "You already have access" },
         ],
       },
       {
-        subtitle: "New in v6 (workshop proposal)",
+        subtitle: "Individual Claim screens",
         base: "",
         links: [
           { key: "/claim/request-sent", label: "Your request has been sent (20)" },
@@ -194,19 +193,22 @@ const SECTIONS = [
 // Changed in build, prototype, pending design sign-off.
 // `established: true` seeds the populated demo council (you already have access to a real council);
 // otherwise the brand-new, empty council is seeded (you are blocked or claiming a new one).
+// 27 Oct: the five research starting points. "Blocked by Internal Access" replaces the old
+// "email not recognised" path (people on an unconfigured domain are stopped at Internal Access);
+// its variant pre-fills a non-configured email so it is one click to the no-access page.
 const WALKTHROUGH_VARIANTS = {
   "already-claimed": { scenario: "already-claimed", established: false },
   "being-checked": { scenario: "council-being-checked", established: false },
   "already-have-access": { scenario: "already-have-access", established: true },
-  "not-recognised": { scenario: "not-recognised", established: false },
+  "blocked": { scenario: "blocked", established: false, iaEmail: "a.mensah@consultancy-cyber.co.uk" },
 };
 
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "New council: claim it and set it up (happy path)" },
-  { href: "/beta/walkthrough/already-claimed", label: "Council already claimed — send a request to join" },
-  { href: "/beta/walkthrough/being-checked", label: "Council being checked — you cannot join yet" },
-  { href: "/beta/walkthrough/already-have-access", label: "You already have access" },
-  { href: "/beta/walkthrough/not-recognised", label: "Email not recognised for the council" },
+  { href: "/beta/walkthrough", label: "New council claim (first person from the council)" },
+  { href: "/beta/walkthrough/already-claimed", label: "Joining a council that is already registered" },
+  { href: "/beta/walkthrough/being-checked", label: "Council still under review" },
+  { href: "/beta/walkthrough/already-have-access", label: "Already has access" },
+  { href: "/beta/walkthrough/blocked", label: "Blocked by Internal Access" },
 ];
 
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.
@@ -296,11 +298,10 @@ module.exports = function (router) {
   // participant goes start → Internal Access → claim, then into the happy path or an unhappy outcome.
   // Seeds an empty council. The variant sets the sign-in scenario, which steers the claim branch.
   // Changed in build, prototype, pending design sign-off.
-  function startWalkthrough(req, res, scenario, established) {
+  function startWalkthrough(req, res, opts) {
     if (!req.session.data) req.session.data = {};
     delete req.session.data.claim;
-    delete req.session.data.iaEmail;
-    if (established) {
+    if (opts.established) {
       // You already have access to an established council — clear the state so the populated demo
       // council (setup, team, decide) re-seeds, instead of an empty new one.
       delete req.session.data.setup;
@@ -312,16 +313,20 @@ module.exports = function (router) {
       req.session.data.decide = buildDecideSeedEmpty();
       req.session.data.access = buildAccessEmpty(); // brand-new council: only the claimant, no one else
     }
-    req.session.data.signInScenario = scenario;
+    req.session.data.signInScenario = opts.scenario;
+    // Pre-fill the Internal Access email for "blocked" so it is one click to the no-access page;
+    // otherwise start with an empty email.
+    if (opts.iaEmail) req.session.data.iaEmail = opts.iaEmail;
+    else delete req.session.data.iaEmail;
     return res.redirect("/get-started");
   }
 
-  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, "new-user", false));
+  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, { scenario: "new-user", established: false }));
 
   router.get("/beta/walkthrough/:variant", (req, res) => {
     const v = WALKTHROUGH_VARIANTS[req.params.variant];
     if (!v) return res.redirect("/beta/walkthrough");
-    return startWalkthrough(req, res, v.scenario, v.established);
+    return startWalkthrough(req, res, v);
   });
 
   // Clear Setup + Decide + Claim state, then return to the reset page with a confirmation.

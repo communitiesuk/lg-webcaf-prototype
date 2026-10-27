@@ -19,14 +19,11 @@
       {% set proposalText = "How MHCLG words the reasons, and whether a decision can be challenged, are not yet agreed." %}
       {% include "components/claim-proposal.njk" %}
 
+      {# 27 Oct: body reworded; the "ask IT to register the domain" and "wrong council" routes and the
+         "Claim a different council" button are out. Changed in build, prototype, pending design sign-off. #}
       <p class="govuk-body">MHCLG could not confirm that {{ email }} is connected to {{ councilName }}.</p>
 
-      <h2 class="govuk-heading-m">What you can do</h2>
-      <p class="govuk-body">If your council has not registered your email domain, ask your IT team to arrange that, then claim again.</p>
-      <p class="govuk-body">If you chose the wrong council, you can start again and claim a different one.</p>
-      <p class="govuk-body">If you think this is wrong, email the CAF team at cafsupport@example.gov.uk.</p>
-
-      {{ govukButton({ text: "Claim a different council", href: "/claim/find", classes: "govuk-button--secondary" }) }}
+      <p class="govuk-body">If you think this is wrong, email the CAF team at <a class="govuk-link" href="mailto:cafsupport@communities.gov.uk">cafsupport@communities.gov.uk</a>.</p>
     </div>
   </div>
 {% endblock %}

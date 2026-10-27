@@ -18,6 +18,21 @@ function clean(value) {
 
 const WESTBOROUGH = { id: "westborough", name: "Westborough Borough Council" };
 
+// 27 Oct: Internal Access only lets people on a configured council domain through. For the
+// prototype, westborough.gov.uk is the only configured domain; anyone else is stopped here and
+// never reaches WebCAF (this replaces our old unrecognised-email path). Changed in build,
+// prototype, pending design sign-off.
+const CONFIGURED_DOMAINS = ["westborough.gov.uk"];
+
+function domainOf(email) {
+  const at = clean(email).indexOf("@");
+  return at === -1 ? "" : clean(email).slice(at + 1).toLowerCase();
+}
+
+function isConfiguredDomain(email) {
+  return CONFIGURED_DOMAINS.indexOf(domainOf(email)) !== -1;
+}
+
 // Sign-in scenarios set on the /beta/reset picker. Each seeds the Claim state that WebCAF reads
 // to choose the landing page. The persona email is deliberate: it sets who the signed-in person
 // is for the rest of the journey. Proposal, not agreed.
@@ -114,9 +129,17 @@ module.exports = function (router) {
   });
 
   router.post("/internal-access/email", (req, res) => {
-    // Any email is accepted (including none) — Internal Access is not built here.
-    req.session.data.iaEmail = clean(req.session.data.iaEmail);
+    const email = clean(req.session.data.iaEmail);
+    req.session.data.iaEmail = email;
+    // A non-empty email on a domain that is not configured is stopped by Internal Access.
+    // An empty email falls through (so the reset-picker scenarios still work without typing).
+    if (email && !isConfiguredDomain(email)) return res.redirect("/internal-access/no-access");
     return res.redirect("/internal-access/code");
+  });
+
+  // You do not have access — email is not on a configured council domain.
+  router.get("/internal-access/no-access", (req, res) => {
+    res.render("pages/internal-access/no-access", { pageTitle: "You do not have access" });
   });
 
   // IA2 — enter your one-time code. Any code is accepted; this is where WebCAF treats the

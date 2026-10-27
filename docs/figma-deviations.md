@@ -260,3 +260,66 @@ access, 19 which council.
 | Claim 05/07/07b/17/19 copy | `views/pages/claim/{check-answers,access-granted,joined,already-have-access,which-council}.html`, `routes/claim.js` |
 | Claim 20/21/22 + review outcomes | `views/pages/claim/{request-sent,review-request,review-request-approved,review-request-rejected,cannot-join}.html`, `routes/claim.js` |
 | "Switch council" removed from nav | `data/helpers/{setup,readiness,decide,claim}.js` |
+
+---
+
+## Claim simplified around the email domain (27 October)
+
+Team decision (27 Oct): after Internal Access, the service works out the council from the email
+domain and the person confirms it. There is no council search in the main journey. People whose
+domain is not configured are stopped by Internal Access and never reach the service, so the
+unrecognised-email path comes out. For the prototype, `westborough.gov.uk` is the only configured
+domain. All reversible — removed journey parts are unlinked, not deleted.
+
+**Start of Claim (screen 01):**
+- After Internal Access a person with no access and no invitation lands on **01 "Is this your
+  council?"** (not 02 "Which council do you work for?"). The council is filled from the email
+  domain in session. Copy: caption **Claim your council**, H1 **Is Westborough Borough Council your
+  council?**, body **We matched your email address to this council…**, radios **Yes, this is my
+  council / No, this is not my council**, **Continue**. Yes → Your details (03); No → new "not my
+  council" page. (Caption kept as "Claim your council" for consistency with the rest of Claim,
+  rather than the briefed "Register your council" — team call, flag for Leon.)
+
+**Unlinked (kept for reinstatement if Leon confirms a need):**
+- Council search: 02 "Which council do you work for?", its error, and 13 "council not in the list".
+  The **Change** link on the Council row of both Check-your-answers pages is removed (name, job
+  title stay; email has no Change).
+- Unrecognised-email path: 08 "How are you connected", 09 "Which organisation", 10 "Contact
+  support", 11 "Check your answers (email not recognised)" and the connection error.
+
+**Modified:**
+- **16 "Registration not approved"** body → "MHCLG could not confirm that j.hart@westborough.gov.uk
+  is connected to Westborough Borough Council." Removed the "ask IT to register the domain" and
+  "wrong council" paragraphs, the "What you can do" heading, and the "Register for a different
+  council" button. Kept "If you think this is wrong, email the CAF team at
+  cafsupport@communities.gov.uk."
+
+**New pages:**
+- **not-my-council** (from "No" on screen 01): caption **Claim your council**, H1 **Your email
+  address is set up for a different council**, the two body lines as briefed, secondary **Back** →
+  screen 01.
+- **Internal Access "You do not have access"** stand-in (`/internal-access/no-access`): blue IA
+  header + "not our service" note, H1 **You do not have access**, body **Your email address is not
+  set up to use this service.**, **Back**. Shown when the email entered is not on a configured
+  domain (`CONFIGURED_DOMAINS = ["westborough.gov.uk"]`). HTML-comment placeholder in the source.
+
+**Research starting points** (walkthroughs on `/beta` and `/beta/reset`): New council claim (first
+person) · Joining a council already registered · Council still under review · Already has access ·
+**Blocked by Internal Access** (replaces "email not recognised").
+
+**Follow-up cleanup (same change):** removed a stale link and label left from the pre-27-Oct
+journey — cannot-join (22) "Try again later" pointed at the removed search (now → screen 01); the
+`/beta` Claim index dropped the "New in v6 (workshop proposal)" subtitle and the now-incoherent
+"email not recognised" / "matches more than one council" scenario jumps; reset-picker scenario
+descriptions corrected (new-user lands on 01, not 02).
+
+### Reference — where each change lives in the code
+
+| Area | Files |
+|---|---|
+| Confirm-first start + branching | `routes/claim.js`, `views/pages/claim/confirm.html` |
+| Unlinked search / unrecognised | `routes/claim.js`, `views/pages/claim/check-answers.html` |
+| 16 not-approved copy | `views/pages/claim/not-approved.html` |
+| New pages | `views/pages/claim/not-my-council.html`, `views/pages/internal-access/no-access.html` |
+| IA domain gate | `routes/internal-access.js` |
+| Research starting points + index cleanup | `routes/beta.js`, `views/pages/claim/cannot-join.html` |

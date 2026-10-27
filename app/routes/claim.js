@@ -114,16 +114,17 @@ module.exports = function (router) {
     // Not signed in → Internal Access (replaced the One Login stand-in).
     // Changed in build, prototype, pending design sign-off.
     if (!claim.oneLoginEmail) return res.redirect("/internal-access");
-    if (claim.arrival === "mhclg-link" && claim.preselectedCouncilId) {
-      return res.redirect("/claim/confirm");
-    }
-    return res.redirect("/claim/find");
+    // 27 Oct: the council is worked out from the email domain and the person confirms it on screen
+    // 01 — there is no council search in the main journey. Changed in build, prototype, pending sign-off.
+    const council = councilFromEmail(claim.oneLoginEmail);
+    if (council) claim.council = { id: council.id, name: council.name };
+    return res.redirect("/claim/confirm");
   });
 
-  // ----- 01 confirm-your-council (209:2383) -------------------------------------------
+  // ----- 01 confirm-your-council (209:2383) — "Is this your council?" (domain match) -------------
   router.get("/claim/confirm", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    const council = getCouncilById(claim.preselectedCouncilId) || getCouncilById("westborough");
+    const council = confirmCouncil(claim);
     res.render("pages/claim/confirm", {
       pageTitle: "Is " + council.name + " your council?",
       backHref: "/prototype-scenarios",
@@ -135,7 +136,7 @@ module.exports = function (router) {
 
   router.post("/claim/confirm", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    const council = getCouncilById(claim.preselectedCouncilId) || getCouncilById("westborough");
+    const council = confirmCouncil(claim);
     const answer = clean(req.session.data.confirmCouncil);
     delete req.session.data.confirmCouncil;
 
@@ -151,14 +152,28 @@ module.exports = function (router) {
     }
 
     claim.confirmAnswer = answer;
-    if (answer === "yes") {
-      claim.council = { id: council.id, name: council.name };
-      return res.redirect("/claim/your-details"); // 03 (Batch 2)
-    }
-    return res.redirect("/claim/find");
+    if (answer === "no") return res.redirect("/claim/not-my-council"); // Stage 3 — different council
+
+    claim.council = { id: council.id, name: council.name };
+    // Branching that used to sit on the (now unlinked) council search happens here instead.
+    // Changed in build, prototype, pending design sign-off.
+    if (claim.flagAlreadyHasAccess) return res.redirect("/claim/already-have-access"); // 17
+    if (claim.councilBeingChecked) return res.redirect("/claim/cannot-join"); // 22 (kept as-is)
+    return res.redirect("/claim/your-details"); // 03
   });
 
-  // ----- 02 find-your-council (209:2421) + 12 error (209:2785) ------------------------
+  // ----- not-my-council (reached from "No" on screen 01) — 27 Oct, domain-matched journey --------
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/not-my-council", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const council = confirmCouncil(claim);
+    res.render("pages/claim/not-my-council", {
+      pageTitle: "Your email address is set up for a different council",
+      councilName: council.name,
+    });
+  });
+
+  // ----- 02 find-your-council (209:2421) + 12 error (209:2785) — UNLINKED (kept for reinstatement) -
   router.get("/claim/find", (req, res) => {
     const claim = ensureClaim(req.session.data);
     // Pre-fill the picker with the council the signed-in email is recognised for, when there is
@@ -227,10 +242,9 @@ module.exports = function (router) {
     }
 
     claim.person = { fullName: fullName, jobTitle: jobTitle };
-    // treatAsRecognised lets a participant's own typed email flow the recognised path; forceUnrecognised
-    // forces the "email not recognised" path for research. Changed in build, prototype, pending sign-off.
-    const recognised = !claim.forceUnrecognised && (claim.treatAsRecognised || (claim.council && isEmailRecognisedForCouncil(claim.oneLoginEmail, claim.council.id)));
-    if (!recognised) return res.redirect("/claim/how-connected"); // 08 (Batch 4)
+    // 27 Oct: the council is confirmed from the email domain on screen 01, so everyone who reaches
+    // here is recognised — the "email not recognised" path (08 → 09/10/11) is out of the journey.
+    // Changed in build, prototype, pending design sign-off.
     return res.redirect("/claim/check"); // 04 / 05
   });
 
@@ -567,8 +581,9 @@ function renderYourDetails(res, claim, opts) {
   (errors || []).forEach((e) => {
     errorByField[e.field] = e.message;
   });
-  // Back from 03 goes to where the user came from: 01 (confirm) via an MHCLG link, else 02 (find).
-  const backHref = claim && claim.arrival === "mhclg-link" ? "/claim/confirm" : "/claim/find";
+  // Back from 03 goes to 01 (confirm) — the council search (02) is out of the journey.
+  // Changed in build, prototype, pending design sign-off.
+  const backHref = "/claim/confirm";
   res.render("pages/claim/your-details", {
     pageTitle: (errors ? "Error: " : "") + "Your details",
     backHref: backHref,
@@ -626,6 +641,22 @@ function startScenario(req, res, key) {
   req.session.data.claim = {};
   if (scenario) Object.assign(req.session.data.claim, scenario.apply);
   return res.redirect("/claim");
+}
+
+// The council worked out from the signed-in email domain (27 Oct: domain drives the match; for the
+// prototype westborough.gov.uk maps to Westborough Borough Council via the example data). Null if the
+// domain is not configured — those people are stopped by Internal Access and never reach us.
+// Changed in build, prototype, pending design sign-off.
+function councilFromEmail(email) {
+  const ids = councilsForEmail(email);
+  return ids.length ? getCouncilById(ids[0]) : null;
+}
+
+// The council to show on screen 01: the one already matched, else derived from the email, else the
+// prototype default so the page always renders.
+function confirmCouncil(claim) {
+  if (claim.council && claim.council.id) return getCouncilById(claim.council.id) || claim.council;
+  return councilFromEmail(claim.oneLoginEmail) || getCouncilById("westborough");
 }
 
 // Seed/return the join request the CAF Lead reviews on screen 21. Keep a pending request from a
