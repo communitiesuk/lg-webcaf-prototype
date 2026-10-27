@@ -1,0 +1,52 @@
+{# 24 claim / check your answers (more than one council) — new in v10. Changed in build, prototype,
+   pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Claim your council</span>
+      <h1 class="govuk-heading-l">Check your answers</h1>
+
+      {% set councilsHtml %}
+        {% for c in councils %}{{ c }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% endset %}
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: "Councils" },
+            value: { html: councilsHtml },
+            actions: { items: [{ href: "/claim/other-councils", text: "Change", visuallyHiddenText: "councils" }] }
+          },
+          {
+            key: { text: "Your name" },
+            value: { text: person.fullName },
+            actions: { items: [{ href: "/claim/your-details", text: "Change", visuallyHiddenText: "your name" }] }
+          },
+          {
+            key: { text: "Job title" },
+            value: { text: person.jobTitle },
+            actions: { items: [{ href: "/claim/your-details", text: "Change", visuallyHiddenText: "job title" }] }
+          },
+          {
+            key: { text: "Email address" },
+            value: { text: email }
+          }
+        ]
+      }) }}
+
+      {{ govukInsetText({ text: insetHtml }) }}
+
+      <form method="post" action="/claim/check-multi" novalidate>
+        {{ govukButton({ text: "Send requests" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -22,7 +22,9 @@ const WESTBOROUGH = { id: "westborough", name: "Westborough Borough Council" };
 // prototype, westborough.gov.uk is the only configured domain; anyone else is stopped here and
 // never reaches WebCAF (this replaces our old unrecognised-email path). Changed in build,
 // prototype, pending design sign-off.
-const CONFIGURED_DOMAINS = ["westborough.gov.uk"];
+// westvale-shared.gov.uk (v10 Stage 3) is a configured shared-service domain — those people are let
+// through and land on 19. Changed in build, prototype, pending design sign-off.
+const CONFIGURED_DOMAINS = ["westborough.gov.uk", "westvale-shared.gov.uk"];
 
 function domainOf(email) {
   const at = clean(email).indexOf("@");
@@ -59,7 +61,23 @@ const SIGN_IN_SCENARIOS = {
     arrival: "independent",
     treatAsRecognised: true,
     flagCouncilHasUsers: true, // council already in use → "Send request" (05) → request sent (20)
+    councilHasCafLead: true, // v10: council has named a CAF Lead → 20
     existingUserCount: 5,
+  },
+  // v10: joining a council already in use that has NOT named a CAF Lead yet → 20b.
+  "joining-no-caflead": {
+    oneLoginEmail: EXAMPLE_EMAILS.recognised,
+    arrival: "independent",
+    treatAsRecognised: true,
+    flagCouncilHasUsers: true,
+    councilHasCafLead: false,
+    existingUserCount: 5,
+  },
+  // v10 Stage 3: a shared-service domain linked to more than one council → 19.
+  "shared-service": {
+    oneLoginEmail: "j.hart@westvale-shared.gov.uk",
+    arrival: "independent",
+    treatAsRecognised: true,
   },
   "already-have-access": {
     oneLoginEmail: EXAMPLE_EMAILS.recognised,

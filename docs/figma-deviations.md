@@ -323,3 +323,57 @@ descriptions corrected (new-user lands on 01, not 02).
 | New pages | `views/pages/claim/not-my-council.html`, `views/pages/internal-access/no-access.html` |
 | IA domain gate | `routes/internal-access.js` |
 | Research starting points + index cleanup | `routes/beta.js`, `views/pages/claim/cannot-join.html` |
+
+---
+
+## Claim v9/v10 — multi-council and approval before a CAF Lead (27 October)
+
+Target: Figma "03 Claim your council · v10 (proposal)" and "02 GOV.UK Internal Access · v4". Decisions
+(Rosa Mann, 27 Oct): one person can ask for access to more than one council; MHCLG checks every first
+claim and every request for a council the email is not linked to; until a council names its CAF Lead,
+the person who registered it approves join requests. All additive/reversible — parked search and
+unrecognised pages are left unlinked, not deleted. Captions kept as "Claim your council" (user call),
+screen bodies/buttons use the v10 copy exactly.
+
+Journey: Internal Access → 01 → 28 → (29 if Yes) → 03 → 04 / 05 / 24 → 06 / 20(/20b) / 25.
+
+**New screens:**
+- **28 Do you need access to any other councils?** (`/claim/other-councils-needed`) — Yes→29, No→03.
+- **29 Which other councils do you need access to?** (`/claim/other-councils` + add/remove routes) —
+  accessible-autocomplete add, "Councils you have added" summary list with Remove, stored in session.
+- **24 Check your answers (more than one council)** (`/claim/check-multi`) — Councils list (Change→29),
+  computed inset, "Send requests"→25.
+- **25 Your requests** (`/claim/requests`) — per-council status list (Westborough/Eastvale "Being
+  checked by MHCLG"; Northmoor "Being checked by MHCLG, then the CAF Lead").
+- **20b Request sent, no CAF Lead yet** (`/claim/request-sent-no-caflead`) — names Sam Patel.
+- **19 Which councils do you need access to?** (`/claim/which-councils`) — shared-service domain
+  (`westvale-shared.gov.uk`, now a configured IA domain) → checkboxes → 03.
+
+**Changed screens:**
+- **01** Yes → 28 (the 17 and 22 interrupts still fire first).
+- **03** job-title label → "Job title" (and error → "Enter your job title", for consistency).
+- **04/05** add Council Change (→01) and an "Other councils / None / Change→28" row; 04 inset reworded
+  and button → "Confirm and register"; 05 inset is the new CAF-Lead-or-registered-person copy.
+- **07** last paragraph → "Until your council names its CAF Lead, you approve requests…".
+- **21/21b** `review-request` shows an extra inset when the reviewer is the person who registered the
+  council (no CAF Lead yet); reached via `?as=registered`.
+- **23 not-my-council** reworded; primary button "Ask for access to a different council" → 29.
+- **17** "one council" line replaced with an "ask for access to another council" link → 29.
+- **16** adds an "Ask for access to a different council" button → 29.
+
+**Multi-council request rules (decision, 27 Oct):** from the main flow (28→29) requests = matched
+council + added ones; reached from 17/23/16 ("ask for another council", via `/claim/ask-another-council`)
+requests = only the added councils. The 24 inset and 25 statuses are exact for the fixed research
+scenario (Westborough + Eastvale + Northmoor); other councils default to "Being checked by MHCLG".
+
+**Research starting points:** 10 walkthroughs/links on `/beta` + inspect links for 20/20b/21/21b/22/24/25/28/29.
+
+### Reference — where each change lives in the code
+
+| Area | Files |
+|---|---|
+| Multi-council routes + helpers | `routes/claim.js` |
+| New screens | `views/pages/claim/{other-councils-needed,other-councils,check-answers-multi,requests-sent,request-sent-no-caflead,which-councils}.html` |
+| Changed screens | `views/pages/claim/{confirm,your-details,check-answers,not-my-council,already-have-access,not-approved,access-granted,review-request}.html` |
+| Shared-service domain | `data/claim-example-data.js`, `routes/internal-access.js` |
+| Starting points | `routes/beta.js`, `routes/internal-access.js` |

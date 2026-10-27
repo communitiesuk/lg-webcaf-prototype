@@ -1,0 +1,31 @@
+{# 25 claim / your requests (more than one council) — new in v10. Changed in build, prototype,
+   pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">We have received your requests. You will get an email when each request has been decided.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+
+      <h1 class="govuk-heading-l">Your requests</h1>
+      <p class="govuk-body">This is where each request has got to.</p>
+
+      {% set rows = [] %}
+      {% for r in requests %}
+        {% set _ = rows.push({ key: { text: r.name }, value: { text: r.status } }) %}
+      {% endfor %}
+      {{ govukSummaryList({ rows: rows }) }}
+
+      <p class="govuk-body">You will not be able to see a council record until its request is approved. MHCLG checks every request for a council your email address is not linked to. If a council already uses this service, its CAF Lead also approves your request.</p>
+
+      {{ govukButton({ text: "Read the guidance", href: "/external", classes: "govuk-button--secondary" }) }}
+    </div>
+  </div>
+{% endblock %}

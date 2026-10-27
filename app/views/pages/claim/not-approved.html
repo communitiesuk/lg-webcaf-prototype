@@ -24,6 +24,10 @@
       <p class="govuk-body">MHCLG could not confirm that {{ email }} is connected to {{ councilName }}.</p>
 
       <p class="govuk-body">If you think this is wrong, email the CAF team at <a class="govuk-link" href="mailto:cafsupport@communities.gov.uk">cafsupport@communities.gov.uk</a>.</p>
+
+      {# v10: the button that went to council search now goes to 29 (ask for another council).
+         Changed in build, prototype, pending design sign-off. #}
+      {{ govukButton({ text: "Ask for access to a different council", href: "/claim/ask-another-council", classes: "govuk-button--secondary" }) }}
     </div>
   </div>
 {% endblock %}

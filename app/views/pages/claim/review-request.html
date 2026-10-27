@@ -21,6 +21,12 @@
 
       <h1 class="govuk-heading-l">Review a request to join</h1>
 
+      {# 21b: shown to the person who registered the council, while there is no CAF Lead yet.
+         Changed in build, prototype, pending design sign-off. #}
+      {% if noCafLead %}
+        {{ govukInsetText({ text: "Your council has not named its CAF Lead yet. Until it does, you approve requests to join because you registered the council." }) }}
+      {% endif %}
+
       {% set proposalLabel = "New in v6, workshop proposal" %}
       {% set proposalText = "This screen is shown to the council's CAF Lead. A real version belongs in Access management, next to A05 and A06. Who approves before a CAF Lead is named, and the reject flow, are not yet decided." %}
       {% include "components/claim-proposal.njk" %}

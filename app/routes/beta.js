@@ -67,21 +67,17 @@ const SECTIONS = [
     description: "Getting access to a council after signing in with Internal Access.",
     groups: [
       {
-        subtitle: "Jump into a scenario (skips Internal Access)",
-        base: "/prototype-scenarios/",
-        links: [
-          { key: "first-to-join", label: "First to claim a council" },
-          { key: "joining-others", label: "Join a council already in use" },
-          { key: "already-have-access", label: "You already have access" },
-        ],
-      },
-      {
-        subtitle: "Individual Claim screens",
+        subtitle: "Individual Claim screens (inspect)",
         base: "",
         links: [
-          { key: "/claim/request-sent", label: "Your request has been sent (20)" },
-          { key: "/claim/review-request", label: "Review a request to join, as the CAF Lead (21)" },
-          { key: "/claim/cannot-join", label: "You cannot join yet — council being checked (22)" },
+          { key: "/claim/other-councils-needed", label: "Do you need other councils? (28)" },
+          { key: "/claim/other-councils", label: "Which other councils (29)" },
+          { key: "/claim/requests", label: "Your requests (25)" },
+          { key: "/claim/request-sent", label: "Request sent, has CAF Lead (20)" },
+          { key: "/claim/request-sent-no-caflead", label: "Request sent, no CAF Lead yet (20b)" },
+          { key: "/claim/review-request?as=caf-lead", label: "Review a request, as the CAF Lead (21)" },
+          { key: "/claim/review-request?as=registered", label: "Review a request, as the registered person (21b)" },
+          { key: "/claim/cannot-join", label: "You cannot join yet (22)" },
         ],
       },
     ],
@@ -197,18 +193,29 @@ const SECTIONS = [
 // "email not recognised" path (people on an unconfigured domain are stopped at Internal Access);
 // its variant pre-fills a non-configured email so it is one click to the no-access page.
 const WALKTHROUGH_VARIANTS = {
-  "already-claimed": { scenario: "already-claimed", established: false },
-  "being-checked": { scenario: "council-being-checked", established: false },
-  "already-have-access": { scenario: "already-have-access", established: true },
+  "ask-other-councils": { scenario: "new-user", established: false },         // researcher says Yes on 28
+  "joining-with-caflead": { scenario: "already-claimed", established: false }, // 05 → 20
+  "joining-no-caflead": { scenario: "joining-no-caflead", established: false }, // 05 → 20b
+  "being-checked": { scenario: "council-being-checked", established: false },  // 22
+  "already-have-access": { scenario: "already-have-access", established: true }, // 17
+  "not-my-council": { scenario: "new-user", established: false },             // researcher says No on 01 → 23
   "blocked": { scenario: "blocked", established: false, iaEmail: "a.mensah@consultancy-cyber.co.uk" },
+  "shared-service": { scenario: "shared-service", established: false, iaEmail: "j.hart@westvale-shared.gov.uk" }, // 19
 };
 
+// v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
+// researcher makes on 28 / 01 (noted in the label). Changed in build, prototype, pending sign-off.
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "New council claim (first person from the council)" },
-  { href: "/beta/walkthrough/already-claimed", label: "Joining a council that is already registered" },
-  { href: "/beta/walkthrough/being-checked", label: "Council still under review" },
-  { href: "/beta/walkthrough/already-have-access", label: "Already has access" },
-  { href: "/beta/walkthrough/blocked", label: "Blocked by Internal Access" },
+  { href: "/beta/walkthrough", label: "1. New council claim, one council (first person)" },
+  { href: "/beta/walkthrough/ask-other-councils", label: "2. New council claim, asks for other councils (choose Yes on 28)" },
+  { href: "/beta/walkthrough/joining-with-caflead", label: "3. Joining a council already registered, with a CAF Lead (20)" },
+  { href: "/beta/walkthrough/joining-no-caflead", label: "4. Joining a council with no CAF Lead yet (20b)" },
+  { href: "/claim/review-request?as=registered", label: "5. Person who registered the council reviews a request (21b)" },
+  { href: "/beta/walkthrough/being-checked", label: "6. Council still under review (22)" },
+  { href: "/beta/walkthrough/already-have-access", label: "7. Already has access (17)" },
+  { href: "/beta/walkthrough/not-my-council", label: "8. Not my council (choose No on 01 → 23)" },
+  { href: "/beta/walkthrough/blocked", label: "9. Blocked by Internal Access" },
+  { href: "/beta/walkthrough/shared-service", label: "10. Shared-service domain (19)" },
 ];
 
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.

@@ -14,11 +14,19 @@
       <span class="govuk-caption-l">Claim your council</span>
       <h1 class="govuk-heading-l">Check your answers</h1>
 
+      {# v10: Council Change → 01, Other councils row → 28, Email has no Change.
+         Changed in build, prototype, pending design sign-off. #}
       {{ govukSummaryList({
         rows: [
           {
             key: { text: "Council" },
-            value: { text: council.name }
+            value: { text: council.name },
+            actions: { items: [{ href: "/claim/confirm", text: "Change", visuallyHiddenText: "council" }] }
+          },
+          {
+            key: { text: "Other councils" },
+            value: { text: "None" },
+            actions: { items: [{ href: "/claim/other-councils-needed", text: "Change", visuallyHiddenText: "other councils" }] }
           },
           {
             key: { text: "Your name" },
@@ -37,16 +45,14 @@
         ]
       }) }}
 
-      {# Joining others is now a request to the CAF Lead, not an instant join (v6).
-         Changed in build, prototype, pending design sign-off. #}
       {% if joining %}
-        {{ govukInsetText({ text: existingUserCount + " people from " + council.name + " already use this service. Your request will go to your council’s CAF Lead, who will approve it and decide what you can see. You will get an email when they have decided." }) }}
+        {{ govukInsetText({ text: existingUserCount + " people from " + council.name + " already use this service. Your request will go to your council’s CAF Lead. If your council has not named its CAF Lead yet, it will go to the person who registered the council. They will approve it and decide what you can see. You will get an email when they have decided." }) }}
       {% else %}
-        {{ govukInsetText({ text: "You are the first person from this council to claim it. MHCLG will check this claim before you get access." }) }}
+        {{ govukInsetText({ text: "You are the first person from this council to register. MHCLG will check this registration before you get access." }) }}
       {% endif %}
 
       <form method="post" action="/claim/check" novalidate>
-        {{ govukButton({ text: "Send request" if joining else "Confirm and claim" }) }}
+        {{ govukButton({ text: "Send request" if joining else "Confirm and register" }) }}
       </form>
     </div>
   </div>

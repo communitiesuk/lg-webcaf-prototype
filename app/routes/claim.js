@@ -115,10 +115,13 @@ module.exports = function (router) {
     // Changed in build, prototype, pending design sign-off.
     if (!claim.oneLoginEmail) return res.redirect("/internal-access");
     // 27 Oct: the council is worked out from the email domain and the person confirms it on screen
-    // 01 — there is no council search in the main journey. Changed in build, prototype, pending sign-off.
+    // 01 — there is no council search in the main journey. v10: a shared-service domain matching more
+    // than one council goes to 19 instead. Changed in build, prototype, pending design sign-off.
+    const ids = councilsForEmail(claim.oneLoginEmail);
+    if (ids.length > 1) return res.redirect("/claim/which-councils"); // 19 (shared service, Stage 3)
     const council = councilFromEmail(claim.oneLoginEmail);
     if (council) claim.council = { id: council.id, name: council.name };
-    return res.redirect("/claim/confirm");
+    return res.redirect("/claim/confirm"); // 01
   });
 
   // ----- 01 confirm-your-council (209:2383) — "Is this your council?" (domain match) -------------
@@ -152,14 +155,101 @@ module.exports = function (router) {
     }
 
     claim.confirmAnswer = answer;
-    if (answer === "no") return res.redirect("/claim/not-my-council"); // Stage 3 — different council
+    if (answer === "no") return res.redirect("/claim/not-my-council"); // 23 — set up for another council
 
     claim.council = { id: council.id, name: council.name };
-    // Branching that used to sit on the (now unlinked) council search happens here instead.
+    // These two special states interrupt before the "other councils" question.
     // Changed in build, prototype, pending design sign-off.
     if (claim.flagAlreadyHasAccess) return res.redirect("/claim/already-have-access"); // 17
     if (claim.councilBeingChecked) return res.redirect("/claim/cannot-join"); // 22 (kept as-is)
+    return res.redirect("/claim/other-councils-needed"); // 28
+  });
+
+  // ----- 28 other-councils-needed (new, v10) -----------------------------------------------------
+  // "Do you need access to any other councils?" Changed in build, prototype, pending design sign-off.
+  router.get("/claim/other-councils-needed", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    res.render("pages/claim/other-councils-needed", {
+      pageTitle: "Do you need access to any other councils?",
+      answer: claim.otherCouncilsNeeded || "",
+      error: null,
+    });
+  });
+
+  router.post("/claim/other-councils-needed", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const answer = clean(req.session.data.otherCouncilsNeeded);
+    delete req.session.data.otherCouncilsNeeded;
+    if (answer !== "yes" && answer !== "no") {
+      return res.render("pages/claim/other-councils-needed", {
+        pageTitle: "Error: Do you need access to any other councils?",
+        answer: "",
+        error: { field: "otherCouncilsNeeded", message: "Select yes if you need access to any other councils" },
+      });
+    }
+    claim.otherCouncilsNeeded = answer;
+    if (answer === "yes") {
+      claim.includePrimaryInRequests = true; // main flow: requests cover the matched council + others
+      return res.redirect("/claim/other-councils"); // 29
+    }
+    claim.otherCouncils = []; // No → single-council path
     return res.redirect("/claim/your-details"); // 03
+  });
+
+  // ----- 29 other-councils (new, v10) — add/remove the other councils you need access to ---------
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/other-councils", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const added = claim.otherCouncils || [];
+    const addedIds = added.map((c) => c.id);
+    const primaryId = (claim.council && claim.council.id) || "";
+    // Councils available to add: everything except the matched (primary) council and those already added.
+    const options = COUNCILS
+      .filter((c) => c.id !== primaryId && addedIds.indexOf(c.id) === -1)
+      .map((c) => ({ value: c.id, text: c.name }));
+    res.render("pages/claim/other-councils", {
+      pageTitle: "Which other councils do you need access to?",
+      primaryName: (claim.council && claim.council.name) || "your council",
+      includePrimary: Boolean(claim.includePrimaryInRequests),
+      added,
+      options: [{ value: "", text: "Select a council" }].concat(options),
+      backHref: claim.includePrimaryInRequests ? "/claim/other-councils-needed" : "/claim/confirm",
+    });
+  });
+
+  router.post("/claim/other-councils/add", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const id = clean(req.session.data.addCouncil);
+    delete req.session.data.addCouncil;
+    delete req.session.data.addCouncilText;
+    const council = getCouncilById(id);
+    const list = claim.otherCouncils || [];
+    const primaryId = (claim.council && claim.council.id) || "";
+    if (council && council.id !== primaryId && !list.some((c) => c.id === council.id)) {
+      list.push({ id: council.id, name: council.name });
+    }
+    claim.otherCouncils = list;
+    return res.redirect("/claim/other-councils");
+  });
+
+  router.get("/claim/other-councils/remove/:id", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    claim.otherCouncils = (claim.otherCouncils || []).filter((c) => c.id !== req.params.id);
+    return res.redirect("/claim/other-councils");
+  });
+
+  router.post("/claim/other-councils", (req, res) => {
+    return res.redirect("/claim/your-details"); // 03
+  });
+
+  // "Ask for access to a different / another council" — entry to 29 from 17, 23 and 16. Here the
+  // person is not registering the matched council, so requests cover only the councils they add
+  // (decision, 27 Oct). Changed in build, prototype, pending design sign-off.
+  router.get("/claim/ask-another-council", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    claim.includePrimaryInRequests = false;
+    if (!claim.otherCouncils) claim.otherCouncils = [];
+    return res.redirect("/claim/other-councils"); // 29
   });
 
   // ----- not-my-council (reached from "No" on screen 01) — 27 Oct, domain-matched journey --------
@@ -236,15 +326,15 @@ module.exports = function (router) {
 
     const errors = [];
     if (!fullName) errors.push({ field: "fullName", message: "Enter your full name" });
-    if (!jobTitle) errors.push({ field: "jobTitle", message: "Enter your job title at this council" });
+    if (!jobTitle) errors.push({ field: "jobTitle", message: "Enter your job title" });
     if (errors.length) {
       return renderYourDetails(res, claim, { person: { fullName: fullName, jobTitle: jobTitle }, errors: errors });
     }
 
     claim.person = { fullName: fullName, jobTitle: jobTitle };
-    // 27 Oct: the council is confirmed from the email domain on screen 01, so everyone who reaches
-    // here is recognised — the "email not recognised" path (08 → 09/10/11) is out of the journey.
+    // v10: more than one council → 24 (multi check); one council → 04/05 (single check).
     // Changed in build, prototype, pending design sign-off.
+    if ((claim.otherCouncils || []).length > 0) return res.redirect("/claim/check-multi"); // 24
     return res.redirect("/claim/check"); // 04 / 05
   });
 
@@ -265,22 +355,80 @@ module.exports = function (router) {
   router.post("/claim/check", (req, res) => {
     const claim = ensureClaim(req.session.data);
     if (claim.flagCouncilHasUsers) {
-      // v6: joining others is a REQUEST to the council's CAF Lead, not an instant join. The email
-      // domain only suggested the council — it never creates membership here.
-      // Changed in build, prototype, pending design sign-off.
+      // Joining a council already in use is a REQUEST — to the CAF Lead (20), or to the person who
+      // registered the council if there is no CAF Lead yet (20b). Changed in build, prototype,
+      // pending design sign-off.
       claim.status = "request-sent";
       claim.joinRequest = {
         status: "sent",
         councilName: (claim.council && claim.council.name) || "",
-        approverName: "Jo Hart", // the council's CAF Lead (first claimant) — NOT DECIDED, see Stage 3
+        hasCafLead: Boolean(claim.councilHasCafLead),
+        registeredBy: "Sam Patel", // person who registered Westborough (approves until a CAF Lead is named)
         person: claim.person || {},
         email: claim.oneLoginEmail || "",
       };
-      return res.redirect("/claim/request-sent"); // 20
+      return res.redirect(claim.councilHasCafLead ? "/claim/request-sent" : "/claim/request-sent-no-caflead"); // 20 / 20b
     }
     claim.needsReview = true;
     claim.status = "pending";
     return res.redirect("/claim/pending"); // 06
+  });
+
+  // ----- 24 check-answers (more than one council) + 25 requests (new, v10) -----------------------
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/check-multi", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    res.render("pages/claim/check-answers-multi", {
+      pageTitle: "Check your answers",
+      backHref: "/claim/other-councils",
+      councils: requestedCouncilList(claim).map((c) => c.name),
+      person: claim.person || {},
+      email: claim.oneLoginEmail || "",
+      insetHtml: buildMultiInset(claim),
+    });
+  });
+
+  router.post("/claim/check-multi", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    claim.requestedCouncils = requestedCouncilList(claim).map((c) => ({
+      name: c.name,
+      status: requestStatusFor(c.id),
+    }));
+    claim.status = "requests-sent";
+    return res.redirect("/claim/requests"); // 25
+  });
+
+  router.get("/claim/requests", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    res.render("pages/claim/requests-sent", {
+      pageTitle: "Your requests",
+      requests: claim.requestedCouncils || [],
+    });
+  });
+
+  // ----- 19 which-councils (shared-service domain) (new, v10 Stage 3) ----------------------------
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/which-councils", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const councils = councilsForEmail(claim.oneLoginEmail).map((id) => getCouncilById(id)).filter(Boolean);
+    res.render("pages/claim/which-councils", {
+      pageTitle: "Which councils do you need access to?",
+      councils: councils.map((c) => ({ value: c.id, text: c.name })),
+    });
+  });
+
+  router.post("/claim/which-councils", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const chosen = toList(req.session.data.sharedCouncils);
+    delete req.session.data.sharedCouncils;
+    const councils = chosen.map((id) => getCouncilById(id)).filter(Boolean);
+    // First selected council is the "primary"; the rest are "other councils" for 24/25.
+    if (councils.length) {
+      claim.council = { id: councils[0].id, name: councils[0].name };
+      claim.otherCouncils = councils.slice(1).map((c) => ({ id: c.id, name: c.name }));
+      claim.includePrimaryInRequests = true;
+    }
+    return res.redirect("/claim/your-details"); // 03
   });
 
   // ----- 20 request-sent (joining others — waiting for CAF Lead approval) — v6 PROPOSAL -------
@@ -296,6 +444,17 @@ module.exports = function (router) {
     });
   });
 
+  // ----- 20b request-sent, no CAF Lead yet (new, v10) — approved by the person who registered -----
+  router.get("/claim/request-sent-no-caflead", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    const jr = claim.joinRequest || {};
+    res.render("pages/claim/request-sent-no-caflead", {
+      pageTitle: "Your request has been sent",
+      councilName: jr.councilName || (claim.council && claim.council.name) || "your council",
+      registeredBy: jr.registeredBy || "the person who registered the council",
+    });
+  });
+
   // ----- 21 review-request (the CAF Lead reviews a request to join) — v6 PROPOSAL -----------
   // Reached from the prototype-only "View as the CAF Lead" link on /beta/reset. Reads the join
   // request in session (05 sets it); seeds a demo one if there is not a pending request yet, so
@@ -303,9 +462,16 @@ module.exports = function (router) {
   // sign-off.
   router.get("/claim/review-request", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    // Prototype control: ?as=registered opens 21b (reviewer is the person who registered the council).
+    if (clean(req.query.as) === "registered") claim.reviewerIsRegisteredPerson = true;
+    if (clean(req.query.as) === "caf-lead") claim.reviewerIsRegisteredPerson = false;
     const jr = ensureReviewRequest(claim);
-    applyClaimGrantedChrome(req, res, { fullName: jr.approverName }, jr.councilName);
-    renderReviewRequest(res, jr, {});
+    // 21b: when the council has not named a CAF Lead, the person who registered it (Sam Patel) is
+    // the reviewer and an extra inset explains why. Changed in build, prototype, pending sign-off.
+    const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
+    const reviewerName = noCafLead ? "Sam Patel" : (jr.approverName || "Jo Hart");
+    applyClaimGrantedChrome(req, res, { fullName: reviewerName }, jr.councilName);
+    renderReviewRequest(res, jr, { noCafLead: noCafLead });
   });
 
   router.post("/claim/review-request", (req, res) => {
@@ -323,8 +489,9 @@ module.exports = function (router) {
 
     // Approve — access level is required.
     if (access !== "full" && access !== "outcomes") {
-      applyClaimGrantedChrome(req, res, { fullName: jr.approverName }, jr.councilName);
-      return renderReviewRequest(res, jr, { error: { message: "Select what access to give them" } });
+      const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
+      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : jr.approverName }, jr.councilName);
+      return renderReviewRequest(res, jr, { error: { message: "Select what access to give them" }, noCafLead: noCafLead });
     }
 
     jr.status = "approved";
@@ -659,6 +826,50 @@ function confirmCouncil(claim) {
   return councilFromEmail(claim.oneLoginEmail) || getCouncilById("westborough");
 }
 
+// Normalise a checkbox value (string or array) to a list of strings.
+function toList(value) {
+  if (Array.isArray(value)) return value.map((v) => clean(v)).filter(Boolean);
+  const v = clean(value);
+  return v ? [v] : [];
+}
+
+// The councils being requested on 24/25. In the main flow (28 → 29) this is the matched council
+// plus the added ones; reached from 17/23/16 ("ask for access to another council") it is only the
+// added councils, because the person is not registering the matched one (decision, 27 Oct).
+// Changed in build, prototype, pending design sign-off.
+function requestedCouncilList(claim) {
+  const others = (claim.otherCouncils || []).map((c) => ({ id: c.id, name: c.name }));
+  const list = claim.includePrimaryInRequests && claim.council && claim.council.id
+    ? [{ id: claim.council.id, name: claim.council.name }].concat(others)
+    : others;
+  const seen = {};
+  return list.filter((c) => (seen[c.id] ? false : (seen[c.id] = true)));
+}
+
+// Status shown per requested council on 25. Exact statuses for the fixed research scenario
+// (Westborough + Eastvale + Northmoor); any other council defaults to the MHCLG-only status.
+function requestStatusFor(id) {
+  if (id === "northmoor") return "Being checked by MHCLG, then the CAF Lead";
+  return "Being checked by MHCLG";
+}
+
+// Inset for 24. Exact briefed copy for the main "register + ask for others" scenario; a parallel
+// sentence (reusing the briefed "not linked … so MHCLG will check" clause) for the add-on case.
+function buildMultiInset(claim) {
+  const esc = (s) => (s || "").toString();
+  const others = (claim.otherCouncils || []).map((c) => esc(c.name));
+  const orJoin = (arr) => (arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " or " + arr[arr.length - 1]);
+  if (claim.includePrimaryInRequests && claim.council) {
+    const primary = esc(claim.council.name);
+    return "You are sending a request for each council. You are the first person from " + primary +
+      " to register, so MHCLG will check that registration. Your email address is not linked to " +
+      orJoin(others) + ", so MHCLG will check those requests too.";
+  }
+  const all = requestedCouncilList(claim).map((c) => esc(c.name));
+  return "You are sending a request for each council. Your email address is not linked to " +
+    orJoin(all) + ", so MHCLG will check these requests.";
+}
+
 // Seed/return the join request the CAF Lead reviews on screen 21. Keep a pending request from a
 // real 05 flow (so 05 → 20 → 21 → 07b stay consistent in one session); otherwise seed a demo one
 // so the reviewer always has something to act on. Changed in build, prototype, pending sign-off.
@@ -698,6 +909,7 @@ function renderReviewRequest(res, jr, opts) {
     email: jr.email || "",
     domain: domainOf(jr.email || ""),
     councilName: jr.councilName || "",
+    noCafLead: Boolean(opts.noCafLead),
     error: error,
   });
 }

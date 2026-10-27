@@ -23,6 +23,10 @@ const COUNCILS = [
 // council. This drives frame 19 (domain matches more than one council).
 const SHARED_DOMAINS = {
   "novatech-services.co.uk": ["westborough", "eastvale", "northmoor"],
+  // v10 Stage 3: a shared-service council domain linked to more than one council. A person signing
+  // in with it lands on 19 (select which councils they need). Changed in build, prototype, pending
+  // design sign-off.
+  "westvale-shared.gov.uk": ["westborough", "eastvale", "northmoor"],
 };
 
 // Example emails used by the prototype scenarios. EXAMPLE DATA, NOT REAL.
