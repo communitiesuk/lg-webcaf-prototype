@@ -104,17 +104,9 @@
                 </div>
               </div>
 
-              <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="cc-lgr" name="councilContextApplies" type="checkbox" value="lgr" data-aria-controls="cc-lgr-conditional" {% if context.lgr %}checked{% endif %}>
-                <label class="govuk-label govuk-checkboxes__label" for="cc-lgr">Local Government Reorganisation (LGR)</label>
-              </div>
-              <div class="govuk-checkboxes__conditional {% if not context.lgr %}govuk-checkboxes__conditional--hidden{% endif %}" id="cc-lgr-conditional">
-                <div class="govuk-form-group">
-                  <label class="govuk-label govuk-label--s" for="lgrDetail">What is changing, and roughly when?</label>
-                  <div id="lgrDetail-hint" class="govuk-hint">For example, merging with two district councils in April 2028</div>
-                  <input class="govuk-input" id="lgrDetail" name="lgrDetail" type="text" aria-describedby="lgrDetail-hint" value="{{ context.lgrDetail }}">
-                </div>
-              </div>
+              {# Local Government Reorganisation (LGR) option removed — that work has paused.
+                 Route handling and seed fields are kept so it can be re-added easily.
+                 Changed in build, prototype, pending design sign-off. #}
 
               <div class="govuk-checkboxes__divider">or</div>
 

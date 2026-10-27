@@ -84,7 +84,7 @@ function buildSetupSeed() {
       recentItTransformationDetail: "",
       upcomingItTransformation: false,
       upcomingItTransformationDetail: "",
-      lgr: true,
+      lgr: false, // LGR option removed from the page (work paused); seed cleared to stay coherent
       lgrDetail: "",
       noneOfThese: false,
       anythingElse: "",
