@@ -29,19 +29,11 @@ const ESSENTIAL_SERVICE_OPTIONS = [
   "Customer contact and the council website",
 ];
 
-// Example council register for the S18 "Search for a council" autocomplete.
-// EXAMPLE DATA, NOT REAL — in production this is the national council register used by
-// "Claim your council". Includes the two councils the design shows as already shared.
-const COUNCIL_REGISTER = [
-  "Ashford Vale Council",
-  "Brackenwood Borough Council",
-  "Carnforth City Council",
-  "Deepdale District Council",
-  "Eastvale District Council",
-  "Fenwick County Council",
-  "Greystone Borough Council",
-  "Northmoor County Council",
-];
+// Council register for the S18 "Search for a council" autocomplete (which councils share this
+// system). Uses the SAME real council list as Claim (app/data/councils.js, 330 real + 3 fictional
+// demo councils) so the two registers are consistent. The demo councils (Eastvale, Northmoor) that
+// the seed shows as already shared remain in the list. Changed in build, prototype, pending sign-off.
+const COUNCIL_REGISTER = require("../councils").map((c) => c.name);
 
 // --- The seeded (populated) Setup state the design depicts ---------------------------
 function buildSetupSeed() {
