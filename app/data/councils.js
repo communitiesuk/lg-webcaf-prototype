@@ -98,7 +98,7 @@ module.exports = [
   { id: "east-sussex-county-council", name: "East Sussex County Council", type: "County", region: "South East", onsCode: "E10000011" },
   { id: "eastbourne-borough-council", name: "Eastbourne Borough Council", type: "District", region: "South East", onsCode: "E07000061" },
   { id: "eastleigh-borough-council", name: "Eastleigh Borough Council", type: "District", region: "South East", onsCode: "E07000086" },
-  { id: "eastvale", name: "Eastvale District Council", type: "District council", domains: ["eastvale.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
+  { id: "eastvale", name: "Eastvale District Council", type: "District", domains: ["eastvale.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
   { id: "elmbridge-borough-council", name: "Elmbridge Borough Council", type: "District", region: "South East", onsCode: "E07000207" },
   { id: "epping-forest-district-council", name: "Epping Forest District Council", type: "District", region: "East of England", onsCode: "E07000072" },
   { id: "epsom-and-ewell-borough-council", name: "Epsom & Ewell Borough Council", type: "District", region: "South East", onsCode: "E07000208" },
@@ -216,7 +216,7 @@ module.exports = [
   { id: "north-warwickshire-borough-council", name: "North Warwickshire Borough Council", type: "District", region: "West Midlands", onsCode: "E07000218" },
   { id: "north-west-leicestershire-district-council", name: "North West Leicestershire District Council", type: "District", region: "East Midlands", onsCode: "E07000134" },
   { id: "north-yorkshire-council", name: "North Yorkshire Council", type: "Unitary", region: "Northern England", onsCode: "E06000065" },
-  { id: "northmoor", name: "Northmoor County Council", type: "County council", domains: ["northmoor.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
+  { id: "northmoor", name: "Northmoor County Council", type: "County", domains: ["northmoor.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
   { id: "northumberland-county-council", name: "Northumberland County Council", type: "Unitary", region: "North East", onsCode: "E06000057" },
   { id: "norwich-city-council", name: "Norwich City Council", type: "District", region: "East of England", onsCode: "E07000148" },
   { id: "nottingham-city-council", name: "Nottingham City Council", type: "Unitary", region: "East Midlands", onsCode: "E06000018" },
@@ -328,7 +328,7 @@ module.exports = [
   { id: "west-suffolk-council", name: "West Suffolk Council", type: "District", region: "East of England", onsCode: "E07000245" },
   { id: "west-sussex-county-council", name: "West Sussex County Council", type: "County", region: "South East", onsCode: "E10000032" },
   { id: "west-yorkshire-ca", name: "West Yorkshire CA", type: "Combined Authority", region: "Yorkshire and the Humber", onsCode: "E47000009" },
-  { id: "westborough", name: "Westborough Borough Council", type: "Borough council", domains: ["westborough.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
+  { id: "westborough", name: "Westborough Borough Council", type: "Borough", domains: ["westborough.gov.uk"], fictionalDemo: true },  // FICTIONAL DEMO — remove before any real use
   { id: "westmorland-and-furness-council", name: "Westmorland and Furness Council", type: "Unitary", region: "North West", onsCode: "E06000063" },
   { id: "wigan-borough-council", name: "Wigan Borough Council", type: "Metropolitan", region: "North West", onsCode: "E08000010" },
   { id: "wiltshire-council", name: "Wiltshire Council", type: "Unitary", region: "South West", onsCode: "E06000054" },
