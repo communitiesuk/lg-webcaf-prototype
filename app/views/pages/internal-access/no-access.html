@@ -1,18 +1,36 @@
-{# IA — You do not have access. Internal Access stand-in (prototype only, not our service).
-   Shown when the email entered is not on a configured council domain, so the person is stopped by
-   Internal Access and never reaches WebCAF. Changed in build, prototype, pending design sign-off. #}
+{# IA7 No access — this is GOV.UK Internal Access's OWN page (not WebCAF). Shown for an email that
+   is not set up. Match the real GDS page; no WebCAF branding. Changed in build, prototype, pending
+   design sign-off. #}
 {% extends "layouts/internal-access.html" %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block header %}
+  <!-- PLACEHOLDER: stands in for the real GOV.UK Internal Access "No access" page. We do not design it. -->
+  <header class="app-ia-header" role="banner">
+    <div class="govuk-width-container app-ia-header__row">
+      <span><span class="app-ia-header__logo">GOV.UK</span><span class="app-ia-header__service">Internal Access</span></span>
+      <a class="app-ia-header__link" href="/internal-access/email">Sign out</a>
+    </div>
+  </header>
+  <nav class="app-ia-nav" aria-label="Internal Access">
+    <div class="govuk-width-container">
+      <a class="app-ia-nav__link" href="#">Dashboard</a>
+      <a class="app-ia-nav__link" href="#">Support</a>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block beforeContent %}{% endblock %}
 
 {% block content %}
-  <!-- PLACEHOLDER: this stands in for the real GOV.UK Internal Access "no access" page. We do not design it. -->
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      <h1 class="govuk-heading-l">You do not have access</h1>
-      <p class="govuk-body">Your email address is not set up to use this service.</p>
+      <div class="app-ia-error-banner" role="alert">
+        <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">No access</p>
+      </div>
 
-      {{ govukButton({ text: "Back", href: "/internal-access/email" }) }}
+      <p class="govuk-body">You do not have access to LG Web CAF. If you believe this is incorrect, contact <a class="govuk-link" href="mailto:caf@localdigital.gov.uk">caf@localdigital.gov.uk</a>.</p>
+      <p class="govuk-body"><a class="govuk-link" href="/internal-access/email">Try again</a> or go to the <a class="govuk-link" href="#">SSO dashboard</a>.</p>
     </div>
   </div>
 {% endblock %}

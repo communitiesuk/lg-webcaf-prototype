@@ -47,7 +47,9 @@ const SIGN_IN_SCENARIOS = {
 function landingForClaim(claim) {
   if (!claim) return "/claim";
   if (claim.invitationPending) return "/access/accept/confirm-name"; // A13, then their task
-  if (claim.hasMembership) return claim.councilCount > 1 ? "/choose-council" : "/dashboard"; // R10 or dashboard
+  // v12: 27 "Choose a council" is removed — a person with more than one council goes to the dashboard.
+  // Changed in build, prototype, pending design sign-off.
+  if (claim.hasMembership) return "/dashboard";
   if (claim.status === "pending") return "/claim/pending"; // 06 We are checking your claim
   if (claim.status === "not-approved") return "/claim/not-approved"; // 16 Your claim was not approved
   return "/claim"; // → 02 Find your council

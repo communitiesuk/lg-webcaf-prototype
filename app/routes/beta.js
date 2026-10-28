@@ -214,16 +214,19 @@ const WALKTHROUGH_VARIANTS = {
 // v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
 // researcher makes on 28 / 01 (noted in the label). Changed in build, prototype, pending sign-off.
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "1. New council claim, one council (type a council email, e.g. name@leeds.gov.uk)" },
-  { href: "/beta/walkthrough/ask-other-councils", label: "2. New council claim, asks for other councils (choose Yes on 28)" },
-  { href: "/beta/walkthrough/joining-with-caflead", label: "3. Joining a council already registered, with a CAF Lead (20)" },
-  { href: "/beta/walkthrough/joining-no-caflead", label: "4. Joining a council with no CAF Lead yet (20b)" },
-  { href: "/claim/review-request?as=registered", label: "5. Person who registered the council reviews a request (21b)" },
-  { href: "/beta/walkthrough/being-checked", label: "6. Council still under review (22)" },
-  { href: "/beta/walkthrough/already-have-access", label: "7. Already has access (17)" },
-  { href: "/beta/walkthrough/not-my-council", label: "8. Not my council (choose No on 01 → 23)" },
-  { href: "/beta/walkthrough/blocked", label: "9. Blocked by Internal Access (type a personal email, e.g. name@gmail.com)" },
-  { href: "/beta/walkthrough/shared-service", label: "10. Shared-service domain (type name@westvale-shared.gov.uk) → 19" },
+  { href: "/beta/walkthrough", label: "1. First person from a council, one council (type e.g. name@leeds.gov.uk, then 28 No)" },
+  { href: "/beta/walkthrough/ask-other-councils", label: "2. Asks for other councils (28 Yes → 29)" },
+  { href: "/beta/walkthrough/shared-service", label: "3. Shared-service domain (type name@westvale-shared.gov.uk → 19)" },
+  { href: "/beta/walkthrough/joining-with-caflead", label: "4. Joining a registered council with a CAF Lead (05 → 20)" },
+  { href: "/beta/walkthrough/joining-no-caflead", label: "5. Joining a council with no CAF Lead yet (05 → 20b)" },
+  { href: "/claim/requests-to-join", label: "6. Approver's list of requests (30 → 21)" },
+  { href: "/claim/review-request?as=registered", label: "7. Person who registered the council reviews a request (21b)" },
+  { href: "/claim/access-granted", label: "8. First registration approved (07)" },
+  { href: "/claim/joined", label: "9. Join approved, Collaborator role (07b)" },
+  { href: "/beta/walkthrough/being-checked", label: "10. Council still being checked (22)" },
+  { href: "/beta/walkthrough/already-have-access", label: "11. Already has access (17)" },
+  { href: "/beta/walkthrough/not-my-council", label: "12. Not my council (01 No → 23)" },
+  { href: "/beta/walkthrough/blocked", label: "13. Blocked by Internal Access (type e.g. name@gmail.com)" },
 ];
 
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.

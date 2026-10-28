@@ -377,3 +377,51 @@ scenario (Westborough + Eastvale + Northmoor); other councils default to "Being 
 | Changed screens | `views/pages/claim/{confirm,your-details,check-answers,not-my-council,already-have-access,not-approved,access-granted,review-request}.html` |
 | Shared-service domain | `data/claim-example-data.js`, `routes/internal-access.js` |
 | Starting points | `routes/beta.js`, `routes/internal-access.js` |
+
+---
+
+## Claim v12 — register, approver roles, approver's request list (28 October)
+
+Target: Figma "03 Claim your council · v12" and "02 GOV.UK Internal Access · v5". Mostly copy updates
+plus two new screens on the v10 base. Captions kept as "Claim your council" (user call); v12 bodies,
+panels and buttons use the exact "register/registration" copy. 06 kept as "checking your claim".
+
+**New screens:**
+- **00 Register your council** (`/claim/start`) — intro after Internal Access; Continue → 01, or 19
+  for the shared-service domain. No caption, no back link.
+- **30 Requests to join** (`/claim/requests-to-join`) — the approver's (Priya Shah) list of 3 waiting
+  requesters (Jo Hart, Alex Morgan, Chris Lee), each with a Review link → 21.
+
+**Changed:**
+- **05** — split into two exact insets (CAF-Lead-named / no-CAF-Lead names Sam Patel); the people
+  count is removed.
+- **21/21b** — radios now **Full access / Collaborator** under "What role should they have?" with the
+  role descriptions; approving (either role) → **07b**; the registered-person inset gains a sentence.
+  Personas realigned: **Priya Shah = CAF Lead approver, Sam Patel = registered person**; requesters on
+  30 = Jo Hart / Alex Morgan / Chris Lee.
+- **22** — rewritten: "We have saved your request" + new body; keep the Important banner; drop
+  "Try again later".
+- **07** — "Registration complete" + "You can now:" list + "Being the first to register does not make
+  you CAF Lead". Button "Go to your dashboard" keeps the optional readiness step (earlier decision),
+  so it routes via `/readiness`.
+- **07b** — "Request approved / You have joined Westborough", names Priya Shah + the Collaborator role,
+  no count.
+- **19** — adds "I need access to a council that is not listed" → 29.
+- **24** — Councils "Change" → 19 for the shared-service domain, else 29.
+- **IA7 no-access** — rebuilt to match the real GDS Internal Access page: GOV.UK Internal Access header
+  with Sign out, Dashboard/Support nav, red "No access" banner, caf@localdigital.gov.uk, Try again /
+  SSO dashboard links. No WebCAF branding (the prototype "not our service" note is dropped on this page).
+- **27 Choose a council** — unlinked; members with more than one council now land on the dashboard.
+
+**Research starting points:** 13 on `/beta` (walkthroughs + direct screen links for 30/21b/07/07b).
+
+### Reference — where each change lives
+
+| Area | Files |
+|---|---|
+| 00 intro + start routing | `routes/claim.js`, `views/pages/claim/register-start.html` |
+| 30 approver list + 21/21b roles | `routes/claim.js`, `views/pages/claim/{requests-to-join,review-request}.html` |
+| 05 / 22 / 07 / 07b / 19 / 24 copy | `views/pages/claim/{check-answers,cannot-join,access-granted,joined,which-councils,check-answers-multi}.html` |
+| IA7 GDS page | `views/pages/internal-access/no-access.html`, `assets/sass/application.scss` |
+| 27 unlink + landing | `routes/internal-access.js` |
+| 13 starting points | `routes/beta.js` |

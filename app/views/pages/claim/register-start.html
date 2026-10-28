@@ -1,0 +1,21 @@
+{# 00 claim / register your council (intro) — new in v12. No back link, no caption.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l">Register your council</h1>
+
+      <p class="govuk-body">You have signed in. Before you can use this service, you need to register the council you work for.</p>
+      <p class="govuk-body">We will suggest your council from your email address. If you work with more than one council, you can ask for access to the others.</p>
+      <p class="govuk-body">MHCLG, or someone at your council, will check your request before you get access.</p>
+
+      <form method="post" action="/claim/start" novalidate>
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

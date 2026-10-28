@@ -114,11 +114,23 @@ module.exports = function (router) {
     // Not signed in → Internal Access (replaced the One Login stand-in).
     // Changed in build, prototype, pending design sign-off.
     if (!claim.oneLoginEmail) return res.redirect("/internal-access");
-    // 27 Oct: the council is worked out from the email domain and the person confirms it on screen
-    // 01 — there is no council search in the main journey. v10: a shared-service domain matching more
-    // than one council goes to 19 instead. Changed in build, prototype, pending design sign-off.
+    // v12: signed in → 00 "Register your council" intro, then 00 decides 01 or 19.
+    // Changed in build, prototype, pending design sign-off.
+    return res.redirect("/claim/start"); // 00
+  });
+
+  // ----- 00 register-your-council (intro) — new in v12 -------------------------------------------
+  router.get("/claim/start", (req, res) => {
+    ensureClaim(req.session.data);
+    res.render("pages/claim/register-start", { pageTitle: "Register your council" });
+  });
+
+  router.post("/claim/start", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    // Shared-service domain (matches more than one council) → 19; otherwise set the matched council
+    // and confirm it on 01. Changed in build, prototype, pending design sign-off.
     const ids = councilsForEmail(claim.oneLoginEmail);
-    if (ids.length > 1) return res.redirect("/claim/which-councils"); // 19 (shared service, Stage 3)
+    if (ids.length > 1) return res.redirect("/claim/which-councils"); // 19
     const council = councilFromEmail(claim.oneLoginEmail);
     if (council) claim.council = { id: council.id, name: council.name };
     return res.redirect("/claim/confirm"); // 01
@@ -350,7 +362,8 @@ module.exports = function (router) {
       person: claim.person || {},
       email: claim.oneLoginEmail || "",
       joining: Boolean(claim.flagCouncilHasUsers),
-      existingUserCount: claim.existingUserCount || 5,
+      hasCafLead: Boolean(claim.councilHasCafLead),
+      registeredBy: "Sam Patel", // person who registered the council (approves until a CAF Lead is named)
     });
   });
 
@@ -380,9 +393,11 @@ module.exports = function (router) {
   // Changed in build, prototype, pending design sign-off.
   router.get("/claim/check-multi", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    const councilsChangeHref = claim.fromSharedService ? "/claim/which-councils" : "/claim/other-councils";
     res.render("pages/claim/check-answers-multi", {
       pageTitle: "Check your answers",
-      backHref: "/claim/other-councils",
+      backHref: councilsChangeHref,
+      councilsChangeHref: councilsChangeHref,
       councils: requestedCouncilList(claim).map((c) => c.name),
       person: claim.person || {},
       email: claim.oneLoginEmail || "",
@@ -432,6 +447,7 @@ module.exports = function (router) {
       claim.council = { id: councils[0].id, name: councils[0].name };
       claim.otherCouncils = councils.slice(1).map((c) => ({ id: c.id, name: c.name }));
       claim.includePrimaryInRequests = true;
+      claim.fromSharedService = true; // v12: 24 "Change" on councils goes back to 19, not 29
     }
     return res.redirect("/claim/your-details"); // 03
   });
@@ -460,61 +476,59 @@ module.exports = function (router) {
     });
   });
 
-  // ----- 21 review-request (the CAF Lead reviews a request to join) — v6 PROPOSAL -----------
-  // Reached from the prototype-only "View as the CAF Lead" link on /beta/reset. Reads the join
-  // request in session (05 sets it); seeds a demo one if there is not a pending request yet, so
-  // the reviewer always has something to act on. Changed in build, prototype, pending design
-  // sign-off.
+  // ----- 30 requests-to-join (the approver's list of requests) — new in v12 ---------------------
+  // Signed in as the CAF Lead (Priya Shah). Each row links to 21 to review that person.
+  // Changed in build, prototype, pending design sign-off.
+  router.get("/claim/requests-to-join", (req, res) => {
+    ensureClaim(req.session.data);
+    applyClaimGrantedChrome(req, res, { fullName: "Priya Shah" }, "Westborough Borough Council");
+    res.render("pages/claim/requests-to-join", {
+      pageTitle: "Requests to join",
+      councilName: "Westborough Borough Council",
+      requesters: JOIN_REQUESTERS,
+    });
+  });
+
+  // ----- 21 / 21b review-request — v12. Reached from 30 (per person) as the CAF Lead (Priya Shah),
+  // or with ?as=registered for 21b (Sam Patel, who registered the council, while no CAF Lead yet).
+  // The approver picks a role (Full access / Collaborator); approving shows the requester's 07b.
+  // Changed in build, prototype, pending design sign-off.
   router.get("/claim/review-request", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    // Prototype control: ?as=registered opens 21b (reviewer is the person who registered the council).
     if (clean(req.query.as) === "registered") claim.reviewerIsRegisteredPerson = true;
     if (clean(req.query.as) === "caf-lead") claim.reviewerIsRegisteredPerson = false;
-    const jr = ensureReviewRequest(claim);
-    // 21b: when the council has not named a CAF Lead, the person who registered it (Sam Patel) is
-    // the reviewer and an extra inset explains why. Changed in build, prototype, pending sign-off.
     const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
-    const reviewerName = noCafLead ? "Sam Patel" : (jr.approverName || "Jo Hart");
-    applyClaimGrantedChrome(req, res, { fullName: reviewerName }, jr.councilName);
-    renderReviewRequest(res, jr, { noCafLead: noCafLead });
+    const requester = currentRequester(claim, clean(req.query.person));
+    applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, "Westborough Borough Council");
+    renderReviewRequest(res, requester, { noCafLead: noCafLead });
   });
 
   router.post("/claim/review-request", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    const jr = ensureReviewRequest(claim);
+    const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
+    const requester = currentRequester(claim, clean(req.session.data.reviewPerson));
     const action = clean(req.session.data.reviewAction);
-    const access = clean(req.session.data.reviewAccess);
+    const role = clean(req.session.data.reviewRole);
     delete req.session.data.reviewAction;
-    delete req.session.data.reviewAccess;
+    delete req.session.data.reviewRole;
+    delete req.session.data.reviewPerson;
 
-    if (action === "reject") {
-      jr.status = "rejected";
-      return res.redirect("/claim/review-request/rejected"); // prototype-only, not designed
+    if (action === "reject") return res.redirect("/claim/review-request/rejected"); // not designed
+
+    // Approve — a role is required.
+    if (role !== "full" && role !== "collaborator") {
+      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, "Westborough Borough Council");
+      return renderReviewRequest(res, requester, { error: { message: "Select what role they should have" }, noCafLead: noCafLead });
     }
 
-    // Approve — access level is required.
-    if (access !== "full" && access !== "outcomes") {
-      const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
-      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : jr.approverName }, jr.councilName);
-      return renderReviewRequest(res, jr, { error: { message: "Select what access to give them" }, noCafLead: noCafLead });
-    }
-
-    jr.status = "approved";
-    jr.accessType = access;
-
-    if (access === "outcomes") {
-      // Hand off to the existing A06 "assign outcomes" screen, seeded with the joiner's details.
-      const accessState = ensureAccess(req.session.data);
-      accessState.invite = {
-        name: (jr.person && jr.person.fullName) || "",
-        email: jr.email || "",
-        role: "collaborator",
-        outcomes: [],
-      };
-      return res.redirect("/access/invite/outcomes"); // A06
-    }
-
-    return res.redirect("/claim/review-request/approved"); // Full access → prototype confirmation
+    // Approve (either role) → the requester's "Request approved" screen (07b).
+    claim.council = { id: "westborough", name: "Westborough Borough Council" };
+    claim.person = { fullName: requester.name };
+    claim.joinRequest = {
+      approverName: noCafLead ? "Sam Patel" : "Priya Shah",
+      role: role === "full" ? "Full access" : "Collaborator",
+    };
+    return res.redirect("/claim/joined"); // 07b
   });
 
   // Approve + Full access — simple prototype-only confirmation (CAF Lead facing). The joiner's own
@@ -590,11 +604,14 @@ module.exports = function (router) {
   router.get("/claim/joined", (req, res) => {
     const claim = ensureClaim(req.session.data);
     applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
+    const jr = claim.joinRequest || {};
+    const approverName = jr.approverName || "Priya Shah"; // the CAF Lead who approved
     res.render("pages/claim/joined", {
       pageTitle: "Request approved",
-      councilName: (claim.council && claim.council.name) || "",
-      existingUserCount: claim.existingUserCount || 5,
-      approverName: (claim.joinRequest && claim.joinRequest.approverName) || "Jo Hart",
+      councilName: (claim.council && claim.council.name) || "Westborough Borough Council",
+      approverName: approverName,
+      approverFirst: approverName.split(" ")[0],
+      role: jr.role || "Collaborator",
     });
   });
 
@@ -875,19 +892,29 @@ function buildMultiInset(claim) {
     orJoin(all) + ", so MHCLG will check these requests.";
 }
 
-// Seed/return the join request the CAF Lead reviews on screen 21. Keep a pending request from a
-// real 05 flow (so 05 → 20 → 21 → 07b stay consistent in one session); otherwise seed a demo one
-// so the reviewer always has something to act on. Changed in build, prototype, pending sign-off.
-function ensureReviewRequest(claim) {
-  if (claim.joinRequest && claim.joinRequest.status === "sent") return claim.joinRequest;
-  claim.joinRequest = {
-    status: "sent",
-    councilName: "Westborough Borough Council",
-    approverName: "Jo Hart", // the reviewing CAF Lead — who approves is NOT DECIDED
-    person: { fullName: "Priya Shah", jobTitle: "Service Manager" },
-    email: "priya.shah@westborough.gov.uk",
-  };
-  return claim.joinRequest;
+// v12: the people waiting on screen 30 for the approver (Priya Shah) to review. Example data.
+// Changed in build, prototype, pending design sign-off.
+const JOIN_REQUESTERS = [
+  { id: "jo-hart", name: "Jo Hart", jobTitle: "Cyber Security Manager", email: "j.hart@westborough.gov.uk", asked: "27 October" },
+  { id: "alex-morgan", name: "Alex Morgan", jobTitle: "ICT Infrastructure Lead", email: "a.morgan@westborough.gov.uk", asked: "28 October" },
+  { id: "chris-lee", name: "Chris Lee", jobTitle: "Information Governance Officer", email: "c.lee@westborough.gov.uk", asked: "28 October" },
+];
+
+// The requester being reviewed on 21: the one picked on 30 (by id, remembered across GET/POST),
+// else a real request from the 05 flow, else the first on the list.
+function currentRequester(claim, personId) {
+  const byId = JOIN_REQUESTERS.find((r) => r.id === personId);
+  if (byId) { claim.reviewPersonId = byId.id; return byId; }
+  if (claim.reviewPersonId) {
+    const prev = JOIN_REQUESTERS.find((r) => r.id === claim.reviewPersonId);
+    if (prev) return prev;
+  }
+  const jr = claim.joinRequest;
+  if (jr && jr.person && jr.person.fullName) {
+    return { id: "", name: jr.person.fullName, jobTitle: jr.person.jobTitle || "", email: jr.email || "" };
+  }
+  claim.reviewPersonId = JOIN_REQUESTERS[0].id;
+  return JOIN_REQUESTERS[0];
 }
 
 // Make the signed-in "you" record in Access match the person who signed in and claimed (the name
@@ -905,15 +932,16 @@ function syncAccessCurrentUser(sessionData, claim) {
 }
 
 // Shared render for screen 21 (base + "select access" error state).
-function renderReviewRequest(res, jr, opts) {
+function renderReviewRequest(res, requester, opts) {
   const error = opts.error || null;
   res.render("pages/claim/review-request", {
     pageTitle: (error ? "Error: " : "") + "Review a request to join",
-    name: (jr.person && jr.person.fullName) || "",
-    jobTitle: (jr.person && jr.person.jobTitle) || "",
-    email: jr.email || "",
-    domain: domainOf(jr.email || ""),
-    councilName: jr.councilName || "",
+    personId: requester.id || "",
+    name: requester.name || "",
+    jobTitle: requester.jobTitle || "",
+    email: requester.email || "",
+    domain: "westborough.gov.uk",
+    councilName: "Westborough Borough Council",
     noCafLead: Boolean(opts.noCafLead),
     error: error,
   });

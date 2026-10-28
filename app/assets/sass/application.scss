@@ -662,3 +662,38 @@
 .app-ia-footer p {
   margin: 0;
 }
+
+// GOV.UK Internal Access "No access" (IA7) — GDS's own page look (not WebCAF). Header Sign-out row,
+// Dashboard/Support nav, red banner. Changed in build, prototype, pending design sign-off.
+.app-ia-header__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-ia-header__link {
+  color: #ffffff;
+  font-size: 19px;
+}
+
+.app-ia-nav {
+  background-color: #0b0c0c;
+  padding: 10px 0;
+}
+
+.app-ia-nav__link {
+  color: #ffffff;
+  margin-right: 20px;
+  font-size: 19px;
+}
+
+.app-ia-error-banner {
+  background-color: #d4351c;
+  color: #ffffff;
+  padding: 15px 20px;
+  margin-bottom: 30px;
+}
+
+.app-ia-error-banner p {
+  color: #ffffff;
+}

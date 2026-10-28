@@ -15,7 +15,7 @@
       {% if error %}
         {{ govukErrorSummary({
           titleText: "There is a problem",
-          errorList: [{ text: error.message, href: "#reviewAccess" }]
+          errorList: [{ text: error.message, href: "#reviewRole" }]
         }) }}
       {% endif %}
 
@@ -24,12 +24,8 @@
       {# 21b: shown to the person who registered the council, while there is no CAF Lead yet.
          Changed in build, prototype, pending design sign-off. #}
       {% if noCafLead %}
-        {{ govukInsetText({ text: "Your council has not named its CAF Lead yet. Until it does, you approve requests to join because you registered the council." }) }}
+        {{ govukInsetText({ text: "Your council has not named its CAF Lead yet. Until it does, you approve requests to join because you registered the council. Once a CAF Lead is named, they will approve requests instead." }) }}
       {% endif %}
-
-      {% set proposalLabel = "New in v6, workshop proposal" %}
-      {% set proposalText = "This screen is shown to the council's CAF Lead. A real version belongs in Access management, next to A05 and A06. Who approves before a CAF Lead is named, and the reject flow, are not yet decided." %}
-      {% include "components/claim-proposal.njk" %}
 
       {# Name, job title and email as the person entered them. The council row is not shown. #}
       {{ govukSummaryList({
@@ -43,13 +39,14 @@
       {{ govukInsetText({ text: "We recognise " + domain + " as an email address for " + councilName + "." }) }}
 
       <form method="post" action="/claim/review-request" novalidate>
+        <input type="hidden" name="reviewPerson" value="{{ personId }}">
         {{ govukRadios({
-          name: "reviewAccess",
-          fieldset: { legend: { text: "What access should they have?", classes: "govuk-fieldset__legend--m" } },
+          name: "reviewRole",
+          fieldset: { legend: { text: "What role should they have?", classes: "govuk-fieldset__legend--m" } },
           errorMessage: { text: error.message } if error else undefined,
           items: [
-            { value: "full", text: "Full access" },
-            { value: "outcomes", text: "Access to specific outcomes, which you choose next" }
+            { value: "full", text: "Full access", hint: { text: "Can do everything, including inviting people and approving requests." } },
+            { value: "collaborator", text: "Collaborator", hint: { text: "Works on the Contributing Outcomes you choose next." } }
           ]
         }) }}
 

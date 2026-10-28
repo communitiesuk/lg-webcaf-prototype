@@ -1,0 +1,26 @@
+{# 30 claim / requests to join (the approver's list) — new in v12. Signed in as the CAF Lead.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <span class="govuk-caption-l">Access management</span>
+      <h1 class="govuk-heading-l">Requests to join</h1>
+
+      <p class="govuk-body">{{ requesters.length }} people are waiting for you to review their request to join {{ councilName }}. Review each one to decide what role they have.</p>
+
+      {% set rows = [] %}
+      {% for r in requesters %}
+        {% set _ = rows.push({
+          key: { text: r.name },
+          value: { text: r.jobTitle + ", asked " + r.asked },
+          actions: { items: [{ href: "/claim/review-request?person=" + r.id, text: "Review", visuallyHiddenText: "the request from " + r.name }] }
+        }) %}
+      {% endfor %}
+      {{ govukSummaryList({ rows: rows }) }}
+    </div>
+  </div>
+{% endblock %}
