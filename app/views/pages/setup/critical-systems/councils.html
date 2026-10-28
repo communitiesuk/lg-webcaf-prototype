@@ -21,7 +21,7 @@
           <select class="govuk-select" id="councilSearch-select" name="councilSearchSelect" aria-describedby="councilSearch-hint" data-council-autocomplete>
             <option value="">Select a council</option>
             {% for c in register %}
-              <option value="{{ c }}">{{ c }}</option>
+              <option value="{{ c.value }}">{{ c.text }}</option>
             {% endfor %}
           </select>
         </div>
@@ -30,10 +30,10 @@
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Councils you have added</legend>
             <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="added-councils">
-              {% for council in system.councils %}
+              {% for council in addedCouncils %}
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="whichCouncils-{{ loop.index }}" name="whichCouncils" type="checkbox" value="{{ council }}" checked>
-                  <label class="govuk-label govuk-checkboxes__label" for="whichCouncils-{{ loop.index }}">{{ council }}</label>
+                  <input class="govuk-checkboxes__input" id="whichCouncils-{{ loop.index }}" name="whichCouncils" type="checkbox" value="{{ council.value }}" checked>
+                  <label class="govuk-label govuk-checkboxes__label" for="whichCouncils-{{ loop.index }}">{{ council.text }}</label>
                 </div>
               {% endfor %}
             </div>

@@ -15,10 +15,11 @@ window.GOVUKPrototypeKit.documentReady(() => {
   const councilSelect = document.querySelector("[data-council-autocomplete]")
   if (councilSelect && accessibleAutocomplete && accessibleAutocomplete.enhanceSelectElement) {
     const addedList = document.querySelector("#added-councils")
-    const appendCouncil = (name) => {
-      if (!name || !addedList) return
+    // The stored value is the plain council name; the label may show "name (type)".
+    const appendCouncil = (value, labelText) => {
+      if (!value || !addedList) return
       const exists = Array.from(addedList.querySelectorAll('input[name="whichCouncils"]')).some(
-        (input) => input.value === name
+        (input) => input.value === value
       )
       if (exists) return
       const idx = addedList.querySelectorAll(".govuk-checkboxes__item").length + 1
@@ -30,12 +31,12 @@ window.GOVUKPrototypeKit.documentReady(() => {
       input.id = safeId
       input.name = "whichCouncils"
       input.type = "checkbox"
-      input.value = name
+      input.value = value
       input.checked = true
       const label = document.createElement("label")
       label.className = "govuk-label govuk-checkboxes__label"
       label.setAttribute("for", safeId)
-      label.textContent = name
+      label.textContent = labelText || value
       item.appendChild(input)
       item.appendChild(label)
       addedList.appendChild(item)
@@ -43,8 +44,14 @@ window.GOVUKPrototypeKit.documentReady(() => {
     accessibleAutocomplete.enhanceSelectElement({
       selectElement: councilSelect,
       defaultValue: "",
-      onConfirm: (value) => {
-        if (value) appendCouncil(value)
+      // onConfirm receives the confirmed string; map it back to the option so we store the plain
+      // council name (value) but keep the "name (type)" display label.
+      onConfirm: (confirmed) => {
+        if (!confirmed) return
+        const opt = Array.from(councilSelect.options).find(
+          (o) => o.textContent === confirmed || o.value === confirmed
+        )
+        appendCouncil(opt ? opt.value : confirmed, opt ? opt.textContent : confirmed)
       },
     })
   }

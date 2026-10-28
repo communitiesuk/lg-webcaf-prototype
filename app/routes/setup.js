@@ -41,6 +41,15 @@ const {
   buildSetupSummary,
 } = require("../data/helpers/setup");
 
+// Council type by name, for showing the type beside each council on S18 (same as Claim screen 29),
+// e.g. "Newcastle Upon Tyne City Council (Metropolitan)". The stored value stays the plain name.
+// Changed in build, prototype, pending design sign-off.
+const COUNCIL_TYPE_BY_NAME = new Map(require("../data/councils").map((c) => [c.name, c.type]));
+function councilWithType(name) {
+  const t = COUNCIL_TYPE_BY_NAME.get(name);
+  return t ? name + " (" + t + ")" : name;
+}
+
 function toList(value) {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null || value === "") return [];
@@ -956,7 +965,9 @@ module.exports = function (router) {
       pageTitle: "Which councils share this system?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`,
       system,
-      register: COUNCIL_REGISTER.filter((c) => !added.has(c)),
+      // value = plain council name (stored); text = "name (type)" for display. Changed in build.
+      register: COUNCIL_REGISTER.filter((c) => !added.has(c)).map((name) => ({ value: name, text: councilWithType(name) })),
+      addedCouncils: (system.councils || []).map((name) => ({ value: name, text: councilWithType(name) })),
     });
   });
 
