@@ -593,17 +593,22 @@ module.exports = function (router) {
   router.get("/claim/access-granted", (req, res) => {
     const claim = ensureClaim(req.session.data);
     syncAccessCurrentUser(req.session.data, claim); // the signed-in "you" is the claimant, not Jo Hart
-    applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
+    // Coherent identity when reached directly (the /beta inspect link), not just in a full journey.
+    const who = (claim.person && claim.person.fullName) ? claim.person : { fullName: "Jo Hart" };
+    const org = (claim.council && claim.council.name) || "Westborough Borough Council";
+    applyClaimGrantedChrome(req, res, who, org);
     res.render("pages/claim/access-granted", {
-      pageTitle: "Claim complete",
-      councilName: (claim.council && claim.council.name) || "",
+      pageTitle: "Registration complete",
+      councilName: org,
     });
   });
 
   // ----- 07b access-granted, joined existing (209:2977) ------------------------------
   router.get("/claim/joined", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    applyClaimGrantedChrome(req, res, claim.person, claim.council && claim.council.name);
+    // Coherent identity when reached directly (the /beta inspect link), not just in a full journey.
+    const who = (claim.person && claim.person.fullName) ? claim.person : { fullName: "Jo Hart" };
+    applyClaimGrantedChrome(req, res, who, (claim.council && claim.council.name) || "Westborough Borough Council");
     const jr = claim.joinRequest || {};
     const approverName = jr.approverName || "Priya Shah"; // the CAF Lead who approved
     res.render("pages/claim/joined", {

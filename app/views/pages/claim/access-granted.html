@@ -24,7 +24,9 @@
       </ul>
       <p class="govuk-body">Being the first to register does not make you your council’s CAF Lead. Naming the CAF Lead is the first task when you set up your council. Once a CAF Lead is named, they approve requests to join instead of you.</p>
 
-      {{ govukButton({ text: "Go to your dashboard", href: "/readiness" }) }}
+      {# Keeps the optional readiness check (R01) before the dashboard, per the earlier decision;
+         labelled "Continue" so it matches where it goes. Changed in build, prototype, pending sign-off. #}
+      {{ govukButton({ text: "Continue", href: "/readiness" }) }}
     </div>
   </div>
 {% endblock %}
