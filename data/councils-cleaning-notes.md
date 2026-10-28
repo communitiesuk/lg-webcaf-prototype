@@ -12,9 +12,10 @@ Output: `app/data/councils.js` — 333 entries = 330 real councils + 3 fictional
 
 ---
 
-## 1. Row count (not reconciled — your decision)
+## 1. Row count
 
-- Source data rows: **330** (the service quotes 317). No rows were filtered to hit 317.
+- **330 councils is the confirmed number** (the earlier "317" figure is superseded). All 330 source
+  rows are kept — none were filtered.
 - By council type: District 163, Unitary 62, Metropolitan 36, London Borough 33, County 22, Combined Authority 12, Borough 2.
 - Counties (name has 'County Council'): 23. London boroughs (name 'London Borough of'): 29. Combined authorities: 12.
 
