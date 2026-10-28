@@ -10,105 +10,35 @@
 // Changed in build, prototype, pending design sign-off.
 
 const { ensureClaim } = require("../data/helpers/claim");
-const { EXAMPLE_EMAILS } = require("../data/claim-example-data");
+const { canSignIn, matchCouncilByDomain } = require("../data/claim-example-data");
 
 function clean(value) {
   return (value || "").toString().trim();
 }
 
-const WESTBOROUGH = { id: "westborough", name: "Westborough Borough Council" };
-
-// 27 Oct: Internal Access only lets people on a configured council domain through. For the
-// prototype, westborough.gov.uk is the only configured domain; anyone else is stopped here and
-// never reaches WebCAF (this replaces our old unrecognised-email path). Changed in build,
-// prototype, pending design sign-off.
-// westvale-shared.gov.uk (v10 Stage 3) is a configured shared-service domain — those people are let
-// through and land on 19. Changed in build, prototype, pending design sign-off.
-const CONFIGURED_DOMAINS = ["westborough.gov.uk", "westvale-shared.gov.uk"];
-
-function domainOf(email) {
-  const at = clean(email).indexOf("@");
-  return at === -1 ? "" : clean(email).slice(at + 1).toLowerCase();
-}
-
-function isConfiguredDomain(email) {
-  return CONFIGURED_DOMAINS.indexOf(domainOf(email)) !== -1;
-}
+// User-driven: Internal Access accepts whatever work email the person types, as long as it resolves
+// to a council (canSignIn). Personal addresses (gmail etc.) and domains that match no council are
+// stopped here and never reach WebCAF. Nothing is pre-filled. Changed in build, prototype, pending
+// design sign-off.
 
 // Sign-in scenarios set on the /beta/reset picker. Each seeds the Claim state that WebCAF reads
 // to choose the landing page. The persona email is deliberate: it sets who the signed-in person
 // is for the rest of the journey. Proposal, not agreed.
+// User-driven: scenarios carry ONLY the routing/state flags that choose which journey to show.
+// The email and the council come from what the participant types — no persona data is seeded here.
 const SIGN_IN_SCENARIOS = {
-  invited: {
-    oneLoginEmail: "s.okoro@westborough.gov.uk",
-    invitationPending: true,
-  },
-  "has-access": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    hasMembership: true,
-    council: WESTBOROUGH,
-    person: { fullName: "Jo Hart" },
-    councilCount: 1,
-  },
-  "new-user": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised, // fallback only — the typed email is kept (see below)
-    arrival: "independent",
-    treatAsRecognised: true, // so the email the person typed flows the recognised claim path
-  },
-  // Unhappy paths (research walkthroughs). Each lands in an unhappy outcome during the claim.
-  "already-claimed": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    arrival: "independent",
-    treatAsRecognised: true,
-    flagCouncilHasUsers: true, // council already in use → "Send request" (05) → request sent (20)
-    councilHasCafLead: true, // v10: council has named a CAF Lead → 20
-    existingUserCount: 5,
-  },
-  // v10: joining a council already in use that has NOT named a CAF Lead yet → 20b.
-  "joining-no-caflead": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    arrival: "independent",
-    treatAsRecognised: true,
-    flagCouncilHasUsers: true,
-    councilHasCafLead: false,
-    existingUserCount: 5,
-  },
-  // v10 Stage 3: a shared-service domain linked to more than one council → 19.
-  "shared-service": {
-    oneLoginEmail: "j.hart@westvale-shared.gov.uk",
-    arrival: "independent",
-    treatAsRecognised: true,
-  },
-  "already-have-access": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    arrival: "independent",
-    treatAsRecognised: true,
-    flagAlreadyHasAccess: true, // find → "You already have access" (17)
-    existingUserCount: 5,
-    registeredDate: "14 August 2026",
-  },
-  "not-recognised": {
-    oneLoginEmail: EXAMPLE_EMAILS.unrecognised,
-    arrival: "independent",
-    forceUnrecognised: true, // your details → "How are you connected?" (08), whatever email is typed
-  },
-  "claim-pending": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    status: "pending",
-    council: WESTBOROUGH,
-    person: { fullName: "Jo Hart" },
-  },
-  "claim-rejected": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    status: "not-approved",
-    council: WESTBOROUGH,
-    person: { fullName: "Jo Hart" },
-  },
-  "council-being-checked": {
-    oneLoginEmail: EXAMPLE_EMAILS.recognised,
-    arrival: "independent",
-    councilBeingChecked: true, // find-your-council leads to 22 "You cannot join yet" (Stage 3)
-  },
+  invited: { invitationPending: true },
+  "has-access": { hasMembership: true, councilCount: 1 },
+  "new-user": { arrival: "independent", treatAsRecognised: true },
+  // Unhappy paths (research walkthroughs). Each flag steers the claim branch.
+  "already-claimed": { arrival: "independent", treatAsRecognised: true, flagCouncilHasUsers: true, councilHasCafLead: true, existingUserCount: 5 },
+  "joining-no-caflead": { arrival: "independent", treatAsRecognised: true, flagCouncilHasUsers: true, councilHasCafLead: false, existingUserCount: 5 },
+  "shared-service": { arrival: "independent", treatAsRecognised: true },
+  "already-have-access": { arrival: "independent", treatAsRecognised: true, flagAlreadyHasAccess: true, existingUserCount: 5, registeredDate: "14 August 2026" },
+  "not-recognised": { arrival: "independent", forceUnrecognised: true },
+  "claim-pending": { status: "pending" },
+  "claim-rejected": { status: "not-approved" },
+  "council-being-checked": { arrival: "independent", councilBeingChecked: true },
 };
 
 // Where WebCAF sends the person after Internal Access, decided from its own user state.
@@ -128,10 +58,12 @@ function landingForClaim(claim) {
 function applySignInScenario(sessionData) {
   const claim = ensureClaim(sessionData);
   const seed = SIGN_IN_SCENARIOS[clean(sessionData.signInScenario)];
-  if (!seed) return claim;
-  const typedEmail = claim.oneLoginEmail; // set by IA2 from the email the person typed
-  Object.assign(claim, seed);
-  if (typedEmail) claim.oneLoginEmail = typedEmail; // use what they typed, not the persona default
+  if (seed) Object.assign(claim, seed); // routing flags only — no email/council/person seeded
+  // The council comes from the email the person typed (user-driven), not a hardcoded one.
+  if (!claim.council && claim.oneLoginEmail) {
+    const c = matchCouncilByDomain(claim.oneLoginEmail);
+    if (c) claim.council = { id: c.id, name: c.name };
+  }
   return claim;
 }
 
@@ -143,15 +75,23 @@ module.exports = function (router) {
     res.render("pages/internal-access/email", {
       pageTitle: "Enter your email address",
       iaEmail: clean(req.session.data.iaEmail),
+      error: null,
     });
   });
 
   router.post("/internal-access/email", (req, res) => {
     const email = clean(req.session.data.iaEmail);
     req.session.data.iaEmail = email;
-    // A non-empty email on a domain that is not configured is stopped by Internal Access.
-    // An empty email falls through (so the reset-picker scenarios still work without typing).
-    if (email && !isConfiguredDomain(email)) return res.redirect("/internal-access/no-access");
+    // Required field (user-driven — nothing pre-filled).
+    if (!email) {
+      return res.render("pages/internal-access/email", {
+        pageTitle: "Error: Enter your email address",
+        iaEmail: "",
+        error: "Enter your email address",
+      });
+    }
+    // Personal addresses and domains that match no council are stopped by Internal Access.
+    if (!canSignIn(email)) return res.redirect("/internal-access/no-access");
     return res.redirect("/internal-access/code");
   });
 
@@ -171,10 +111,10 @@ module.exports = function (router) {
 
   router.post("/internal-access/code", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    claim.oneLoginEmail = clean(req.session.data.iaEmail); // the email the person typed (may be empty)
+    claim.oneLoginEmail = clean(req.session.data.iaEmail); // the email the person typed
+    if (!claim.oneLoginEmail) return res.redirect("/internal-access/email"); // nothing typed
     delete req.session.data.iaCode;
-    applySignInScenario(req.session.data); // scenario flags; keeps the typed email
-    if (!claim.oneLoginEmail) claim.oneLoginEmail = EXAMPLE_EMAILS.recognised; // fallback if none typed
+    applySignInScenario(req.session.data); // routing flags + council from the typed email
     return res.redirect(landingForClaim(req.session.data.claim));
   });
 

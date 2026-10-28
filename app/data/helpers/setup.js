@@ -615,9 +615,10 @@ function buildSetupSummary(setup) {
 // Changed in build, prototype, pending design sign-off.
 function signedInSetupUser(req) {
   const claim = (req.session && req.session.data && req.session.data.claim) || {};
-  if (claim.person && claim.person.fullName) {
-    return { name: claim.person.fullName, orgName: (claim.council && claim.council.name) || SETUP_USER.orgName, role: "council" };
-  }
+  const org = (claim.council && claim.council.name) || SETUP_USER.orgName;
+  if (claim.person && claim.person.fullName) return { name: claim.person.fullName, orgName: org, role: "council" };
+  // User-driven: derive the name from the signed-in email rather than a hardcoded persona.
+  if (claim.oneLoginEmail) return { name: require("../claim-example-data").displayNameFromEmail(claim.oneLoginEmail), orgName: org, role: "council" };
   return null;
 }
 

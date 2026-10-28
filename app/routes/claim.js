@@ -15,7 +15,7 @@ const {
   councilsForEmail,
   domainOf,
 } = require("../data/helpers/claim");
-const { COUNCILS, EXAMPLE_EMAILS, ORGANISATIONS } = require("../data/claim-example-data");
+const { COUNCILS, EXAMPLE_EMAILS, ORGANISATIONS, matchCouncilByDomain, displayNameFromEmail } = require("../data/claim-example-data");
 // Used by screen 21 to hand an approved "specific outcomes" request to the existing A06 screen.
 const { ensureAccess } = require("../data/helpers/access");
 
@@ -682,7 +682,8 @@ module.exports = function (router) {
   router.get("/claim/already-have-access", (req, res) => {
     const claim = ensureClaim(req.session.data);
     const councilName = (claim.council && claim.council.name) || "";
-    applyClaimGrantedChrome(req, res, { fullName: (claim.person && claim.person.fullName) || "Jo Hart" }, councilName);
+    const who = (claim.person && claim.person.fullName) || displayNameFromEmail(claim.oneLoginEmail);
+    applyClaimGrantedChrome(req, res, { fullName: who }, councilName);
     res.render("pages/claim/already-have-access", {
       pageTitle: "You already have access to " + councilName,
       councilName: councilName,
@@ -815,13 +816,12 @@ function startScenario(req, res, key) {
   return res.redirect("/claim");
 }
 
-// The council worked out from the signed-in email domain (27 Oct: domain drives the match; for the
-// prototype westborough.gov.uk maps to Westborough Borough Council via the example data). Null if the
-// domain is not configured — those people are stopped by Internal Access and never reach us.
+// The council worked out from the signed-in email domain — user-driven. Matches the demo/shared
+// domains, else the domain's organisation label against a real council name (e.g. leeds.gov.uk ->
+// Leeds City Council). Null if nothing matches (those people are stopped by Internal Access).
 // Changed in build, prototype, pending design sign-off.
 function councilFromEmail(email) {
-  const ids = councilsForEmail(email);
-  return ids.length ? getCouncilById(ids[0]) : null;
+  return matchCouncilByDomain(email);
 }
 
 // The council to show on screen 01: the one already matched, else derived from the email, else the

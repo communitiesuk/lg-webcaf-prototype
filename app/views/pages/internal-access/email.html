@@ -5,10 +5,16 @@
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error, href: "#ia-email" }] }) }}
+      {% endif %}
+
       <form method="post" action="/internal-access/email" novalidate>
 
         {{ govukInput({
@@ -19,7 +25,8 @@
           type: "email",
           autocomplete: "email",
           spellcheck: false,
-          value: iaEmail
+          value: iaEmail,
+          errorMessage: { text: error } if error else undefined
         }) }}
 
         {{ govukCheckboxes({

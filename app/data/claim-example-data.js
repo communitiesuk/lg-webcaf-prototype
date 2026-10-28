@@ -64,6 +64,73 @@ function councilsForEmail(email) {
   return Array.from(ids);
 }
 
+// Personal email providers — not a council/public-sector address, so Internal Access stops them.
+// Changed in build, prototype, pending design sign-off.
+const PERSONAL_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "hotmail.com", "hotmail.co.uk",
+  "outlook.com", "live.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "gmx.com",
+]);
+function isPersonalDomain(email) {
+  return PERSONAL_DOMAINS.has(domainOf(email));
+}
+
+// User-driven council matching: work out the council from whatever email the person types.
+// 1) a fictional-demo / shared domain (councilsForEmail), else
+// 2) the domain's organisation label matched to a real council name, e.g.
+//    jane@leeds.gov.uk -> "Leeds City Council", j@cornwall.gov.uk -> "Cornwall Council".
+// Returns a council object, or null when no council can be matched.
+// Changed in build, prototype, pending design sign-off.
+const NAME_STOPWORDS = new Set([
+  "council", "borough", "district", "county", "city", "metropolitan", "london", "of", "the",
+  "ca", "combined", "authority", "royal", "and",
+]);
+function normaliseName(s) {
+  return (s || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+function matchCouncilByDomain(email) {
+  const demoIds = councilsForEmail(email);
+  if (demoIds.length) return getCouncilById(demoIds[0]);
+  const domain = domainOf(email);
+  if (!domain) return null;
+  const label = domain.split(".")[0].replace(/[^a-z0-9]/g, "");
+  if (!label || label.length < 3) return null;
+  // Score each council: exact label match (3) beats "name starts with the label" (2) beats
+  // "label appears somewhere in the name" (1). Ties break to the shorter name.
+  let best = null, bestScore = 0;
+  COUNCILS.forEach((c) => {
+    if (c.fictionalDemo) return;
+    const words = normaliseName(c.name).split(" ").filter((w) => !NAME_STOPWORDS.has(w));
+    const joined = words.join("");
+    if (!joined) return;
+    let score = 0;
+    if (joined === label) score = 3;
+    else if (words[0] === label || (joined.length >= 4 && joined.indexOf(label) === 0)) score = 2;
+    else if (words.indexOf(label) !== -1 || (joined.length >= 4 && label.indexOf(joined) === 0)) score = 1;
+    if (score > bestScore || (score === bestScore && score > 0 && c.name.length < best.name.length)) {
+      best = c; bestScore = score;
+    }
+  });
+  return best;
+}
+
+// Can this email sign in to the service (user-driven)? No if it is a personal address, or if the
+// domain does not resolve to a council — those people are stopped by Internal Access.
+function canSignIn(email) {
+  if (!domainOf(email)) return false;
+  if (isPersonalDomain(email)) return false;
+  return Boolean(matchCouncilByDomain(email));
+}
+
+// A display name derived from the email's local part, for the few user-driven screens reached
+// before the person enters their name (e.g. "jane.doe@..." -> "Jane Doe"). Avoids a hardcoded
+// persona. Changed in build, prototype, pending design sign-off.
+function displayNameFromEmail(email) {
+  const local = (email || "").split("@")[0];
+  if (!local) return "";
+  return local.split(/[._-]+/).filter(Boolean)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ");
+}
+
 module.exports = {
   COUNCILS,
   SHARED_DOMAINS,
@@ -73,4 +140,8 @@ module.exports = {
   getCouncilById,
   getCouncilByName,
   councilsForEmail,
+  matchCouncilByDomain,
+  isPersonalDomain,
+  canSignIn,
+  displayNameFromEmail,
 };

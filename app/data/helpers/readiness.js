@@ -75,9 +75,10 @@ function baseChrome(res) {
 // scenarios fall back to the seeded persona. Changed in build, prototype, pending design sign-off.
 function signedInIdentity(req) {
   const claim = (req.session && req.session.data && req.session.data.claim) || {};
-  if (claim.person && claim.person.fullName) {
-    return { name: claim.person.fullName, orgName: (claim.council && claim.council.name) || COUNCIL_NAME };
-  }
+  const org = (claim.council && claim.council.name) || COUNCIL_NAME;
+  if (claim.person && claim.person.fullName) return { name: claim.person.fullName, orgName: org };
+  // User-driven: derive the name from the signed-in email rather than a hardcoded persona.
+  if (claim.oneLoginEmail) return { name: require("../claim-example-data").displayNameFromEmail(claim.oneLoginEmail), orgName: org };
   return null;
 }
 

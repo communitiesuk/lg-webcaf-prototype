@@ -196,22 +196,25 @@ const SECTIONS = [
 // for every westborough-based walkthrough, so the researcher can click Continue and land on 01
 // instead of being stopped by Internal Access if they type a non-configured email.
 // Changed in build, prototype, pending design sign-off.
-const PERSONA_EMAIL = "j.hart@westborough.gov.uk";
+// User-driven: no email is pre-filled. Each walkthrough only sets the routing scenario; the
+// participant types their own work email at Internal Access and the council is matched from it.
+// The /beta labels tell the researcher what kind of email to type for each.
+// Changed in build, prototype, pending design sign-off.
 const WALKTHROUGH_VARIANTS = {
-  "ask-other-councils": { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL },   // researcher says Yes on 28
-  "joining-with-caflead": { scenario: "already-claimed", established: false, iaEmail: PERSONA_EMAIL }, // 05 → 20
-  "joining-no-caflead": { scenario: "joining-no-caflead", established: false, iaEmail: PERSONA_EMAIL }, // 05 → 20b
-  "being-checked": { scenario: "council-being-checked", established: false, iaEmail: PERSONA_EMAIL },  // 22
-  "already-have-access": { scenario: "already-have-access", established: true, iaEmail: PERSONA_EMAIL }, // 17
-  "not-my-council": { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL },        // researcher says No on 01 → 23
-  "blocked": { scenario: "blocked", established: false, iaEmail: "a.mensah@consultancy-cyber.co.uk" },
-  "shared-service": { scenario: "shared-service", established: false, iaEmail: "j.hart@westvale-shared.gov.uk" }, // 19
+  "ask-other-councils": { scenario: "new-user", established: false },   // researcher says Yes on 28
+  "joining-with-caflead": { scenario: "already-claimed", established: false }, // 05 → 20
+  "joining-no-caflead": { scenario: "joining-no-caflead", established: false }, // 05 → 20b
+  "being-checked": { scenario: "council-being-checked", established: false },  // 22
+  "already-have-access": { scenario: "already-have-access", established: true }, // 17
+  "not-my-council": { scenario: "new-user", established: false },        // researcher says No on 01 → 23
+  "blocked": { scenario: "blocked", established: false },
+  "shared-service": { scenario: "shared-service", established: false }, // 19
 };
 
 // v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
 // researcher makes on 28 / 01 (noted in the label). Changed in build, prototype, pending sign-off.
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "1. New council claim, one council (first person)" },
+  { href: "/beta/walkthrough", label: "1. New council claim, one council (type a council email, e.g. name@leeds.gov.uk)" },
   { href: "/beta/walkthrough/ask-other-councils", label: "2. New council claim, asks for other councils (choose Yes on 28)" },
   { href: "/beta/walkthrough/joining-with-caflead", label: "3. Joining a council already registered, with a CAF Lead (20)" },
   { href: "/beta/walkthrough/joining-no-caflead", label: "4. Joining a council with no CAF Lead yet (20b)" },
@@ -219,8 +222,8 @@ const WALKTHROUGH_LINKS = [
   { href: "/beta/walkthrough/being-checked", label: "6. Council still under review (22)" },
   { href: "/beta/walkthrough/already-have-access", label: "7. Already has access (17)" },
   { href: "/beta/walkthrough/not-my-council", label: "8. Not my council (choose No on 01 → 23)" },
-  { href: "/beta/walkthrough/blocked", label: "9. Blocked by Internal Access" },
-  { href: "/beta/walkthrough/shared-service", label: "10. Shared-service domain (19)" },
+  { href: "/beta/walkthrough/blocked", label: "9. Blocked by Internal Access (type a personal email, e.g. name@gmail.com)" },
+  { href: "/beta/walkthrough/shared-service", label: "10. Shared-service domain (type name@westvale-shared.gov.uk) → 19" },
 ];
 
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.
@@ -333,7 +336,7 @@ module.exports = function (router) {
     return res.redirect("/get-started");
   }
 
-  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, { scenario: "new-user", established: false, iaEmail: PERSONA_EMAIL }));
+  router.get("/beta/walkthrough", (req, res) => startWalkthrough(req, res, { scenario: "new-user", established: false }));
 
   router.get("/beta/walkthrough/:variant", (req, res) => {
     const v = WALKTHROUGH_VARIANTS[req.params.variant];
