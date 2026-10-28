@@ -31,3 +31,6 @@ coverage/
 
 # Local backup folder
 _backup_pre_kit/
+
+# Source data with internal engagement flags — must NOT be committed
+data/source/

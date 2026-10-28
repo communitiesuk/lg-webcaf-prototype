@@ -204,9 +204,11 @@ module.exports = function (router) {
     const addedIds = added.map((c) => c.id);
     const primaryId = (claim.council && claim.council.id) || "";
     // Councils available to add: everything except the matched (primary) council and those already added.
+    // Show the council type beside each result so similar names can be told apart, e.g.
+    // "Newcastle Upon Tyne City Council (Metropolitan)". Changed in build, prototype, pending sign-off.
     const options = COUNCILS
       .filter((c) => c.id !== primaryId && addedIds.indexOf(c.id) === -1)
-      .map((c) => ({ value: c.id, text: c.name }));
+      .map((c) => ({ value: c.id, text: c.type ? c.name + " (" + c.type + ")" : c.name }));
     res.render("pages/claim/other-councils", {
       pageTitle: "Which other councils do you need access to?",
       primaryName: (claim.council && claim.council.name) || "your council",
@@ -410,6 +412,9 @@ module.exports = function (router) {
   // Changed in build, prototype, pending design sign-off.
   router.get("/claim/which-councils", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    // The shared-service → councils mapping is DEMO DATA (SHARED_DOMAINS in claim-example-data.js),
+    // onto the three fictional demo councils. To be replaced when Leon's inventory of shared and
+    // managed services arrives — not derived from the CSV "Shared service" column (free text).
     const councils = councilsForEmail(claim.oneLoginEmail).map((id) => getCouncilById(id)).filter(Boolean);
     res.render("pages/claim/which-councils", {
       pageTitle: "Which councils do you need access to?",

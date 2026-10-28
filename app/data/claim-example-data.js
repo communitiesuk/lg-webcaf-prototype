@@ -1,31 +1,23 @@
 // app/data/claim-example-data.js
 //
-// EXAMPLE DATA, NOT REAL.
-// Fictional councils, email domains and connection data for the "Claim your council"
-// (Claim v3) prototype section. No real council names, people or domains are used.
-// Domain recognition in Claim is driven by this data plus scenario flags held in session
-// (see docs/claim-session-keys.md). The ".gov.uk"-style domains are fictional and match
-// the Figma frames; the council names do not correspond to any real English council.
+// Council list + fictional email/connection data for the "Claim your council" prototype section.
+// The council register now uses the REAL MHCLG council list (see app/data/councils.js, derived
+// from data/source/council-status-list.csv — gitignored). Three fictional demo councils
+// (Westborough, Eastvale, Northmoor) remain in that list, marked FICTIONAL DEMO, because the demo
+// people and screens depend on them — remove before any real use.
+// Domain recognition in Claim (screens 01/19) is driven by the fictional demo domains + the
+// shared-domain mapping below plus scenario flags held in session (see docs/claim-session-keys.md).
+// Real councils carry no domain and are only searchable on screen 29.
 
-// The council register behind the S02 "Council name" autocomplete (329+ in production).
-const COUNCILS = [
-  { id: "westborough", name: "Westborough Borough Council", type: "Borough council", domains: ["westborough.gov.uk"] },
-  { id: "eastvale", name: "Eastvale District Council", type: "District council", domains: ["eastvale.gov.uk"] },
-  { id: "northmoor", name: "Northmoor County Council", type: "County council", domains: ["northmoor.gov.uk"] },
-  { id: "ashford-vale", name: "Ashford Vale Council", type: "Unitary authority", domains: ["ashfordvale.gov.uk"] },
-  { id: "brackenwood", name: "Brackenwood Borough Council", type: "Borough council", domains: ["brackenwood.gov.uk"] },
-  { id: "carnforth", name: "Carnforth City Council", type: "City council", domains: ["carnforth.gov.uk"] },
-  { id: "deepdale", name: "Deepdale District Council", type: "District council", domains: ["deepdale.gov.uk"] },
-  { id: "greystone", name: "Greystone Borough Council", type: "Borough council", domains: ["greystone.gov.uk"] },
-];
+// The real council register behind the Claim autocomplete (screen 29) and getCouncilById/ByName.
+const COUNCILS = require("./councils");
 
-// A shared-service / managed-service provider domain can be recognised for more than one
-// council. This drives frame 19 (domain matches more than one council).
+// A shared-service / managed-service provider domain recognised for more than one council (screen 19).
+// DEMO DATA — a hard-coded mapping onto the three fictional demo councils. To be replaced when
+// Leon's inventory of shared and managed services arrives. NOT built from the CSV "Shared service"
+// column, which is free text and unreliable. Changed in build, prototype, pending design sign-off.
 const SHARED_DOMAINS = {
   "novatech-services.co.uk": ["westborough", "eastvale", "northmoor"],
-  // v10 Stage 3: a shared-service council domain linked to more than one council. A person signing
-  // in with it lands on 19 (select which councils they need). Changed in build, prototype, pending
-  // design sign-off.
   "westvale-shared.gov.uk": ["westborough", "eastvale", "northmoor"],
 };
 
