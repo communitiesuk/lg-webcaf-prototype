@@ -798,7 +798,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/supplier", {
-      pageTitle: "Is this system managed by a third-party supplier?",
+      pageTitle: "Is this critical system managed by a third-party supplier?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`,
       system,
     });
@@ -828,7 +828,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/which-supplier", {
-      pageTitle: "Which supplier manages all or part of this system?",
+      pageTitle: "Which supplier manages all or part of this critical system?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
       system,
       suppliers: setup.suppliers || [],
@@ -936,7 +936,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/shared-with-councils", {
-      pageTitle: "Is this system shared with other councils?",
+      pageTitle: "Is this critical system shared with other councils?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
       system,
     });
@@ -962,7 +962,7 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     const added = new Set(system.councils || []);
     res.render("pages/setup/critical-systems/councils", {
-      pageTitle: "Which councils share this system?",
+      pageTitle: "Which councils share this critical system?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`,
       system,
       // value = plain council name (stored); text = "name (type)" for display. Changed in build.

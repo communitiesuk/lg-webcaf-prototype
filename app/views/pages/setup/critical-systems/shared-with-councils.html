@@ -12,7 +12,7 @@
 
       {% set legendHtml %}
         <span class="govuk-caption-l">{{ system.name }}</span>
-        <h1 class="govuk-fieldset__heading">Is this system shared with other councils?</h1>
+        <h1 class="govuk-fieldset__heading">Is this critical system shared with other councils?</h1>
       {% endset %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/shared-with-councils" novalidate>
@@ -25,7 +25,7 @@
           ]
         }) }}
 
-        {{ govukButton({ text: "Save and continue" }) }}
+        {{ govukButton({ text: "Continue" }) }}
       </form>
     </div>
   </div>

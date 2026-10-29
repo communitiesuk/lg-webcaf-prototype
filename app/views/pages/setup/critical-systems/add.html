@@ -17,19 +17,19 @@
       <form method="post" action="{{ formAction }}" novalidate>
         <div class="govuk-form-group">
           <label class="govuk-label govuk-label--s" for="systemName">Name of the system</label>
-          <div id="systemName-hint" class="govuk-hint">The technical name, and what people call it</div>
+          <div id="systemName-hint" class="govuk-hint">Include both the technical name and the name people commonly use (if any)</div>
           <input class="govuk-input" id="systemName" name="systemName" type="text" aria-describedby="systemName-hint" value="{{ system.name }}">
         </div>
 
         <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="systemDescription">What does it do, and what would happen if it were compromised?</label>
-          <div id="systemDescription-hint" class="govuk-hint">For example, what would stop working, and who would be affected</div>
+          <label class="govuk-label govuk-label--s" for="systemDescription">What does this system do, and what would happen if it was compromised?</label>
+          <div id="systemDescription-hint" class="govuk-hint">For example: Processes council tax, business rates and housing benefit. If compromised, the council could not bill or pay benefits, and residents&rsquo; financial data could be exposed.</div>
           <textarea class="govuk-textarea" id="systemDescription" name="systemDescription" rows="4" aria-describedby="systemDescription-hint">{{ system.description }}</textarea>
         </div>
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which essential services or functions does it support?</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Which essential services or functions does this system support?</legend>
             <div class="govuk-checkboxes" data-module="govuk-checkboxes">
               {% for o in serviceOptions %}
                 <div class="govuk-checkboxes__item">
@@ -48,8 +48,8 @@
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset" aria-describedby="assessedBefore-hint">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Has this system had a CAF assessment before?</legend>
-            <div id="assessedBefore-hint" class="govuk-hint">Including assessments done before this service existed</div>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Has this system been assessed against the CAF before?</legend>
+            <div id="assessedBefore-hint" class="govuk-hint">Include assessments done before this service existed</div>
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="assessedBefore-yes" name="assessedBefore" type="radio" value="yes" {% if system.assessedBefore == "yes" %}checked{% endif %}>
@@ -67,7 +67,7 @@
           </fieldset>
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and continue" if mode == "edit" else "Add this system" }}</button>
       </form>
 
       {% if mode == "edit" %}

@@ -15,7 +15,7 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Which supplier manages all or part of this system?"
+        title: "Which supplier manages all or part of this critical system?"
       }) }}
 
       {% set supplierItems = [] %}
@@ -26,20 +26,20 @@
       <form method="post" action="/setup/critical-systems/{{ system.id }}/which-supplier" novalidate>
         {{ govukRadios({
           name: "whichSupplier",
-          fieldset: { legend: { text: "Which supplier manages all or part of this system?", classes: "govuk-visually-hidden" } },
-          hint: { text: "Suppliers you have already added" },
+          fieldset: { legend: { text: "Which supplier manages all or part of this critical system?", classes: "govuk-visually-hidden" } },
+          hint: { text: "These are suppliers you have already added. Review the list and add or remove suppliers as needed." },
           items: supplierItems
         }) }}
 
         <div class="govuk-!-margin-bottom-5">
-          {{ govukButton({ text: "Add a supplier that is not listed", href: "/setup/suppliers/add?return=system:" + system.id, classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add a supplier", href: "/setup/suppliers/add?return=system:" + system.id, classes: "govuk-button--secondary" }) }}
         </div>
 
         {{ govukTextarea({
           id: "supplierNote",
           name: "supplierNote",
           label: { text: "What does the supplier manage, and what does the council manage? (optional)", classes: "govuk-label--s" },
-          hint: { text: "For example, the supplier hosts and patches the application, and the council manages user access." },
+          hint: { text: "For example: The supplier hosts and patches the application. The council manages user access." },
           rows: 3,
           value: system.supplierNote
         }) }}

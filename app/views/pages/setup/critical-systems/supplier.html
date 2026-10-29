@@ -13,7 +13,7 @@
 
       {% set legendHtml %}
         <span class="govuk-caption-l">{{ system.name }}</span>
-        <h1 class="govuk-fieldset__heading">Is this system managed by a third-party supplier?</h1>
+        <h1 class="govuk-fieldset__heading">Is this critical system managed by a third-party supplier?</h1>
       {% endset %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/supplier" novalidate>
@@ -28,9 +28,9 @@
           ]
         }) }}
 
-        {{ govukInsetText({ text: "A supplier managing the system does not put it out of scope. You will be asked about scope separately." }) }}
+        {{ govukInsetText({ text: "Do not exclude a system just because a supplier manages it. You will decide whether it is in scope in a separate step." }) }}
 
-        {{ govukButton({ text: "Save and continue" }) }}
+        {{ govukButton({ text: "Continue" }) }}
       </form>
     </div>
   </div>

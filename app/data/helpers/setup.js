@@ -117,7 +117,7 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "3. How you identify services and systems" },
       href: "/setup/methodology",
-      hint: { text: "The five-lens approach, or your own methodology" },
+      hint: { text: "The five lens approach, or your own methodology" },
       status: method.completed ? completed : notStarted,
     },
   ];
