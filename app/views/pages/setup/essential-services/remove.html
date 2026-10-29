@@ -9,8 +9,8 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: service.name,
-        title: "Are you sure you want to remove " + service.name + "?",
-        intro: "Removing it will:"
+        title: "Remove " + (service.name | lower) + "?",
+        intro: "If you remove this service:"
       }) }}
 
       <ul class="govuk-list govuk-list--bullet">
@@ -23,7 +23,7 @@
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-visually-hidden">Warning</span>
-          You cannot undo this. You can add the service again later.
+          You cannot undo this step, but you can add the service and its related functions again later if you need to.
         </strong>
       </div>
 

@@ -10,13 +10,13 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Check and confirm",
-        title: "Check nothing is missing"
+        title: "Review your progress"
       }) }}
 
       {{ appNotificationBanner({
         type: "information",
-        heading: warnings.length + (" thing to look at" if warnings.length == 1 else " things to look at"),
-        body: "You can still carry on. These are reminders, not blockers."
+        heading: warnings.length + (" thing to review" if warnings.length == 1 else " things to review"),
+        body: "You can continue without making changes. These are suggestions to help you complete your assessment."
       }) }}
 
       {% if concentration %}

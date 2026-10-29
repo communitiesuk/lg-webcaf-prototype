@@ -320,7 +320,7 @@ module.exports = function (router) {
     const removed = clean(req.query.removed);
     const orphan = clean(req.query.orphan);
     res.render("pages/setup/essential-services/index", {
-      pageTitle: "Your essential services",
+      pageTitle: "Summary of your essential services",
       backHref: "/setup/task-list",
       rows: buildServiceHubRows(setup),
       removed: removed || null,
@@ -437,7 +437,7 @@ module.exports = function (router) {
     const service = getService(setup, req.params.serviceId);
     if (!service) return res.redirect("/setup/essential-services");
     res.render("pages/setup/essential-services/remove", {
-      pageTitle: `Are you sure you want to remove ${service.name}?`,
+      pageTitle: `Remove ${service.name.toLowerCase()}?`,
       backHref: `/setup/essential-services/${encodeURIComponent(service.id)}/functions`,
       service,
       consequences: buildRemoveServiceConsequences(setup, service),
@@ -1053,7 +1053,7 @@ module.exports = function (router) {
       });
     }
     res.render("pages/setup/critical-systems/remove", {
-      pageTitle: `Are you sure you want to remove ${system.name}?`,
+      pageTitle: `Remove ${system.name.toLowerCase()}?`,
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/edit`,
       system,
       consequences: buildRemoveSystemConsequences(setup, system),
@@ -1143,7 +1143,7 @@ module.exports = function (router) {
     const warnings = buildCoverageWarnings(setup);
     const noSystemService = servicesWithoutSystem(setup)[0] || null;
     res.render("pages/setup/coverage-check", {
-      pageTitle: "Check nothing is missing",
+      pageTitle: "Review your progress",
       backHref: "/setup/task-list",
       warnings,
       concentration: buildConcentrationInset(setup),

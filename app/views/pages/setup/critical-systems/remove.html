@@ -9,8 +9,8 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Are you sure you want to remove " + system.name + "?",
-        intro: "It is not in this cycle's plan. Removing it will:"
+        title: "Remove " + (system.name | lower) + "?",
+        intro: "This critical system is not included in the approved assessment for this cycle. If you remove it:"
       }) }}
 
       <ul class="govuk-list govuk-list--bullet">
