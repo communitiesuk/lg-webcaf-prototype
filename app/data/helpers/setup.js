@@ -43,6 +43,13 @@ function ensureSetup(sessionData) {
   if (!sessionData.setup || !sessionData.setup.seeded) {
     sessionData.setup = buildSetupSeed();
   }
+  // Keep the Setup council name in step with the council identified at claim (from the
+  // signed-in email), so the task-list and S30 captions match the nav identity. Demo
+  // scenarios with no claim journey keep the seeded name.
+  const claimCouncil = sessionData.claim && sessionData.claim.council;
+  if (claimCouncil && claimCouncil.name) {
+    sessionData.setup.council.name = claimCouncil.name;
+  }
   return sessionData.setup;
 }
 
