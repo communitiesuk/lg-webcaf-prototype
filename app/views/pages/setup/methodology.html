@@ -20,7 +20,7 @@
         {{ govukRadios({
           name: "methodologyApproach",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { text: "The GovAssure Five Lens Model, also called the five-lens approach, is the recommended way. You can use your own methodology if it gives the same level of detail." },
+          hint: { text: "The GovAssure Five Lens Model, also called the five lens approach, is the recommended way. You can use your own methodology if it gives the same level of detail." },
           items: [
             { value: "five-lens", text: "Use the GovAssure Five Lens Model", checked: approach == "five-lens" },
             { value: "other", text: "We use another methodology", checked: approach == "other" }
@@ -28,11 +28,11 @@
         }) }}
 
         {% set fiveLensHtml %}
-          <p class="govuk-body">The five-lens approach is the GovAssure method for identifying your essential services and the critical systems they depend on.</p>
-          <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/five-lens-approach/" rel="noreferrer noopener" target="_blank">Read the five-lens approach guidance (opens in new tab)</a></p>
+          <p class="govuk-body">The five lens approach is the GovAssure method for identifying your essential services and the critical systems they depend on.</p>
+          <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/five-lens-approach/" rel="noreferrer noopener" target="_blank">Read the five lens approach guidance (opens in new tab)</a></p>
         {% endset %}
         {{ govukDetails({
-          summaryText: "What is the five-lens approach?",
+          summaryText: "What is the five lens approach?",
           html: fiveLensHtml
         }) }}
 
