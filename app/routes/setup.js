@@ -1157,7 +1157,7 @@ module.exports = function (router) {
     const service = getService(setup, req.params.serviceId);
     if (!service) return res.redirect("/setup/coverage-check");
     res.render("pages/setup/essential-services/no-system-reason", {
-      pageTitle: `Why does ${service.name} not need a critical system?`,
+      pageTitle: `Why does ${service.name.toLowerCase()} not need a critical system?`,
       backHref: "/setup/coverage-check",
       service,
     });

@@ -9,13 +9,13 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: service.name,
-        title: "Why does " + service.name + " not need a critical system?"
+        title: "Why does " + (service.name | lower) + " not need a critical system?"
       }) }}
 
       <form method="post" action="/setup/essential-services/{{ service.id }}/no-system-reason" novalidate>
         <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="noSystemReason">Reason</label>
-          <div id="noSystemReason-hint" class="govuk-hint">For example, it is run entirely by a contractor on their own systems, and assurance comes through the contract</div>
+          <label class="govuk-label govuk-label--s" for="noSystemReason">Tell us why {{ service.name | lower }} can operate without a critical system</label>
+          <div id="noSystemReason-hint" class="govuk-hint">For example: It is run entirely by a contractor on their own systems, and assurance is provided through the contract</div>
           <textarea class="govuk-textarea" id="noSystemReason" name="noSystemReason" rows="4" aria-describedby="noSystemReason-hint">{{ service.noSystemReason }}</textarea>
         </div>
 
