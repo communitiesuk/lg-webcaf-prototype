@@ -368,7 +368,7 @@ function buildPlatformChoices(setup, linkedIds) {
 function buildRemovePlatformConsequences(platform) {
   const svcCount = (platform.linkedServices || []).length;
   const sysCount = (platform.linkedSystems || []).length;
-  return `It supports ${svcCount} essential service${plural(svcCount)} and ${sysCount} critical system${plural(sysCount)}. They will no longer be linked to it.`;
+  return `This core infrastructure platform supports ${svcCount} essential service${plural(svcCount)} and ${sysCount} critical system${plural(sysCount)}. If you remove it, these links will be removed.`;
 }
 
 // Remove a service from every platform that lists it.

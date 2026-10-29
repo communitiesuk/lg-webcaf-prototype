@@ -640,7 +640,7 @@ module.exports = function (router) {
     const platform = getPlatform(setup, req.params.platformId);
     if (!platform) return res.redirect("/setup/shared-infrastructure");
     res.render("pages/setup/shared-infrastructure/remove", {
-      pageTitle: `Are you sure you want to remove ${platform.name}?`,
+      pageTitle: `Remove ${platform.name}?`,
       backHref: `/setup/shared-infrastructure/${encodeURIComponent(platform.id)}/edit`,
       platform,
       consequence: buildRemovePlatformConsequences(platform),

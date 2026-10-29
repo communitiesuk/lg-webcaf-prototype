@@ -13,7 +13,7 @@
         {{ appNotificationBanner({
           type: "success",
           heading: removed + " has been removed",
-          body: (orphan + " is no longer linked to any essential service.") if orphan else null
+          body: ("The critical system " + orphan + " is no longer linked to any essential services.") if orphan else null
         }) }}
       {% endif %}
 

@@ -1,6 +1,4 @@
 {# S48 — setup / cannot-remove-this-system — Figma node 393:1536 #}
-{# Deviation (decision 6): the design's "You can mark a system as no longer in use
-   instead." sentence is dropped — that action is not designed in this prototype. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -14,10 +12,10 @@
         title: "You cannot remove " + system.name
       }) }}
 
-      {% if system.inPlan %}
-        <p class="govuk-body">It is in this cycle's approved plan. To take it out of the plan, speak to your assurer.</p>
-      {% endif %}
-      <p class="govuk-body">Systems that have been assessed before also stay in your directory, so their past results keep their meaning.</p>
+      <p class="govuk-body">This critical system is included in the approved assessment for this cycle.</p>
+      <p class="govuk-body">To remove it from this assessment cycle, speak to your assurer.</p>
+      <p class="govuk-body">Previously assessed systems stay in your list along with your past assessment results.</p>
+      <p class="govuk-body">If you no longer use a system, mark it as no longer in use.</p>
 
       <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Back to your critical systems</a>
     </div>
