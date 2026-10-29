@@ -16,9 +16,6 @@
         title: "Add a core infrastructure platform"
       }) }}
 
-      {% set proposalText = "The \"who manages it?\" fully and partly options are a v6 proposal, not yet agreed." %}
-      {% include "components/setup-proposal.njk" %}
-
       <form method="post" action="{{ formAction }}" novalidate>
         {% if mode != "edit" %}<input type="hidden" name="returnTo" value="{{ returnTo }}">{% endif %}
 

@@ -1,29 +1,29 @@
-{# S04 — setup / methodology — Figma node 393:100 #}
+{# S04 — setup / methodology — Figma node 481:2390 (v7) #}
 {% extends "layouts/setup.html" %}
-{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
-  {{ govukBackLink({ text: "Back", href: backHref }) }}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-
-      {% set legendHtml %}
-        <span class="govuk-caption-l">How you identify services and systems</span>
-        <h1 class="govuk-fieldset__heading">How will you identify your essential services and critical systems?</h1>
-      {% endset %}
+      {{ appPageHeader({
+        caption: "How you identify services and systems",
+        title: "Tell us how you will identify your essential services and critical systems",
+        intro: "MHCLG recommends using the GovAssure five lens approach.",
+        intro2: "You can use your own approach if it provides the same level of detail as the five lens approach. You must also explain your method to your assurer."
+      }) }}
 
       <form method="post" action="/setup/methodology" novalidate>
         {{ govukRadios({
           name: "methodologyApproach",
-          fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { text: "The GovAssure Five Lens Model, also called the five lens approach, is the recommended way. You can use your own methodology if it gives the same level of detail." },
+          fieldset: { legend: { text: "Tell us how you will identify your essential services and critical systems", classes: "govuk-visually-hidden" } },
           items: [
-            { value: "five-lens", text: "Use the GovAssure Five Lens Model", checked: approach == "five-lens" },
-            { value: "other", text: "We use another methodology", checked: approach == "other" }
+            { value: "five-lens", text: "Use the GovAssure five lens Model", checked: approach == "five-lens" },
+            { value: "other", text: "Use another approach", checked: approach == "other" }
           ]
         }) }}
 
@@ -36,7 +36,7 @@
           html: fiveLensHtml
         }) }}
 
-        {{ govukButton({ text: "Save and continue" }) }}
+        {{ govukButton({ text: "Continue" }) }}
       </form>
     </div>
   </div>

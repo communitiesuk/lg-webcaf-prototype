@@ -228,7 +228,7 @@ module.exports = function (router) {
   router.get("/setup/methodology", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/methodology", {
-      pageTitle: "How will you identify your essential services and critical systems?",
+      pageTitle: "Tell us how you will identify your essential services and critical systems",
       backHref: "/setup/council-context",
       approach: setup.methodology.approach,
     });
@@ -249,7 +249,7 @@ module.exports = function (router) {
   router.get("/setup/methodology-detail", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/methodology-detail", {
-      pageTitle: "Tell us about your methodology",
+      pageTitle: "Tell us about your approach",
       backHref: "/setup/methodology",
       methodology: setup.methodology,
     });

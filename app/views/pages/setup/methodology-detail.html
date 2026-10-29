@@ -9,21 +9,21 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "How you identify services and systems",
-        title: "Tell us about your methodology"
+        title: "Tell us about your approach"
       }) }}
 
-      {# Inset removed — content moved to S04 (methodology) to help the user choose (Isabel, content
-         review). Changed in build, prototype, pending design sign-off. #}
+      <div class="govuk-inset-text">Your own methodology is fine as long as it gives the same level of detail as the five lens approach, and you explain it to your independent assurer.</div>
+
       <form method="post" action="/setup/methodology-detail" novalidate>
         <div class="govuk-form-group">
           <label class="govuk-label govuk-label--s" for="methodologyDetail">How do you identify your essential services and critical systems?</label>
-          <div id="methodologyDetail-hint" class="govuk-hint">Your assurer needs enough detail to follow what you did</div>
+          <div id="methodologyDetail-hint" class="govuk-hint">Give enough detail so your assurer can understand the approach you used.</div>
           <textarea class="govuk-textarea" id="methodologyDetail" name="methodologyDetail" rows="5" aria-describedby="methodologyDetail-hint">{{ methodology.detail }}</textarea>
         </div>
 
         <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="methodologyLink">Link to your methodology document (optional)</label>
-          <div id="methodologyLink-hint" class="govuk-hint">A link your assurer can open</div>
+          <label class="govuk-label govuk-label--s" for="methodologyLink">Provide a link to any documents that help to explain your approach (optional)</label>
+          <div id="methodologyLink-hint" class="govuk-hint">Your assurer must be able to access and view the linked document</div>
           <input class="govuk-input" id="methodologyLink" name="methodologyLink" type="text" aria-describedby="methodologyLink-hint" value="{{ methodology.link }}">
         </div>
 
