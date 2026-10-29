@@ -372,7 +372,7 @@ module.exports = function (router) {
     const service = getService(setup, req.params.serviceId);
     if (!service) return res.redirect("/setup/essential-services");
     res.render("pages/setup/essential-services/functions", {
-      pageTitle: "What are the key functions of this service?",
+      pageTitle: "List the main functions of this essential service",
       backHref: "/setup/essential-services",
       service,
     });
@@ -476,7 +476,7 @@ module.exports = function (router) {
     const service = getService(setup, req.params.serviceId);
     if (!service) return res.redirect("/setup/essential-services");
     res.render("pages/setup/shared-infrastructure/for-service", {
-      pageTitle: `What core infrastructure supports ${service.name}?`,
+      pageTitle: `List the core infrastructure platforms that support ${service.name.toLowerCase()}`,
       backHref: `/setup/essential-services/${encodeURIComponent(service.id)}/functions`,
       service,
       platforms: buildPlatformChoices(

@@ -9,13 +9,17 @@
       {{ appPageHeader({
         caption: councilName,
         title: "Set up your council",
-        intro: "You only do this once. It is reused every time you assess, and you can change it whenever something changes."
+        intro: "You only need to do this once. We will reuse it every time you do an assessment."
       }) }}
+
+      <p class="govuk-body">You can update it whenever you need to.</p>
 
       {{ govukTaskList({ items: tasks.preServices, idPrefix: "setup-task-pre" }) }}
 
       <h2 class="govuk-heading-m govuk-!-margin-top-8">Your services and systems</h2>
-      <p class="govuk-body">Do these in any order. Start with whatever you already know: if you have a list of critical systems from a business impact analysis or Get CAF Ready, you can start there. You can link things to each other now, or later.</p>
+      <p class="govuk-body">You can do these in any order.</p>
+      <p class="govuk-body">Start with what you already know. For example, you might have a list of critical systems from a business impact analysis or Get CAF Ready.</p>
+      <p class="govuk-body">You will be asked to link each system to the service it supports. You can do this now or come back and do it later.</p>
 
       {{ govukTaskList({ items: tasks.servicesAndSystems, idPrefix: "setup-task-services" }) }}
 

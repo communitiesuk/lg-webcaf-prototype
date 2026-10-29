@@ -34,13 +34,13 @@
         {{ govukCheckboxes({
           name: "essentialServiceChoices",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { text: "These are the services metropolitan borough councils usually deliver. Select all that apply." },
+          hint: { text: "Select all that apply." },
           errorMessage: { text: errText } if error else undefined,
           items: checkboxItems
         }) }}
 
         <p class="govuk-!-margin-bottom-3">
-          {{ govukButton({ text: "Add a service that is not on the list", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add an essential service", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
         </p>
         {{ govukButton({ text: "Save and continue" }) }}
       </form>

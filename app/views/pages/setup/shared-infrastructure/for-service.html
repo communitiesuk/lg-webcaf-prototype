@@ -13,7 +13,7 @@
 
       {% set legendHtml %}
         <span class="govuk-caption-l">{{ service.name }}</span>
-        <h1 class="govuk-fieldset__heading">What core infrastructure supports {{ service.name }}?</h1>
+        <h1 class="govuk-fieldset__heading">List the core infrastructure platforms that support {{ service.name | lower }}</h1>
       {% endset %}
 
       {% set platformItems = [] %}
@@ -25,7 +25,7 @@
         {{ govukCheckboxes({
           name: "servicePlatforms",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { text: "Shared platforms such as identity, network, hosting, integration and monitoring. Tick any you have already listed for other services, or add a new one." },
+          hint: { text: "This might include shared platforms such as identity, network, hosting, integration and monitoring. Tick all that apply to this service, or add a new platform." },
           items: platformItems
         }) }}
 
