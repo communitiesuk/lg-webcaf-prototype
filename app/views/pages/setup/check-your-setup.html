@@ -7,12 +7,12 @@
 {% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
-{% macro row(key, value, href, anchorId) %}
+{% macro row(key, value, href, anchorId, action) %}
   <div class="govuk-summary-list__row">
     <dt class="govuk-summary-list__key">{{ key }}</dt>
     <dd class="govuk-summary-list__value">{{ value }}</dd>
     <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ href }}"{% if anchorId %} id="{{ anchorId }}"{% endif %}>Change<span class="govuk-visually-hidden"> {{ key }}</span></a>
+      <a class="govuk-link" href="{{ href }}"{% if anchorId %} id="{{ anchorId }}"{% endif %}>{{ action or "Change" }}<span class="govuk-visually-hidden"> {{ key }}</span></a>
     </dd>
   </div>
 {% endmacro %}
@@ -34,14 +34,17 @@
       {% set cafLeadValue = (summary.cafLead + ", confirmed") if summary.cafLeadConfirmed else ((summary.cafLead + ", invitation sent") if summary.cafLeadPending else "Not confirmed yet") %}
       {% set approverValue = (summary.approver + ", confirmed") if summary.approverConfirmed else ((summary.approver + ", invitation sent") if summary.approverPending else "Not confirmed yet") %}
 
-      <h2 class="govuk-heading-m">People</h2>
+      {% set cafLeadAction = "Change" if (summary.cafLeadConfirmed or summary.cafLeadPending) else "Confirm" %}
+      {% set approverAction = "Change" if (summary.approverConfirmed or summary.approverPending) else "Confirm" %}
+
+      <h2 class="govuk-heading-m">Your people</h2>
       <dl class="govuk-summary-list">
-        {{ row("CAF Lead", cafLeadValue, "/access/caf-lead?return=/setup/check-your-setup", "cafLead-change") }}
-        {{ row("Approver", approverValue, "/access/approver?return=/setup/check-your-setup", "approver-change") }}
+        {{ row("CAF Lead", cafLeadValue, "/access/caf-lead?return=/setup/check-your-setup", "cafLead-change", cafLeadAction) }}
+        {{ row("Approver", approverValue, "/access/approver?return=/setup/check-your-setup", "approver-change", approverAction) }}
       </dl>
       <div class="govuk-inset-text">Setup is only complete once a CAF Lead and an Approver have been named.</div>
 
-      <h2 class="govuk-heading-m govuk-!-margin-top-6">Organisational context</h2>
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Your organisational context</h2>
       <dl class="govuk-summary-list">
         {{ row("Sector context", "Read and confirmed" if summary.sectorConfirmed else "Not confirmed", "/setup/sector-context") }}
         {{ row("Council context", "Provided" if summary.councilContextProvided else "Not provided", "/setup/council-context") }}

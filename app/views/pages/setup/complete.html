@@ -1,6 +1,4 @@
 {# S31 — setup / setup-complete — Figma node 393:819 #}
-{# Deviation (decision 6): the design repeats the same two sentences in the panel and in
-   "What happens next"; de-duplicated here. #}
 {% extends "layouts/setup.html" %}
 {% from "components/feedback-message.njk" import appConfirmationPanel %}
 
@@ -9,16 +7,17 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appConfirmationPanel({
         title: "Setup complete",
-        body: "Your CAF Lead and Approver are both confirmed, so your setup is complete."
+        body: "Your CAF Lead and Approver are both confirmed. You can now choose what to assess this cycle."
       }) }}
 
       <h2 class="govuk-heading-m">What happens next</h2>
-      <p class="govuk-body">You can now decide what to assess this cycle. Your setup is reused every cycle, and you can update it whenever something changes.</p>
+      <p class="govuk-body">You can now continue with your assessment.</p>
+      <p class="govuk-body">Your setup is reused every cycle, and you can update it whenever something changes.</p>
 
       <div class="govuk-!-margin-bottom-3">
-        <a class="govuk-button" data-module="govuk-button" href="/decide">Decide what to assess</a>
+        <a class="govuk-button" data-module="govuk-button" href="/decide">Choose what to assess</a>
       </div>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/dashboard">Back to your dashboard</a>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/dashboard">Back to dashboard</a>
     </div>
   </div>
 {% endblock %}
