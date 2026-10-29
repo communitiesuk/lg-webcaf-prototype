@@ -332,7 +332,7 @@ module.exports = function (router) {
   //       + S32 error state (name missing) (Figma 393:852)
   router.get("/setup/essential-services/add", (req, res) => {
     res.render("pages/setup/essential-services/add", {
-      pageTitle: "Add an essential service that is not on the list",
+      pageTitle: "Add an essential service",
       backHref: "/setup/essential-services",
       name: "",
     });
@@ -511,7 +511,7 @@ module.exports = function (router) {
   router.get("/setup/shared-infrastructure/add-platform", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/shared-infrastructure/platform", {
-      pageTitle: "Add a platform",
+      pageTitle: "Add a core infrastructure platform",
       backHref: platformReturnHref(req, setup),
       mode: "add",
       caption: platformReturnCaption(req, setup),
@@ -575,7 +575,7 @@ module.exports = function (router) {
     const platform = getPlatform(setup, req.params.platformId);
     if (!platform) return res.redirect("/setup/shared-infrastructure");
     res.render("pages/setup/shared-infrastructure/platform", {
-      pageTitle: "Add a platform",
+      pageTitle: "Add a core infrastructure platform",
       backHref: "/setup/shared-infrastructure",
       mode: "edit",
       caption: platform.name,

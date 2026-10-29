@@ -20,7 +20,7 @@
         <input type="hidden" name="returnTo" value="{{ returnTo }}">
         <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="supplierName">Supplier name</label>
-          <div id="supplierName-hint" class="govuk-hint">The company, not the product. For example, NEC Software Solutions rather than Northgate</div>
+          <div id="supplierName-hint" class="govuk-hint">This should be the name of the company, not the product.<br>For example: NEC Software Solutions (rather than Northgate)</div>
           {% if error %}
             <p class="govuk-error-message" id="supplierName-error">
               <span class="govuk-visually-hidden">Error:</span>
@@ -30,7 +30,7 @@
           <input class="govuk-input" id="supplierName" name="supplierName" type="text" value="{{ name }}" aria-describedby="supplierName-hint{% if error %} supplierName-error{% endif %}">
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Add</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Add this supplier</button>
       </form>
     </div>
   </div>

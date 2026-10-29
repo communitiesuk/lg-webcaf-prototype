@@ -13,22 +13,23 @@
 
       {{ appPageHeader({
         caption: "Your essential services",
-        title: "Add an essential service that is not on the list"
+        title: "Add an essential service"
       }) }}
 
       <form method="post" action="/setup/essential-services/add" novalidate>
         <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="newServiceName">Name of the service</label>
+          <div id="newServiceName-hint" class="govuk-hint">For example: Revenue and benefits</div>
           {% if error %}
             <p class="govuk-error-message" id="newServiceName-error">
               <span class="govuk-visually-hidden">Error:</span>
               {{ (error.items | selectattr('field','equalto','newServiceName') | list | first).text }}
             </p>
           {% endif %}
-          <input class="govuk-input" id="newServiceName" name="newServiceName" type="text" value="{{ name }}"{% if error %} aria-describedby="newServiceName-error"{% endif %}>
+          <input class="govuk-input" id="newServiceName" name="newServiceName" type="text" value="{{ name }}" aria-describedby="newServiceName-hint{% if error %} newServiceName-error{% endif %}">
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Add this service</button>
       </form>
     </div>
   </div>
