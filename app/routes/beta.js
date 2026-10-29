@@ -208,7 +208,8 @@ const WALKTHROUGH_VARIANTS = {
   "already-have-access": { scenario: "already-have-access", established: true }, // 17
   "not-my-council": { scenario: "new-user", established: false },        // researcher says No on 01 → 23
   "blocked": { scenario: "blocked", established: false },
-  "shared-service": { scenario: "shared-service", established: false }, // 19
+  "shared-service": { scenario: "shared-service", established: false }, // 19 (domain → >1 council)
+  "partner-domain": { scenario: "shared-service", established: false }, // 19 via a council's own domain (v13)
 };
 
 // v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
@@ -217,6 +218,7 @@ const WALKTHROUGH_LINKS = [
   { href: "/beta/walkthrough", label: "1. First person from a council, one council (type e.g. name@leeds.gov.uk, then 28 No)" },
   { href: "/beta/walkthrough/ask-other-councils", label: "2. Asks for other councils (28 Yes → 29)" },
   { href: "/beta/walkthrough/shared-service", label: "3. Shared-service domain (type name@westvale-shared.gov.uk → 19)" },
+  { href: "/beta/walkthrough/partner-domain", label: "3a. Council's own domain that covers a partner council (type d.rao@eastvale.gov.uk → 19)" },
   { href: "/beta/walkthrough/joining-with-caflead", label: "4. Joining a registered council with a CAF Lead (05 → 20)" },
   { href: "/beta/walkthrough/joining-no-caflead", label: "5. Joining a council with no CAF Lead yet (05 → 20b)" },
   { href: "/claim/requests-to-join", label: "6. Approver's list of requests (30 → 21)" },

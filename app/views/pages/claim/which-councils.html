@@ -1,4 +1,5 @@
-{# 19 claim / which councils do you need access to? — shared-service domain (new in v10 Stage 3).
+{# 19 claim / which councils do you need access to? — shown for any email domain linked to more than
+   one council (a shared-service domain, or a council's own domain covering partner councils; v13).
    Changed in build, prototype, pending design sign-off. #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
@@ -10,7 +11,7 @@
 
       <span class="govuk-caption-l">Claim your council</span>
       <h1 class="govuk-heading-l">Which councils do you need access to?</h1>
-      <p class="govuk-body">Your email address belongs to a shared service that works for more than one council. Select all the councils you need access to.</p>
+      <p class="govuk-body">Your email address is linked to more than one council. Select all the councils you need access to.</p>
 
       <form method="post" action="/claim/which-councils" novalidate>
         {{ govukCheckboxes({

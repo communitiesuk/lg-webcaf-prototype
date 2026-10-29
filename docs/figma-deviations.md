@@ -425,3 +425,22 @@ panels and buttons use the exact "register/registration" copy. 06 kept as "check
 | IA7 GDS page | `views/pages/internal-access/no-access.html`, `assets/sass/application.scss` |
 | 27 unlink + landing | `routes/internal-access.js` |
 | 13 starting points | `routes/beta.js` |
+
+---
+
+## Claim v13 — domain linked to more than one council (29 October)
+
+Small delta on v12. Screen 19 now opens for **any** email domain linked to more than one council —
+a shared-service domain, or a council's own domain that also covers partner councils.
+
+- **Domain data** — added `eastvale.gov.uk` → [Eastvale, Northmoor] (the two share IT). The domain
+  map already supports one-domain-to-many and one-council-to-many-domains; `/claim/start` already
+  routes any email matching more than one council to 19, so this mapping is all that was needed.
+- **19 copy** — body changed to "Your email address is linked to more than one council. Select all
+  the councils you need access to." The screen lists the councils linked to the signed-in domain
+  (3 for westvale-shared.gov.uk, 2 for eastvale.gov.uk).
+- **Starting points** — added **3a** on `/beta`: council's own domain covering a partner council
+  (type d.rao@eastvale.gov.uk → 19).
+
+Files: `data/claim-example-data.js`, `views/pages/claim/which-councils.html`, `routes/beta.js`
+(and a one-line comment in `routes/claim.js`).

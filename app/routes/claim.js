@@ -127,7 +127,7 @@ module.exports = function (router) {
 
   router.post("/claim/start", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    // Shared-service domain (matches more than one council) → 19; otherwise set the matched council
+    // v13: any email domain linked to more than one council → 19; otherwise set the matched council
     // and confirm it on 01. Changed in build, prototype, pending design sign-off.
     const ids = councilsForEmail(claim.oneLoginEmail);
     if (ids.length > 1) return res.redirect("/claim/which-councils"); // 19

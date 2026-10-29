@@ -16,9 +16,16 @@ const COUNCILS = require("./councils");
 // DEMO DATA — a hard-coded mapping onto the three fictional demo councils. To be replaced when
 // Leon's inventory of shared and managed services arrives. NOT built from the CSV "Shared service"
 // column, which is free text and unreliable. Changed in build, prototype, pending design sign-off.
+// Domains linked to MORE THAN ONE council — a shared-service provider domain, or a council's own
+// domain that also covers partner councils (shared IT). councilsForEmail unions this with each
+// council's own domains, so one domain can link to several councils and one council can have several
+// domains. Any email whose domain is here (length > 1) opens screen 19.
+// Changed in build, prototype, pending design sign-off.
 const SHARED_DOMAINS = {
   "novatech-services.co.uk": ["westborough", "eastvale", "northmoor"],
   "westvale-shared.gov.uk": ["westborough", "eastvale", "northmoor"],
+  // v13: Eastvale's own domain also covers Northmoor County Council, because the two share IT.
+  "eastvale.gov.uk": ["eastvale", "northmoor"],
 };
 
 // Example emails used by the prototype scenarios. EXAMPLE DATA, NOT REAL.
