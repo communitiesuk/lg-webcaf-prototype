@@ -9,8 +9,8 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "What else does this system do for the council?",
-        intro: "Some systems also provide corporate or internal services. Knowing this early means nothing surprises you during an incident."
+        title: "Does this critical system support any other council services or functions?",
+        intro: "Some systems also provide corporate or internal services. Recording this now helps you understand the potential impact of an incident before it happens."
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/corporate-services" novalidate>

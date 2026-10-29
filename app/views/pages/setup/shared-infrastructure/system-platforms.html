@@ -9,8 +9,9 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Check the shared platforms this system relies on",
-        intro: "We have ticked the platforms that support the services this system is linked to. Untick any it does not use, or tick others it does."
+        title: "Which shared platforms does this critical system rely on?",
+        intro: "The core infrastructure platforms linked to this critical system&rsquo;s services have already been selected.",
+        intro2: "Review the list and add or remove platforms as needed."
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/platforms" novalidate>
@@ -25,13 +26,13 @@
             <div class="govuk-checkboxes__divider">or</div>
             <div class="govuk-checkboxes__item">
               <input class="govuk-checkboxes__input" id="systemPlatformsLater" name="systemPlatformsLater" type="checkbox" value="later" data-behaviour="exclusive">
-              <label class="govuk-label govuk-checkboxes__label" for="systemPlatformsLater">Nothing yet, I'll link this later</label>
+              <label class="govuk-label govuk-checkboxes__label" for="systemPlatformsLater">None yet, I'll link this later</label>
             </div>
           </div>
         </div>
 
         <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=system:{{ system.id }}">Add a platform that is not listed</a>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=system:{{ system.id }}">Add a platform</a>
         </div>
         <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       </form>

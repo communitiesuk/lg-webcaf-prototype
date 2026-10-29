@@ -16,16 +16,16 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Where is this system hosted?"
+        title: "Where is this critical system hosted?"
       }) }}
 
-      {% set insetHtml %}{% if hostingPlatform %}From what you have already told us, this system relies on {{ hostingPlatform }}. {% endif %}Sites give context for your assessment and are not assessed directly.{% endset %}
+      {% set insetHtml %}{% if hostingPlatform %}From what you have already told us, this critical system relies on {{ hostingPlatform }}. {% endif %}Sites give context for your assessment and are not assessed directly.{% endset %}
       {{ govukInsetText({ html: insetHtml }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/hosting" novalidate>
         {{ govukRadios({
           name: "hostingType",
-          fieldset: { legend: { text: "Where is this system hosted?", classes: "govuk-visually-hidden" } },
+          fieldset: { legend: { text: "Where is this critical system hosted?", classes: "govuk-visually-hidden" } },
           items: [
             { value: "third-party", text: "Third-party hosting", checked: system.hosting.type == "third-party" },
             { value: "on-premises", text: "On premises", checked: system.hosting.type == "on-premises" },
@@ -43,7 +43,7 @@
         {{ govukInput({
           id: "hostingSecondary",
           name: "hostingSecondary",
-          label: { text: "Secondary site, if there is one", classes: "govuk-label--s" },
+          label: { text: "Add a secondary site, if there is one", classes: "govuk-label--s" },
           value: system.hosting.secondary
         }) }}
 

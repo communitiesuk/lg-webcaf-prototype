@@ -661,7 +661,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/shared-infrastructure/system-platforms", {
-      pageTitle: "Check the shared platforms this system relies on",
+      pageTitle: "Which shared platforms does this critical system rely on?",
       backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/corporate-services`,
       system,
       platforms: buildPlatformChoices(
@@ -768,7 +768,7 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     const selected = new Set(system.corporateServices || []);
     res.render("pages/setup/critical-systems/corporate-services", {
-      pageTitle: "What else does this system do for the council?",
+      pageTitle: "Does this critical system support any other council services or functions?",
       backHref: `/setup/critical-systems/add`,
       system,
       options: CORPORATE_SERVICE_OPTIONS.map((o) => ({ ...o, checked: selected.has(o.value) })),
@@ -989,7 +989,7 @@ module.exports = function (router) {
       ? `/setup/critical-systems/${encodeURIComponent(system.id)}/councils`
       : `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`;
     res.render("pages/setup/critical-systems/hosting", {
-      pageTitle: "Where is this system hosted?",
+      pageTitle: "Where is this critical system hosted?",
       backHref,
       system,
       hostingPlatform: deriveHostingPlatformName(setup, system),
