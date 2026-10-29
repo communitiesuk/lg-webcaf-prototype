@@ -444,3 +444,70 @@ a shared-service domain, or a council's own domain that also covers partner coun
 
 Files: `data/claim-example-data.js`, `views/pages/claim/which-councils.html`, `routes/beta.js`
 (and a one-line comment in `routes/claim.js`).
+
+---
+
+## Setup "Set up your council" — full content sync to Figma v4/v7 (29 October)
+
+Unlike the entries above (which record prototype changes **ahead of** Figma), this is the
+reverse: a verbatim content sync bringing the Setup section **in line with** the current
+Figma ("07 Set up your council · v7", page node `481:2290`). Every designed screen frame was
+screenshotted, diffed against the prototype, and the copy updated to match — H1s, intros,
+hints, field labels, button text, inset/consequence/banner copy — plus the matching route
+`pageTitle`s. Committed in ten waves (`85067ea` → `f54107c`).
+
+**Screens synced:** S01, S04, S05, S09, S10, S10b, S12c, S13, S14, S15, S16, S17, S18, S19,
+S20, S21, S23, S24, S27, S30, S31, S35, S36, S38, S39, S41, S42, S45, S46, S47, S48, S49, S50.
+Already matching (no change): S02a, S02b, S03, S28, S29, S32, S40, S51.
+
+### Deviations from Figma deliberately kept (do NOT revert in Figma sync)
+
+These are user decisions that the current Figma does **not** reflect — Figma should be
+updated to match the prototype, not the other way round:
+
+- **S02 "Your sector context"** — keeps the long organisational-context content (mission,
+  objectives, threat actors, consequences). Figma shows the short summary only.
+- **S03 council-context** — the "Local Government Reorganisation (LGR)" checkbox is removed
+  (work paused). Figma still shows it.
+- **S03 CNI / OT dropdowns** — populated with realistic options plus a "None" choice. Figma
+  shows placeholders ("Select a sector" / "Option list not yet agreed").
+- **S29 recovery requirements** — the "Under review / This page may not stay here" banner is
+  removed. Figma still shows it.
+- **S12c add-platform** — the "who manages it? is a v6 proposal" note is removed (the shared
+  `setup-proposal.njk` component is globally disabled anyway).
+- **S15 supplier inset** — uses "You will decide whether to **include** it in a separate step"
+  instead of Figma's "whether it is **in scope**" (content-design steer: avoid "scope").
+
+### Content decisions taken during the sync
+
+- **"five lens" (no hyphen)** everywhere, following the content review (Holly/Isabel) over
+  Figma's mixed "five-lens"/"five lens". Applied to S04, S05 and the S01 task-3 hint.
+- **S31 button "Choose what to assess"** — used Figma's label even though it links to the
+  section branded "Decide what to assess" elsewhere. Flagged: button vs section-name mismatch.
+- **S04 methodology** restructured so the two explanatory paragraphs sit above the radios
+  (were a radio hint); radios now carry a visually-hidden legend. **S05** re-added its inset
+  per v7 (an earlier build had moved that content to S04).
+
+### Figma frames that are internally inconsistent (followed the canonical frame)
+
+Where a screen's primary and secondary frames disagree, the prototype follows the primary
+one; the secondary Figma frame is stale and should be updated:
+
+- **S30 vs S30a** — primary "Your people / Your organisational context"; error frame drops
+  the "Your". Followed primary.
+- **S36 vs S50** — hub button "Add an essential service" (S36); success frame S50 still shows
+  "Add a service that is not on the list". Followed S36 (shared template).
+- **S09/S41 vs S32/S51** — primary buttons "Add this service" / "Add this supplier"; error
+  frames still show "Save and continue" / "Add". Followed the primary frames.
+- **S04 vs S30** casing — "GovAssure **five lens** Model" (S04) vs "GovAssure **Five Lens**
+  Model" (S30 summary). Both are straight from Figma; left as-is.
+
+### Parked (not built)
+
+- **S43 "Is this a system we already hold an assessment for?" (MHCLG records)** — marked
+  "Parked, not part of the current design" in Figma; no route or view in the prototype.
+
+### Bug fixed during the sync
+
+- A literal `&rsquo;` passed into `appPageHeader` on S20 would have rendered as the raw text
+  `&rsquo;` (the macro autoescapes); replaced with a real apostrophe.
