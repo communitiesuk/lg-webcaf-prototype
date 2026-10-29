@@ -1018,7 +1018,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/owner", {
-      pageTitle: "Who owns this system?",
+      pageTitle: "Who owns this critical system?",
       backHref: "/setup/critical-systems",
       system,
       counter: systemDetailCounter(setup, system),
