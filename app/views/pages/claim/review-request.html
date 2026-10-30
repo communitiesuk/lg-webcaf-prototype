@@ -19,12 +19,13 @@
         }) }}
       {% endif %}
 
+      <span class="govuk-caption-l">{{ councilName }}</span>
       <h1 class="govuk-heading-l">Review a request to join</h1>
 
       {# 21b: shown to the person who registered the council, while there is no CAF Lead yet.
          Changed in build, prototype, pending design sign-off. #}
       {% if noCafLead %}
-        {{ govukInsetText({ text: "Your council has not named its CAF Lead yet. Until it does, you approve requests to join because you registered the council. Once a CAF Lead is named, they will approve requests instead." }) }}
+        {{ govukInsetText({ text: "Your council has not named its CAF Lead yet. Until it does, you can approve requests to join because you registered the council. Once a CAF Lead is named, they will approve requests instead." }) }}
       {% endif %}
 
       {# Name, job title and email as the person entered them. The council row is not shown. #}

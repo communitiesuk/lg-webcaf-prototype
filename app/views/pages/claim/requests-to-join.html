@@ -10,7 +10,8 @@
       <span class="govuk-caption-l">Access management</span>
       <h1 class="govuk-heading-l">Requests to join</h1>
 
-      <p class="govuk-body">{{ requesters.length }} people are waiting for you to review their request to join {{ councilName }}. Review each one to decide what role they have.</p>
+      <p class="govuk-body">{{ requesters.length }} people are waiting for you to review their request to join {{ councilName }}.</p>
+      <p class="govuk-body">Review each one to decide what role they should have.</p>
 
       {% set rows = [] %}
       {% for r in requesters %}

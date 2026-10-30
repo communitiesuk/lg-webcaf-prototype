@@ -10,13 +10,16 @@
     <div class="govuk-grid-column-two-thirds">
 
       {% set bannerHtml %}
-        <p class="govuk-notification-banner__heading">Your request is waiting for approval. You will get an email when someone at your council has decided.</p>
+        <p class="govuk-notification-banner__heading">Your request is waiting for approval</p>
+        <p class="govuk-body">You will get an email when someone at your council has decided.</p>
       {% endset %}
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
       <h1 class="govuk-heading-l">Your request has been sent</h1>
 
       <p class="govuk-body">We have asked {{ registeredBy }}, who registered {{ councilName }}, to approve your request and decide what you can see. Your council has not named its CAF Lead yet.</p>
+      <p class="govuk-body">You will not be able to see your council record until your request is approved.</p>
+      <p class="govuk-body">While you wait, you can read the guidance on the CAF for local government.</p>
 
       {{ govukButton({ text: "Read the guidance", href: "/external" }) }}
     </div>

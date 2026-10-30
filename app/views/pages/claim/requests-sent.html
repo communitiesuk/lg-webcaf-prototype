@@ -10,7 +10,8 @@
     <div class="govuk-grid-column-two-thirds">
 
       {% set bannerHtml %}
-        <p class="govuk-notification-banner__heading">We have received your requests. You will get an email when each request has been decided.</p>
+        <p class="govuk-notification-banner__heading">We have received your requests</p>
+        <p class="govuk-body">You will get an email when each request has been decided.</p>
       {% endset %}
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
