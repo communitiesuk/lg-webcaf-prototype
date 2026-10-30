@@ -36,7 +36,7 @@
         {{ govukInput({
           id: "jobTitle",
           name: "jobTitle",
-          label: { text: "Job title", classes: "govuk-label--s" },
+          label: { text: "Job title at this council", classes: "govuk-label--s" },
           hint: { text: "For example, Head of IT" },
           value: person.jobTitle,
           errorMessage: { text: errorByField.jobTitle } if errorByField.jobTitle else undefined

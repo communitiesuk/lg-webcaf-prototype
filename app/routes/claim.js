@@ -340,7 +340,7 @@ module.exports = function (router) {
 
     const errors = [];
     if (!fullName) errors.push({ field: "fullName", message: "Enter your full name" });
-    if (!jobTitle) errors.push({ field: "jobTitle", message: "Enter your job title" });
+    if (!jobTitle) errors.push({ field: "jobTitle", message: "Enter your job title at this council" });
     if (errors.length) {
       return renderYourDetails(res, claim, { person: { fullName: fullName, jobTitle: jobTitle }, errors: errors });
     }

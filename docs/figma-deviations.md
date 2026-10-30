@@ -543,13 +543,15 @@ user-visible).
 - 24 inset and 25 statuses already matched Figma (route-built).
 - 28 / 30: bodies split into two paragraphs; 30 "…what role they should have".
 
+**Resolved (30 October, follow-up):**
+- **07 access-granted button** — now "Go to your dashboard" → `/dashboard`, matching Figma.
+  The optional readiness detour (claim 07 → `/readiness`) is dropped; `/readiness` still
+  exists as a section to revisit as a journey another time.
+- **Job title field** — the your-details form field is now "Job title at this council" (+ error
+  "Enter your job title at this council"), per the error frame 14. The check-answers /
+  review-request **summary rows** stay "Job title", matching those Figma frames.
+
 **Flags (not changed — pending your call):**
-- **07 access-granted button** — Figma shows "Go to your dashboard"; the prototype keeps
-  "Continue" → `/readiness` (the optional readiness step, an earlier decision). Left as-is;
-  changing it would drop the readiness step, which is behavioural, not copy.
-- **Job title field** — Figma frame 03 labels it "Job title"; the error frame 14 shows "Job
-  title at this council" (+ error "Enter your job title at this council"). Kept the primary
-  frame's "Job title" / "Enter your job title". Figma is internally inconsistent here.
 - **26 no-council-linked** — a new edge screen in the updated Figma ("Your email address is
   not linked to a council yet"); not built in the prototype. Parked — flag if it's needed.
 - **21/21b role options** — Figma shows the Full access / Collaborator descriptions as one
