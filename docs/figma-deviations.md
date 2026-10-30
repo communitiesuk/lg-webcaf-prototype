@@ -511,3 +511,47 @@ one; the secondary Figma frame is stale and should be updated:
 
 - A literal `&rsquo;` passed into `appPageHeader` on S20 would have rendered as the raw text
   `&rsquo;` (the macro autoescapes); replaced with a real apostrophe.
+
+---
+
+## Claim "Register your council" — content sync to updated Figma (30 October)
+
+Content designers updated the Claim screens in Figma (page node `595:2`). This is a verbatim
+copy sync (like the Setup sync above): each designed frame was transcribed and the prototype
+copy updated to match. Committed in three waves (`0090517`, `8a7cd56`, `4862bae`).
+
+**Terminology reversed to "register / registration"** for the council-claiming action
+(caption "Register your council", "You registered on…", "Your registration was not approved",
+"We are checking your registration"), per user decision on 30 October — this supersedes the
+27 October "claim throughout" call. The **"request to join"** wording for joining a council
+that already uses the service is unchanged. Routes and filenames stay `/claim/…` (not
+user-visible).
+
+**Screens synced:** 01, 03, 04, 05, 06, 07, 07b, 16, 17, 18, 19, 20, 20b, 21, 21b, 22, 23,
+24, 25, 28, 29, 30. **00** already matched (no change).
+
+**Notable copy changes beyond the terminology swap:**
+- 03: email line "…through GDS Internal Access".
+- 06 / 18 / 20 / 20b / 22: notification banners split into heading + body; bodies reworded
+  into separate paragraphs; guidance line now "…the CAF for local government".
+- 07: bullet copy ("see any earlier CAF assessment information…", "invite colleagues to use
+  this service"); "…does not make you CAF Lead for your council".
+- 07b: added a "What happens next" H2; "…working on the CAF for local government".
+- 16 not-approved: added a "What you can do" H2; **removed** the "Ask for access to a
+  different council" button (Figma 16 has no button) and the dead proposal note.
+- 21 / 21b review-request: added the council-name caption; 21b "…you can approve requests…".
+- 24 inset and 25 statuses already matched Figma (route-built).
+- 28 / 30: bodies split into two paragraphs; 30 "…what role they should have".
+
+**Flags (not changed — pending your call):**
+- **07 access-granted button** — Figma shows "Go to your dashboard"; the prototype keeps
+  "Continue" → `/readiness` (the optional readiness step, an earlier decision). Left as-is;
+  changing it would drop the readiness step, which is behavioural, not copy.
+- **Job title field** — Figma frame 03 labels it "Job title"; the error frame 14 shows "Job
+  title at this council" (+ error "Enter your job title at this council"). Kept the primary
+  frame's "Job title" / "Enter your job title". Figma is internally inconsistent here.
+- **26 no-council-linked** — a new edge screen in the updated Figma ("Your email address is
+  not linked to a council yet"); not built in the prototype. Parked — flag if it's needed.
+- **21/21b role options** — Figma shows the Full access / Collaborator descriptions as one
+  hint block above the radios; the prototype keeps GDS per-option hints (same wording). Left
+  in the accessible pattern.
