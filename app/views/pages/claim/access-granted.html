@@ -1,18 +1,21 @@
 {# 07 claim / access-granted (first to join) — Figma node 209:2608 #}
 {% extends "layouts/claim.html" %}
-{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {{ govukPanel({
-        titleText: "Registration complete",
-        text: "Next, set up your council. The first task is confirming who your council’s CAF Lead is."
-      }) }}
+      {# Not the end of the journey — registration succeeded but the user continues into setup —
+         so a success notification banner, not the end-of-transaction confirmation panel. #}
+      {% set bannerHtml %}
+        <h3 class="govuk-notification-banner__heading">Registration complete</h3>
+      {% endset %}
+      {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
 
-      <h2 class="govuk-heading-m">What happens next</h2>
+      <h1 class="govuk-heading-l">What happens next</h1>
+      <p class="govuk-body">Next, set up your council. The first task is confirming who your council’s CAF Lead is.</p>
       <p class="govuk-body">You can now:</p>
       <ul class="govuk-list govuk-list--bullet">
         <li>work on the whole council record</li>

@@ -91,10 +91,10 @@ function buildSetupTaskList(setup) {
   // acceptance) -> In progress; otherwise Not started.
   const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? inProgress : notStarted);
 
-  // The Figma design renders all three status tags in the same blue (the default
-  // govuk-tag colour), not green/blue/grey. Matched here per design fidelity.
-  const completed = { tag: { text: "Completed", classes: "govuk-tag--blue" } };
-  const inProgress = { tag: { text: "In progress", classes: "govuk-tag--blue" } };
+  // GOV.UK task list statuses: "Completed" is plain text with no tag; incomplete states use
+  // tags, distinguished by colour — "In progress" light-blue, "Not started" blue.
+  const completed = { text: "Completed" };
+  const inProgress = { tag: { text: "In progress", classes: "govuk-tag--light-blue" } };
   const notStarted = { tag: { text: "Not started", classes: "govuk-tag--blue" } };
 
   // Statuses and hints are derived from the Setup state, so the list is correct for both
