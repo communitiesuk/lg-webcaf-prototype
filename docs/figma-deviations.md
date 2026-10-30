@@ -554,6 +554,20 @@ user-visible).
 **Flags (not changed — pending your call):**
 - **26 no-council-linked** — a new edge screen in the updated Figma ("Your email address is
   not linked to a council yet"); not built in the prototype. Parked — flag if it's needed.
+
+### Design follow-ups (30 October) — deliberate deviations from Figma
+
+- **00 /claim/start** — the first paragraph ("You have signed in. Before you can use this
+  service, you need to register…") is now an Important notification banner above the H1.
+- **07 / 07b access-granted** — the green end-of-transaction **confirmation panel** is replaced
+  with a **success notification banner** + a real H1 "What happens next". These pages aren't
+  the end of the journey (the user continues into setup / to the dashboard), so the confirmation
+  page pattern overstated completion. Figma still shows the panel.
+- **S01 task list — status tag colours** — corrected to the GOV.UK task list pattern:
+  "Completed" is plain text with no tag; "In progress" is `govuk-tag--light-blue`; "Not started"
+  is `govuk-tag--blue`. Figma rendered all three as the same blue.
+- **S01 task list — hints** — removed the static descriptive hints on tasks 1, 2, 3, 7, 8 (they
+  restated the title); kept the dynamic progress hints on tasks 4, 5, 6. Figma shows all hints.
 - **21/21b role options** — Figma shows the Full access / Collaborator descriptions as one
   hint block above the radios; the prototype keeps GDS per-option hints (same wording). Left
   in the accessible pattern.
