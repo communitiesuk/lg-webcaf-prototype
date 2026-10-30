@@ -16,7 +16,7 @@
         {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
       {% endif %}
 
-      <span class="govuk-caption-l">Claim your council</span>
+      <span class="govuk-caption-l">Register your council</span>
       <h1 class="govuk-heading-l">Your details</h1>
 
       {% if recognised %}
@@ -42,7 +42,7 @@
           errorMessage: { text: errorByField.jobTitle } if errorByField.jobTitle else undefined
         }) }}
 
-        <p class="govuk-body">Email address: {{ email }}. You signed in with this address using Internal Access.</p>
+        <p class="govuk-body">Email address: {{ email }}. You signed in with this address through GDS Internal Access.</p>
 
         {{ govukButton({ text: "Continue" }) }}
       </form>

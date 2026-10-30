@@ -8,15 +8,16 @@
     <div class="govuk-grid-column-two-thirds">
 
       {% set bannerHtml %}
-        <p class="govuk-notification-banner__heading">We are checking your claim</p>
+        <p class="govuk-notification-banner__heading">We are checking your registration</p>
         <p class="govuk-body">You will get an email when MHCLG has checked it.</p>
       {% endset %}
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
-      <h1 class="govuk-heading-l">We are checking your claim</h1>
+      <h1 class="govuk-heading-l">We are checking your registration</h1>
 
-      <p class="govuk-body">This is a one-time check because you are the first person from {{ councilName }} to claim it. It is not a check on you personally.</p>
-      <p class="govuk-body">While you wait, you can read the guidance on how the CAF works. You will not be able to see your council record until the check is done.</p>
+      <p class="govuk-body">This is a one-time check because you are the first person from {{ councilName }} to register. It is not a check on you as an individual.</p>
+      <p class="govuk-body">You will not be able to see your council record until the check is done.</p>
+      <p class="govuk-body">While you wait, you can read the guidance on the CAF for local government.</p>
 
       {{ govukButton({ text: "Read the guidance", href: "/setup/not-in-this-prototype", classes: "govuk-button--secondary" }) }}
 

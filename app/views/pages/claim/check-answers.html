@@ -11,7 +11,7 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <span class="govuk-caption-l">Claim your council</span>
+      <span class="govuk-caption-l">Register your council</span>
       <h1 class="govuk-heading-l">Check your answers</h1>
 
       {# v10: Council Change → 01, Other councils row → 28, Email has no Change.
@@ -55,7 +55,7 @@
           {{ govukInsetText({ text: "Someone from " + council.name + " already uses this service. Your request will go to " + registeredBy + ", who registered the council, because your council has not named its CAF Lead yet. They will review your request and decide what access to give you. You will get an email when they have decided." }) }}
         {% endif %}
       {% else %}
-        {{ govukInsetText({ text: "You are the first person from this council to register. MHCLG will check this registration before you get access." }) }}
+        {{ govukInsetText({ text: "You are the first person from this council to register. MHCLG will check this registration before giving you access." }) }}
       {% endif %}
 
       <form method="post" action="/claim/check" novalidate>

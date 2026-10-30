@@ -569,7 +569,7 @@ module.exports = function (router) {
   router.get("/claim/pending", (req, res) => {
     const claim = ensureClaim(req.session.data);
     res.render("pages/claim/pending", {
-      pageTitle: "We are checking your claim",
+      pageTitle: "We are checking your registration",
       councilName: (claim.council && claim.council.name) || "",
     });
   });
