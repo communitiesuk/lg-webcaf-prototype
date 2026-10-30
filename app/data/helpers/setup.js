@@ -72,10 +72,10 @@ function buildSetupNavigation(currentPath) {
   ];
 }
 
-// S01 task-list model. Hints are verbatim from the design; the service/infrastructure/
-// system hints reflect the seeded counts (3 services, 5 platforms, 4 systems).
-// Grouped to match the design: pre-services tasks, then "Your services and systems",
-// then "Finish setting up".
+// S01 task-list model. Only tasks 4-6 (services / infrastructure / systems) carry hint text
+// now — a dynamic progress line reflecting the current counts. The static descriptive hints on
+// the other tasks were removed (they restated the title). Grouped to match the design:
+// pre-services tasks, then "Your services and systems", then "Finish setting up".
 function buildSetupTaskList(setup) {
   setup = setup || {};
   const services = setup.essentialServices || [];
@@ -112,19 +112,16 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "1. Confirm your CAF Lead" },
       href: "/access/caf-lead?return=/setup/task-list",
-      hint: { text: "Who is accountable for your council's CAF" },
       status: peopleStatus(cafLead),
     },
     {
       title: { text: "2. Organisational context" },
       href: "/setup/sector-context",
-      hint: { text: "Your sector and your council's circumstances" },
       status: ctxDone ? completed : ctxStarted ? inProgress : notStarted,
     },
     {
       title: { text: "3. How you identify services and systems" },
       href: "/setup/methodology",
-      hint: { text: "The five lens approach, or your own methodology" },
       status: method.completed ? completed : notStarted,
     },
   ];
@@ -166,13 +163,11 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "7. Confirm your Approver" },
       href: "/access/approver?return=/setup/task-list",
-      hint: { text: "Who signs off each cycle's plan" },
       status: peopleStatus(approver),
     },
     {
       title: { text: "8. Check and confirm" },
       href: "/setup/coverage-check",
-      hint: { text: "See anything still to link, then finish" },
       status: notStarted,
     },
   ];
