@@ -239,16 +239,15 @@ access, 19 which council.
   Readiness/Dashboard, Decide, Claim). R10 `/choose-council` kept as a parked toggle.
 
 **Placeholders / wording to confirm:**
-- Get started "Before you start" bullet reworded to Internal Access ("to sign in with Internal
-  Access, using that email address and a one-time code") — NOT verified against Get started v5 /
-  Access management v5 Figma copy.
 - Approver named "Jo Hart", demo joiner "Priya Shah" — who approves before a CAF Lead is named is
   not decided (built as the first claimant approves).
-- Terminology: aligned to "claim / claimed" throughout (20 October decision), not the Figma v6
-  panels' "registration / registered". The distinct "request to join" wording (the join-approval
-  model on 05/20/21) is kept — it is a different action from claiming a council. Figma panels that
-  say "registration" (07 "Registration complete", 17 "registered", 06/16) should be updated to
-  "claim" to match.
+- Terminology: the council-claiming action now uses "register / registration" (30 October
+  decision — see "Claim 'Register your council' — content sync" below), which supersedes the
+  earlier 20 October "claim throughout" call. The distinct "request to join" wording for joining
+  a council that already uses the service is kept.
+
+(The earlier "Get started 'Before you start' bullet not verified against v5" note is resolved —
+G01 is now synced to Figma v5; the Internal Access / one-time-code wording was dropped.)
 
 ### Reference — where each change lives in the code
 

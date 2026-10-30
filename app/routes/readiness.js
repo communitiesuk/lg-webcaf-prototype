@@ -85,7 +85,6 @@ module.exports = function (router) {
   router.get("/dashboard", (req, res) => {
     ensureSetup(req.session.data);
     ensureDecide(req.session.data);
-    seedExampleReadinessIfPristine(req.session.data);
     const state = selectDashboardState(req.session.data);
     if (state === "collaborator") applyCollaboratorChrome(req, res);
     else applyFullAccessChrome(req, res);

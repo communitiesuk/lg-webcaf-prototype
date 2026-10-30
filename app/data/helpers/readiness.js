@@ -22,17 +22,6 @@ const COLLABORATOR = { name: "Priya Shah", orgName: COUNCIL_NAME };
 const SIGN_OUT_HREF = "/get-started/sign-out";
 const HOLDING_HREF = "/setup/not-in-this-prototype";
 
-// Readiness nudge wording comes ONLY from the Content frames. The frames give wording for two of the
-// three questions; "teamsInvolved" has no drawn nudge, so a "Not yet" answer there produces none.
-// Do not invent nudge copy — see docs/readiness-stage1-inventory.md §7.1.
-const NUDGE_WORDING = {
-  seniorSponsor:
-    "You said you do not have a senior sponsor yet. Making the case to your leadership team may help.",
-  secureEvidence:
-    "You said you do not have a secure way to share evidence yet. You will need one before assurance starts.",
-  // teamsInvolved: intentionally omitted — no wording in the Content frames.
-};
-
 // Initialise the readiness session namespace (idempotent). Does not pre-answer anything.
 function ensureReadiness(sessionData) {
   if (!sessionData.readiness) sessionData.readiness = {};
@@ -40,8 +29,8 @@ function ensureReadiness(sessionData) {
 }
 
 // Seed the drawn example answers (Not yet / Yes / Not yet, answered 2 September 2026) ONLY when the
-// readiness has never been touched. This makes the default dashboard (R03) show the two nudges as
-// drawn, and R02 show the example answers — without ever overwriting a real user's answers.
+// readiness has never been touched. This makes R02 (your readiness answers) show the example answers
+// — without ever overwriting a real user's answers.
 function seedExampleReadinessIfPristine(sessionData) {
   const r = ensureReadiness(sessionData);
   const pristine =
@@ -136,16 +125,6 @@ function setupTaskProgress(setup) {
   return { done, total: all.length };
 }
 
-// Readiness nudges for the dashboard "Things that might help" section. Only "Not yet" answers that
-// have drawn wording produce a nudge (see NUDGE_WORDING).
-function buildNudges(readiness) {
-  const nudges = [];
-  Object.keys(NUDGE_WORDING).forEach((key) => {
-    if (readiness[key] === "notYet") nudges.push(NUDGE_WORDING[key]);
-  });
-  return nudges;
-}
-
 // View-model for the R03 (setup in progress) dashboard state.
 function buildSetupInProgressModel(sessionData) {
   const setup = ensureSetup(sessionData);
@@ -165,7 +144,6 @@ function buildSetupInProgressModel(sessionData) {
       hint: { text: `${done} of ${total} tasks done. You only do this once.` },
       status,
     },
-    nudges: buildNudges(sessionData.readiness || {}),
   };
 }
 
@@ -283,7 +261,6 @@ module.exports = {
   COLLABORATOR,
   SIGN_OUT_HREF,
   HOLDING_HREF,
-  NUDGE_WORDING,
   ensureReadiness,
   seedExampleReadinessIfPristine,
   ensureSetup,
@@ -293,7 +270,6 @@ module.exports = {
   applyNoCouncilChrome,
   selectDashboardState,
   setupTaskProgress,
-  buildNudges,
   buildSetupInProgressModel,
   selectedSystemNames,
   buildReadyToDecideModel,
