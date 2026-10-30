@@ -1,5 +1,5 @@
-{# G01 service start page (Figma node 209:1943); G02 is the same page with the first-visit
-   cookie banner (209:1980), which the shared layout renders. #}
+{# G01 service start page (Figma node 515:31444, v5); G02 is the same page with the first-visit
+   cookie banner (515:31497), which the shared layout renders. #}
 {% extends "layouts/get-started.html" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
@@ -8,32 +8,27 @@
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">Assess and manage your council’s cyber resilience</h1>
 
-      <p class="govuk-body">Use this service to complete the Cyber Assessment Framework (CAF) for your council, share it with an independent assurer, and plan the improvements that follow.</p>
+      <p class="govuk-body">Use this service to complete the Cyber Assessment Framework (CAF) for local government.</p>
 
       <p class="govuk-body">You can:</p>
       <ul class="govuk-list govuk-list--bullet">
         <li>record your essential services and the systems they depend on</li>
+        <li>decide what you will self-assess this cycle</li>
         <li>complete your self-assessment with colleagues</li>
-        <li>share evidence securely with your assurer</li>
-        <li>keep your improvement plan in one place</li>
+        <li>securely share your assessment and evidence with an independent assurer</li>
+        <li>create and manage your improvement and implementation plan</li>
       </ul>
+
+      <p class="govuk-body">On the next page you can sign in with your council email address. If you need to use a non-council email address, contact the CAF team at <a class="govuk-link" href="mailto:caf@localdigital.gov.uk">caf@localdigital.gov.uk</a> to request access.</p>
 
       {{ govukButton({ text: "Start now", href: startHref, isStartButton: true }) }}
 
       <h2 class="govuk-heading-m">Before you start</h2>
       <p class="govuk-body">You will need:</p>
       <ul class="govuk-list govuk-list--bullet">
-        <li>a work email address at your council</li>
-        <li>to sign in with Internal Access, using that email address and a one-time code</li>
+        <li>your council email address, which you will use to sign in</li>
         <li>roughly 26 weeks to complete a full cycle, including assurance</li>
-        <li>time for calls and workshops with your assurer, which you book through Microsoft Bookings</li>
-      </ul>
-
-      <h2 class="govuk-heading-m">Before you begin, you may want to read</h2>
-      <ul class="govuk-list">
-        <li><a class="govuk-link" href="/external">How the CAF works and what is involved (security.gov.uk)</a></li>
-        <li><a class="govuk-link" href="/external">Making the case to your leadership team (security.gov.uk)</a></li>
-        <li><a class="govuk-link" href="/external">Who to involve at your council (security.gov.uk)</a></li>
+        <li>time for calls and workshops with an independent assurer</li>
       </ul>
     </div>
   </div>
