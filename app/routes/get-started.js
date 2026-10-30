@@ -54,7 +54,7 @@ function localReferer(req, fallback) {
 
 module.exports = function (router) {
   // Signed-out chrome for the Get started service pages (and the shared external placeholder).
-  const GET_STARTED_PATHS = ["/get-started", "/cookies", "/external", "/support", "/feedback", "/service-unavailable"];
+  const GET_STARTED_PATHS = ["/get-started", "/cookies", "/support", "/feedback", "/service-unavailable"];
   router.use((req, res, next) => {
     if (GET_STARTED_PATHS.some((p) => req.path === p || req.path.startsWith(p + "/"))) {
       applyGetStartedChrome(req, res);
@@ -111,12 +111,6 @@ module.exports = function (router) {
     cookies.confirmationVisible = false; // the settings page shows its own success banner
     delete req.session.data.cookiesAnalytics;
     return res.redirect("/cookies?saved=1");
-  });
-
-  // Shared external placeholder — a single holding page for every link that leaves this
-  // prototype (the security.gov.uk guidance links on G01, and G05's external references).
-  router.get("/external", (req, res) => {
-    res.render("pages/getstarted/external", { pageTitle: "External page" });
   });
 
   // G05 — Get help with the CAF (support). Reached from the footer on any page; Back returns
