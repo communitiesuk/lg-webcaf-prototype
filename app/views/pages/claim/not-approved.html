@@ -8,26 +8,17 @@
     <div class="govuk-grid-column-two-thirds">
 
       {% set bannerHtml %}
-        <p class="govuk-notification-banner__heading">Your claim was not approved</p>
+        <p class="govuk-notification-banner__heading">Your registration was not approved</p>
         <p class="govuk-body">MHCLG could not confirm your connection to this council.</p>
       {% endset %}
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
-      <h1 class="govuk-heading-l">Your claim was not approved</h1>
+      <h1 class="govuk-heading-l">Your registration was not approved</h1>
 
-      {% set proposalLabel = "Proposal" %}
-      {% set proposalText = "How MHCLG words the reasons, and whether a decision can be challenged, are not yet agreed." %}
-      {% include "components/claim-proposal.njk" %}
-
-      {# 27 Oct: body reworded; the "ask IT to register the domain" and "wrong council" routes and the
-         "Claim a different council" button are out. Changed in build, prototype, pending design sign-off. #}
       <p class="govuk-body">MHCLG could not confirm that {{ email }} is connected to {{ councilName }}.</p>
 
+      <h2 class="govuk-heading-m">What you can do</h2>
       <p class="govuk-body">If you think this is wrong, email the CAF team at <a class="govuk-link" href="mailto:cafsupport@communities.gov.uk">cafsupport@communities.gov.uk</a>.</p>
-
-      {# v10: the button that went to council search now goes to 29 (ask for another council).
-         Changed in build, prototype, pending design sign-off. #}
-      {{ govukButton({ text: "Ask for access to a different council", href: "/claim/ask-another-council", classes: "govuk-button--secondary" }) }}
     </div>
   </div>
 {% endblock %}

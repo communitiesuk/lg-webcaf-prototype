@@ -694,7 +694,7 @@ module.exports = function (router) {
   router.get("/claim/not-approved", (req, res) => {
     const claim = ensureClaim(req.session.data);
     res.render("pages/claim/not-approved", {
-      pageTitle: "Your claim was not approved",
+      pageTitle: "Your registration was not approved",
       email: claim.oneLoginEmail || "",
       councilName: (claim.council && claim.council.name) || "this council",
     });
@@ -717,7 +717,7 @@ module.exports = function (router) {
   router.get("/claim/still-checking", (req, res) => {
     const claim = ensureClaim(req.session.data);
     res.render("pages/claim/still-checking", {
-      pageTitle: "We are still checking your claim",
+      pageTitle: "We are still checking your registration",
       councilName: (claim.council && claim.council.name) || "your council",
       registeredDate: claim.registeredDate || "21 September 2026",
     });
