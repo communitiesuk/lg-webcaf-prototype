@@ -32,5 +32,12 @@ coverage/
 # Local backup folder
 _backup_pre_kit/
 
+# Verification scratch — curl cookie jars and temp output must NOT be committed.
+# (Prefer writing scratch to the session scratchpad dir outside the repo.)
+*-cookies.txt
+*.cookies
+cookies.txt
+/.scratch/
+
 # Source data with internal engagement flags — must NOT be committed
 data/source/
