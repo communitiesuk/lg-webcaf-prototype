@@ -146,12 +146,19 @@ function buildSetupInProgressModel(sessionData) {
       : started > 0
       ? { tag: { text: "In progress", classes: "govuk-tag--blue" } }
       : { tag: { text: "Not started", classes: "govuk-tag--grey" } };
+  // Reflect partial progress: name the in-progress tasks as well as the completed ones, so the
+  // hint matches the "In progress" tag instead of reading "0 of 8 done".
+  const inProgress = started - done;
+  const hintText =
+    inProgress > 0
+      ? `${done} of ${total} tasks done, ${inProgress} in progress. You only do this once.`
+      : `${done} of ${total} tasks done. You only do this once.`;
   return {
     councilName: COUNCIL_NAME,
     setupTask: {
       title: { text: "Set up your council" },
       href: "/setup/task-list",
-      hint: { text: `${done} of ${total} tasks done. You only do this once.` },
+      hint: { text: hintText },
       status,
     },
   };
