@@ -772,14 +772,16 @@ module.exports = function (router) {
     const setup = ensureSetup(req.session.data);
     const name = clean(req.session.data.systemName);
     const description = clean(req.session.data.systemDescription);
-    const notSure = clean(req.session.data.notSureServices) === "later";
-    const supportedServices = notSure ? [] : toList(req.session.data.supportedServices);
+    // "Not sure yet, I'll link it later" is an exclusive option within the supportedServices group,
+    // so the framework keeps it mutually exclusive with the service options. Read it from there.
+    const serviceChoices = toList(req.session.data.supportedServices);
+    const notSure = serviceChoices.includes("later");
+    const supportedServices = notSure ? [] : serviceChoices.filter((v) => v !== "later");
     const assessedBefore = clean(req.session.data.assessedBefore);
     [
       "systemName",
       "systemDescription",
       "supportedServices",
-      "notSureServices",
       "assessedBefore",
     ].forEach((k) => delete req.session.data[k]);
 
@@ -990,14 +992,14 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     system.name = clean(req.session.data.systemName) || system.name;
     system.description = clean(req.session.data.systemDescription);
-    const notSure = clean(req.session.data.notSureServices) === "later";
-    system.supportedServices = notSure ? [] : toList(req.session.data.supportedServices);
+    const serviceChoices = toList(req.session.data.supportedServices);
+    const notSure = serviceChoices.includes("later");
+    system.supportedServices = notSure ? [] : serviceChoices.filter((v) => v !== "later");
     system.assessedBefore = clean(req.session.data.assessedBefore);
     [
       "systemName",
       "systemDescription",
       "supportedServices",
-      "notSureServices",
       "assessedBefore",
     ].forEach((k) => delete req.session.data[k]);
     const back = summaryReturnHref(req, system);
