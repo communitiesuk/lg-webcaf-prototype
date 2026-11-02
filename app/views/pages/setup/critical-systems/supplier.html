@@ -17,6 +17,7 @@
       {% endset %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/supplier" novalidate>
+        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
         {{ govukRadios({
           name: "managedBySupplier",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },

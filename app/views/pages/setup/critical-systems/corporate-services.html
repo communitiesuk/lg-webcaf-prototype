@@ -14,6 +14,7 @@
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/corporate-services" novalidate>
+        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Select all that apply</legend>

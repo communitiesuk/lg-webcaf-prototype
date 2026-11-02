@@ -282,7 +282,14 @@ module.exports = function (router) {
     }
 
     if (invite.role === "collaborator") return res.redirect("/access/invite/outcomes"); // A06
-    if (invite.role === "approver") return res.redirect("/access/invite/approver-account"); // A07
+    if (invite.role === "approver") {
+      // When this is the Setup "Confirm your Approver" invitation path, the person has already
+      // chosen "needs an invitation" — so skip A07 ("Does your Approver need to use the service?",
+      // which otherwise leads into recording the decision) and go straight to check + send.
+      const ctx = req.session.data.setupInvite;
+      if (ctx && ctx.kind === "approver") return res.redirect("/access/invite/check");
+      return res.redirect("/access/invite/approver-account"); // A07
+    }
     return res.redirect("/access/invite/check"); // full → A08
   });
 
@@ -357,9 +364,11 @@ module.exports = function (router) {
     const invite = ensureInvite(access);
     addInvitation(access, invite);
     req.session.data.lastInvitedName = invite.name;
+    req.session.data.lastInvitedEmail = invite.email;
     // If this invitation names a Setup Approver or CAF Lead, record a pending (invited, not yet
     // accepted) entry in Setup and carry the return so the user gets back to finish setup.
     const ctx = req.session.data.setupInvite;
+    let approverSetupInvite = false;
     if (ctx) {
       const setup = ensureSetup(req.session.data);
       if (ctx.kind === "approver" && setup.people && setup.people.approver) {
@@ -368,6 +377,7 @@ module.exports = function (router) {
         setup.people.approver.confirmed = false;
         setup.people.approver.pending = true; // invitation sent, awaiting acceptance
         setup.people.approver.hasAccount = true;
+        approverSetupInvite = true;
       }
       if (ctx.kind === "cafLead" && setup.people && setup.people.cafLead) {
         setup.people.cafLead.name = invite.name;
@@ -378,7 +388,28 @@ module.exports = function (router) {
       delete req.session.data.setupInvite;
     }
     delete access.invite; // clear the draft
+    // The Setup Approver invitation ends on its own confirmation page (not the generic A09), so it
+    // does not offer to record the decision as the next step.
+    if (approverSetupInvite) return res.redirect("/access/approver/invitation-sent");
     return res.redirect("/access/invite/sent");
+  });
+
+  // Confirmation for the Setup "Confirm your Approver" invitation path. Distinct from A09 so the
+  // Access-management invite flow is untouched. "Record their decision yourself" links to the
+  // existing record page (A27 approver-details), carrying the Setup return.
+  router.get("/access/approver/invitation-sent", (req, res) => {
+    ensureAccess(req.session.data);
+    applyFullAccessChrome(req, res);
+    const setupReturn = req.session.data.setupInviteReturn || "/setup/task-list";
+    // So "record their decision yourself" (A27) returns to Setup after recording.
+    req.session.data.approverReturn = setupReturn;
+    res.render("pages/access/approver-invite-sent", {
+      pageTitle: "Invitation sent",
+      name: (req.session.data.lastInvitedName || "your Approver").toString(),
+      email: (req.session.data.lastInvitedEmail || "").toString(),
+      setupReturn,
+      recordDecisionHref: "/access/approver-details",
+    });
   });
 
   // A09 — Invitation sent.

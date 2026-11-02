@@ -1,0 +1,21 @@
+{# Setup "Confirm your Approver" — invitation sent confirmation. Distinct from A09 invite-sent so
+   the Access-management invite flow is untouched. Changed in build, prototype, pending sign-off. #}
+{% extends "layouts/dashboard.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        titleText: "Invitation sent",
+        html: "We have sent an invitation to " + name + (" at " + email if email else "") + "."
+      }) }}
+
+      <p class="govuk-body">{{ name }} will be asked to sign in and approve your plan. You will get an email when they have decided.</p>
+      <p class="govuk-body">If they cannot use the service, you can <a class="govuk-link" href="{{ recordDecisionHref }}">record their decision yourself</a> instead.</p>
+
+      {{ govukButton({ text: "Return to set up your council", href: setupReturn }) }}
+    </div>
+  </div>
+{% endblock %}

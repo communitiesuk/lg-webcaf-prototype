@@ -88,14 +88,14 @@ function buildSetupTaskList(setup) {
   const cafLead = people.cafLead || {};
   const approver = people.approver || {};
   // People tasks: confirmed (recorded / existing user) -> Completed; pending (invited, awaiting
-  // acceptance) -> In progress; otherwise Not started.
-  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? inProgress : notStarted);
+  // acceptance) -> Incomplete; otherwise Not yet started.
+  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? incomplete : notStarted);
 
-  // GOV.UK task list statuses: "Completed" is plain text with no tag; incomplete states use
-  // tags, distinguished by colour — "In progress" light-blue, "Not started" blue.
+  // GOV.UK task list statuses (standard set): "Completed" is plain text with no tag; "Incomplete"
+  // is a blue tag; "Not yet started" is a grey tag. No other statuses are used.
   const completed = { text: "Completed" };
-  const inProgress = { tag: { text: "In progress", classes: "govuk-tag--light-blue" } };
-  const notStarted = { tag: { text: "Not started", classes: "govuk-tag--blue" } };
+  const incomplete = { tag: { text: "Incomplete", classes: "govuk-tag--blue" } };
+  const notStarted = { tag: { text: "Not yet started", classes: "govuk-tag--grey" } };
 
   // Statuses and hints are derived from the Setup state, so the list is correct for both
   // the populated demo and an empty (build-from-scratch) council.
@@ -117,7 +117,7 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "2. Organisational context" },
       href: "/setup/sector-context",
-      status: ctxDone ? completed : ctxStarted ? inProgress : notStarted,
+      status: ctxDone ? completed : ctxStarted ? incomplete : notStarted,
     },
     {
       title: { text: "3. How you identify services and systems" },
@@ -135,7 +135,7 @@ function buildSetupTaskList(setup) {
           ? `${services.length} added${svcToLink ? ` · ${svcToLink} still to link to infrastructure` : ""}`
           : "Add the services your council delivers",
       },
-      status: services.length ? inProgress : notStarted,
+      status: services.length ? incomplete : notStarted,
     },
     {
       title: { text: "5. Your shared infrastructure" },
@@ -145,7 +145,7 @@ function buildSetupTaskList(setup) {
           ? `${platforms.length} platform${plural(platforms.length)}${platUnlinked ? ` · ${platUnlinked} not linked to anything yet` : ""}`
           : "Add the platforms your services share",
       },
-      status: platforms.length ? inProgress : notStarted,
+      status: platforms.length ? incomplete : notStarted,
     },
     {
       title: { text: "6. Your critical systems" },
@@ -155,7 +155,7 @@ function buildSetupTaskList(setup) {
           ? `${systems.length} added${sysUnlinked ? ` · ${sysUnlinked} not linked to a service yet` : ""}`
           : "Add your most critical systems",
       },
-      status: systems.length ? inProgress : notStarted,
+      status: systems.length ? incomplete : notStarted,
     },
   ];
 
@@ -168,7 +168,7 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "8. Check and confirm" },
       href: "/setup/coverage-check",
-      status: notStarted,
+      status: setup.completed ? completed : notStarted,
     },
   ];
 
@@ -429,14 +429,89 @@ function buildCriticalSystemsHubRows(setup) {
     let action = "Add details";
     if (!linked) action = "Link it";
     else if (sys.detailsComplete) action = "Change";
-    // "Add details" starts the owner/ratings pass (S27); "Change"/"Link it" open the
-    // system in edit mode (S14), where it can be changed or removed.
-    const href =
-      action === "Add details"
-        ? `/setup/critical-systems/${sys.id}/owner`
-        : `/setup/critical-systems/${sys.id}/edit`;
+    // "Add details" starts the owner/ratings pass (S27); "Link it" opens the system in edit mode
+    // (S14); "Change" opens the per-system check-answers summary, where every field can be changed.
+    let href = `/setup/critical-systems/${sys.id}/edit`;
+    if (action === "Add details") href = `/setup/critical-systems/${sys.id}/owner`;
+    else if (action === "Change") href = `/setup/critical-systems/${sys.id}/summary`;
     return { id: sys.id, name: sys.name, summary: parts.join(" · "), action, href };
   });
+}
+
+// Readable labels for the stored values, used by the per-system check-answers summary (S30-style).
+const SUPPLIER_MANAGED_LABELS = {
+  fully: "Yes, fully",
+  partially: "Yes, partially",
+  council: "No, the council manages it",
+  dontknow: "I don't know",
+};
+const ASSESSED_BEFORE_LABELS = { yes: "Yes", no: "No", dontknow: "I don't know" };
+const HOSTING_TYPE_LABELS = {
+  "third-party": "Third-party hosting",
+  "on-premises": "On premises",
+  "council-cloud": "Council-managed cloud",
+};
+const IMPACT_LABELS = { low: "Low", medium: "Medium", high: "High" };
+
+function supportedServiceLabels(setup, system) {
+  const map = new Map(buildSupportedServiceOptions(setup).map((o) => [o.value, o.label]));
+  return (system.supportedServices || []).map((v) => map.get(v) || v);
+}
+
+function corporateServiceLabels(system) {
+  const map = new Map(CORPORATE_SERVICE_OPTIONS.map((o) => [o.value, o.label]));
+  return (system.corporateServices || []).map((v) =>
+    v === "other" ? system.corporateServicesOther || "Other" : map.get(v) || v
+  );
+}
+
+// Per-system check-answers rows. Every field has a Change link back to the page where it was
+// answered, carrying ?return=summary so saving returns here. "Overall criticality" is calculated
+// from the three impact ratings and has no Change link.
+function buildCriticalSystemDetail(setup, system) {
+  const base = `/setup/critical-systems/${system.id}`;
+  const join = (arr) => (arr && arr.length ? arr.join(", ") : "");
+  const supplier = system.supplierId ? getSupplier(setup, system.supplierId) : null;
+  const impact = system.impact || {};
+  const recovery = system.recovery || {};
+  const hosting = system.hosting || {};
+
+  const rows = [
+    { key: "Name", value: system.name, changeHref: `${base}/edit?return=summary` },
+    { key: "What it does", value: system.description, changeHref: `${base}/edit?return=summary` },
+    { key: "Services it supports", value: join(supportedServiceLabels(setup, system)), changeHref: `${base}/edit?return=summary` },
+    { key: "Assessed against the CAF before", value: ASSESSED_BEFORE_LABELS[system.assessedBefore] || "", changeHref: `${base}/edit?return=summary` },
+    { key: "Other council services or functions", value: join(corporateServiceLabels(system)), changeHref: `${base}/corporate-services?return=summary` },
+    { key: "Managed by a third-party supplier", value: SUPPLIER_MANAGED_LABELS[system.managedBySupplier] || "", changeHref: `${base}/supplier?return=summary` },
+  ];
+  if (system.managedBySupplier === "fully" || system.managedBySupplier === "partially") {
+    rows.push({ key: "Supplier", value: supplier ? supplier.name : "", changeHref: `${base}/which-supplier?return=summary` });
+  }
+  rows.push({ key: "Shared with other councils", value: system.sharedWithCouncils ? "Yes" : "No", changeHref: `${base}/shared-with-councils?return=summary` });
+  if (system.sharedWithCouncils) {
+    rows.push({ key: "Councils it is shared with", value: join(system.councils), changeHref: `${base}/councils?return=summary` });
+  }
+  const hostingParts = [];
+  if (hosting.type) hostingParts.push(HOSTING_TYPE_LABELS[hosting.type] || hosting.type);
+  if (hosting.provider) hostingParts.push(hosting.provider);
+  if (hosting.secondary) hostingParts.push(`Secondary: ${hosting.secondary}`);
+  rows.push({ key: "Where it is hosted", value: hostingParts.join(" · "), changeHref: `${base}/hosting?return=summary` });
+
+  const ownerParts = [];
+  if (system.owner && system.owner.name) ownerParts.push(system.owner.name);
+  if (system.owner && system.owner.jobTitle) ownerParts.push(system.owner.jobTitle);
+  rows.push({ key: "System owner", value: ownerParts.join(", "), changeHref: `${base}/owner?return=summary` });
+
+  rows.push({ key: "Confidentiality impact", value: IMPACT_LABELS[impact.confidentiality] || "", changeHref: `${base}/impact?return=summary` });
+  rows.push({ key: "Integrity impact", value: IMPACT_LABELS[impact.integrity] || "", changeHref: `${base}/impact?return=summary` });
+  rows.push({ key: "Availability impact", value: IMPACT_LABELS[impact.availability] || "", changeHref: `${base}/impact?return=summary` });
+  rows.push({ key: "Overall criticality", value: deriveCriticality(impact) || "", calculated: true });
+
+  rows.push({ key: "Maximum tolerable downtime (MTD)", value: recovery.mtd || "", changeHref: `${base}/recovery?return=summary` });
+  rows.push({ key: "Recovery time objective (RTO)", value: recovery.rto || "", changeHref: `${base}/recovery?return=summary` });
+  rows.push({ key: "Recovery point objective (RPO)", value: recovery.rpo || "", changeHref: `${base}/recovery?return=summary` });
+
+  return rows;
 }
 
 // S14 "Which essential services or functions does it support?" options.
@@ -665,6 +740,7 @@ module.exports = {
   CORPORATE_SERVICE_OPTIONS,
   deriveCriticality,
   buildCriticalSystemsHubRows,
+  buildCriticalSystemDetail,
   buildSupportedServiceOptions,
   getSupplier,
   systemCanBeRemoved,

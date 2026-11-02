@@ -27,6 +27,7 @@ const {
   unlinkServiceFromPlatforms,
   CORPORATE_SERVICE_OPTIONS,
   buildCriticalSystemsHubRows,
+  buildCriticalSystemDetail,
   buildSupportedServiceOptions,
   getSupplier,
   systemCanBeRemoved,
@@ -58,6 +59,22 @@ function toList(value) {
 
 function clean(value) {
   return (value || "").toString().trim();
+}
+
+// Per-system check-answers "Change" links carry ?return=summary. These helpers let each critical-
+// system question page send the user back to the summary after saving, instead of continuing the
+// add-a-system chain. The marker is passed to the form as a hidden `csReturn` field.
+function fromSummary(req) {
+  return clean(req.query.return) === "summary";
+}
+function systemSummaryHref(system) {
+  return `/setup/critical-systems/${encodeURIComponent(system.id)}/summary`;
+}
+// Read + consume the hidden marker on POST. Returns the summary href if set, else null.
+function summaryReturnHref(req, system) {
+  const marker = clean(req.session.data.csReturn);
+  delete req.session.data.csReturn;
+  return marker === "summary" ? systemSummaryHref(system) : null;
 }
 
 // S12c add-mode back link + caption, based on where it was opened from (?return=).
@@ -285,10 +302,19 @@ module.exports = function (router) {
 
   router.post("/setup/essential-services/choose", (req, res) => {
     const setup = ensureSetup(req.session.data);
+    const action = clean(req.session.data.action);
     const selected = toList(req.session.data.essentialServiceChoices)
       .map(clean)
       .filter(Boolean);
     delete req.session.data.essentialServiceChoices;
+    delete req.session.data.action;
+
+    // "Add an essential service" submits the form so any ticked selections are kept, then opens
+    // the add-a-service page. No "select at least one" error here (they may be adding the first).
+    if (action === "add") {
+      reconcileChosenServices(setup, selected);
+      return res.redirect("/setup/essential-services/add");
+    }
 
     if (selected.length === 0) {
       return res.render("pages/setup/essential-services/choose", {
@@ -501,7 +527,9 @@ module.exports = function (router) {
         if (ticked.includes(p.id)) p.linkedServices.push(service.id);
       });
       service.infraStatus = "complete";
-      return res.redirect("/setup/critical-systems");
+      // Finishing a service returns to the essential services list, so the person can pick the
+      // next service. It does not push them into critical systems (round-1 research defect).
+      return res.redirect("/setup/essential-services");
     }
     service.infraStatus = "link_later";
     return res.redirect("/setup/essential-services");
@@ -708,6 +736,20 @@ module.exports = function (router) {
     });
   });
 
+  // Per-system check-answers summary — every field with a Change link (round-1 research defect:
+  // owner, impact ratings and recovery fields were not changeable after the system was saved).
+  router.get("/setup/critical-systems/:systemId/summary", (req, res) => {
+    const setup = ensureSetup(req.session.data);
+    const system = getSystem(setup, req.params.systemId);
+    if (!system) return res.redirect("/setup/critical-systems");
+    res.render("pages/setup/critical-systems/summary", {
+      pageTitle: `Check your answers for ${system.name}`,
+      backHref: "/setup/critical-systems",
+      system,
+      rows: buildCriticalSystemDetail(setup, system),
+    });
+  });
+
   // S14 — Add a critical system (Figma 393:1664)
   router.get("/setup/critical-systems/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
@@ -769,9 +811,10 @@ module.exports = function (router) {
     const selected = new Set(system.corporateServices || []);
     res.render("pages/setup/critical-systems/corporate-services", {
       pageTitle: "Does this critical system support any other council services or functions?",
-      backHref: `/setup/critical-systems/add`,
+      backHref: fromSummary(req) ? systemSummaryHref(system) : `/setup/critical-systems/add`,
       system,
       options: CORPORATE_SERVICE_OPTIONS.map((o) => ({ ...o, checked: selected.has(o.value) })),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -788,6 +831,8 @@ module.exports = function (router) {
     ["corporateServices", "corporateServicesOther", "noneCorporate"].forEach(
       (k) => delete req.session.data[k]
     );
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     // S19 → S20 shared platforms (Batch 3).
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`);
   });
@@ -799,8 +844,11 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/supplier", {
       pageTitle: "Is this critical system managed by a third-party supplier?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`,
       system,
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -811,6 +859,17 @@ module.exports = function (router) {
     const answer = clean(req.session.data.managedBySupplier);
     system.managedBySupplier = answer;
     delete req.session.data.managedBySupplier;
+    // Changing this from the summary: if they now say a supplier manages it, send them on to pick
+    // the supplier (which itself returns to the summary); otherwise go straight back.
+    const summaryBack = summaryReturnHref(req, system);
+    if (summaryBack) {
+      if (answer === "fully" || answer === "partially") {
+        return res.redirect(
+          `/setup/critical-systems/${encodeURIComponent(system.id)}/which-supplier?return=summary`
+        );
+      }
+      return res.redirect(summaryBack);
+    }
     if (answer === "fully" || answer === "partially") {
       return res.redirect(
         `/setup/critical-systems/${encodeURIComponent(system.id)}/which-supplier`
@@ -829,9 +888,12 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/which-supplier", {
       pageTitle: "Which supplier manages all or part of this critical system?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
       system,
       suppliers: setup.suppliers || [],
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -843,6 +905,8 @@ module.exports = function (router) {
     system.supplierNote = clean(req.session.data.supplierNote);
     delete req.session.data.whichSupplier;
     delete req.session.data.supplierNote;
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     return res.redirect(
       `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`
     );
@@ -904,10 +968,11 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/add", {
       pageTitle: "Add a critical system",
-      backHref: "/setup/critical-systems",
+      backHref: fromSummary(req) ? systemSummaryHref(system) : "/setup/critical-systems",
       mode: "edit",
       serviceOptions: buildSupportedServiceOptions(setup),
       system,
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -927,6 +992,8 @@ module.exports = function (router) {
       "notSureServices",
       "assessedBefore",
     ].forEach((k) => delete req.session.data[k]);
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     return res.redirect("/setup/critical-systems");
   });
 
@@ -937,8 +1004,11 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/shared-with-councils", {
       pageTitle: "Is this critical system shared with other councils?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
       system,
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -949,6 +1019,17 @@ module.exports = function (router) {
     const shared = clean(req.session.data.sharedWithCouncils) === "yes";
     system.sharedWithCouncils = shared;
     delete req.session.data.sharedWithCouncils;
+    // Changing this from the summary: "Yes" sends them on to pick councils (which returns to the
+    // summary); "No" goes straight back.
+    const summaryBack = summaryReturnHref(req, system);
+    if (summaryBack) {
+      if (shared) {
+        return res.redirect(
+          `/setup/critical-systems/${encodeURIComponent(system.id)}/councils?return=summary`
+        );
+      }
+      return res.redirect(summaryBack);
+    }
     if (shared) {
       return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils`);
     }
@@ -963,11 +1044,14 @@ module.exports = function (router) {
     const added = new Set(system.councils || []);
     res.render("pages/setup/critical-systems/councils", {
       pageTitle: "Which councils share this critical system?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`,
       system,
       // value = plain council name (stored); text = "name (type)" for display. Changed in build.
       register: COUNCIL_REGISTER.filter((c) => !added.has(c)).map((name) => ({ value: name, text: councilWithType(name) })),
       addedCouncils: (system.councils || []).map((name) => ({ value: name, text: councilWithType(name) })),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -977,6 +1061,8 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     system.councils = toList(req.session.data.whichCouncils);
     delete req.session.data.whichCouncils;
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/hosting`);
   });
 
@@ -990,9 +1076,10 @@ module.exports = function (router) {
       : `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`;
     res.render("pages/setup/critical-systems/hosting", {
       pageTitle: "Where is this critical system hosted?",
-      backHref,
+      backHref: fromSummary(req) ? systemSummaryHref(system) : backHref,
       system,
       hostingPlatform: deriveHostingPlatformName(setup, system),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -1008,6 +1095,8 @@ module.exports = function (router) {
     ["hostingType", "hostingProvider", "hostingSecondary"].forEach(
       (k) => delete req.session.data[k]
     );
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     // S21 → back to the systems hub (S23).
     return res.redirect("/setup/critical-systems");
   });
@@ -1019,9 +1108,10 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/owner", {
       pageTitle: "Who owns this critical system?",
-      backHref: "/setup/critical-systems",
+      backHref: fromSummary(req) ? systemSummaryHref(system) : "/setup/critical-systems",
       system,
       counter: systemDetailCounter(setup, system),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -1035,6 +1125,8 @@ module.exports = function (router) {
     };
     delete req.session.data.ownerName;
     delete req.session.data.ownerJobTitle;
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     // S27 → S28 impact ratings (Batch 6).
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/impact`);
   });
@@ -1079,10 +1171,13 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/impact", {
       pageTitle: "What would the impact be if this system were compromised?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/owner`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/owner`,
       system,
       counter: systemDetailCounter(setup, system),
       criticality: deriveCriticality(system.impact),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -1102,6 +1197,8 @@ module.exports = function (router) {
     ["impactConfidentiality", "impactIntegrity", "impactAvailability"].forEach(
       (k) => delete req.session.data[k]
     );
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/recovery`);
   });
 
@@ -1112,9 +1209,12 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/critical-systems/recovery", {
       pageTitle: "Recovery requirements",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/impact`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/impact`,
       system,
       counter: systemDetailCounter(setup, system),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -1128,6 +1228,11 @@ module.exports = function (router) {
       rpo: clean(req.session.data.recoveryRpo),
     };
     ["recoveryMtd", "recoveryRto", "recoveryRpo"].forEach((k) => delete req.session.data[k]);
+    const back = summaryReturnHref(req, system);
+    if (back) {
+      delete req.session.data.action;
+      return res.redirect(back);
+    }
     // "Back to the hub" vs "Save and continue" (→ coverage check).
     if (clean(req.session.data.action) === "hub") {
       delete req.session.data.action;

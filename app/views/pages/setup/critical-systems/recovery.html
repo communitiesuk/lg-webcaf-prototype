@@ -13,6 +13,7 @@
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/recovery" novalidate>
+        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
         <div class="govuk-form-group">
           <label class="govuk-label govuk-label--s" for="recoveryMtd">Maximum tolerable downtime (MTD)</label>
           <input class="govuk-input" id="recoveryMtd" name="recoveryMtd" type="text" value="{{ system.recovery.mtd }}">

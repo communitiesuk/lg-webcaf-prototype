@@ -1,0 +1,37 @@
+{# Per-system check-answers summary. Every field has a Change link back to the page where it was
+   answered (carrying ?return=summary). Overall criticality is calculated, so it has no Change link.
+   Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Your critical systems",
+        title: "Check your answers for " + system.name
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row {% if not row.changeHref %}govuk-summary-list__row--no-actions{% endif %}">
+            <dt class="govuk-summary-list__key">{{ row.key }}</dt>
+            <dd class="govuk-summary-list__value">
+              {% if row.value %}{{ row.value }}{% else %}<span class="govuk-hint govuk-!-margin-0">Not provided</span>{% endif %}
+              {% if row.calculated %}<br><span class="govuk-hint govuk-!-margin-0">Worked out from the three impact ratings.</span>{% endif %}
+            </dd>
+            {% if row.changeHref %}
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ row.changeHref }}">Change<span class="govuk-visually-hidden"> {{ row.key | lower }}</span></a>
+              </dd>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </dl>
+
+      <a class="govuk-button" data-module="govuk-button" href="/setup/critical-systems">Return to critical systems</a>
+    </div>
+  </div>
+{% endblock %}

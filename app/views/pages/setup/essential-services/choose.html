@@ -40,9 +40,9 @@
         }) }}
 
         <p class="govuk-!-margin-bottom-3">
-          {{ govukButton({ text: "Add an essential service", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add an essential service", name: "action", value: "add", classes: "govuk-button--secondary" }) }}
         </p>
-        {{ govukButton({ text: "Save and continue" }) }}
+        {{ govukButton({ text: "Save and continue", name: "action", value: "continue" }) }}
       </form>
     </div>
   </div>

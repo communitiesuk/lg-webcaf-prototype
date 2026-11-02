@@ -24,6 +24,7 @@
       {% endfor %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/which-supplier" novalidate>
+        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
         {{ govukRadios({
           name: "whichSupplier",
           fieldset: { legend: { text: "Which supplier manages all or part of this critical system?", classes: "govuk-visually-hidden" } },
