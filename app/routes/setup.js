@@ -39,6 +39,7 @@ const {
   buildCoverageWarnings,
   buildConcentrationInset,
   servicesWithoutSystem,
+  systemsNeedingDetails,
   buildSetupSummary,
 } = require("../data/helpers/setup");
 
@@ -1253,6 +1254,7 @@ module.exports = function (router) {
       warnings,
       concentration: buildConcentrationInset(setup),
       noSystemService,
+      needsDetails: systemsNeedingDetails(setup).length > 0,
     });
   });
 

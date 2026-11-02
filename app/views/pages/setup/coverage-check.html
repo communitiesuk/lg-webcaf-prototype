@@ -13,11 +13,19 @@
         title: "Review your progress"
       }) }}
 
-      {{ appNotificationBanner({
-        type: "information",
-        heading: warnings.length + (" thing to review" if warnings.length == 1 else " things to review"),
-        body: "You can continue without making changes. These are suggestions to help you complete your assessment."
-      }) }}
+      {% if warnings.length %}
+        {{ appNotificationBanner({
+          type: "information",
+          heading: warnings.length + (" thing to review" if warnings.length == 1 else " things to review"),
+          body: "You can continue without making changes. These are suggestions to help you complete your assessment."
+        }) }}
+      {% else %}
+        {{ appNotificationBanner({
+          type: "information",
+          heading: "There is nothing to review",
+          body: "You can continue to check and confirm your setup."
+        }) }}
+      {% endif %}
 
       {% if concentration %}
         <div class="govuk-inset-text">{{ concentration }}</div>
@@ -33,9 +41,11 @@
         </div>
       {% endfor %}
 
-      <div class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Add the missing details</a>
-      </div>
+      {% if needsDetails %}
+        <div class="govuk-!-margin-bottom-3">
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Add the missing details</a>
+        </div>
+      {% endif %}
       {% if noSystemService %}
         <div class="govuk-!-margin-bottom-3">
           <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/add">Add a system for {{ noSystemService.name }}</a>
@@ -44,7 +54,12 @@
           <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ noSystemService.id }}/no-system-reason">Record why no system is needed</a>
         </div>
       {% endif %}
-      <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue anyway</a>
+
+      {% if warnings.length %}
+        <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue anyway</a>
+      {% else %}
+        <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue to check and confirm</a>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

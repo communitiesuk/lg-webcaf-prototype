@@ -1,9 +1,7 @@
-{# A05 Who do you want to invite? — Figma node 209:880. A19 (node 209:1258) is its error state.
-   Quality Assurer / System Mapper are inset-only, unconfirmed (Private Beta scope). #}
+{# A05 Who do you want to invite? — Figma node 209:880. A19 (node 209:1258) is its error state. #}
 {% extends "layouts/dashboard.html" %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
-{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
@@ -33,7 +31,6 @@
             { value: "approver", text: "Approve the assessment plan (Approver)", checked: invite.role == "approver" }
           ]
         }) }}
-        {{ govukInsetText({ text: "Quality Assurer is not available yet. System Mapper is not part of this service." }) }}
         {{ govukButton({ text: "Continue" }) }}
       </form>
     </div>

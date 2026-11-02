@@ -751,5 +751,6 @@ module.exports = {
   buildCoverageWarnings,
   buildConcentrationInset,
   servicesWithoutSystem,
+  systemsNeedingDetails,
   buildSetupSummary,
 };
