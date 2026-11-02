@@ -27,6 +27,14 @@
       <p class="govuk-body">You will not be able to see a council record until its request is approved. MHCLG checks every request for a council your email address is not linked to. If a council already uses this service, its CAF Lead also approves your request.</p>
 
       {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", classes: "govuk-button--secondary", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+
+      {# Prototype-only control (not part of the service). #}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+      <p class="govuk-caption-m">Prototype only</p>
+      <p class="govuk-body">Simulate the decision on your requests. This is not part of the service.</p>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="/claim/requests/approve">Approve all requests</a>. Access granted (frame 07).</li>
+      </ul>
     </div>
   </div>
 {% endblock %}

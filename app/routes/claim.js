@@ -423,6 +423,16 @@ module.exports = function (router) {
     });
   });
 
+  // Prototype-only control: simulate every request being approved, so the journey can continue to
+  // the "access granted" screen (07). Not part of the service. Changed in build, prototype, pending
+  // design sign-off.
+  router.get("/claim/requests/approve", (req, res) => {
+    const claim = ensureClaim(req.session.data);
+    (claim.requestedCouncils || []).forEach((c) => { c.status = "Approved"; });
+    claim.status = "approved";
+    return res.redirect("/claim/access-granted"); // 07
+  });
+
   // ----- 19 which-councils (shared-service domain) (new, v10 Stage 3) ----------------------------
   // Changed in build, prototype, pending design sign-off.
   router.get("/claim/which-councils", (req, res) => {
