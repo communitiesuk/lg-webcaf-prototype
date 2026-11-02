@@ -186,7 +186,8 @@ function buildReadyToDecideModel(sessionData) {
       title: { text: "Decide what to assess" },
       href: "/decide",
       hint: { text: "Choose what this cycle covers, then get it approved." },
-      status: TAG_NOT_STARTED,
+      // "Not yet started" to match the Set up your council tile and the setup task list.
+      status: { tag: { text: "Not yet started", classes: "govuk-tag--grey" } },
     },
     record: {
       setupValue: `Complete, ${svc} essential service${plural(svc)} and ${sys} critical system${plural(sys)}`,
