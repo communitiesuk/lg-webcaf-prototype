@@ -55,7 +55,7 @@
 
                 <div class="govuk-checkboxes__divider">or</div>
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
+                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="annualSystemIds" type="checkbox" value="none" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
                   <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
                     None
                   </label>
@@ -65,7 +65,7 @@
               <p class="govuk-body">You have no critical systems in your scope list. <a class="govuk-link" href="/stages/2/scope/systems/review">Add critical systems</a> before continuing, or choose the option below if you are not assessing any this year.</p>
               <div class="govuk-checkboxes" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
-                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="noSystemsThisYear" type="checkbox" value="yes" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
+                  <input class="govuk-checkboxes__input" id="noSystemsThisYear" name="annualSystemIds" type="checkbox" value="none" {% if noSystems %}checked{% endif %} data-behaviour="exclusive">
                   <label class="govuk-label govuk-checkboxes__label" for="noSystemsThisYear">
                     None
                   </label>
@@ -81,23 +81,8 @@
         </div>
       </form>
 
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          var systemCheckboxes = document.querySelectorAll('input[name="annualSystemIds"]');
-          var noneCheckbox = document.getElementById('noSystemsThisYear');
-          if (!noneCheckbox) return;
-          systemCheckboxes.forEach(function (cb) {
-            cb.addEventListener('change', function () {
-              if (this.checked) noneCheckbox.checked = false;
-            });
-          });
-          noneCheckbox.addEventListener('change', function () {
-            if (this.checked) {
-              systemCheckboxes.forEach(function (cb) { cb.checked = false; });
-            }
-          });
-        });
-      </script>
+      {# Exclusivity between the system checkboxes and "None" is handled natively by GOV.UK
+         Frontend now that they share the annualSystemIds group (value "none", exclusive). #}
 
     </div>
   </div>

@@ -650,17 +650,23 @@ module.exports = function (router) {
     const setup = ensureSetup(req.session.data);
     const platform = getPlatform(setup, req.params.platformId);
     if (!platform) return res.redirect("/setup/shared-infrastructure");
-    const later = clean(req.session.data.reliesLater) === "later";
+    // Services, systems and the exclusive "Nothing yet, I'll link this later" share one checkbox
+    // group (name="relies") so the exclusive option clears both lists client-side. Values are
+    // prefixed "svc:"/"sys:" so the two can be separated again here.
+    const choices = toList(req.session.data.relies);
+    const later = choices.includes("later");
     if (later) {
       platform.linkedServices = [];
       platform.linkedSystems = [];
     } else {
-      platform.linkedServices = toList(req.session.data.reliesServices);
-      platform.linkedSystems = toList(req.session.data.reliesSystems);
+      platform.linkedServices = choices
+        .filter((v) => v.indexOf("svc:") === 0)
+        .map((v) => v.slice(4));
+      platform.linkedSystems = choices
+        .filter((v) => v.indexOf("sys:") === 0)
+        .map((v) => v.slice(4));
     }
-    ["reliesServices", "reliesSystems", "reliesLater"].forEach(
-      (k) => delete req.session.data[k]
-    );
+    delete req.session.data.relies;
     return res.redirect("/setup/shared-infrastructure");
   });
 
@@ -708,13 +714,15 @@ module.exports = function (router) {
     const setup = ensureSetup(req.session.data);
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
-    const later = clean(req.session.data.systemPlatformsLater) === "later";
-    const ticked = later ? [] : toList(req.session.data.systemPlatforms);
+    // "None yet, I'll link this later" is an exclusive option within the systemPlatforms group.
+    const platformChoices = toList(req.session.data.systemPlatforms);
+    const later = platformChoices.includes("later");
+    const ticked = later ? [] : platformChoices.filter((v) => v !== "later");
     (setup.platforms || []).forEach((p) => {
       p.linkedSystems = (p.linkedSystems || []).filter((id) => id !== system.id);
       if (ticked.includes(p.id)) p.linkedSystems.push(system.id);
     });
-    ["systemPlatforms", "systemPlatformsLater"].forEach((k) => delete req.session.data[k]);
+    ["systemPlatforms"].forEach((k) => delete req.session.data[k]);
     const back = summaryReturnHref(req, system);
     if (back) return res.redirect(back);
     // Fallback (not reached in the current flow): continue to the supplier question.
@@ -832,13 +840,15 @@ module.exports = function (router) {
     const setup = ensureSetup(req.session.data);
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
-    const none = clean(req.session.data.noneCorporate) === "none";
-    system.corporateServices = none ? [] : toList(req.session.data.corporateServices);
+    // "None of these" is an exclusive option within the corporateServices group.
+    const corporateChoices = toList(req.session.data.corporateServices);
+    const none = corporateChoices.includes("none");
+    system.corporateServices = none ? [] : corporateChoices.filter((v) => v !== "none");
     system.corporateServicesOther =
       !none && system.corporateServices.includes("other")
         ? clean(req.session.data.corporateServicesOther)
         : "";
-    ["corporateServices", "corporateServicesOther", "noneCorporate"].forEach(
+    ["corporateServices", "corporateServicesOther"].forEach(
       (k) => delete req.session.data[k]
     );
     const back = summaryReturnHref(req, system);

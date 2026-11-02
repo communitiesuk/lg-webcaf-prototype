@@ -511,8 +511,10 @@ module.exports = function (router) {
     }
     const availableSystems = buildAvailableSystems(assessment);
     const allowedIds = new Set(availableSystems.map((s) => s.id));
-    const noSystemsChosen = (req.body.noSystemsThisYear || "").toString() === "yes";
-    const requestedIds = noSystemsChosen ? [] : coerceArray(req.body.annualSystemIds).filter(Boolean);
+    // "None" is an exclusive option within the annualSystemIds group (value "none").
+    const rawIds = coerceArray(req.body.annualSystemIds).filter(Boolean);
+    const noSystemsChosen = rawIds.includes("none");
+    const requestedIds = noSystemsChosen ? [] : rawIds.filter((id) => id !== "none");
     const selectedIds = requestedIds.filter((id) => allowedIds.has(id));
     const errors = [];
     if (!noSystemsChosen && requestedIds.length === 0) {
@@ -536,7 +538,6 @@ module.exports = function (router) {
     assessment.annualSetup.completed = false;
     assessment.updatedAt = new Date().toISOString();
     delete req.session.data.annualSystemIds;
-    delete req.session.data.noSystemsThisYear;
     return res.redirect("/assessments/current/annual-setup/confirm");
   });
 

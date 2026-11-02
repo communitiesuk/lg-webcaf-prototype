@@ -19,7 +19,7 @@
             <h2 class="govuk-heading-s govuk-!-margin-bottom-2">Essential services</h2>
             {% for s in model.services %}
               <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="reliesServices-{{ loop.index }}" name="reliesServices" type="checkbox" value="{{ s.id }}" {% if s.checked %}checked{% endif %}>
+                <input class="govuk-checkboxes__input" id="reliesServices-{{ loop.index }}" name="relies" type="checkbox" value="svc:{{ s.id }}" {% if s.checked %}checked{% endif %}>
                 <label class="govuk-label govuk-checkboxes__label" for="reliesServices-{{ loop.index }}">{{ s.name }}</label>
               </div>
             {% endfor %}
@@ -27,14 +27,14 @@
             <h2 class="govuk-heading-s govuk-!-margin-top-4 govuk-!-margin-bottom-2">Critical systems</h2>
             {% for s in model.systems %}
               <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="reliesSystems-{{ loop.index }}" name="reliesSystems" type="checkbox" value="{{ s.id }}" {% if s.checked %}checked{% endif %}>
+                <input class="govuk-checkboxes__input" id="reliesSystems-{{ loop.index }}" name="relies" type="checkbox" value="sys:{{ s.id }}" {% if s.checked %}checked{% endif %}>
                 <label class="govuk-label govuk-checkboxes__label" for="reliesSystems-{{ loop.index }}">{{ s.name }}</label>
               </div>
             {% endfor %}
 
             <div class="govuk-checkboxes__divider">or</div>
             <div class="govuk-checkboxes__item">
-              <input class="govuk-checkboxes__input" id="reliesLater" name="reliesLater" type="checkbox" value="later" data-behaviour="exclusive">
+              <input class="govuk-checkboxes__input" id="reliesLater" name="relies" type="checkbox" value="later" data-behaviour="exclusive">
               <label class="govuk-label govuk-checkboxes__label" for="reliesLater">Nothing yet, I'll link this later</label>
             </div>
           </div>
