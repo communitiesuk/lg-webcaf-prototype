@@ -12,47 +12,15 @@ window.GOVUKPrototypeKit.documentReady(() => {
   // accessible autocomplete. Selecting a council appends it (checked) to the
   // "Councils you have added" list, which is what gets saved.
   const accessibleAutocomplete = window.accessibleAutocomplete
+  // Setup — S18 "Which councils share this system?": enhance the <select> into a GDS accessible
+  // autocomplete. The chosen option updates the underlying <select>, so its value
+  // (councilSearchSelect) is submitted to the add route — the server owns add/remove (mirrors the
+  // Claim "other councils" pattern), so this is pure progressive enhancement.
   const councilSelect = document.querySelector("[data-council-autocomplete]")
   if (councilSelect && accessibleAutocomplete && accessibleAutocomplete.enhanceSelectElement) {
-    const addedList = document.querySelector("#added-councils")
-    // The stored value is the plain council name; the label may show "name (type)".
-    const appendCouncil = (value, labelText) => {
-      if (!value || !addedList) return
-      const exists = Array.from(addedList.querySelectorAll('input[name="whichCouncils"]')).some(
-        (input) => input.value === value
-      )
-      if (exists) return
-      const idx = addedList.querySelectorAll(".govuk-checkboxes__item").length + 1
-      const safeId = "whichCouncils-added-" + idx
-      const item = document.createElement("div")
-      item.className = "govuk-checkboxes__item"
-      const input = document.createElement("input")
-      input.className = "govuk-checkboxes__input"
-      input.id = safeId
-      input.name = "whichCouncils"
-      input.type = "checkbox"
-      input.value = value
-      input.checked = true
-      const label = document.createElement("label")
-      label.className = "govuk-label govuk-checkboxes__label"
-      label.setAttribute("for", safeId)
-      label.textContent = labelText || value
-      item.appendChild(input)
-      item.appendChild(label)
-      addedList.appendChild(item)
-    }
     accessibleAutocomplete.enhanceSelectElement({
       selectElement: councilSelect,
       defaultValue: "",
-      // onConfirm receives the confirmed string; map it back to the option so we store the plain
-      // council name (value) but keep the "name (type)" display label.
-      onConfirm: (confirmed) => {
-        if (!confirmed) return
-        const opt = Array.from(councilSelect.options).find(
-          (o) => o.textContent === confirmed || o.value === confirmed
-        )
-        appendCouncil(opt ? opt.value : confirmed, opt ? opt.textContent : confirmed)
-      },
     })
   }
 

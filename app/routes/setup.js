@@ -1062,25 +1062,58 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
     const added = new Set(system.councils || []);
+    const base = `/setup/critical-systems/${encodeURIComponent(system.id)}`;
+    const q = fromSummary(req) ? "?return=summary" : "";
     res.render("pages/setup/critical-systems/councils", {
       pageTitle: "Which councils share this critical system?",
       backHref: fromSummary(req)
         ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`,
+        : `${base}/shared-with-councils`,
       system,
       // value = plain council name (stored); text = "name (type)" for display. Changed in build.
-      register: COUNCIL_REGISTER.filter((c) => !added.has(c)).map((name) => ({ value: name, text: councilWithType(name) })),
-      addedCouncils: (system.councils || []).map((name) => ({ value: name, text: councilWithType(name) })),
+      register: [{ value: "", text: "Select a council" }].concat(
+        COUNCIL_REGISTER.filter((c) => !added.has(c)).map((name) => ({ value: name, text: councilWithType(name) }))
+      ),
+      addedCouncils: (system.councils || []).map((name) => ({
+        text: councilWithType(name),
+        removeHref: `${base}/councils/remove/${encodeURIComponent(name)}${q}`,
+      })),
+      addAction: `${base}/councils/add${q}`,
       csReturn: fromSummary(req) ? "summary" : "",
     });
+  });
+
+  // Add a council (server round-trip, mirrors Claim's /claim/other-councils/add).
+  router.post("/setup/critical-systems/:systemId/councils/add", (req, res) => {
+    const setup = ensureSetup(req.session.data);
+    const system = getSystem(setup, req.params.systemId);
+    if (!system) return res.redirect("/setup/critical-systems");
+    const name = clean(req.session.data.councilSearchSelect);
+    delete req.session.data.councilSearchSelect;
+    system.councils = system.councils || [];
+    if (name && COUNCIL_REGISTER.includes(name) && !system.councils.includes(name)) {
+      system.councils.push(name);
+    }
+    const q = clean(req.query.return) === "summary" ? "?return=summary" : "";
+    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils${q}`);
+  });
+
+  // Remove a council (mirrors Claim's /claim/other-councils/remove/:id).
+  router.get("/setup/critical-systems/:systemId/councils/remove/:councilName", (req, res) => {
+    const setup = ensureSetup(req.session.data);
+    const system = getSystem(setup, req.params.systemId);
+    if (!system) return res.redirect("/setup/critical-systems");
+    const name = clean(req.params.councilName);
+    system.councils = (system.councils || []).filter((c) => c !== name);
+    const q = clean(req.query.return) === "summary" ? "?return=summary" : "";
+    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils${q}`);
   });
 
   router.post("/setup/critical-systems/:systemId/councils", (req, res) => {
     const setup = ensureSetup(req.session.data);
     const system = getSystem(setup, req.params.systemId);
     if (!system) return res.redirect("/setup/critical-systems");
-    system.councils = toList(req.session.data.whichCouncils);
-    delete req.session.data.whichCouncils;
+    // Councils are managed via the add/remove links on the page; "Save and continue" just proceeds.
     const back = summaryReturnHref(req, system);
     if (back) return res.redirect(back);
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/hosting`);
