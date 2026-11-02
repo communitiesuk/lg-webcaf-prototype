@@ -511,10 +511,11 @@ module.exports = function (router) {
       setup.people.approver.confirmed = true;
       setup.people.approver.hasAccount = false; // recorded, not invited
     }
-    // Return to Setup if the user came from there (task 7 / check-your-setup), else the People hub.
+    // Recording the Approver is a setup activity, so return to the setup task list by default
+    // (honouring an explicit Setup return, e.g. the check-your-setup Change link).
     const ret = req.session.data.approverReturn;
     delete req.session.data.approverReturn;
-    return res.redirect(ret || "/access");
+    return res.redirect(ret || "/setup/task-list");
   });
 
   // A11 — invitation email. Prototype PREVIEW of an email (not a real send).
