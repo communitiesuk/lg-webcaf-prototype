@@ -240,6 +240,10 @@ module.exports = function (router) {
       delete req.session.data.approverReturn;
       return res.redirect("/access/invite"); // A05 as Approver
     }
+    // Choosing an existing user as the Approver is not built in this prototype.
+    if (choice === "has-access") {
+      return res.redirect("/setup/not-in-this-prototype");
+    }
     return res.redirect("/access/approver-details"); // A27
   });
 
