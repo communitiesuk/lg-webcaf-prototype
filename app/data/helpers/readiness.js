@@ -145,7 +145,7 @@ function buildSetupInProgressModel(sessionData) {
       ? { tag: { text: "Completed", classes: "govuk-tag--green" } }
       : started > 0
       ? { tag: { text: "In progress", classes: "govuk-tag--blue" } }
-      : { tag: { text: "Not started", classes: "govuk-tag--grey" } };
+      : { tag: { text: "Not yet started", classes: "govuk-tag--grey" } };
   // Reflect partial progress: name the in-progress tasks as well as the completed ones, so the
   // hint matches the "In progress" tag instead of reading "0 of 8 done".
   const inProgress = started - done;
