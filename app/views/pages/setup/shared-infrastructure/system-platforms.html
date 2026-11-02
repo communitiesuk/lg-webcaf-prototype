@@ -15,6 +15,7 @@
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/platforms" novalidate>
+        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
         <div class="govuk-form-group">
           <div class="govuk-checkboxes" data-module="govuk-checkboxes">
             {% for p in platforms %}

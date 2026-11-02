@@ -426,14 +426,11 @@ function buildCriticalSystemsHubRows(setup) {
     } else {
       parts.push("Details to do");
     }
-    let action = "Add details";
-    if (!linked) action = "Link it";
-    else if (sys.detailsComplete) action = "Change";
-    // "Add details" starts the owner/ratings pass (S27); "Link it" opens the system in edit mode
-    // (S14); "Change" opens the per-system check-answers summary, where every field can be changed.
-    let href = `/setup/critical-systems/${sys.id}/edit`;
-    if (action === "Add details") href = `/setup/critical-systems/${sys.id}/owner`;
-    else if (action === "Change") href = `/setup/critical-systems/${sys.id}/summary`;
+    // Every system opens its check-answers summary — the one place to add or change any detail
+    // (the service link, owner, impact ratings, recovery, platforms, supplier, hosting). The
+    // status line above flags what is still outstanding.
+    const action = sys.detailsComplete ? "Change" : "Add details";
+    const href = `/setup/critical-systems/${sys.id}/summary`;
     return { id: sys.id, name: sys.name, summary: parts.join(" · "), action, href };
   });
 }
@@ -496,6 +493,9 @@ function buildCriticalSystemDetail(setup, system) {
   if (hosting.provider) hostingParts.push(hosting.provider);
   if (hosting.secondary) hostingParts.push(`Secondary: ${hosting.secondary}`);
   rows.push({ key: "Where it is hosted", value: hostingParts.join(" · "), changeHref: `${base}/hosting?return=summary` });
+
+  const platformNames = platformsForSystem(setup, system.id).map((p) => p.name);
+  rows.push({ key: "Shared platforms it relies on", value: join(platformNames), changeHref: `${base}/platforms?return=summary` });
 
   const ownerParts = [];
   if (system.owner && system.owner.name) ownerParts.push(system.owner.name);

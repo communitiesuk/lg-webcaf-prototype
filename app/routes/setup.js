@@ -691,12 +691,15 @@ module.exports = function (router) {
     if (!system) return res.redirect("/setup/critical-systems");
     res.render("pages/setup/shared-infrastructure/system-platforms", {
       pageTitle: "Which shared platforms does this critical system rely on?",
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/corporate-services`,
+      backHref: fromSummary(req)
+        ? systemSummaryHref(system)
+        : `/setup/critical-systems/${encodeURIComponent(system.id)}/corporate-services`,
       system,
       platforms: buildPlatformChoices(
         setup,
         platformsForSystem(setup, system.id).map((p) => p.id)
       ),
+      csReturn: fromSummary(req) ? "summary" : "",
     });
   });
 
@@ -711,7 +714,9 @@ module.exports = function (router) {
       if (ticked.includes(p.id)) p.linkedSystems.push(system.id);
     });
     ["systemPlatforms", "systemPlatformsLater"].forEach((k) => delete req.session.data[k]);
-    // S20 "Save and continue" → S15 supplier question (Batch 4).
+    const back = summaryReturnHref(req, system);
+    if (back) return res.redirect(back);
+    // Fallback (not reached in the current flow): continue to the supplier question.
     return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`);
   });
 
@@ -799,9 +804,10 @@ module.exports = function (router) {
     };
     setup.criticalSystems = setup.criticalSystems || [];
     setup.criticalSystems.push(system);
-    return res.redirect(
-      `/setup/critical-systems/${encodeURIComponent(system.id)}/corporate-services`
-    );
+    // Adding a system returns to its check-answers summary, where the remaining details (owner,
+    // impact, recovery, platforms, supplier, hosting, and the service link) are filled in on
+    // demand — rather than forcing a multi-page wizard at creation time.
+    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/summary`);
   });
 
   // S19 — What else does this system do for the council? (Figma 393:1729)
