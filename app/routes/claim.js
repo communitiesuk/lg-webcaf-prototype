@@ -17,7 +17,8 @@ const {
 } = require("../data/helpers/claim");
 const { COUNCILS, EXAMPLE_EMAILS, ORGANISATIONS, matchCouncilByDomain, displayNameFromEmail } = require("../data/claim-example-data");
 // Used by screen 21 to hand an approved "specific outcomes" request to the existing A06 screen.
-const { ensureAccess } = require("../data/helpers/access");
+const { ensureAccess, buildAccessEmpty } = require("../data/helpers/access");
+const { buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
 
 function clean(value) {
   return (value || "").toString().trim();
@@ -602,6 +603,15 @@ module.exports = function (router) {
   // ----- 07 access-granted, first to join (209:2608) ---------------------------------
   router.get("/claim/access-granted", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    // Registering a council gives a council record with NO setup answers (round-1 research defect:
+    // Set up your council was pre-filled with demo data after registration). Seed an empty Setup
+    // (and Decide) once, so nothing is copied from the demo seed or left over from a previous run.
+    // Guarded by a flag so revisiting this screen never wipes the person's own in-progress answers.
+    if (!claim.setupInitialised) {
+      req.session.data.setup = buildSetupSeedEmpty();
+      req.session.data.decide = buildDecideSeedEmpty();
+      claim.setupInitialised = true;
+    }
     syncAccessCurrentUser(req.session.data, claim); // the signed-in "you" is the claimant, not Jo Hart
     // Coherent identity when reached directly (the /beta inspect link), not just in a full journey.
     const who = (claim.person && claim.person.fullName) ? claim.person : { fullName: "Jo Hart" };
@@ -844,6 +854,11 @@ function connectionLabel(connection) {
 function startScenario(req, res, key) {
   const scenario = SCENARIOS.find((s) => s.key === key);
   req.session.data.claim = {};
+  // Clear any prior Setup/Decide/Access state before this starting point sets up its own, so a
+  // registration journey always begins with an empty council (no demo data, no leftover session).
+  req.session.data.setup = buildSetupSeedEmpty();
+  req.session.data.decide = buildDecideSeedEmpty();
+  req.session.data.access = buildAccessEmpty();
   if (scenario) Object.assign(req.session.data.claim, scenario.apply);
   return res.redirect("/claim");
 }
