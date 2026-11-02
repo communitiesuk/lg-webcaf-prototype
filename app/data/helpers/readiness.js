@@ -121,21 +121,31 @@ function selectDashboardState(sessionData) {
 function setupTaskProgress(setup) {
   const tl = buildSetupTaskList(setup);
   const all = [...tl.preServices, ...tl.servicesAndSystems, ...tl.finish];
-  const done = all.filter((t) => t.status && t.status.tag && t.status.tag.text === "Completed").length;
-  return { done, total: all.length };
+  // A task's status is either plain text ({ text: "Completed" }) or a tag
+  // ({ tag: { text: "Incomplete" | "Not yet started" } }).
+  const label = (t) => {
+    const s = t.status || {};
+    return s.text || (s.tag && s.tag.text) || "";
+  };
+  const done = all.filter((t) => label(t) === "Completed").length;
+  // "Started" = anything the user has touched (Completed or Incomplete), so the dashboard reads
+  // "In progress" as soon as any section is under way — not only once a whole task is Completed.
+  const started = all.filter((t) => label(t) === "Completed" || label(t) === "Incomplete").length;
+  return { done, started, total: all.length };
 }
 
 // View-model for the R03 (setup in progress) dashboard state.
 function buildSetupInProgressModel(sessionData) {
   const setup = ensureSetup(sessionData);
-  const { done, total } = setupTaskProgress(setup);
-  // GDS tag colours (decision #4): grey not-started, blue in-progress.
+  const { done, started, total } = setupTaskProgress(setup);
+  // GDS tag colours: grey not-started, blue in-progress, green completed. "In progress" shows as
+  // soon as anything is started, not only once a whole task is Completed.
   const status =
-    done === 0
-      ? { tag: { text: "Not started", classes: "govuk-tag--grey" } }
-      : done >= total
+    done >= total
       ? { tag: { text: "Completed", classes: "govuk-tag--green" } }
-      : { tag: { text: "In progress", classes: "govuk-tag--blue" } };
+      : started > 0
+      ? { tag: { text: "In progress", classes: "govuk-tag--blue" } }
+      : { tag: { text: "Not started", classes: "govuk-tag--grey" } };
   return {
     councilName: COUNCIL_NAME,
     setupTask: {
