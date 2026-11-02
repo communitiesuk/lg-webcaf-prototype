@@ -128,9 +128,9 @@ function setupTaskProgress(setup) {
     return s.text || (s.tag && s.tag.text) || "";
   };
   const done = all.filter((t) => label(t) === "Completed").length;
-  // "Started" = anything the user has touched (Completed or Incomplete), so the dashboard reads
+  // "Started" = anything the user has touched (Completed or In progress), so the dashboard reads
   // "In progress" as soon as any section is under way — not only once a whole task is Completed.
-  const started = all.filter((t) => label(t) === "Completed" || label(t) === "Incomplete").length;
+  const started = all.filter((t) => label(t) === "Completed" || label(t) === "In progress").length;
   return { done, started, total: all.length };
 }
 

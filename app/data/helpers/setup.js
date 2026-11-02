@@ -88,13 +88,13 @@ function buildSetupTaskList(setup) {
   const cafLead = people.cafLead || {};
   const approver = people.approver || {};
   // People tasks: confirmed (recorded / existing user) -> Completed; pending (invited, awaiting
-  // acceptance) -> Incomplete; otherwise Not yet started.
-  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? incomplete : notStarted);
+  // acceptance) -> In progress; otherwise Not yet started.
+  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? inProgress : notStarted);
 
-  // GOV.UK task list statuses (standard set): "Completed" is plain text with no tag; "Incomplete"
-  // is a blue tag; "Not yet started" is a grey tag. No other statuses are used.
+  // Task list statuses: "Completed" is plain text with no tag; "In progress" is a blue tag;
+  // "Not yet started" is a grey tag. "In progress" matches the dashboard "Set up your council" tile.
   const completed = { text: "Completed" };
-  const incomplete = { tag: { text: "Incomplete", classes: "govuk-tag--blue" } };
+  const inProgress = { tag: { text: "In progress", classes: "govuk-tag--blue" } };
   const notStarted = { tag: { text: "Not yet started", classes: "govuk-tag--grey" } };
 
   // Statuses and hints are derived from the Setup state, so the list is correct for both
@@ -117,7 +117,7 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "2. Organisational context" },
       href: "/setup/sector-context",
-      status: ctxDone ? completed : ctxStarted ? incomplete : notStarted,
+      status: ctxDone ? completed : ctxStarted ? inProgress : notStarted,
     },
     {
       title: { text: "3. How you identify services and systems" },
@@ -135,7 +135,7 @@ function buildSetupTaskList(setup) {
           ? `${services.length} added${svcToLink ? ` · ${svcToLink} still to link to infrastructure` : ""}`
           : "Add the services your council delivers",
       },
-      status: services.length ? incomplete : notStarted,
+      status: services.length ? inProgress : notStarted,
     },
     {
       title: { text: "5. Your shared infrastructure" },
@@ -145,7 +145,7 @@ function buildSetupTaskList(setup) {
           ? `${platforms.length} platform${plural(platforms.length)}${platUnlinked ? ` · ${platUnlinked} not linked to anything yet` : ""}`
           : "Add the platforms your services share",
       },
-      status: platforms.length ? incomplete : notStarted,
+      status: platforms.length ? inProgress : notStarted,
     },
     {
       title: { text: "6. Your critical systems" },
@@ -155,7 +155,7 @@ function buildSetupTaskList(setup) {
           ? `${systems.length} added${sysUnlinked ? ` · ${sysUnlinked} not linked to a service yet` : ""}`
           : "Add your most critical systems",
       },
-      status: systems.length ? incomplete : notStarted,
+      status: systems.length ? inProgress : notStarted,
     },
   ];
 
