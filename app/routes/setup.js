@@ -207,9 +207,11 @@ module.exports = function (router) {
 
   router.post("/setup/council-context", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const none = clean(req.session.data.councilContextNone) === "none";
-    const selected = none ? [] : toList(req.session.data.councilContextApplies);
-    const has = (value) => selected.includes(value);
+    // "None of these" is now an exclusive option within the same checkbox group, so the framework
+    // keeps it mutually exclusive with the positive options client-side. Read it from that group.
+    const selected = toList(req.session.data.councilContextApplies);
+    const none = selected.includes("none");
+    const has = (value) => !none && selected.includes(value);
 
     setup.councilContext = {
       // v7: CNI and OT are dropdowns, stored as the selected value under the existing keys.
@@ -230,7 +232,6 @@ module.exports = function (router) {
     // Consume transient form fields.
     [
       "councilContextApplies",
-      "councilContextNone",
       "councilContextCni",
       "councilContextOt",
       "recentItDetail",
