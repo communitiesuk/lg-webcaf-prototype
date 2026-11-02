@@ -44,6 +44,7 @@ const SECTIONS = [
   {
     title: "Get started",
     description: "The pre-sign-in pages: service start, cookies, help, feedback, errors and sign-out.",
+    inResearch: true,
     groups: [
       {
         base: "",
@@ -65,19 +66,20 @@ const SECTIONS = [
   {
     title: "Claim your council",
     description: "Getting access to a council after signing in with Internal Access.",
+    inResearch: true,
     groups: [
       {
         subtitle: "Individual Claim screens (inspect)",
         base: "",
         links: [
-          { key: "/claim/other-councils-needed", label: "Do you need other councils? (28)" },
-          { key: "/claim/other-councils", label: "Which other councils (29)" },
-          { key: "/claim/requests", label: "Your requests (25)" },
-          { key: "/claim/request-sent", label: "Request sent, has CAF Lead (20)" },
-          { key: "/claim/request-sent-no-caflead", label: "Request sent, no CAF Lead yet (20b)" },
-          { key: "/claim/review-request?as=caf-lead", label: "Review a request, as the CAF Lead (21)" },
-          { key: "/claim/review-request?as=registered", label: "Review a request, as the registered person (21b)" },
-          { key: "/claim/cannot-join", label: "You cannot join yet (22)" },
+          { key: "/claim/other-councils-needed", label: "Do you need other councils?" },
+          { key: "/claim/other-councils", label: "Which other councils" },
+          { key: "/claim/requests", label: "Your requests" },
+          { key: "/claim/request-sent", label: "Request sent, has CAF Lead" },
+          { key: "/claim/request-sent-no-caflead", label: "Request sent, no CAF Lead yet" },
+          { key: "/claim/review-request?as=caf-lead", label: "Review a request, as the CAF Lead" },
+          { key: "/claim/review-request?as=registered", label: "Review a request, as the registered person" },
+          { key: "/claim/cannot-join", label: "You cannot join yet" },
         ],
       },
     ],
@@ -133,6 +135,7 @@ const SECTIONS = [
   {
     title: "Set up your council",
     description: "Services, shared infrastructure and critical systems.",
+    inResearch: true,
     groups: [
       {
         base: "/beta/go/",
@@ -215,20 +218,20 @@ const WALKTHROUGH_VARIANTS = {
 // v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
 // researcher makes on 28 / 01 (noted in the label). Changed in build, prototype, pending sign-off.
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "1. First person from a council, one council (type e.g. name@leeds.gov.uk, then 28 No)" },
-  { href: "/beta/walkthrough/ask-other-councils", label: "2. Asks for other councils (28 Yes → 29)" },
-  { href: "/beta/walkthrough/shared-service", label: "3. Shared-service domain (type name@westvale-shared.gov.uk → 19)" },
-  { href: "/beta/walkthrough/partner-domain", label: "3a. Council's own domain that covers a partner council (type d.rao@eastvale.gov.uk → 19)" },
-  { href: "/beta/walkthrough/joining-with-caflead", label: "4. Joining a registered council with a CAF Lead (05 → 20)" },
-  { href: "/beta/walkthrough/joining-no-caflead", label: "5. Joining a council with no CAF Lead yet (05 → 20b)" },
-  { href: "/claim/requests-to-join", label: "6. Approver's list of requests (30 → 21)" },
-  { href: "/claim/review-request?as=registered", label: "7. Person who registered the council reviews a request (21b)" },
-  { href: "/claim/access-granted", label: "8. First registration approved (07)" },
-  { href: "/claim/joined", label: "9. Join approved, Collaborator role (07b)" },
-  { href: "/beta/walkthrough/being-checked", label: "10. Council still being checked (22)" },
-  { href: "/beta/walkthrough/already-have-access", label: "11. Already has access (17)" },
-  { href: "/beta/walkthrough/not-my-council", label: "12. Not my council (01 No → 23)" },
-  { href: "/beta/walkthrough/blocked", label: "13. Blocked by Internal Access (type e.g. name@gmail.com)" },
+  { href: "/beta/walkthrough", label: "First person registering a council — type e.g. name@leeds.gov.uk, then choose ‘No’ when asked about other councils" },
+  { href: "/beta/walkthrough/ask-other-councils", label: "Registering and also requesting other councils — choose ‘Yes’ when asked about other councils" },
+  { href: "/beta/walkthrough/shared-service", label: "Shared-service email covering several councils — type name@westvale-shared.gov.uk" },
+  { href: "/beta/walkthrough/partner-domain", label: "A council’s own email that also covers a partner council — type d.rao@eastvale.gov.uk" },
+  { href: "/beta/walkthrough/joining-with-caflead", label: "Joining a council that already has a CAF Lead" },
+  { href: "/beta/walkthrough/joining-no-caflead", label: "Joining a council that has no CAF Lead yet" },
+  { href: "/claim/requests-to-join", label: "Approver’s list of requests to join" },
+  { href: "/claim/review-request?as=registered", label: "The person who registered the council reviews a request" },
+  { href: "/claim/access-granted", label: "First registration approved" },
+  { href: "/claim/joined", label: "Join request approved (Collaborator role)" },
+  { href: "/beta/walkthrough/being-checked", label: "Council still being checked by MHCLG" },
+  { href: "/beta/walkthrough/already-have-access", label: "Someone who already has access" },
+  { href: "/beta/walkthrough/not-my-council", label: "Says ‘this is not my council’" },
+  { href: "/beta/walkthrough/blocked", label: "Blocked at sign-in, no council access — type e.g. name@gmail.com" },
 ];
 
 // Delete any accumulated state and re-seed the canonical Setup + Decide example data.
@@ -262,7 +265,11 @@ module.exports = function (router) {
   router.get("/beta", (req, res) => {
     res.render("pages/beta", {
       pageTitle: "Beta prototype",
-      sections: SECTIONS,
+      // Only the sections in this research round (Get started, Claim, Set up) show by default;
+      // the rest are tucked into a collapsed "Other sections" block so researchers are not
+      // distracted. Flip `inResearch` on a section to move it between the two.
+      sections: SECTIONS.filter((s) => s.inResearch),
+      otherSections: SECTIONS.filter((s) => !s.inResearch),
       walkthroughs: WALKTHROUGH_LINKS,
       resetSuccess: (req.query.reset || "").toString() === "success",
     });

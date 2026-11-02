@@ -37,12 +37,9 @@
         {% endfor %}
       </ul>
 
-      {% for section in sections %}
-        <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
-
+      {% macro sectionBlock(section) %}
         <h2 class="govuk-heading-m govuk-!-margin-bottom-1">{{ section.title }}</h2>
         <p class="govuk-hint govuk-!-margin-bottom-3">{{ section.description }}</p>
-
         {% for group in section.groups %}
           {% if group.subtitle %}
             <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ group.subtitle }}</h3>
@@ -55,7 +52,26 @@
             {% endfor %}
           </ul>
         {% endfor %}
+      {% endmacro %}
+
+      {% for section in sections %}
+        <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
+        {{ sectionBlock(section) }}
       {% endfor %}
+
+      {% if otherSections.length %}
+        <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
+        <details class="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">Other sections — not used in this research round</span>
+          </summary>
+          <div class="govuk-details__text">
+            {% for section in otherSections %}
+              {{ sectionBlock(section) }}
+            {% endfor %}
+          </div>
+        </details>
+      {% endif %}
 
       <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
       <p class="govuk-body-s"><a class="govuk-link" href="/beta/reset">Reset and choose a sign-in scenario</a></p>
