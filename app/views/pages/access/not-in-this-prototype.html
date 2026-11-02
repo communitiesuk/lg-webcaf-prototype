@@ -1,0 +1,18 @@
+{# Access — "not built in this prototype" holding page, rendered in the dashboard/full-access
+   chrome (unlike the Setup holding page). Reached from the Approver choice "Someone who already
+   has access" option. Changed in build, prototype, pending design sign-off. #}
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref or '/access/approver' }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">This part is not built in this prototype</h1>
+
+      <p class="govuk-body">Choosing an Approver who already has access is not part of this prototype yet.</p>
+
+      <p class="govuk-body"><a class="govuk-link" href="/access/approver">Go back and choose another option</a></p>
+    </div>
+  </div>
+{% endblock %}

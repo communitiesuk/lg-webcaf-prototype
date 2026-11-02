@@ -242,9 +242,19 @@ module.exports = function (router) {
     }
     // Choosing an existing user as the Approver is not built in this prototype.
     if (choice === "has-access") {
-      return res.redirect("/setup/not-in-this-prototype");
+      return res.redirect("/access/not-in-this-prototype");
     }
     return res.redirect("/access/approver-details"); // A27
+  });
+
+  // "Not built in this prototype" holding page, in the Access/dashboard chrome.
+  router.get("/access/not-in-this-prototype", (req, res) => {
+    ensureAccess(req.session.data);
+    applyFullAccessChrome(req, res);
+    res.render("pages/access/not-in-this-prototype", {
+      pageTitle: "This part is not built in this prototype",
+      backHref: "/access/approver",
+    });
   });
 
   // A05 — Who do you want to invite? A19 is its error state.
