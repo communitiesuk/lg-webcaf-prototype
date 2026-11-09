@@ -49,8 +49,18 @@
         {% endfor %}
       </ul>
       <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, you can challenge that here.</p>
+    {% elif planWarning.warning %}
+      {# Warning line + follow-on paragraph (D05). #}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          {{ planWarning.warning }}
+        </strong>
+      </div>
+      {% if planWarning.body %}<p class="govuk-body">{{ planWarning.body }}</p>{% endif %}
     {% else %}
-      {# Simple single-message warning (D05). #}
+      {# Simple single-message warning. #}
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
         <strong class="govuk-warning-text__text">

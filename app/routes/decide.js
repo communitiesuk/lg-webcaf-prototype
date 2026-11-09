@@ -323,8 +323,10 @@ module.exports = function (router) {
       pageTitle: "Confirm your plan for this cycle",
       backHref: "/decide/timing",
       planSummary: buildPlanSummary(setup, decide),
-      planWarning:
-        "Your assurer will review your plan before it goes for approval. Next, arrange a call with your assurer to discuss your plan.",
+      planWarning: {
+        warning: "Your assurer will review your plan before it goes for approval.",
+        body: "Next, arrange a call with your assurer to discuss your plan.",
+      },
     });
   });
 
