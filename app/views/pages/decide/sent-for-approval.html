@@ -1,0 +1,30 @@
+{# D27 — decide / sent-for-approval — ADDITION, not in Figma v7 (needs design).
+   Council (CAF Lead) confirmation when the Approver uses the service: the plan waits for the
+   Approver's decision on D11. Replaces the CAF Lead being taken into the Approver's view. #}
+{% extends "layouts/decide.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appConfirmationPanel({
+        title: "Plan sent for approval",
+        body: "We have sent your plan to " + approverName
+      }) }}
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">{{ approverName }} will review your plan in this service. We will tell you when they have approved it or returned it to you.</p>
+      <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">View or print your plan summary</a></p>
+
+      <a class="govuk-button" data-module="govuk-button" href="/dashboard">Back to your dashboard</a>
+
+      {# Prototype-only control (not part of the service). #}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+      <p class="govuk-caption-m">Prototype only</p>
+      <p class="govuk-body">Simulate your Approver making a decision. This is not part of the service.</p>
+      <ul class="govuk-list">
+        <li><a class="govuk-link" href="/decide/approve">Open the Approver’s view of the plan</a>. Approve the plan for this cycle (D11).</li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

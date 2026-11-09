@@ -1,0 +1,34 @@
+{# D28 — decide / approve-done — ADDITION, not in Figma v7 (needs design). APPROVER view.
+   Confirmation after the Approver submits their decision on D11, so they do not see the
+   CAF Lead's D13 (approved) or D14 (returned) screens. #}
+{% extends "layouts/decide.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if decision == "approved" %}
+        {{ appConfirmationPanel({ title: "Plan approved", body: "You have approved what " + councilName + " will assess this cycle" }) }}
+        <h2 class="govuk-heading-m">What happens next</h2>
+        <p class="govuk-body">We have told {{ cafLeadName }}. They can now start the assessments.</p>
+      {% else %}
+        {{ appConfirmationPanel({ title: "Plan returned", body: "You have returned the plan to " + cafLeadName }) }}
+        <h2 class="govuk-heading-m">What happens next</h2>
+        <p class="govuk-body">We have told {{ cafLeadName }} and shared your reason with them. They will change the plan and send it to you again.</p>
+      {% endif %}
+      <p class="govuk-body">You do not need to do anything else.</p>
+
+      {# Prototype-only control (not part of the service). #}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+      <p class="govuk-caption-m">Prototype only</p>
+      <p class="govuk-body">Return to the CAF Lead’s view. This is not part of the service.</p>
+      <ul class="govuk-list">
+        {% if decision == "approved" %}
+          <li><a class="govuk-link" href="/decide/approved">See what the CAF Lead sees</a>. Cycle approved (D13).</li>
+        {% else %}
+          <li><a class="govuk-link" href="/decide/returned">See what the CAF Lead sees</a>. Your plan has been returned (D14).</li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}

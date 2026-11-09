@@ -83,6 +83,14 @@ module.exports = function (router) {
     return res.redirect("/dashboard");
   });
 
+  // Holding page (dashboard chrome) for the assessments themselves, which are not in this prototype.
+  router.get("/dashboard/not-in-this-prototype", (req, res) => {
+    applyFullAccessChrome(req, res);
+    res.render("pages/dashboard/not-in-this-prototype", {
+      pageTitle: "This part is not built in this prototype",
+    });
+  });
+
   // The dashboard — one route, LIVE state from Setup/Decide (+ demo flags). Caption + H1 shared.
   router.get("/dashboard", (req, res) => {
     ensureSetup(req.session.data);

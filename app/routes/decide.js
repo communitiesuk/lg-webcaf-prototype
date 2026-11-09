@@ -47,9 +47,11 @@ function afterAssurerReview(setup, decide) {
   return approvalHref(setup);
 }
 
+// The CAF Lead's next screen when the plan goes for approval: D27 "Plan sent for approval" if the
+// Approver uses the service (they approve on D11 themselves), else D12 (record it here).
 function approvalHref(setup) {
   const approver = (setup.people && setup.people.approver) || {};
-  return approver.hasAccount ? "/decide/approve" : "/decide/record-approval";
+  return approver.hasAccount ? "/decide/sent-for-approval" : "/decide/record-approval";
 }
 
 module.exports = function (router) {
@@ -82,6 +84,7 @@ module.exports = function (router) {
     if (decision === "returned") return res.redirect("/decide/returned");
     if (decide.plan && decide.plan.sentToAssurer) {
       if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
+      if (decide.plan.sentForApproval) return res.redirect(approvalHref(setup));
       if (decide.plan.assurerReviewed) return res.redirect(afterAssurerReview(setup, decide));
       return res.redirect("/decide/sent");
     }
@@ -400,6 +403,7 @@ module.exports = function (router) {
     decide.plan.sentToAssurer = true;
     // A new (or re-sent, after being returned) plan goes back through review and approval.
     decide.plan.assurerReviewed = false;
+    decide.plan.sentForApproval = false;
     decide.approval = decide.approval || {};
     decide.approval.decision = "";
     // Sending the plan starts this cycle's onboarding. Reset the cycle's assurance activities to
@@ -444,6 +448,10 @@ module.exports = function (router) {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
     if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
+    // Being on D09 means the plan has been sent (also keeps example scenes that open D09 directly
+    // coherent, so /decide resumes here).
+    decide.plan = decide.plan || {};
+    decide.plan.sentToAssurer = true;
     const hasSystems = ((decide.cycle && decide.cycle.selectedSystems) || []).length > 0;
     const acts = ensureAssurance(req.session.data).activities || {};
     const rows = [];
@@ -496,6 +504,38 @@ module.exports = function (router) {
 
   // ----- Batch 5: approval flow + printable plan summary ------------------------------
 
+  // D27 (ADDITION, not in Figma v7) — council: Plan sent for approval. Shown to the CAF Lead when
+  // the Approver uses the service, instead of taking the CAF Lead into the Approver's view (D11).
+  router.get("/decide/sent-for-approval", (req, res) => {
+    const setup = req.session.data.setup;
+    const decide = req.session.data.decide;
+    const approver = (setup.people && setup.people.approver) || {};
+    if (!approver.hasAccount) return res.redirect("/decide/record-approval");
+    decide.plan = decide.plan || {};
+    decide.plan.sentForApproval = true;
+    res.render("pages/decide/sent-for-approval", {
+      pageTitle: "Plan sent for approval",
+      approverName: approver.name || "",
+    });
+  });
+
+  // D28 (ADDITION, not in Figma v7) — APPROVER: confirmation after submitting a decision on D11,
+  // in the Approver's own chrome, instead of showing them the CAF Lead's D13/D14.
+  router.get("/decide/approve/done", (req, res) => {
+    const setup = req.session.data.setup;
+    const decide = req.session.data.decide;
+    const decision = (decide.approval && decide.approval.decision) || "";
+    if (decision !== "approved" && decision !== "returned") return res.redirect("/decide/approve");
+    applyDecideMinimalChrome(req, res);
+    const people = setup.people || {};
+    res.render("pages/decide/approve-done", {
+      pageTitle: decision === "approved" ? "Plan approved" : "Plan returned",
+      decision,
+      councilName: (setup.council && setup.council.name) || "",
+      cafLeadName: (people.cafLead && people.cafLead.name) || "",
+    });
+  });
+
   // D11 / D17 — APPROVER: Approve this cycle's plan (393:2685 / 393:2905)
   router.get("/decide/approve", (req, res) => {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
@@ -520,7 +560,7 @@ module.exports = function (router) {
       decide.approval.decision = "approved";
       decide.approval.by = approver.name || "";
       decide.approval.date = formatToday(); // approved in the service today
-      return res.redirect("/decide/approved");
+      return res.redirect("/decide/approve/done");
     }
     if (decision === "return") {
       if (!reason) {
@@ -531,7 +571,7 @@ module.exports = function (router) {
       decide.approval.by = approver.name || "";
       decide.approval.returnReason = reason;
       decide.approval.returnedDate = formatToday();
-      return res.redirect("/decide/returned");
+      return res.redirect("/decide/approve/done");
     }
     // No decision chosen — re-render the page unchanged.
     applyDecideMinimalChrome(req, res);

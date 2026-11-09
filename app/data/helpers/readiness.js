@@ -21,6 +21,9 @@ const CAF_LEAD = { name: "Jo Hart", orgName: COUNCIL_NAME };
 const COLLABORATOR = { name: "Priya Shah", orgName: COUNCIL_NAME };
 const SIGN_OUT_HREF = "/get-started/sign-out";
 const HOLDING_HREF = "/setup/not-in-this-prototype";
+// Doing the assessments is not in the Beta prototype; their links go to a dashboard-chrome holding
+// page (not the older /self-assessment journey, which belongs to a different example council).
+const ASSESSMENTS_NOT_BUILT_HREF = "/dashboard/not-in-this-prototype";
 
 // The council being worked on: the one the person registered (claim), else the Setup council
 // (the example council's name in example starting points). Use this, never COUNCIL_NAME directly.
@@ -93,7 +96,7 @@ function applyFullAccessChrome(req, res) {
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard", active: path === "/dashboard" },
     { text: "Your council", href: "/setup/task-list" },
-    { text: "Assessments", href: "/self-assessment" },
+    { text: "Assessments", href: "/decide" },
     { text: "People", href: "/access", active: path.startsWith("/access") },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
     // Changed in build, prototype, pending design sign-off.
@@ -246,14 +249,14 @@ function buildCycleInProgressModel(sessionData) {
   if (orgIncluded) {
     assessments.push(
       example
-        ? { title: { text: "Organisation assessment" }, href: "/self-assessment", hint: { text: "Objectives A and D. 4 of 12 outcomes done." }, status: TAG_IN_PROGRESS }
-        : { title: { text: "Organisation assessment" }, href: "/self-assessment", hint: { text: "Objectives A and D. Not started." }, status: TAG_NOT_STARTED }
+        ? { title: { text: "Organisation assessment" }, href: ASSESSMENTS_NOT_BUILT_HREF, hint: { text: "Objectives A and D. 4 of 12 outcomes done." }, status: TAG_IN_PROGRESS }
+        : { title: { text: "Organisation assessment" }, href: ASSESSMENTS_NOT_BUILT_HREF, hint: { text: "Objectives A and D. Not started." }, status: TAG_NOT_STARTED }
     );
   }
   selectedSystemNames(sessionData).forEach((name) => {
     assessments.push({
       title: { text: name },
-      href: "/self-assessment",
+      href: ASSESSMENTS_NOT_BUILT_HREF,
       hint: { text: "Objectives B and C. Not started." },
       status: TAG_NOT_STARTED,
     });
@@ -278,7 +281,7 @@ function buildSeveralRemindersModel() {
     assessments: [
       {
         title: { text: "Organisation assessment" },
-        href: "/self-assessment",
+        href: ASSESSMENTS_NOT_BUILT_HREF,
         hint: { text: "Objectives A and D. Not started." },
         status: TAG_NOT_STARTED,
       },
@@ -301,13 +304,13 @@ function buildCollaboratorModel() {
     tasks: [
       {
         title: { text: "A3. Asset management" },
-        href: "/self-assessment",
+        href: ASSESSMENTS_NOT_BUILT_HREF,
         hint: { text: "Organisation assessment. Not started." },
         status: TAG_NOT_STARTED,
       },
       {
         title: { text: "A4. Supply chain" },
-        href: "/self-assessment",
+        href: ASSESSMENTS_NOT_BUILT_HREF,
         hint: { text: "Organisation assessment. In progress." },
         status: TAG_IN_PROGRESS,
       },

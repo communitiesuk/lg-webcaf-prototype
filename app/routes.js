@@ -78,6 +78,12 @@ router.use((req, res, next) => {
   next();
 });
 
+// Stop stale pages after a submit/redirect: save the session before redirecting, and make the
+// kit's file session store fast and safe. See app/data/helpers/session-store-fix.js.
+const { patchFileStore, saveBeforeRedirect } = require("./data/helpers/session-store-fix");
+patchFileStore();
+router.use(saveBeforeRedirect);
+
 router.use((req, res, next) => {
   res.on("finish", () => {
     const sessionData = req.session && req.session.data ? req.session.data : null;
