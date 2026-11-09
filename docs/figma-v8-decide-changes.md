@@ -1,7 +1,7 @@
 # Figma v8: Decide what to assess, changes from the prototype
 
 Prompt for updating Figma so it matches the coded prototype (branch `beta-1`, commits
-`f985686` → `f2653c4`, 9 November 2026). Paste the prompt below into an agent with Figma access.
+`f985686` → `9b6e464`, 9 November 2026). Paste the prompt below into an agent with Figma access.
 
 Covers two rounds of prototype changes from commit `f985686` onwards (the second is under SECOND ROUND in the prompt).
 
@@ -18,7 +18,7 @@ Screens the journey still needs but that are **not built yet** (design first):
 
 ```
 You are updating the Figma file mnOq3QRhTdiliuSuzQoNsX so it matches the coded GOV.UK prototype
-(lg-webcaf-prototype, branch beta-1, commits f985686 → f2653c4). Figma is the design source of
+(lg-webcaf-prototype, branch beta-1, commits f985686 → 9b6e464). Figma is the design source of
 truth; the prototype has moved ahead and Figma must catch up.
 
 SET-UP
