@@ -11,9 +11,9 @@
 
       <p class="govuk-body">
         {{ councilName }}<br>
-        Assessment cycle starting 2026<br>
-        Prepared by {{ cafLeadName }}, CAF Lead<br>
-        For approval by {{ approverName }}
+        Assessment cycle starting {{ cycleYear }}<br>
+        Prepared by {{ cafLeadName }}, CAF Lead{% if approverName %}<br>
+        For approval by {{ approverName }}{% endif %}
       </p>
 
       {% include "components/plan-summary.njk" %}
@@ -28,10 +28,12 @@
           <dt class="govuk-summary-list__key">Approver</dt>
           <dd class="govuk-summary-list__value">{{ approverName }}</dd>
         </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Assurer</dt>
-          <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
-        </div>
+        {% if assurerLine %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurer</dt>
+            <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
+          </div>
+        {% endif %}
       </dl>
 
       <button class="govuk-button govuk-button--secondary" data-module="govuk-button" data-print-page>Print this page</button>

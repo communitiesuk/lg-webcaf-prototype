@@ -152,10 +152,10 @@ const SECTIONS = [
   },
   {
     title: "Decide what to assess",
-    description: "Choose and approve what to assess this cycle.",
+    description: "Choose and approve what to assess this cycle. These starting points load an example council (Westborough Borough Council) with its own systems. A participant who registers and sets up their own council reaches Decide from Setup complete, with their own data.",
     groups: [
       {
-        subtitle: "CAF Lead",
+        subtitle: "Decide, with an example council: CAF Lead",
         base: "/beta/go/",
         links: [
           { key: "decide-start", label: "Start a cycle" },
@@ -166,7 +166,7 @@ const SECTIONS = [
         ],
       },
       {
-        subtitle: "CAF Lead (nothing pre-selected)",
+        subtitle: "Decide, with an example council: CAF Lead, nothing pre-selected",
         base: "/beta/empty/",
         links: [
           { key: "decide-start", label: "Start a cycle" },
@@ -174,12 +174,12 @@ const SECTIONS = [
         ],
       },
       {
-        subtitle: "Assurer",
+        subtitle: "Decide, with an example council: Assurer",
         base: "/beta/go/",
         links: [{ key: "decide-assurer", label: "Review setup and plan" }],
       },
       {
-        subtitle: "Approver",
+        subtitle: "Decide, with an example council: Approver",
         base: "/beta/go/",
         links: [{ key: "decide-approve", label: "Approve the plan" }],
       },

@@ -29,14 +29,18 @@
 
       {% include "components/plan-summary.njk" %}
 
-      <h2 class="govuk-heading-m">Your assurer</h2>
-      <dl class="govuk-summary-list">
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Assurer</dt>
-          <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View feedback<span class="govuk-visually-hidden"> the assurer's comment</span></a></dd>
-        </div>
-      </dl>
+      {% if assurerLine %}
+        <h2 class="govuk-heading-m">Your assurer</h2>
+        <dl class="govuk-summary-list">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Assurer</dt>
+            <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
+            {% if hasFeedback %}
+              <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View feedback<span class="govuk-visually-hidden"> the assurer's comment</span></a></dd>
+            {% endif %}
+          </div>
+        </dl>
+      {% endif %}
 
       <form method="post" action="/decide/approve" novalidate>
         <div class="govuk-form-group">

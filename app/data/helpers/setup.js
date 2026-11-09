@@ -713,6 +713,7 @@ function applySetupChrome(req, res) {
 
 module.exports = {
   SETUP_USER,
+  signedInSetupUser,
   SETUP_SERVICE_NAME,
   HOLDING_HREF,
   ESSENTIAL_SERVICE_OPTIONS,

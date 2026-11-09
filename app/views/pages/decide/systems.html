@@ -19,7 +19,7 @@
       {% if showError %}
         {{ govukErrorSummary({
           titleText: "There is a problem",
-          errorList: [{ text: "Select at least one critical system, or select ‘None this cycle’", href: "#whichSystems" }]
+          errorList: [{ text: errorText, href: "#whichSystems" }]
         }) }}
       {% endif %}
 
@@ -28,8 +28,10 @@
         title: "Which critical systems will you assess?"
       }) }}
 
-      {% if unrated %}
+      {% if orgIncluded %}
         {{ govukInsetText({ text: "Your organisation assessment is included because your council has not completed one yet" }) }}
+      {% endif %}
+      {% if unrated %}
         <p class="govuk-body">Select the critical systems you want to assess this cycle.</p>
         <p class="govuk-body">These systems have not been assessed yet. They are listed by how critical they are. Up to three is recommended.</p>
       {% else %}
@@ -49,18 +51,18 @@
         {{ govukCheckboxes({
           name: "whichSystems",
           fieldset: { legend: { text: "Which critical systems will you assess?", classes: "govuk-visually-hidden" } },
-          errorMessage: { text: "Select at least one critical system, or select ‘None this cycle’" } if showError else undefined,
+          errorMessage: { text: errorText } if showError else undefined,
           items: systemItems
         }) }}
 
         {% if showCapHint %}
-          <p id="whichSystems-hint" class="govuk-hint">Showing your {{ rows.length }} highest-ranked systems.</p>
-          <p class="govuk-body"><a class="govuk-link" href="#">Show all systems</a></p>
+          <p class="govuk-hint">Showing your {{ displayCap }} highest-ranked systems. {{ totalCount }} critical systems have not been assessed yet.</p>
+          <p class="govuk-body"><a class="govuk-link" href="/decide/systems?all=1">Show all {{ totalCount }} systems</a></p>
         {% endif %}
 
-        {% if unrated and unratedName %}
+        {% if unrated and unratedWarning %}
           {{ govukWarningText({
-            text: unratedName + " is listed last because its criticality has not been rated yet. Rate it in Setup to rank it properly.",
+            text: unratedWarning,
             iconFallbackText: "Warning"
           }) }}
         {% endif %}
@@ -71,7 +73,7 @@
             {% for item in assessed %}
               <div class="govuk-summary-list__row">
                 <dt class="govuk-summary-list__key">{{ item.name }}</dt>
-                <dd class="govuk-summary-list__value">Assessed {{ item.assessedDate }}</dd>
+                <dd class="govuk-summary-list__value">{{ item.assessedLabel }}</dd>
               </div>
             {% endfor %}
           </dl>

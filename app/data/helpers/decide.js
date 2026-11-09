@@ -5,22 +5,27 @@
 // (req.session.data.decide). Reads systems/criticality/CNI/assessed-before from the
 // Setup model (req.session.data.setup). Kept isolated: chrome is painted via res.locals.
 
-const { buildDecideSeed } = require("../seed/setup");
+const { buildDecideSeed, buildDecideSeedEmpty } = require("../seed/setup");
 const {
   ensureSetup,
   SETUP_USER,
+  signedInSetupUser,
   SETUP_SERVICE_NAME,
   HOLDING_HREF,
   getSystem,
   deriveCriticality,
 } = require("./setup");
 
-// Ensure both Setup and Decide session state exist (idempotent).
+// Ensure both Setup and Decide session state exist (idempotent). The example Decide choices
+// (Northgate + Social care, March 2027 and so on) only ever pair with the example Setup that
+// ensureSetup seeds when there is no Setup at all. A council the person set up themselves gets
+// an empty Decide, so example choices never appear in their journey.
 function ensureDecide(sessionData) {
   if (!sessionData) return null;
+  const hadSetup = Boolean(sessionData.setup && sessionData.setup.seeded);
   ensureSetup(sessionData);
   if (!sessionData.decide || !sessionData.decide.seeded) {
-    sessionData.decide = buildDecideSeed();
+    sessionData.decide = hadSetup ? buildDecideSeedEmpty() : buildDecideSeed();
   }
   return sessionData.decide;
 }
@@ -48,7 +53,9 @@ function buildMinimalNavigation() {
 function applyDecideChrome(req, res) {
   res.locals.serviceName = SETUP_SERVICE_NAME;
   res.locals.showNavigation = true;
-  res.locals.currentUser = SETUP_USER;
+  // The signed-in person and their registered council (as Setup does); the example persona only
+  // when no one has signed in (the example-council starting points).
+  res.locals.currentUser = signedInSetupUser(req) || SETUP_USER;
   res.locals.navigation = buildDecideCouncilNavigation(req.path);
   res.locals.showJourney = false;
   res.locals.breadcrumbs = [];
@@ -64,6 +71,51 @@ function applyDecideMinimalChrome(req, res) {
   res.locals.showJourney = false;
   res.locals.breadcrumbs = [];
   res.locals.progress = null;
+}
+
+// --- Entry rules ----------------------------------------------------------------------
+
+// S03 records a CNI sector as a dropdown value. "none" (explicitly chosen) and "" (not answered)
+// both mean no CNI sector, so the CNI screens (D23-D26a) are skipped.
+function isCniFlaggedInSetup(setup) {
+  const cni = setup && setup.councilContext && setup.councilContext.cni;
+  return Boolean(cni && cni !== "none");
+}
+
+// The CNI screens only make sense when the council chose a CNI sector AND has critical systems.
+function showCniScreens(setup) {
+  return isCniFlaggedInSetup(setup) && (setup.criticalSystems || []).length > 0;
+}
+
+// Decide needs a named Approver (confirmed, or invited and awaiting acceptance) — the same rule
+// S30 uses to finish setup. Without one, the plan has nobody to approve it.
+function hasApprover(setup) {
+  const a = (setup && setup.people && setup.people.approver) || {};
+  return Boolean(a.name && (a.confirmed || a.pending));
+}
+
+function hasAssurer(setup) {
+  return Boolean(setup && setup.assurer && setup.assurer.assigned && setup.assurer.name);
+}
+
+function assurerLine(setup) {
+  if (!hasAssurer(setup)) return "";
+  return [setup.assurer.name, setup.assurer.organisation].filter(Boolean).join(", ");
+}
+
+function orgIncluded(setup) {
+  return !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
+}
+
+// Today as "9 November 2026" — used when the Approver approves or returns the plan in service.
+function formatToday() {
+  const d = new Date();
+  return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear();
+}
+
+// "Assessed March 2025" if Setup holds a date, otherwise "Assessed before". Never invented.
+function assessedLabel(system) {
+  return system.assessedDate ? "Assessed " + system.assessedDate : "Assessed before";
 }
 
 // --- CNI helpers (Batch 1) ----------------------------------------------------------
@@ -160,8 +212,7 @@ function formatTiming(entry) {
 // (if not done before) then the selected systems, ranked. Used by D04 timing + plan summary.
 function includedAssessments(setup, decide) {
   const list = [];
-  const orgIncluded = !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
-  if (orgIncluded) {
+  if (orgIncluded(setup)) {
     list.push({ id: "organisation", name: "Organisation assessment", kind: "org" });
   }
   const selected = (decide.cycle && decide.cycle.selectedSystems) || [];
@@ -174,11 +225,10 @@ function includedAssessments(setup, decide) {
 // The shared plan summary data: Included / Not included / Already assessed.
 function buildPlanSummary(setup, decide) {
   const selected = (decide.cycle && decide.cycle.selectedSystems) || [];
-  const orgIncluded = !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
   const timing = decide.timing || {};
 
   const included = [];
-  if (orgIncluded) {
+  if (orgIncluded(setup)) {
     included.push({ name: "Organisation assessment", detail: "First assessment · " + formatTiming(timing.organisation) });
   }
   const notIncluded = [];
@@ -196,7 +246,7 @@ function buildPlanSummary(setup, decide) {
 
   const assessed = alreadyAssessedSystems(setup).map((s) => ({
     name: s.name,
-    detail: "Assessed " + (s.assessedDate || "") + " · You cannot update this assessment yet",
+    detail: assessedLabel(s) + " · You cannot update this assessment yet",
   }));
 
   return { included, notIncluded, assessed };
@@ -208,23 +258,31 @@ function joinWithAnd(items) {
   return items.slice(0, -1).join(", ") + ", and " + items[items.length - 1];
 }
 
-// PROPOSAL priority warning (plan-summary v2): flags higher-priority systems left out —
-// a not-included CNI system, or a not-included Mission-critical system while a lower-tier
-// system is included. Returns a sentence or null. (Shown on D11; built here for reuse.)
+// Priority warning (plan-summary v2): flags higher-priority systems left out — a not-included
+// CNI system, or a not-included system rated more critical than the least critical included
+// system ("X is mission critical while a business supporting system is included"). Unrated
+// systems are not compared (their criticality is unknown). One bullet per system. Null if none.
 function buildPriorityWarning(setup, decide) {
   const selected = (decide.cycle && decide.cycle.selectedSystems) || [];
   const ranked = rankAssessableSystems(setup);
   const notSelected = ranked.filter((s) => selected.indexOf(s.id) === -1);
-  const includedSystems = ranked.filter((s) => selected.indexOf(s.id) !== -1);
-  const hasBusinessIncluded = includedSystems.some((s) => deriveCriticality(s.impact) !== "Mission critical");
+  const includedCrits = ranked
+    .filter((s) => selected.indexOf(s.id) !== -1)
+    .map((s) => deriveCriticality(s.impact))
+    .filter(Boolean);
+  // The least critical rated system included this cycle (highest rank number).
+  const lowestIncluded = includedCrits.sort((a, b) => CRITICALITY_RANK[b] - CRITICALITY_RANK[a])[0] || "";
 
   const clauses = [];
-  notSelected.filter((s) => s.cni).forEach((s) => clauses.push(s.name + " is CNI"));
-  if (hasBusinessIncluded) {
-    notSelected
-      .filter((s) => deriveCriticality(s.impact) === "Mission critical")
-      .forEach((s) => clauses.push(s.name + " is mission critical while a business critical system is included"));
-  }
+  notSelected.forEach((s) => {
+    const parts = [];
+    if (s.cni) parts.push("is CNI");
+    const crit = deriveCriticality(s.impact);
+    if (crit && lowestIncluded && CRITICALITY_RANK[crit] < CRITICALITY_RANK[lowestIncluded]) {
+      parts.push("is " + crit.toLowerCase() + " while a " + lowestIncluded.toLowerCase() + " system is included");
+    }
+    if (parts.length) clauses.push(s.name + " " + parts.join(" and "));
+  });
   if (!clauses.length) return null;
   // Returns the flagged systems as bullet items; the "Check the systems that are not included"
   // heading and the trailing advice are rendered by components/plan-summary.njk (D07/D11/D21).
@@ -233,6 +291,14 @@ function buildPriorityWarning(setup, decide) {
 
 module.exports = {
   HOLDING_HREF,
+  isCniFlaggedInSetup,
+  showCniScreens,
+  hasApprover,
+  hasAssurer,
+  assurerLine,
+  orgIncluded,
+  formatToday,
+  assessedLabel,
   ensureDecide,
   applyDecideChrome,
   applyDecideMinimalChrome,

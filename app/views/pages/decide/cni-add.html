@@ -9,16 +9,32 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if showError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                <li><a href="#cniSystem-select">Select a critical system</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {{ appPageHeader({
         caption: "Start a cycle",
         title: "Which critical systems are part of CNI?"
       }) }}
 
       <form method="post" action="/decide/cni/add" novalidate>
-        <div class="govuk-form-group">
+        <div class="govuk-form-group {% if showError %}govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="cniSystem-select">Critical system</label>
           <div id="cniSystem-hint" class="govuk-hint">Start typing the name of a critical system, then select it from the list</div>
-          <select class="govuk-select" id="cniSystem-select" name="cniSystemId" aria-describedby="cniSystem-hint" data-system-autocomplete>
+          {% if showError %}
+            <p id="cniSystem-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select a critical system</p>
+          {% endif %}
+          <select class="govuk-select {% if showError %}govuk-select--error{% endif %}" id="cniSystem-select" name="cniSystemId" aria-describedby="cniSystem-hint{% if showError %} cniSystem-error{% endif %}" data-system-autocomplete>
             <option value="">Select a critical system</option>
             {% for option in options %}
               <option value="{{ option.id }}">{{ option.name }}</option>

@@ -7,6 +7,21 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if errors.length %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="#{{ error.id }}">{{ error.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {{ appPageHeader({
         caption: "Start a cycle",
         title: "Record your Approver's decision",
@@ -24,15 +39,21 @@
       </dl>
 
       <form method="post" action="/decide/record-approval" novalidate>
-        <div class="govuk-form-group">
+        <div class="govuk-form-group {% if errorById.approvalDate %}govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="approvalDate">When was the plan approved?</label>
           <div id="approvalDate-hint" class="govuk-hint">For example, 18 March 2027</div>
-          <input class="govuk-input govuk-input--width-10" id="approvalDate" name="approvalDate" type="text" aria-describedby="approvalDate-hint" value="{{ date }}">
+          {% if errorById.approvalDate %}
+            <p id="approvalDate-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.approvalDate }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-10 {% if errorById.approvalDate %}govuk-input--error{% endif %}" id="approvalDate" name="approvalDate" type="text" aria-describedby="approvalDate-hint{% if errorById.approvalDate %} approvalDate-error{% endif %}" value="{{ date }}">
         </div>
 
-        <div class="govuk-form-group">
-          <fieldset class="govuk-fieldset">
+        <div class="govuk-form-group {% if errorById.approvalHow %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset"{% if errorById.approvalHow %} aria-describedby="approvalHow-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">How was the plan approved?</legend>
+            {% if errorById.approvalHow %}
+              <p id="approvalHow-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.approvalHow }}</p>
+            {% endif %}
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="approvalHow" name="approvalHow" type="radio" value="at-meeting" {% if how == "at-meeting" %}checked{% endif %}>

@@ -308,8 +308,7 @@ function buildSetupSeed() {
 }
 
 // --- Empty Setup state (build from scratch) ------------------------------------------
-// The claimed council, CAF Lead (the claimant) and assigned assurer are account-level and
-// kept, but every setup task is undone: the Approver is NOT yet confirmed (task 7 does it,
+// The claimed council and CAF Lead (the claimant) are account-level and kept, but every setup task is undone: the Approver is NOT yet confirmed (task 7 does it,
 // via /access/approver), and there is no confirmed context, methodology, services,
 // platforms, suppliers or critical systems. Used by the "/beta" Start empty (Setup) mode.
 function buildSetupSeedEmpty() {
@@ -331,7 +330,9 @@ function buildSetupSeedEmpty() {
       approver: { name: "", jobTitle: "", confirmed: false, hasAccount: false },
     },
 
-    assurer: { name: "K Osei", organisation: "Bridewell", assigned: true },
+    // No assurer: MHCLG assigns one, and a newly registered council has not been assigned one yet
+    // (Decide D05 goes to D06 "Waiting for an assurer"). Only Decide reads this.
+    assurer: { name: "", organisation: "", assigned: false },
     organisationAssessment: { doneBefore: false },
 
     // Task 2 — not confirmed yet.
