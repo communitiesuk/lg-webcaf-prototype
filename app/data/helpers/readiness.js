@@ -22,6 +22,21 @@ const COLLABORATOR = { name: "Priya Shah", orgName: COUNCIL_NAME };
 const SIGN_OUT_HREF = "/get-started/sign-out";
 const HOLDING_HREF = "/setup/not-in-this-prototype";
 
+// The council being worked on: the one the person registered (claim), else the Setup council
+// (the example council's name in example starting points). Use this, never COUNCIL_NAME directly.
+function councilNameFor(sessionData) {
+  const claim = (sessionData && sessionData.claim) || {};
+  if (claim.council && claim.council.name) return claim.council.name;
+  const setup = (sessionData && sessionData.setup) || {};
+  return (setup.council && setup.council.name) || COUNCIL_NAME;
+}
+
+// True only for the populated example council (loaded by a /beta starting point). Example-only
+// content such as previous-assessment history is shown for it and never for a registered council.
+function isExampleCouncil(sessionData) {
+  return Boolean(sessionData && sessionData.setup && sessionData.setup.exampleCouncil);
+}
+
 // Initialise the readiness session namespace (idempotent). Does not pre-answer anything.
 function ensureReadiness(sessionData) {
   if (!sessionData.readiness) sessionData.readiness = {};
@@ -154,7 +169,7 @@ function buildSetupInProgressModel(sessionData) {
       ? `${done} of ${total} tasks done, ${inProgress} in progress. You only do this once.`
       : `${done} of ${total} tasks done. You only do this once.`;
   return {
-    councilName: COUNCIL_NAME,
+    councilName: councilNameFor(sessionData),
     setupTask: {
       title: { text: "Set up your council" },
       href: "/setup/task-list",
@@ -174,6 +189,21 @@ function selectedSystemNames(sessionData) {
   return ids.map((id) => byId[id] || id);
 }
 
+// Decide progress for the dashboard tile: "not-started" until the person has answered anything in
+// Decide (CNI, systems, confirmation, sending, or a returned plan); otherwise "in-progress".
+function decideTaskStatus(sessionData) {
+  const d = (sessionData && sessionData.decide) || {};
+  const cycle = d.cycle || {};
+  const touched =
+    Boolean(d.cniAnswer) ||
+    (cycle.selectedSystems || []).length > 0 ||
+    Boolean(cycle.noneOnly) ||
+    Boolean(cycle.confirmed) ||
+    Boolean(d.plan && d.plan.sentToAssurer) ||
+    Boolean(d.approval && d.approval.decision);
+  return touched ? "in-progress" : "not-started";
+}
+
 // View-model for R04 (ready to decide). Setup counts are LIVE; "Last assessment" is example history.
 function buildReadyToDecideModel(sessionData) {
   const setup = ensureSetup(sessionData);
@@ -181,18 +211,23 @@ function buildReadyToDecideModel(sessionData) {
   const svc = summary.servicesCount;
   const sys = summary.systemsCount;
   const plural = (n) => (n === 1 ? "" : "s");
+  const started = decideTaskStatus(sessionData) === "in-progress";
   return {
     decideTask: {
       title: { text: "Decide what to assess" },
       href: "/decide",
       hint: { text: "Choose what this cycle covers, then get it approved." },
-      // "Not yet started" to match the Set up your council tile and the setup task list.
-      status: { tag: { text: "Not yet started", classes: "govuk-tag--grey" } },
+      // Reflects Decide progress: "Not yet started" until the person answers anything in Decide.
+      status: started
+        ? { tag: { text: "In progress", classes: "govuk-tag--blue" } }
+        : { tag: { text: "Not yet started", classes: "govuk-tag--grey" } },
     },
+    decideButtonText: started ? "Continue" : "Start this cycle",
     record: {
       setupValue: `Complete, ${svc} essential service${plural(svc)} and ${sys} critical system${plural(sys)}`,
-      // Example history (the prototype holds no prior assurance) — labelled in a prototype note.
-      lastAssessmentValue: "Council website and forms, assured March 2025",
+      // Previous assessment history exists only for the example council (the prototype holds no
+      // assurance record for a council registered in research). Hidden otherwise.
+      lastAssessmentValue: isExampleCouncil(sessionData) ? "Council website and forms, assured March 2025" : "",
     },
   };
 }
@@ -202,14 +237,19 @@ function buildReadyToDecideModel(sessionData) {
 function buildCycleInProgressModel(sessionData) {
   ensureSetup(sessionData);
   ensureDecide(sessionData);
-  const assessments = [
-    {
-      title: { text: "Organisation assessment" },
-      href: "/self-assessment",
-      hint: { text: "Objectives A and D. 4 of 12 outcomes done." },
-      status: TAG_IN_PROGRESS,
-    },
-  ];
+  // Outcome progress is example data for the example council only; a council registered in research
+  // has just had its plan approved, so nothing is started yet.
+  const example = isExampleCouncil(sessionData);
+  const setup = sessionData.setup || {};
+  const orgIncluded = !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
+  const assessments = [];
+  if (orgIncluded) {
+    assessments.push(
+      example
+        ? { title: { text: "Organisation assessment" }, href: "/self-assessment", hint: { text: "Objectives A and D. 4 of 12 outcomes done." }, status: TAG_IN_PROGRESS }
+        : { title: { text: "Organisation assessment" }, href: "/self-assessment", hint: { text: "Objectives A and D. Not started." }, status: TAG_NOT_STARTED }
+    );
+  }
   selectedSystemNames(sessionData).forEach((name) => {
     assessments.push({
       title: { text: name },
@@ -218,12 +258,15 @@ function buildCycleInProgressModel(sessionData) {
       status: TAG_NOT_STARTED,
     });
   });
+  // Reminders: the pre self-assessment call reminder is live from the shared assurance activities;
+  // the evidence-location reminder has no data source, so it is example-council only.
+  const preCall = ((sessionData.assurance && sessionData.assurance.activities) || {})["pre-call"] || {};
+  const reminders = [];
+  if (example) reminders.push("Your assurer has not confirmed they can open your evidence location.");
+  if (preCall.status !== "booked" && preCall.status !== "happened") reminders.push("Your pre self-assessment call is not booked yet.");
   return {
     assessments,
-    reminders: [
-      "Your assurer has not confirmed they can open your evidence location.",
-      "Your pre self-assessment call is not booked yet.",
-    ],
+    reminders,
     // The "Assurance activities" summary now comes from the shared AA01 partial (assuranceSummary),
     // built in app/data/helpers/assurance.js and passed by the dashboard route.
   };
@@ -275,6 +318,9 @@ function buildCollaboratorModel() {
 module.exports = {
   READINESS_SERVICE_NAME,
   COUNCIL_NAME,
+  councilNameFor,
+  isExampleCouncil,
+  decideTaskStatus,
   CAF_LEAD,
   COLLABORATOR,
   SIGN_OUT_HREF,

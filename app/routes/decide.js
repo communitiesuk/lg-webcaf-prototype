@@ -70,10 +70,21 @@ module.exports = function (router) {
     next();
   });
 
-  // Section entry: D23 if the council chose a CNI sector in setup, otherwise straight to D02.
-  // With no CNI sector no system can be CNI, so clear any stale CNI flags.
+  // Section entry (dashboard "Start this cycle" / "Continue", S31, the Assessments nav). Resumes
+  // where the plan is: approved (D13), returned (D14), waiting on the assurer (D06/D09) or for
+  // approval after the assurer's review. Otherwise starts the cycle: D23 if the council chose a CNI
+  // sector in setup, else straight to D02 (clearing stale CNI flags, as no system can be CNI).
   router.get("/decide", (req, res) => {
     const setup = req.session.data.setup;
+    const decide = req.session.data.decide;
+    const decision = (decide.approval && decide.approval.decision) || "";
+    if (decision === "approved") return res.redirect("/decide/approved");
+    if (decision === "returned") return res.redirect("/decide/returned");
+    if (decide.plan && decide.plan.sentToAssurer) {
+      if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
+      if (decide.plan.assurerReviewed) return res.redirect(afterAssurerReview(setup, decide));
+      return res.redirect("/decide/sent");
+    }
     if (showCniScreens(setup)) return res.redirect("/decide/cni");
     if (!isCniFlaggedInSetup(setup)) {
       (setup.criticalSystems || []).forEach((s) => {
@@ -387,6 +398,10 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     decide.plan = decide.plan || {};
     decide.plan.sentToAssurer = true;
+    // A new (or re-sent, after being returned) plan goes back through review and approval.
+    decide.plan.assurerReviewed = false;
+    decide.approval = decide.approval || {};
+    decide.approval.decision = "";
     // Sending the plan starts this cycle's onboarding. Reset the cycle's assurance activities to
     // "not booked yet" (the single source of truth, shared with the Assurance section) so D09
     // prompts the user to book them. Bookings made afterwards flow back to D09.
@@ -454,6 +469,8 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     decide.assurerFeedback = clean(req.session.data.assurerFeedback);
     delete req.session.data.assurerFeedback;
+    decide.plan = decide.plan || {};
+    decide.plan.assurerReviewed = true;
     return res.redirect(afterAssurerReview(setup, decide));
   });
 

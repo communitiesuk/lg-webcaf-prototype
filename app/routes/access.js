@@ -7,6 +7,7 @@ const {
   applyCollaboratorChrome,
   applyNoCouncilChrome,
   COUNCIL_NAME,
+  councilNameFor,
   ensureSetup,
   ensureDecide,
 } = require("../data/helpers/readiness");
@@ -62,7 +63,7 @@ module.exports = function (router) {
     applyFullAccessChrome(req, res);
     res.render("pages/access/hub", {
       pageTitle: "People and governance",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       peopleRows: buildPeopleRows(req.session.data.access),
     });
   });
@@ -182,10 +183,10 @@ module.exports = function (router) {
   router.get("/access/named-caf-lead", (req, res) => {
     ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
-    res.locals.currentUser = { name: NAMED_PERSON, orgName: COUNCIL_NAME };
+    res.locals.currentUser = { name: NAMED_PERSON, orgName: councilNameFor(req.session.data) };
     res.render("pages/access/named-caf-lead", {
       pageTitle: "Your CAF dashboard",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       namedBy: "Jo Hart",
       namedDate: "25 September 2026",
     });
@@ -195,10 +196,10 @@ module.exports = function (router) {
   router.get("/access/not-caf-lead", (req, res) => {
     ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
-    res.locals.currentUser = { name: NAMED_PERSON, orgName: COUNCIL_NAME };
+    res.locals.currentUser = { name: NAMED_PERSON, orgName: councilNameFor(req.session.data) };
     res.render("pages/access/not-caf-lead", {
       pageTitle: "Are you sure you are not the CAF Lead?",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       namedBy: "Jo Hart",
     });
   });
@@ -434,7 +435,7 @@ module.exports = function (router) {
     delete req.session.data.setupInviteReturn;
     res.render("pages/access/invite-sent", {
       pageTitle: "Invitation sent",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       name: (req.session.data.lastInvitedName || "Sam Okoro").toString(),
       setupReturn: setupReturn, // when the invite named a Setup Approver/CAF Lead
     });
@@ -521,7 +522,7 @@ module.exports = function (router) {
   // A11 — invitation email. Prototype PREVIEW of an email (not a real send).
   router.get("/access/invite/email-preview", (req, res) => {
     ensureAccess(req.session.data);
-    res.render("pages/access/invitation-email", { pageTitle: "Invitation email", councilName: COUNCIL_NAME });
+    res.render("pages/access/invitation-email", { pageTitle: "Invitation email", councilName: councilNameFor(req.session.data) });
   });
 
   // Accept — prototype sign-in stand-in. Mocks the domain check: a matching council email → A13, a
@@ -537,7 +538,7 @@ module.exports = function (router) {
     applyNoCouncilChrome(req, res);
     res.render("pages/access/accept-mismatch", {
       pageTitle: "This invitation is for a Westborough Borough Council email address",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
     });
   });
 
@@ -545,10 +546,10 @@ module.exports = function (router) {
   router.get("/access/accept/confirm-name", (req, res) => {
     ensureAccess(req.session.data);
     applyCollaboratorChrome(req, res);
-    res.locals.currentUser = { name: "Sam Okoro", orgName: COUNCIL_NAME };
+    res.locals.currentUser = { name: "Sam Okoro", orgName: councilNameFor(req.session.data) };
     res.render("pages/access/accept-confirm-name", {
       pageTitle: "Check your details",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       name: "Sam Okoro",
     });
   });
@@ -558,10 +559,10 @@ module.exports = function (router) {
     const jobTitle = (req.session.data.inviteeJobTitle || "").toString().trim();
     if (!name) {
       applyCollaboratorChrome(req, res);
-      res.locals.currentUser = { name: "Sam Okoro", orgName: COUNCIL_NAME };
+      res.locals.currentUser = { name: "Sam Okoro", orgName: councilNameFor(req.session.data) };
       return res.render("pages/access/accept-confirm-name", {
         pageTitle: "Error: Check your details",
-        councilName: COUNCIL_NAME,
+        councilName: councilNameFor(req.session.data),
         name,
         jobTitle,
         error: { field: "inviteeName", text: "Enter your name" },
@@ -620,14 +621,14 @@ module.exports = function (router) {
     const me = currentUser(access);
     const isSelf = me && me.id === person.id;
     if (isSelf && isOnlyFullAccess(access, person.id)) {
-      return res.render("pages/access/remove-last-person", { pageTitle: "You are the only person with full access", person, councilName: COUNCIL_NAME });
+      return res.render("pages/access/remove-last-person", { pageTitle: "You are the only person with full access", person, councilName: councilNameFor(req.session.data) });
     }
     if (isSelf) {
       const others = (access.people || []).filter((p) => (p.role === "full" || p.role === "collaborator") && p.id !== person.id);
       const othersSummary = others.length
         ? others[0].name + (others.length > 1 ? ` and ${others.length - 1} others` : "")
         : "no one else";
-      return res.render("pages/access/remove-self", { pageTitle: "You are about to remove your own access", person, councilName: COUNCIL_NAME, othersSummary });
+      return res.render("pages/access/remove-self", { pageTitle: "You are about to remove your own access", person, councilName: councilNameFor(req.session.data), othersSummary });
     }
     return res.render("pages/access/remove-confirm", { pageTitle: `Are you sure you want to remove ${person.firstName || person.name}’s access?`, person });
   });
@@ -676,7 +677,7 @@ module.exports = function (router) {
   router.get("/access/removed", (req, res) => {
     const access = ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
-    res.render("pages/access/removed", { pageTitle: "Access removed", councilName: COUNCIL_NAME, removed: access.lastRemoved || { name: "", outcomeCount: 0 } });
+    res.render("pages/access/removed", { pageTitle: "Access removed", councilName: councilNameFor(req.session.data), removed: access.lastRemoved || { name: "", outcomeCount: 0 } });
   });
 
   // A28 — reassign outcomes. A33 is its error state.

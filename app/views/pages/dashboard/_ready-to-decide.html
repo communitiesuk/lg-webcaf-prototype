@@ -5,22 +5,24 @@
 
 <h2 class="govuk-heading-m">What to do next</h2>
 {{ govukTaskList({ items: [ model.decideTask ] }) }}
-{{ govukButton({ text: "Start this cycle", href: "/decide" }) }}
+{{ govukButton({ text: model.decideButtonText, href: "/decide" }) }}
 
 <h2 class="govuk-heading-m">Your council record</h2>
-{{ govukSummaryList({
-  rows: [
-    {
-      key: { text: "Setup" },
-      value: { text: model.record.setupValue },
-      actions: { items: [{ href: "/setup/check-your-setup", text: "View", visuallyHiddenText: "your setup" }] }
-    },
-    {
-      key: { text: "Last assessment" },
-      value: { text: model.record.lastAssessmentValue },
-      actions: { items: [{ href: "/dashboard/previous-results", text: "View", visuallyHiddenText: "previous CAF results" }] }
-    }
-  ]
-}) }}
+{% set recordRows = [
+  {
+    key: { text: "Setup" },
+    value: { text: model.record.setupValue },
+    actions: { items: [{ href: "/setup/check-your-setup", text: "View", visuallyHiddenText: "your setup" }] }
+  }
+] %}
+{# Previous assessment history only exists for the example council. #}
+{% if model.record.lastAssessmentValue %}
+  {% set _ = recordRows.push({
+    key: { text: "Last assessment" },
+    value: { text: model.record.lastAssessmentValue },
+    actions: { items: [{ href: "/dashboard/previous-results", text: "View", visuallyHiddenText: "previous CAF results" }] }
+  }) %}
+{% endif %}
+{{ govukSummaryList({ rows: recordRows }) }}
 
 {% include "components/dashboard-also-on-this-page.njk" %}

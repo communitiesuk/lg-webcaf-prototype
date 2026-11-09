@@ -40,6 +40,7 @@ function buildSetupSeed() {
   return {
     seeded: true,
     exampleData: true, // EXAMPLE DATA, NOT REAL
+    exampleCouncil: true, // the populated example council (not one a participant registered)
 
     council: {
       name: "Westborough Borough Council",

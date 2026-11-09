@@ -3,7 +3,7 @@
 // Batch 2: AA02 (the full list, with the Other activities row) and AA03 (before you book).
 // WebCAF records booked/done in the session and links to the live Microsoft Bookings form.
 
-const { applyFullAccessChrome, ensureSetup, ensureDecide, COUNCIL_NAME } = require("../data/helpers/readiness");
+const { applyFullAccessChrome, ensureSetup, ensureDecide, COUNCIL_NAME, councilNameFor } = require("../data/helpers/readiness");
 const {
   ensureAssurance,
   buildActivitiesModel,
@@ -31,7 +31,7 @@ module.exports = function (router) {
     applyFullAccessChrome(req, res);
     res.render("pages/assurance/activities", {
       pageTitle: "Assurance activities",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       groups: buildActivitiesModel(req.session.data),
     });
   });

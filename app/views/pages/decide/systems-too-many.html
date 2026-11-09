@@ -22,14 +22,13 @@
       <p class="govuk-body">We recommend selecting up to 3 critical systems to assess in this cycle. This is because you need to assess each system against 27 outcomes.</p>
       <p class="govuk-body">You can continue with {{ count }} critical systems if you have the capacity.</p>
 
-      <div class="govuk-checkboxes govuk-!-margin-bottom-6" data-module="govuk-checkboxes">
+      {# The selection is read-only here (the checkboxes in Figma could not change anything);
+         "Change your selection" returns to D02 to change it. #}
+      <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
         {% for row in rows %}
-          <div class="govuk-checkboxes__item">
-            <input class="govuk-checkboxes__input" id="chosen-{{ loop.index }}" name="chosenSystems" type="checkbox" value="{{ row.id }}" checked>
-            <label class="govuk-label govuk-checkboxes__label" for="chosen-{{ loop.index }}">{{ row.name }} — {{ row.criticalityLabel }}</label>
-          </div>
+          <li>{{ row.name }} — {{ row.criticalityLabel }}</li>
         {% endfor %}
-      </div>
+      </ul>
 
       <form method="post" action="/decide/systems/too-many" novalidate>
         <button class="govuk-button" data-module="govuk-button" type="submit">Continue with {{ count }} systems</button>

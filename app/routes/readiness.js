@@ -7,6 +7,8 @@
 
 const {
   COUNCIL_NAME,
+  councilNameFor,
+  isExampleCouncil,
   ensureReadiness,
   seedExampleReadinessIfPristine,
   ensureSetup,
@@ -38,7 +40,7 @@ module.exports = function (router) {
     const readiness = ensureReadiness(req.session.data);
     res.render("pages/readiness/readiness-check", {
       pageTitle: "Before you start, a few optional questions",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       readiness,
     });
   });
@@ -69,7 +71,7 @@ module.exports = function (router) {
     const readiness = seedExampleReadinessIfPristine(req.session.data);
     res.render("pages/readiness/your-answers", {
       pageTitle: "Your readiness answers",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
       readiness,
       answeredAt: readiness.answeredAt || "",
     });
@@ -95,14 +97,15 @@ module.exports = function (router) {
       model = buildSetupInProgressModel(req.session.data);
     } else if (state === "ready-to-decide") {
       model = buildReadyToDecideModel(req.session.data);
-      prototypeNotes = [
-        "Example data, not real: the ‘Last assessment’ shown is illustrative. The prototype holds no prior assurance record.",
-      ];
+      prototypeNotes = isExampleCouncil(req.session.data)
+        ? ["Example data, not real: the ‘Last assessment’ shown is illustrative. The prototype holds no prior assurance record."]
+        : [];
     } else if (state === "cycle-in-progress") {
       model = buildCycleInProgressModel(req.session.data);
       assuranceSummary = buildAssuranceSummary(req.session.data);
       prototypeNotes = [
-        "Proposal, not agreed: the assurance activities summary and the reminders assume the Microsoft Bookings proposal is agreed. The outcome progress shown is example data.",
+        "Proposal, not agreed: the assurance activities summary and the reminders assume the Microsoft Bookings proposal is agreed." +
+          (isExampleCouncil(req.session.data) ? " The outcome progress shown is example data." : ""),
       ];
     } else if (state === "several-reminders") {
       model = buildSeveralRemindersModel();
@@ -119,7 +122,7 @@ module.exports = function (router) {
       model,
       prototypeNotes,
       assuranceSummary,
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
     });
   });
 
@@ -166,7 +169,7 @@ module.exports = function (router) {
     applyFullAccessChrome(req, res);
     res.render("pages/dashboard/previous-results", {
       pageTitle: "Previous CAF results",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
     });
   });
 
@@ -175,7 +178,7 @@ module.exports = function (router) {
     applyFullAccessChrome(req, res);
     res.render("pages/dashboard/how-long", {
       pageTitle: "How long the CAF takes",
-      councilName: COUNCIL_NAME,
+      councilName: councilNameFor(req.session.data),
     });
   });
 
