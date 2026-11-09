@@ -219,7 +219,7 @@ module.exports = function (router) {
     // Setup paths are honoured. Set fresh on each entry so a People-section visit does not
     // inherit a stale return.
     const ret = (req.query.return || "").toString();
-    if (ret.startsWith("/setup/")) req.session.data.approverReturn = ret;
+    if (ret.startsWith("/setup/") || ret.startsWith("/decide/")) req.session.data.approverReturn = ret;
     else delete req.session.data.approverReturn;
     res.render("pages/access/approver", {
       pageTitle: "Who approves your council’s CAF plan?",

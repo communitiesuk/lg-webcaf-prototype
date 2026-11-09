@@ -1,0 +1,64 @@
+{# D07a — decide / assurer-setup — ADDITION, not in Figma v7 (needs design). ASSURER view.
+   Read-only view of the council's setup, reached from the three "View" links on D07. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "ASSURER VIEW · " + councilName,
+        title: "The council’s setup"
+      }) }}
+
+      <h2 class="govuk-heading-m" id="context">Organisation context</h2>
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Sector context</dt>
+          <dd class="govuk-summary-list__value">{{ "Confirmed" if context.sectorConfirmed else "Not confirmed" }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Council context</dt>
+          <dd class="govuk-summary-list__value">{{ "Provided" if context.councilContextProvided else "Not provided" }}</dd>
+        </div>
+        {% if context.cniSector %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">CNI sector</dt>
+            <dd class="govuk-summary-list__value">{{ context.cniSector }}</dd>
+          </div>
+        {% endif %}
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">How they identify services and systems</dt>
+          <dd class="govuk-summary-list__value">{{ context.methodology or "Not provided" }}</dd>
+        </div>
+      </dl>
+
+      <h2 class="govuk-heading-m" id="services">Essential services</h2>
+      {% if services.length %}
+        <ul class="govuk-list govuk-list--bullet">
+          {% for name in services %}<li>{{ name }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p class="govuk-body">No essential services added.</p>
+      {% endif %}
+
+      <h2 class="govuk-heading-m" id="systems">Critical systems</h2>
+      {% if systems.length %}
+        <dl class="govuk-summary-list">
+          {% for s in systems %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ s.name }}</dt>
+              <dd class="govuk-summary-list__value">{{ s.detail }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% else %}
+        <p class="govuk-body">No critical systems added.</p>
+      {% endif %}
+
+      <p class="govuk-body"><a class="govuk-link" href="{{ backHref }}">Back to the plan</a></p>
+    </div>
+  </div>
+{% endblock %}

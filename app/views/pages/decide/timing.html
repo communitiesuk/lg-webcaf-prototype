@@ -54,13 +54,13 @@
                     <div class="govuk-date-input__item">
                       <div class="govuk-form-group">
                         <label class="govuk-label govuk-label--s" for="timing-{{ a.id }}-month">Month</label>
-                        <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="timing-{{ a.id }}-month" name="timing-{{ a.id }}-month" type="text" inputmode="numeric" value="{{ a.month }}">
+                        <input class="govuk-input govuk-date-input__input govuk-input--width-2 {% if err and errorFieldById[a.id] != 'year' and a.choice == 'month' %}govuk-input--error{% endif %}" id="timing-{{ a.id }}-month" name="timing-{{ a.id }}-month" type="text" inputmode="numeric" value="{{ a.month }}">
                       </div>
                     </div>
                     <div class="govuk-date-input__item">
                       <div class="govuk-form-group">
                         <label class="govuk-label govuk-label--s" for="timing-{{ a.id }}-year">Year</label>
-                        <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="timing-{{ a.id }}-year" name="timing-{{ a.id }}-year" type="text" inputmode="numeric" value="{{ a.year }}">
+                        <input class="govuk-input govuk-date-input__input govuk-input--width-4 {% if err and errorFieldById[a.id] != 'month' and a.choice == 'month' %}govuk-input--error{% endif %}" id="timing-{{ a.id }}-year" name="timing-{{ a.id }}-year" type="text" inputmode="numeric" value="{{ a.year }}">
                       </div>
                     </div>
                   </div>

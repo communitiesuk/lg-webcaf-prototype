@@ -50,8 +50,10 @@ function seedAccess() {
   };
 }
 
+// Starts EMPTY (only "you"). The example team (seedAccess) is loaded only with the example council
+// by a /beta starting point (routes/beta.js loadExampleCouncil), never as a fallback.
 function ensureAccess(sessionData) {
-  if (!sessionData.access) sessionData.access = seedAccess();
+  if (!sessionData.access) sessionData.access = buildAccessEmpty();
   return sessionData.access;
 }
 
@@ -383,6 +385,7 @@ function buildApproverModel(access) {
 }
 
 module.exports = {
+  seedAccess,
   formatToday,
   roleLabel,
   seedAccess,

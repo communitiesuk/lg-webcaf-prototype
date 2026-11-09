@@ -317,9 +317,10 @@ function buildSetupSeedEmpty() {
     seeded: true,
     exampleData: true,
 
+    // The council's name comes from registration (ensureSetup copies it from the claim).
     council: {
-      name: "Westborough Borough Council",
-      type: "metropolitan borough council",
+      name: "",
+      type: "",
     },
 
     people: {

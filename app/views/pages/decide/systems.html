@@ -60,9 +60,10 @@
           <p class="govuk-body"><a class="govuk-link" href="/decide/systems?all=1">Show all {{ totalCount }} systems</a></p>
         {% endif %}
 
-        {% if unrated and unratedWarning %}
+        {% if unrated and unratedSystems.length %}
+          {% set unratedNames %}{% for u in unratedSystems %}<a class="govuk-link" href="/setup/critical-systems/{{ u.id }}/summary">{{ u.name }}</a>{% if not loop.last %}{{ " and " if loop.revindex == 2 else ", " }}{% endif %}{% endfor %}{% endset %}
           {{ govukWarningText({
-            text: unratedWarning,
+            html: unratedNames + (" are listed last because their criticality has not been rated yet. Rate them in Setup to rank them properly." if unratedSystems.length > 1 else " is listed last because its criticality has not been rated yet. Rate it in Setup to rank it properly."),
             iconFallbackText: "Warning"
           }) }}
         {% endif %}

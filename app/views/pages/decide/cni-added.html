@@ -7,6 +7,19 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if showError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                <li><a href="#addAnotherCni">Select yes if any other critical systems are part of CNI</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {{ appPageHeader({
         caption: "Start a cycle",
         title: pageTitle
@@ -25,18 +38,21 @@
       </dl>
 
       <form method="post" action="/decide/cni/added" novalidate>
-        <div class="govuk-form-group">
-          <fieldset class="govuk-fieldset">
+        <div class="govuk-form-group {% if showError %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset"{% if showError %} aria-describedby="addAnotherCni-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
               <h2 class="govuk-fieldset__heading">Are any other critical systems part of CNI?</h2>
             </legend>
+            {% if showError %}
+              <p id="addAnotherCni-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select yes if any other critical systems are part of CNI</p>
+            {% endif %}
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="addAnotherCni" name="addAnotherCni" type="radio" value="yes">
                 <label class="govuk-label govuk-radios__label" for="addAnotherCni">Yes</label>
               </div>
               <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="addAnotherCni-2" name="addAnotherCni" type="radio" value="no" checked>
+                <input class="govuk-radios__input" id="addAnotherCni-2" name="addAnotherCni" type="radio" value="no">
                 <label class="govuk-label govuk-radios__label" for="addAnotherCni-2">No</label>
               </div>
             </div>

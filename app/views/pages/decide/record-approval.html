@@ -14,7 +14,7 @@
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
                 {% for error in errors %}
-                  <li><a href="#{{ error.id }}">{{ error.text }}</a></li>
+                  <li><a href="#{{ error.id }}{% if error.id == 'approvalDate' %}-{{ error.field or 'day' }}{% endif %}">{{ error.text }}</a></li>
                 {% endfor %}
               </ul>
             </div>
@@ -34,18 +34,30 @@
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Approver</dt>
           <dd class="govuk-summary-list__value">{{ approverLine }}</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">Change<span class="govuk-visually-hidden"> the Approver</span></a></dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/access/approver?return=/decide/record-approval">Change<span class="govuk-visually-hidden"> the Approver</span></a></dd>
         </div>
       </dl>
 
       <form method="post" action="/decide/record-approval" novalidate>
-        <div class="govuk-form-group {% if errorById.approvalDate %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label govuk-label--s" for="approvalDate">When was the plan approved?</label>
-          <div id="approvalDate-hint" class="govuk-hint">For example, 18 March 2027</div>
-          {% if errorById.approvalDate %}
-            <p id="approvalDate-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.approvalDate }}</p>
-          {% endif %}
-          <input class="govuk-input govuk-input--width-10 {% if errorById.approvalDate %}govuk-input--error{% endif %}" id="approvalDate" name="approvalDate" type="text" aria-describedby="approvalDate-hint{% if errorById.approvalDate %} approvalDate-error{% endif %}" value="{{ date }}">
+        {% set dateErr = errorById.approvalDate %}
+        <div class="govuk-form-group {% if dateErr %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" role="group" aria-describedby="approvalDate-hint{% if dateErr %} approvalDate-error{% endif %}">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">When was the plan approved?</legend>
+            <div id="approvalDate-hint" class="govuk-hint">For example, 18 3 2027</div>
+            {% if dateErr %}
+              <p id="approvalDate-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ dateErr }}</p>
+            {% endif %}
+            <div class="govuk-date-input" id="approvalDate">
+              {% for part in [{ key: "day", label: "Day", width: 2, value: day }, { key: "month", label: "Month", width: 2, value: month }, { key: "year", label: "Year", width: 4, value: year }] %}
+                <div class="govuk-date-input__item">
+                  <div class="govuk-form-group">
+                    <label class="govuk-label govuk-date-input__label" for="approvalDate-{{ part.key }}">{{ part.label }}</label>
+                    <input class="govuk-input govuk-date-input__input govuk-input--width-{{ part.width }} {% if dateErr and (not dateErrorField or dateErrorField == part.key) %}govuk-input--error{% endif %}" id="approvalDate-{{ part.key }}" name="approvalDate-{{ part.key }}" type="text" inputmode="numeric" value="{{ part.value }}">
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
         </div>
 
         <div class="govuk-form-group {% if errorById.approvalHow %}govuk-form-group--error{% endif %}">

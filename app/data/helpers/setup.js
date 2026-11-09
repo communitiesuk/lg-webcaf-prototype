@@ -701,11 +701,18 @@ function signedInSetupUser(req) {
   return null;
 }
 
+// The example persona (Jo Hart, Westborough) — only when the example council is loaded. Nobody
+// signed in and no example council → no identity in the header (never an invented person).
+function exampleCouncilPersona(req) {
+  const setup = req.session && req.session.data && req.session.data.setup;
+  return setup && setup.exampleCouncil ? SETUP_USER : null;
+}
+
 // Apply Setup chrome to res.locals for a /setup request, without touching session auth.
 function applySetupChrome(req, res) {
   res.locals.serviceName = SETUP_SERVICE_NAME;
   res.locals.showNavigation = true;
-  res.locals.currentUser = signedInSetupUser(req) || SETUP_USER;
+  res.locals.currentUser = signedInSetupUser(req) || exampleCouncilPersona(req);
   res.locals.navigation = buildSetupNavigation(req.path);
   // Setup owns its own page chrome; suppress the generic journey breadcrumbs/progress.
   res.locals.showJourney = false;
@@ -716,6 +723,7 @@ function applySetupChrome(req, res) {
 module.exports = {
   SETUP_USER,
   signedInSetupUser,
+  exampleCouncilPersona,
   SETUP_SERVICE_NAME,
   HOLDING_HREF,
   ESSENTIAL_SERVICE_OPTIONS,

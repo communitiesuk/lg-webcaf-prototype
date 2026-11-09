@@ -492,11 +492,11 @@ module.exports = function (router) {
   // Changed in build, prototype, pending design sign-off.
   router.get("/claim/requests-to-join", (req, res) => {
     ensureClaim(req.session.data);
-    applyClaimGrantedChrome(req, res, { fullName: "Priya Shah" }, "Westborough Borough Council");
+    applyClaimGrantedChrome(req, res, { fullName: "Priya Shah" }, reviewCouncil(ensureClaim(req.session.data)).name);
     res.render("pages/claim/requests-to-join", {
       pageTitle: "Requests to join",
-      councilName: "Westborough Borough Council",
-      requesters: JOIN_REQUESTERS,
+      councilName: reviewCouncil(ensureClaim(req.session.data)).name,
+      requesters: JOIN_REQUESTERS.map((r) => Object.assign({}, r, { email: requesterEmail(r, ensureClaim(req.session.data)) })),
     });
   });
 
@@ -510,8 +510,8 @@ module.exports = function (router) {
     if (clean(req.query.as) === "caf-lead") claim.reviewerIsRegisteredPerson = false;
     const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
     const requester = currentRequester(claim, clean(req.query.person));
-    applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, "Westborough Borough Council");
-    renderReviewRequest(res, requester, { noCafLead: noCafLead });
+    applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, reviewCouncil(claim).name);
+    renderReviewRequest(res, requester, { noCafLead: noCafLead, claim: claim });
   });
 
   router.post("/claim/review-request", (req, res) => {
@@ -528,12 +528,13 @@ module.exports = function (router) {
 
     // Approve — a role is required.
     if (role !== "full" && role !== "collaborator") {
-      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, "Westborough Borough Council");
-      return renderReviewRequest(res, requester, { error: { message: "Select what role they should have" }, noCafLead: noCafLead });
+      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, reviewCouncil(claim).name);
+      return renderReviewRequest(res, requester, { error: { message: "Select what role they should have" }, noCafLead: noCafLead, claim: claim });
     }
 
     // Approve (either role) → the requester's "Request approved" screen (07b).
-    claim.council = { id: "westborough", name: "Westborough Borough Council" };
+    // Keep the participant's council (approving a request must not swap it for the example one).
+    claim.council = reviewCouncil(claim);
     claim.person = { fullName: requester.name };
     claim.joinRequest = {
       approverName: noCafLead ? "Sam Patel" : "Priya Shah",
@@ -963,6 +964,27 @@ function syncAccessCurrentUser(sessionData, claim) {
   if (claim.oneLoginEmail) me.email = claim.oneLoginEmail;
 }
 
+// The council a join request is for: the participant's own council when there is one, else the
+// example council (the reviewer screens opened on their own from /beta).
+function reviewCouncil(claim) {
+  if (claim && claim.council && claim.council.name) return claim.council;
+  return { id: "westborough", name: "Westborough Borough Council" };
+}
+
+function reviewCouncilDomain(claim) {
+  const c = getCouncilById(reviewCouncil(claim).id);
+  if (c && c.domains && c.domains.length) return c.domains[0];
+  const email = (claim && claim.oneLoginEmail) || "";
+  return email.includes("@") ? email.split("@")[1] : "";
+}
+
+// Example requesters' emails use the reviewed council's domain, so they match its name.
+function requesterEmail(requester, claim) {
+  const domain = reviewCouncilDomain(claim);
+  const local = (requester.email || "").split("@")[0];
+  return domain ? local + "@" + domain : requester.email || "";
+}
+
 // Shared render for screen 21 (base + "select access" error state).
 function renderReviewRequest(res, requester, opts) {
   const error = opts.error || null;
@@ -971,9 +993,9 @@ function renderReviewRequest(res, requester, opts) {
     personId: requester.id || "",
     name: requester.name || "",
     jobTitle: requester.jobTitle || "",
-    email: requester.email || "",
-    domain: "westborough.gov.uk",
-    councilName: "Westborough Borough Council",
+    email: requester.email ? requesterEmail(requester, opts.claim) : "",
+    domain: reviewCouncilDomain(opts.claim),
+    councilName: reviewCouncil(opts.claim).name,
     noCafLead: Boolean(opts.noCafLead),
     error: error,
   });

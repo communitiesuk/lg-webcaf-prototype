@@ -30,8 +30,10 @@ const ASSESSMENTS_NOT_BUILT_HREF = "/dashboard/not-in-this-prototype";
 function councilNameFor(sessionData) {
   const claim = (sessionData && sessionData.claim) || {};
   if (claim.council && claim.council.name) return claim.council.name;
-  const setup = (sessionData && sessionData.setup) || {};
-  return (setup.council && setup.council.name) || COUNCIL_NAME;
+  const setup = sessionData && sessionData.setup;
+  // No Setup at all: the Access/People example pages opened on their own (example team).
+  if (!setup) return COUNCIL_NAME;
+  return (setup.council && setup.council.name) || "";
 }
 
 // True only for the populated example council (loaded by a /beta starting point). Example-only
@@ -91,7 +93,8 @@ function signedInIdentity(req) {
 
 function applyFullAccessChrome(req, res) {
   baseChrome(res);
-  res.locals.currentUser = signedInIdentity(req) || CAF_LEAD;
+  // The example persona only when the example council is loaded; never an invented person otherwise.
+  res.locals.currentUser = signedInIdentity(req) || (isExampleCouncil(req.session && req.session.data) ? CAF_LEAD : null);
   const path = req.path;
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard", active: path === "/dashboard" },

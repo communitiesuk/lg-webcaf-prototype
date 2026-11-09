@@ -10,6 +10,7 @@ const {
   ensureSetup,
   SETUP_USER,
   signedInSetupUser,
+  exampleCouncilPersona,
   SETUP_SERVICE_NAME,
   HOLDING_HREF,
   getSystem,
@@ -53,7 +54,7 @@ function applyDecideChrome(req, res) {
   res.locals.showNavigation = true;
   // The signed-in person and their registered council (as Setup does); the example persona only
   // when no one has signed in (the example-council starting points).
-  res.locals.currentUser = signedInSetupUser(req) || SETUP_USER;
+  res.locals.currentUser = signedInSetupUser(req) || exampleCouncilPersona(req);
   res.locals.navigation = buildDecideCouncilNavigation(req.path);
   res.locals.showJourney = false;
   res.locals.breadcrumbs = [];

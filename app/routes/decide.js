@@ -65,6 +65,13 @@ module.exports = function (router) {
     // No Approver named in setup (task 7) → nobody can approve the plan. Send the person back
     // to the setup task list to confirm one (S30 applies the same rule to finishing setup).
     if (!hasApprover(setup)) return res.redirect("/setup/task-list");
+    // Once the plan is approved it is locked: the plan screens go to D13 (changes are made by
+    // speaking to the assurer, as D13 says). Only D13, D28 and the plan summary stay open.
+    const decision = (req.session.data.decide.approval && req.session.data.decide.approval.decision) || "";
+    const openAfterApproval = ["/decide", "/decide/approved", "/decide/approve/done", "/decide/plan-summary"];
+    if (decision === "approved" && openAfterApproval.indexOf(req.path) === -1) {
+      return res.redirect("/decide/approved");
+    }
     // The CNI screens only run when the council chose a CNI sector in S03 and has systems.
     if (req.path.startsWith("/decide/cni") && !showCniScreens(setup)) {
       return res.redirect("/decide/systems");
@@ -199,9 +206,19 @@ module.exports = function (router) {
 
   router.post("/decide/cni/added", (req, res) => {
     ensureDecide(req.session.data);
-    const another = clean(req.session.data.addAnotherCni) === "yes";
+    const answer = clean(req.session.data.addAnotherCni);
     delete req.session.data.addAnotherCni;
-    if (another) return res.redirect("/decide/cni/add");
+    if (answer !== "yes" && answer !== "no") {
+      const setup = req.session.data.setup;
+      const added = cniSystems(setup).map((s) => ({ id: s.id, name: s.name, criticality: deriveCriticality(s.impact) || "Not yet rated" }));
+      return res.render("pages/decide/cni-added", {
+        pageTitle: `Error: You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
+        backHref: nonCniSystems(setup).length ? "/decide/cni/add" : "/decide/cni",
+        added,
+        showError: true,
+      });
+    }
+    if (answer === "yes") return res.redirect("/decide/cni/add");
     return res.redirect("/decide/systems"); // D02 (Batch 2)
   });
 
@@ -357,15 +374,35 @@ module.exports = function (router) {
       delete data["timing-" + a.id + "-year"];
     });
 
-    const errors = assessments
-      .filter((a) => a.choice !== "month" && a.choice !== "tbc")
-      .map((a) => ({
-        id: a.id,
-        message:
-          "Tell us when you expect the " +
-          (a.kind === "org" ? "organisation assessment" : a.name) +
-          " to happen, or select ‘I do not know yet’",
-      }));
+    const errors = [];
+    assessments.forEach((a) => {
+      const label = a.kind === "org" ? "organisation assessment" : a.name;
+      if (a.choice !== "month" && a.choice !== "tbc") {
+        errors.push({ id: a.id, message: "Tell us when you expect the " + label + " to happen, or select ‘I do not know yet’" });
+        return;
+      }
+      if (a.choice !== "month") return;
+      // GOV.UK month-and-year validation. "the organisation assessment" / a system's own name.
+      const what = a.kind === "org" ? "the organisation assessment" : a.name;
+      const m = Number(a.month);
+      const y = Number(a.year);
+      if (!a.month && !a.year) {
+        errors.push({ id: a.id, field: "", message: "Enter the month and year for " + what });
+      } else if (!a.month) {
+        errors.push({ id: a.id, field: "month", message: "The date for " + what + " must include a month" });
+      } else if (!a.year) {
+        errors.push({ id: a.id, field: "year", message: "The date for " + what + " must include a year" });
+      } else if (!/^\d{1,2}$/.test(a.month) || m < 1 || m > 12) {
+        errors.push({ id: a.id, field: "month", message: "Month must be a number from 1 to 12" });
+      } else if (!/^\d{4}$/.test(a.year)) {
+        errors.push({ id: a.id, field: "year", message: "Year must include 4 numbers" });
+      } else {
+        const now = new Date();
+        if (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1)) {
+          errors.push({ id: a.id, field: "", message: "The date for " + what + " must be this month or in the future" });
+        }
+      }
+    });
 
     if (errors.length) {
       return renderTiming(res, assessments, errors);
@@ -482,6 +519,35 @@ module.exports = function (router) {
     return res.redirect(afterAssurerReview(setup, decide));
   });
 
+  // D07a (ADDITION, not in Figma v7) — ASSURER: read-only view of the council's setup, reached
+  // from the three "View" links on D07. Assurers cannot change anything here.
+  router.get("/decide/assurer-review/setup", (req, res) => {
+    const setup = req.session.data.setup;
+    applyDecideMinimalChrome(req, res);
+    const ctx = setup.councilContext || {};
+    const cni = ctx.cni && ctx.cni !== "none" ? sectorLabel(ctx.cni) : "None";
+    res.render("pages/decide/assurer-setup", {
+      pageTitle: "The council’s setup",
+      backHref: "/decide/assurer-review",
+      councilName: (setup.council && setup.council.name) || "",
+      context: {
+        sectorConfirmed: Boolean(setup.sectorContext && setup.sectorContext.confirmed),
+        councilContextProvided: Boolean(ctx.completed),
+        cniSector: ctx.completed ? cni : "",
+        methodology: setup.methodology && setup.methodology.completed
+          ? (setup.methodology.approach === "five-lens" ? "GovAssure Five Lens Model" : "Their own methodology")
+          : "",
+      },
+      services: (setup.essentialServices || []).map((s) => s.name),
+      systems: (setup.criticalSystems || []).map((s) => {
+        const parts = [deriveCriticality(s.impact) || "Not yet rated"];
+        if (s.cni) parts.push("CNI");
+        parts.push(s.assessedBefore === "yes" ? assessedLabel(s) : "Not yet assessed");
+        return { name: s.name, detail: parts.join(" · ") };
+      }),
+    });
+  });
+
   // D08 — Your assurer has commented on your plan (393:2617)
   router.get("/decide/feedback", (req, res) => {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
@@ -584,8 +650,11 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     const approver = (setup.people && setup.people.approver) || {};
     const approval = decide.approval || {};
+    const parts = approval.dateParts || {};
     renderRecordApproval(res, setup, decide, {
-      date: approval.date || "",
+      day: parts.day || "",
+      month: parts.month || "",
+      year: parts.year || "",
       how: approval.how || "",
       link: approval.link || "",
     });
@@ -596,16 +665,24 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     const data = req.session.data;
     const approver = (setup.people && setup.people.approver) || {};
-    const entered = { date: clean(data.approvalDate), how: clean(data.approvalHow), link: clean(data.approvalLink) };
-    ["approvalDate", "approvalHow", "approvalLink"].forEach((k) => delete data[k]);
+    const entered = {
+      day: clean(data["approvalDate-day"]),
+      month: clean(data["approvalDate-month"]),
+      year: clean(data["approvalDate-year"]),
+      how: clean(data.approvalHow),
+      link: clean(data.approvalLink),
+    };
+    ["approvalDate-day", "approvalDate-month", "approvalDate-year", "approvalHow", "approvalLink"].forEach((k) => delete data[k]);
     const errors = [];
-    if (!entered.date) errors.push({ id: "approvalDate", text: "Enter the date the plan was approved" });
+    const dateError = validateApprovalDate(entered);
+    if (dateError) errors.push({ id: "approvalDate", field: dateError.field, text: dateError.text });
     if (!entered.how) errors.push({ id: "approvalHow", text: "Select how the plan was approved" });
     if (errors.length) return renderRecordApproval(res, setup, decide, entered, errors);
     decide.approval = decide.approval || {};
     decide.approval.decision = "approved";
     decide.approval.by = approver.name || "";
-    decide.approval.date = entered.date;
+    decide.approval.date = formatDate(Number(entered.day), Number(entered.month), Number(entered.year));
+    decide.approval.dateParts = { day: entered.day, month: entered.month, year: entered.year };
     decide.approval.how = entered.how;
     decide.approval.link = entered.link;
     return res.redirect("/decide/approved");
@@ -670,6 +747,7 @@ function approveModel(setup, decide, opts) {
     planWarning: buildPriorityWarning(setup, decide),
     assurerLine: assurer ? assurer + (hasFeedback ? " · Gave feedback on the plan" : "") : "",
     hasFeedback,
+    feedback: decide.assurerFeedback || "",
     decision: opts.decision || "",
     reason: opts.reason || "",
     showError: Boolean(opts.showError),
@@ -727,20 +805,22 @@ function renderTiming(res, assessments, errors) {
       acc[e.id] = e.message;
       return acc;
     }, {}),
+    // Which part of the month/year input to highlight (both when the error is not field-specific).
+    errorFieldById: (errors || []).reduce((acc, e) => {
+      acc[e.id] = e.field || "";
+      return acc;
+    }, {}),
   });
+}
+
+// "emergency-services" -> "Emergency services" (S03 CNI sector values).
+function sectorLabel(value) {
+  const s = (value || "").replace(/-/g, " ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // Display cap: how many ranked systems to list before "Show all".
 const SYSTEM_DISPLAY_CAP = 5;
-
-// "A is listed last…" / "A and B are listed last…" for the D22 warning.
-function unratedWarningText(names) {
-  if (!names.length) return "";
-  const list = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-  return names.length === 1
-    ? list + " is listed last because its criticality has not been rated yet. Rate it in Setup to rank it properly."
-    : list + " are listed last because their criticality has not been rated yet. Rate them in Setup to rank them properly.";
-}
 
 // Shared render for the D02/D22/D15 states of "Which critical systems will you assess?".
 // Shows the 5 highest-ranked systems unless showAll, or a selected system sits below the cap
@@ -765,7 +845,7 @@ function renderSystems(res, setup, decide, opts) {
     orgIncluded: included,
     noneOnly: Boolean(decide.cycle.noneOnly),
     unrated,
-    unratedWarning: unratedWarningText(opts.rows.filter((r) => !r.rated).map((r) => r.name)),
+    unratedSystems: opts.rows.filter((r) => !r.rated).map((r) => ({ id: r.id, name: r.name })),
     errorText: included
       ? "Select at least one critical system, or select ‘None this cycle’"
       : "Select at least one critical system",
@@ -792,7 +872,9 @@ function renderRecordApproval(res, setup, decide, values, errors) {
     backHref: decide.assurerFeedback ? "/decide/feedback" : "/decide/sent",
     approverName: approver.name || "",
     approverLine: [approver.name, approver.jobTitle].filter(Boolean).join(", "),
-    date: values.date,
+    day: values.day,
+    month: values.month,
+    year: values.year,
     how: values.how,
     link: values.link,
     errors: errs,
@@ -800,5 +882,33 @@ function renderRecordApproval(res, setup, decide, values, errors) {
       acc[e.id] = e.text;
       return acc;
     }, {}),
+    dateErrorField: (errs.find((e) => e.id === "approvalDate") || {}).field || "",
   });
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function formatDate(d, m, y) {
+  return d + " " + MONTH_NAMES[m - 1] + " " + y;
+}
+
+// GOV.UK date-input validation for "When was the plan approved?" (D12). The date must be real and
+// not in the future. Returns { field, text } or null. field: "day" | "month" | "year" | "" (all).
+function validateApprovalDate(v) {
+  const label = "The date the plan was approved";
+  if (!v.day && !v.month && !v.year) return { field: "", text: "Enter the date the plan was approved" };
+  if (!v.day) return { field: "day", text: label + " must include a day" };
+  if (!v.month) return { field: "month", text: label + " must include a month" };
+  if (!v.year) return { field: "year", text: label + " must include a year" };
+  if (!/^\d{4}$/.test(v.year)) return { field: "year", text: "Year must include 4 numbers" };
+  const d = Number(v.day), m = Number(v.month), y = Number(v.year);
+  const date = new Date(y, m - 1, d);
+  if (!/^\d{1,2}$/.test(v.day) || !/^\d{1,2}$/.test(v.month) || date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+    return { field: "", text: label + " must be a real date" };
+  }
+  if (date > new Date()) return { field: "", text: label + " must be today or in the past" };
+  return null;
 }

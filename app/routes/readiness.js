@@ -1,3 +1,4 @@
+const { buildDecideSeedEmpty } = require("../data/seed/setup");
 // app/routes/readiness.js
 // "Readiness and dashboard" section (Figma page 209:56, v3).
 // Batch 1: the optional readiness check (R01), updating those answers (R02), and the dashboard
@@ -148,7 +149,8 @@ module.exports = function (router) {
       data.setup.completed = false;
     } else if (state === "ready-to-decide") {
       data.setup.completed = true;
-      data.decide.approval.decision = "";
+      // R04 as drawn: the cycle has not been started, so nothing is chosen in Decide yet.
+      data.decide = buildDecideSeedEmpty();
     } else if (state === "cycle-in-progress") {
       data.setup.completed = true;
       data.decide.approval.decision = "approved";

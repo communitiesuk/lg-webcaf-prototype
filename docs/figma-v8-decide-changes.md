@@ -3,11 +3,16 @@
 Prompt for updating Figma so it matches the coded prototype (branch `beta-1`, commits
 `f985686` → `f2653c4`, 9 November 2026). Paste the prompt below into an agent with Figma access.
 
+Covers two rounds of prototype changes from commit `f985686` onwards (the second is under SECOND ROUND in the prompt).
+
 Screens the journey still needs but that are **not built yet** (design first):
 
 - an Assessments landing page for after the plan is approved (the "Assessments" link currently lands on D13)
-- a locked plan after approval (D02 can still be opened by URL)
-- what happens if the Approver changes during a cycle
+- what happens if the Approver changes during a cycle (D12 "Change the Approver" now uses the Access
+  Approver step, but nothing tells the old Approver or resets a plan already sent to them)
+- where "has the council done an organisation assessment before?" is asked (Setup has no question,
+  so D20 "nothing new to assess" cannot happen for a real council)
+- the "Non-critical" level (all three impact ratings Low), which Setup derives but Figma does not show
 
 ## Prompt
 
@@ -116,6 +121,49 @@ same way)
   "Your pre self-assessment call is not booked yet." disappears once it is booked.
 - Service navigation on dashboard, Setup and Decide: "Assessments" → Decide, "People" → People
   (access management).
+
+SECOND ROUND (also on v8)
+NEW FRAMES
+8. D07a — The council's setup (ASSURER view, minimal navigation). Reached from the three "View"
+   links on D07 (each jumps to its section). Read-only, no Change links.
+   - Caption "ASSURER VIEW · Westborough Borough Council"; H1 "The council’s setup"
+   - H2 "Organisation context": summary list — Sector context (Confirmed / Not confirmed),
+     Council context (Provided / Not provided), CNI sector (e.g. Transport; omitted if not provided),
+     How they identify services and systems (GovAssure Five Lens Model / Their own methodology /
+     Not provided)
+   - H2 "Essential services": bulleted list of service names ("No essential services added." if none)
+   - H2 "Critical systems": summary list, key = system name, value e.g.
+     "Business critical · CNI · Not yet assessed" / "Not yet rated · Not yet assessed" /
+     "Mission critical · Assessed before" ("No critical systems added." if none)
+   - Link "Back to the plan"
+9. D26 error — nothing selected for "Are any other critical systems part of CNI?":
+   "Select yes if any other critical systems are part of CNI"
+10. D04 error variants (GOV.UK month-year pattern), per assessment fieldset:
+   - "Enter the month and year for the organisation assessment" (both empty)
+   - "The date for Revenues and benefits must include a month" / "...must include a year"
+   - "Month must be a number from 1 to 12" / "Year must include 4 numbers"
+   - "The date for the organisation assessment must be this month or in the future"
+11. D12 error variants (GOV.UK date input):
+   - "Enter the date the plan was approved"
+   - "The date the plan was approved must include a day" / "...a month" / "...a year"
+   - "The date the plan was approved must be a real date"
+   - "The date the plan was approved must be today or in the past"
+
+CHANGED FRAMES
+- D12: "When was the plan approved?" is a GOV.UK date input (Day / Month / Year), hint
+  "For example, 18 3 2027" (was a single text field). "Change" on the Approver row goes to the
+  People › Approver step and returns to D12.
+- D11: "View feedback" is a Details component under the assurer row that reveals the assurer's
+  feedback in place (was a link away).
+- D02 / D22: in the unrated warning each system name is a link to that system in Setup.
+- D07: the three "View" links go to D07a sections.
+- R04 (dashboard state switcher frame): the drawn R04 shows nothing chosen in Decide yet
+  ("Not yet started", "Start this cycle") — keep as drawn.
+
+FLOW ANNOTATIONS
+- Once the plan is approved it is locked: every plan screen (D02–D12, D27) goes to D13.
+  Only D13, D28 and D21 (plan summary) stay available. Changes are made by speaking to the
+  assurer (as D13 says).
 
 When finished, list every frame you added or changed with its node ID so the prototype's template
 comments can be updated to reference them.

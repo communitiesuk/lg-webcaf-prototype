@@ -4,7 +4,7 @@
 // scene always looks right regardless of what was clicked before.
 
 const { buildSetupSeed, buildDecideSeed, buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
-const { buildAccessEmpty } = require("../data/helpers/access");
+const { buildAccessEmpty, seedAccess } = require("../data/helpers/access");
 
 // The ONLY place the populated example council (Westborough Borough Council: its systems, people,
 // cycle choices and assurer) is loaded. ensureSetup/ensureDecide start empty, so example data only
@@ -13,6 +13,7 @@ function loadExampleCouncil(req) {
   if (!req.session.data) req.session.data = {};
   req.session.data.setup = buildSetupSeed();
   req.session.data.decide = buildDecideSeed();
+  req.session.data.access = seedAccess();
 }
 
 // Sign-in scenarios for the /beta/reset picker. Each key matches a scenario in
@@ -122,7 +123,8 @@ const SECTIONS = [
     description: "Who has access, inviting people, and changing or removing access.",
     groups: [
       {
-        base: "",
+        subtitle: "With an example council",
+        base: "/beta/example?to=",
         links: [
           { key: "/access", label: "People and governance (A01)" },
           { key: "/access/audit-trail", label: "Audit trail (A02)" },
@@ -346,7 +348,6 @@ module.exports = function (router) {
     if (opts.established) {
       // You already have access to an established council — clear the state so the populated demo
       // council (setup, team, decide) re-seeds, instead of an empty new one.
-      delete req.session.data.access; // re-seeds the example team on next use
       loadExampleCouncil(req);
     } else {
       req.session.data.setup = buildSetupSeedEmpty();

@@ -35,11 +35,14 @@
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Assurer</dt>
             <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
-            {% if hasFeedback %}
-              <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View feedback<span class="govuk-visually-hidden"> the assurer's comment</span></a></dd>
-            {% endif %}
           </div>
         </dl>
+        {% if hasFeedback %}
+          <details class="govuk-details">
+            <summary class="govuk-details__summary"><span class="govuk-details__summary-text">View feedback</span></summary>
+            <div class="govuk-details__text">{{ feedback }}</div>
+          </details>
+        {% endif %}
       {% endif %}
 
       <form method="post" action="/decide/approve" novalidate>
