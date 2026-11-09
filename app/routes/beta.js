@@ -3,9 +3,17 @@
 // Each scene link re-seeds the canonical example data, then jumps to that screen, so a
 // scene always looks right regardless of what was clicked before.
 
-const { ensureDecide } = require("../data/helpers/decide");
-const { buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
+const { buildSetupSeed, buildDecideSeed, buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
 const { buildAccessEmpty } = require("../data/helpers/access");
+
+// The ONLY place the populated example council (Westborough Borough Council: its systems, people,
+// cycle choices and assurer) is loaded. ensureSetup/ensureDecide start empty, so example data only
+// appears through an explicit starting point on this page.
+function loadExampleCouncil(req) {
+  if (!req.session.data) req.session.data = {};
+  req.session.data.setup = buildSetupSeed();
+  req.session.data.decide = buildDecideSeed();
+}
 
 // Sign-in scenarios for the /beta/reset picker. Each key matches a scenario in
 // routes/internal-access.js, which seeds the WebCAF user state so the person lands on the right
@@ -89,7 +97,8 @@ const SECTIONS = [
     description: "The optional readiness check, and the dashboard that is home once a council is registered.",
     groups: [
       {
-        base: "",
+        subtitle: "With an example council",
+        base: "/beta/example?to=",
         links: [
           { key: "/readiness/reset", label: "Readiness check (R01)" },
           { key: "/readiness/answers", label: "Your readiness answers (R02)" },
@@ -234,12 +243,9 @@ const WALKTHROUGH_LINKS = [
   { href: "/beta/walkthrough/blocked", label: "Blocked at sign-in, no council access — type e.g. name@gmail.com" },
 ];
 
-// Delete any accumulated state and re-seed the canonical Setup + Decide example data.
+// Delete any accumulated state and load the canonical Setup + Decide example council.
 function reseed(req) {
-  if (!req.session.data) req.session.data = {};
-  delete req.session.data.setup;
-  delete req.session.data.decide;
-  ensureDecide(req.session.data);
+  loadExampleCouncil(req);
 }
 
 // Re-seed for Start empty (Decide) mode: keep the populated Setup inventory (so there are
@@ -281,6 +287,15 @@ module.exports = function (router) {
     if (!target) return res.redirect("/beta");
     reseed(req);
     return res.redirect(target);
+  });
+
+  // Open any page with the example council loaded (for links that are not Decide/Setup scenes).
+  // Only local paths are allowed.
+  router.get("/beta/example", (req, res) => {
+    const to = (req.query.to || "").toString();
+    if (!to.startsWith("/") || to.startsWith("//")) return res.redirect("/beta");
+    loadExampleCouncil(req);
+    return res.redirect(to);
   });
 
   // Open a scene in Start empty (Decide) mode: populated inventory, no cycle choices.
@@ -331,10 +346,8 @@ module.exports = function (router) {
     if (opts.established) {
       // You already have access to an established council — clear the state so the populated demo
       // council (setup, team, decide) re-seeds, instead of an empty new one.
-      delete req.session.data.setup;
-      delete req.session.data.decide;
-      delete req.session.data.access;
-      ensureDecide(req.session.data);
+      delete req.session.data.access; // re-seeds the example team on next use
+      loadExampleCouncil(req);
     } else {
       req.session.data.setup = buildSetupSeedEmpty();
       req.session.data.decide = buildDecideSeedEmpty();

@@ -8,7 +8,7 @@
 // mutating the shared prototype session user.
 
 const {
-  buildSetupSeed,
+  buildSetupSeedEmpty,
   ESSENTIAL_SERVICE_OPTIONS,
   COUNCIL_REGISTER,
 } = require("../seed/setup");
@@ -36,12 +36,14 @@ const SETUP_SERVICE_NAME = "Assess and manage your council's cyber resilience";
 // Holding page for links that leave the Setup section (Access management, Decide, etc.).
 const HOLDING_HREF = "/setup/not-in-this-prototype";
 
-// Ensure the Setup session state exists (idempotent). Boots into the populated state
-// the design depicts. EXAMPLE DATA, NOT REAL.
+// Ensure the Setup session state exists (idempotent). With no Setup in the session it starts
+// EMPTY — nothing is set up yet. The populated example council (buildSetupSeed) is only ever
+// loaded explicitly, by a named research starting point (see routes/beta.js loadExampleCouncil),
+// so example data never reaches someone who registered and set up their own council.
 function ensureSetup(sessionData) {
   if (!sessionData) return null;
   if (!sessionData.setup || !sessionData.setup.seeded) {
-    sessionData.setup = buildSetupSeed();
+    sessionData.setup = buildSetupSeedEmpty();
   }
   // Keep the Setup council name in step with the council identified at claim (from the
   // signed-in email), so the task-list and S30 captions match the nav identity. Demo

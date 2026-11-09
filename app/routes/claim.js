@@ -610,6 +610,8 @@ module.exports = function (router) {
     if (!claim.setupInitialised) {
       req.session.data.setup = buildSetupSeedEmpty();
       req.session.data.decide = buildDecideSeedEmpty();
+      // A new council has only the person who registered it — no example team or invitations.
+      req.session.data.access = buildAccessEmpty();
       claim.setupInitialised = true;
     }
     syncAccessCurrentUser(req.session.data, claim); // the signed-in "you" is the claimant, not Jo Hart

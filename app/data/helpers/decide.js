@@ -5,7 +5,7 @@
 // (req.session.data.decide). Reads systems/criticality/CNI/assessed-before from the
 // Setup model (req.session.data.setup). Kept isolated: chrome is painted via res.locals.
 
-const { buildDecideSeed, buildDecideSeedEmpty } = require("../seed/setup");
+const { buildDecideSeedEmpty } = require("../seed/setup");
 const {
   ensureSetup,
   SETUP_USER,
@@ -16,16 +16,14 @@ const {
   deriveCriticality,
 } = require("./setup");
 
-// Ensure both Setup and Decide session state exist (idempotent). The example Decide choices
-// (Northgate + Social care, March 2027 and so on) only ever pair with the example Setup that
-// ensureSetup seeds when there is no Setup at all. A council the person set up themselves gets
-// an empty Decide, so example choices never appear in their journey.
+// Ensure both Setup and Decide session state exist (idempotent). Both start empty; the example
+// council's Decide choices are only loaded explicitly by a research starting point
+// (routes/beta.js loadExampleCouncil).
 function ensureDecide(sessionData) {
   if (!sessionData) return null;
-  const hadSetup = Boolean(sessionData.setup && sessionData.setup.seeded);
   ensureSetup(sessionData);
   if (!sessionData.decide || !sessionData.decide.seeded) {
-    sessionData.decide = hadSetup ? buildDecideSeedEmpty() : buildDecideSeed();
+    sessionData.decide = buildDecideSeedEmpty();
   }
   return sessionData.decide;
 }
