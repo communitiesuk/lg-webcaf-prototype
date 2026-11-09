@@ -101,8 +101,10 @@ function buildSetupTaskList(setup) {
 
   // Statuses and hints are derived from the Setup state, so the list is correct for both
   // the populated demo and an empty (build-from-scratch) council.
-  const ctxDone = sector.confirmed && ctx.completed;
-  const ctxStarted = sector.confirmed || ctx.completed;
+  // Task 2 also covers S03a (organisation assessment done before?).
+  const orgAnswered = Boolean(setup.organisationAssessment && setup.organisationAssessment.answer);
+  const ctxDone = sector.confirmed && ctx.completed && orgAnswered;
+  const ctxStarted = sector.confirmed || ctx.completed || orgAnswered;
   const svcToLink = services.filter((s) => s.infraStatus === "to_do").length;
   const platUnlinked = platforms.filter(
     (p) => (p.linkedServices || []).length === 0 && (p.linkedSystems || []).length === 0
@@ -677,6 +679,7 @@ function buildSetupSummary(setup) {
     approverPending: setup.people.approver.pending,
     sectorConfirmed: setup.sectorContext.confirmed,
     councilContextProvided: setup.councilContext.completed,
+    orgAssessedBefore: { yes: "Yes", no: "No", dontknow: "I don't know" }[(setup.organisationAssessment || {}).answer] || "Not answered",
     methodology:
       setup.methodology.approach === "five-lens"
         ? "GovAssure Five Lens Model"

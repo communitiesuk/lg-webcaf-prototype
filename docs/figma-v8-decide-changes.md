@@ -3,16 +3,18 @@
 Prompt for updating Figma so it matches the coded prototype (branch `beta-1`, commits
 `f985686` → `9b6e464`, 9 November 2026). Paste the prompt below into an agent with Figma access.
 
-Covers two rounds of prototype changes from commit `f985686` onwards (the second is under SECOND ROUND in the prompt).
+Covers three rounds of prototype changes from commit `f985686` onwards (the second and third are
+under SECOND ROUND and THIRD ROUND in the prompt).
 
-Screens the journey still needs but that are **not built yet** (design first):
+Decisions made (9 November 2026), so nothing is waiting on design before research:
 
-- an Assessments landing page for after the plan is approved (the "Assessments" link currently lands on D13)
-- what happens if the Approver changes during a cycle (D12 "Change the Approver" now uses the Access
-  Approver step, but nothing tells the old Approver or resets a plan already sent to them)
-- where "has the council done an organisation assessment before?" is asked (Setup has no question,
-  so D20 "nothing new to assess" cannot happen for a real council)
-- the "Non-critical" level (all three impact ratings Low), which Setup derives but Figma does not show
+- **Assessments after approval:** the assessments section is out of scope for now. Once the plan is
+  approved, "Assessments" goes to the "not built in this prototype" page. No design needed yet.
+- **Approver changes mid-cycle:** a plan waiting for a decision goes to the new Approver, and the
+  CAF Lead is told once (banner on D27 or D12). An approved plan is unaffected.
+- **Organisation assessment done before:** asked properly in Setup task 2 (new screen S03a).
+- **"Non-critical":** kept as the fourth criticality level, matching Setup's impact page (S28),
+  which already names four levels. Decide ranks it after Business supporting.
 
 ## Prompt
 
@@ -164,6 +166,41 @@ FLOW ANNOTATIONS
 - Once the plan is approved it is locked: every plan screen (D02–D12, D27) goes to D13.
   Only D13, D28 and D21 (plan summary) stay available. Changes are made by speaking to the
   assurer (as D13 says).
+
+THIRD ROUND
+SETUP (page "Set up your council"; duplicate it to a v8 page the same way)
+12. S03a — NEW, task 2 "Organisational context", after S03 Your council context, before S04.
+   - Caption "Organisational context"; H1 (radio legend as page heading)
+     "Has your council completed a CAF organisation assessment before?"
+   - Hint "The organisation assessment covers objectives A and D. Include assessments done before
+     this service existed."
+   - Radios: Yes / No / I don't know. Button "Continue" (→ S04).
+   - Error: "Select yes if your council has completed a CAF organisation assessment before"
+   - S30 Check your setup: new row under "Your organisational context":
+     "Organisation assessment done before" — Yes / No / I don't know / Not answered — Change → S03a.
+   - Task 2 on S01 is "Completed" only when S02, S03 and S03a are all done.
+   - "I don't know" is treated as No (the organisation assessment is included this cycle).
+
+DECIDE
+13. D27 variant — "Your Approver has changed" (Approver who uses the service was replaced by another
+    who does): Important notification banner above the panel, heading "Your Approver has changed",
+    body "We have sent your plan to Priya Kaur instead. Cllr M Devlin no longer needs to approve it."
+14. D12 variant — "Your Approver has changed" (replaced by an Approver who does not use the
+    service): Important notification banner at the top, heading "Your Approver has changed", body
+    "Sam Rivers is now your Approver. Cllr M Devlin no longer needs to approve your plan. Record
+    Sam Rivers’s decision here when they have made it."
+    Both banners show once.
+15. D02 when the organisation assessment was done before: no "organisation assessment is included"
+    inset, no "None this cycle" option, and "Already assessed" lists "Organisation assessment —
+    Assessed before" first. D20 is shown when, in addition, every critical system was assessed before.
+16. "Non-critical" (all three impact ratings Low) appears as a criticality value wherever levels
+    show (D02 labels, plan summary, D07a), ranked after Business supporting and before "not yet rated".
+17. D07a: add the row "Organisation assessment done before" (Yes / No / I don't know / Not answered).
+
+FLOW ANNOTATIONS
+- "Assessments" (navigation) after approval → "This part is not built in this prototype".
+- Approver changed while the plan waits for a decision → the plan goes to the new Approver: D27 if
+  they use the service, otherwise D12. No change to an approved plan.
 
 When finished, list every frame you added or changed with its node ID so the prototype's template
 comments can be updated to reference them.

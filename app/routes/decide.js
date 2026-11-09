@@ -40,6 +40,29 @@ function firstScreenBackHref(setup) {
   return showCniScreens(setup) ? "/decide/cni" : "/dashboard";
 }
 
+// If the plan was sent to an Approver who has since been replaced, and no decision has been made,
+// route the plan to the new Approver (D27 if they use the service, else D12) and remember the
+// change for a one-off banner. Old Approver → no longer asked; nothing else is reset.
+function noteApproverChange(setup, decide) {
+  const plan = decide.plan || {};
+  const decision = (decide.approval && decide.approval.decision) || "";
+  const approver = (setup.people && setup.people.approver) || {};
+  if (!plan.sentForApproval || decision || !plan.sentForApprovalTo) return;
+  if (plan.sentForApprovalTo === (approver.name || "")) return;
+  plan.approverChange = { from: plan.sentForApprovalTo, to: approver.name || "", usesService: Boolean(approver.hasAccount) };
+  plan.sentForApprovalTo = approver.name || "";
+  // A recorded (not in-service) Approver cannot approve on D11; the CAF Lead records it on D12.
+  if (!approver.hasAccount) plan.sentForApproval = false;
+}
+
+// Read and clear the one-off "Approver changed" banner.
+function takeApproverChange(decide) {
+  const plan = decide.plan || {};
+  const change = plan.approverChange || null;
+  delete plan.approverChange;
+  return change;
+}
+
 // After D07: the council sees the assurer's feedback (D08) only if there is some; otherwise the
 // plan goes straight for approval — D11 (Approver uses the service) or D12 (record it here).
 function afterAssurerReview(setup, decide) {
@@ -65,6 +88,11 @@ module.exports = function (router) {
     // No Approver named in setup (task 7) → nobody can approve the plan. Send the person back
     // to the setup task list to confirm one (S30 applies the same rule to finishing setup).
     if (!hasApprover(setup)) return res.redirect("/setup/task-list");
+    // The Approver changed (People › Approver) while a plan was waiting for their decision: the
+    // plan now goes to the new Approver. Remember the change so the next approval screen (D27 or
+    // D12) tells the CAF Lead once. An approved plan is unaffected (D13 keeps who approved it).
+    noteApproverChange(setup, req.session.data.decide);
+
     // Once the plan is approved it is locked: the plan screens go to D13 (changes are made by
     // speaking to the assurer, as D13 says). Only D13, D28 and the plan summary stay open.
     const decision = (req.session.data.decide.approval && req.session.data.decide.approval.decision) || "";
@@ -87,7 +115,9 @@ module.exports = function (router) {
     const setup = req.session.data.setup;
     const decide = req.session.data.decide;
     const decision = (decide.approval && decide.approval.decision) || "";
-    if (decision === "approved") return res.redirect("/decide/approved");
+    // Approved: Decide is finished and "Assessments" means the assessments themselves, which are
+    // not in this prototype yet. (D13 is still shown straight after approval.)
+    if (decision === "approved") return res.redirect("/dashboard/not-in-this-prototype");
     if (decision === "returned") return res.redirect("/decide/returned");
     if (decide.plan && decide.plan.sentToAssurer) {
       if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
@@ -441,6 +471,7 @@ module.exports = function (router) {
     // A new (or re-sent, after being returned) plan goes back through review and approval.
     decide.plan.assurerReviewed = false;
     decide.plan.sentForApproval = false;
+    decide.plan.sentForApprovalTo = "";
     decide.approval = decide.approval || {};
     decide.approval.decision = "";
     // Sending the plan starts this cycle's onboarding. Reset the cycle's assurance activities to
@@ -534,6 +565,7 @@ module.exports = function (router) {
         sectorConfirmed: Boolean(setup.sectorContext && setup.sectorContext.confirmed),
         councilContextProvided: Boolean(ctx.completed),
         cniSector: ctx.completed ? cni : "",
+        orgAssessedBefore: { yes: "Yes", no: "No", dontknow: "I don't know" }[(setup.organisationAssessment || {}).answer] || "Not answered",
         methodology: setup.methodology && setup.methodology.completed
           ? (setup.methodology.approach === "five-lens" ? "GovAssure Five Lens Model" : "Their own methodology")
           : "",
@@ -579,9 +611,12 @@ module.exports = function (router) {
     if (!approver.hasAccount) return res.redirect("/decide/record-approval");
     decide.plan = decide.plan || {};
     decide.plan.sentForApproval = true;
+    decide.plan.sentForApprovalTo = approver.name || "";
+    const change = takeApproverChange(decide);
     res.render("pages/decide/sent-for-approval", {
       pageTitle: "Plan sent for approval",
       approverName: approver.name || "",
+      approverChange: change,
     });
   });
 
@@ -651,6 +686,7 @@ module.exports = function (router) {
     const approver = (setup.people && setup.people.approver) || {};
     const approval = decide.approval || {};
     const parts = approval.dateParts || {};
+    res.locals.approverChange = takeApproverChange(decide);
     renderRecordApproval(res, setup, decide, {
       day: parts.day || "",
       month: parts.month || "",
@@ -838,10 +874,9 @@ function renderSystems(res, setup, decide, opts) {
     totalCount: total,
     displayCap: SYSTEM_DISPLAY_CAP,
     showCapHint: capped,
-    assessed: alreadyAssessedSystems(setup).map((s) => ({
-      name: s.name,
-      assessedLabel: assessedLabel(s),
-    })),
+    assessed: (included ? [] : [{ name: "Organisation assessment", assessedLabel: "Assessed before" }]).concat(
+      alreadyAssessedSystems(setup).map((s) => ({ name: s.name, assessedLabel: assessedLabel(s) }))
+    ),
     orgIncluded: included,
     noneOnly: Boolean(decide.cycle.noneOnly),
     unrated,

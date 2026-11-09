@@ -60,9 +60,9 @@ function buildSetupSeed() {
     // added here as shared EXAMPLE DATA. `assigned` drives D05→D09 vs D05→D06.
     assurer: { name: "K Osei", organisation: "Bridewell", assigned: true },
 
-    // Whether the council has done its organisation assessment before — used by Decide
-    // (D02/D03 "Included, not done before"; D20 nothing-left). EXAMPLE DATA, NOT REAL.
-    organisationAssessment: { doneBefore: false },
+    // S03a: whether the council has done its organisation assessment before — used by Decide
+    // (included this cycle unless "yes"; D20 nothing-left). EXAMPLE DATA, NOT REAL.
+    organisationAssessment: { answer: "no", doneBefore: false },
 
     // Task 2a — S02 sector context (read-only, confirmed).
     sectorContext: { confirmed: true },
@@ -335,7 +335,7 @@ function buildSetupSeedEmpty() {
     // No assurer: MHCLG assigns one, and a newly registered council has not been assigned one yet
     // (Decide D05 goes to D06 "Waiting for an assurer"). Only Decide reads this.
     assurer: { name: "", organisation: "", assigned: false },
-    organisationAssessment: { doneBefore: false },
+    organisationAssessment: { answer: "", doneBefore: false }, // S03a not answered yet
 
     // Task 2 — not confirmed yet.
     sectorContext: { confirmed: false },

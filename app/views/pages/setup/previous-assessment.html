@@ -1,0 +1,45 @@
+{# S03a — setup / previous-assessment — ADDITION, not in Figma (needs design).
+   Task 2 "Organisational context". Whether the council has completed a CAF organisation assessment
+   (objectives A and D) before. Decide uses it to include or leave out the organisation assessment. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if showError %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [{ text: "Select yes if your council has completed a CAF organisation assessment before", href: "#orgAssessedBefore" }]
+        }) }}
+      {% endif %}
+
+      <form method="post" action="/setup/previous-assessment" novalidate>
+        {{ govukRadios({
+          name: "orgAssessedBefore",
+          fieldset: {
+            legend: {
+              html: '<span class="govuk-caption-l">Organisational context</span>Has your council completed a CAF organisation assessment before?',
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          hint: { text: "The organisation assessment covers objectives A and D. Include assessments done before this service existed." },
+          errorMessage: { text: "Select yes if your council has completed a CAF organisation assessment before" } if showError else undefined,
+          items: [
+            { value: "yes", text: "Yes", checked: answer == "yes" },
+            { value: "no", text: "No", checked: answer == "no" },
+            { value: "dontknow", text: "I don't know", checked: answer == "dontknow" }
+          ]
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

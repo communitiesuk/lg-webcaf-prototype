@@ -243,10 +243,13 @@ function buildPlanSummary(setup, decide) {
     }
   });
 
-  const assessed = alreadyAssessedSystems(setup).map((s) => ({
-    name: s.name,
-    detail: assessedLabel(s) + " · You cannot update this assessment yet",
-  }));
+  const assessed = [];
+  if (!orgIncluded(setup)) {
+    assessed.push({ name: "Organisation assessment", detail: "Assessed before · You cannot update this assessment yet" });
+  }
+  alreadyAssessedSystems(setup).forEach((s) => {
+    assessed.push({ name: s.name, detail: assessedLabel(s) + " · You cannot update this assessment yet" });
+  });
 
   return { included, notIncluded, assessed };
 }

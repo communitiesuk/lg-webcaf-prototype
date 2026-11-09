@@ -240,6 +240,26 @@ module.exports = function (router) {
       "ccAnythingElse",
     ].forEach((key) => delete req.session.data[key]);
 
+    return res.redirect("/setup/previous-assessment");
+  });
+
+  // S03a (ADDITION, not in Figma) — Has your council completed a CAF organisation assessment before?
+  // Decides whether Decide includes the organisation assessment (objectives A and D) this cycle,
+  // and makes D20 "nothing new to assess" possible. Mirrors the per-system "assessed before" question.
+  router.get("/setup/previous-assessment", (req, res) => {
+    const setup = ensureSetup(req.session.data);
+    renderPreviousAssessment(res, (setup.organisationAssessment || {}).answer || "", false);
+  });
+
+  router.post("/setup/previous-assessment", (req, res) => {
+    const setup = ensureSetup(req.session.data);
+    const answer = clean(req.session.data.orgAssessedBefore);
+    delete req.session.data.orgAssessedBefore;
+    if (["yes", "no", "dontknow"].indexOf(answer) === -1) {
+      return renderPreviousAssessment(res, "", true);
+    }
+    // "I don't know" is treated like "No": the organisation assessment is included this cycle.
+    setup.organisationAssessment = { answer, doneBefore: answer === "yes" };
     return res.redirect("/setup/methodology");
   });
 
@@ -248,7 +268,7 @@ module.exports = function (router) {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/methodology", {
       pageTitle: "Tell us how you will identify your essential services and critical systems",
-      backHref: "/setup/council-context",
+      backHref: "/setup/previous-assessment",
       approach: setup.methodology.approach,
     });
   });
@@ -1391,3 +1411,13 @@ module.exports = function (router) {
     });
   });
 };
+
+// S03a render (base + error).
+function renderPreviousAssessment(res, answer, showError) {
+  res.render("pages/setup/previous-assessment", {
+    pageTitle: (showError ? "Error: " : "") + "Has your council completed a CAF organisation assessment before?",
+    backHref: "/setup/council-context",
+    answer,
+    showError,
+  });
+}

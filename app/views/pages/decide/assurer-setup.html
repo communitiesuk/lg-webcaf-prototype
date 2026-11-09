@@ -30,6 +30,10 @@
           </div>
         {% endif %}
         <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Organisation assessment done before</dt>
+          <dd class="govuk-summary-list__value">{{ context.orgAssessedBefore }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">How they identify services and systems</dt>
           <dd class="govuk-summary-list__value">{{ context.methodology or "Not provided" }}</dd>
         </div>

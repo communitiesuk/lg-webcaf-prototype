@@ -7,6 +7,18 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if approverChange %}
+        <div class="govuk-notification-banner" role="region" aria-labelledby="approver-change-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="approver-change-title">Important</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">Your Approver has changed</p>
+            <p class="govuk-body">{{ approverChange.to }} is now your Approver. {{ approverChange.from }} no longer needs to approve your plan. Record {{ approverChange.to }}’s decision here when they have made it.</p>
+          </div>
+        </div>
+      {% endif %}
+
       {% if errors.length %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
           <div role="alert">
