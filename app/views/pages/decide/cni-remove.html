@@ -10,14 +10,15 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Are you sure you want to remove " + system.name + " as critical national infrastructure?"
+        title: "Are you sure you want to remove CNI status from " + system.name + "?"
       }) }}
 
-      <p class="govuk-body">This removes the CNI designation from {{ system.name }}. The system stays in your council record, and you can add it back as CNI later.</p>
+      <p class="govuk-body">This removes the CNI status from {{ system.name }}.</p>
+      <p class="govuk-body">The system will stay in your council’s list of critical systems. You can mark it as part of CNI again later.</p>
 
       <form method="post" action="/decide/cni/added/{{ system.id }}/remove" novalidate>
         <div class="govuk-button-group">
-          <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
+          <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove CNI status</button>
           <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ backHref }}">Cancel</a>
         </div>
       </form>

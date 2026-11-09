@@ -25,13 +25,10 @@
 
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Roughly when will each assessment happen?"
+        title: "When do you expect each assessment to happen?"
       }) }}
 
-      {% set proposalText = "The \"To be confirmed\" timing option is a v6 proposal — the data tracker currently expects a month." %}
-      {% include "components/setup-proposal.njk" %}
-
-      <p class="govuk-body">Your CAF Lead and Approver are the same for every assessment this cycle. A rough month is enough, and you can change it later.</p>
+      <p class="govuk-body">Your CAF Lead and Approver will be the same for every assessment this cycle.</p>
 
       <form method="post" action="/decide/timing" novalidate>
         {% for a in assessments %}
@@ -49,7 +46,7 @@
               <div class="govuk-radios" data-module="govuk-radios">
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="timing-{{ a.id }}" name="timing-{{ a.id }}" type="radio" value="month" data-aria-controls="timing-{{ a.id }}-reveal" {% if a.choice == "month" %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}">Give a month</label>
+                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}">I know the month when this assessment is expected to happen</label>
                 </div>
                 <div class="govuk-radios__conditional {% if a.choice != 'month' %}govuk-radios__conditional--hidden{% endif %}" id="timing-{{ a.id }}-reveal">
                   <div id="timing-{{ a.id }}-hint" class="govuk-hint">For example, 3 2027</div>
@@ -70,14 +67,17 @@
                 </div>
                 <div class="govuk-radios__item">
                   <input class="govuk-radios__input" id="timing-{{ a.id }}-2" name="timing-{{ a.id }}" type="radio" value="tbc" {% if a.choice == "tbc" %}checked{% endif %}>
-                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}-2">To be confirmed</label>
+                  <label class="govuk-label govuk-radios__label" for="timing-{{ a.id }}-2">I do not know yet</label>
                 </div>
               </div>
             </fieldset>
           </div>
         {% endfor %}
 
-        <div class="govuk-inset-text">MHCLG uses timings to plan assurer capacity. A rough month helps them, but "to be confirmed" is a real answer if you do not know yet.</div>
+        <div class="govuk-inset-text">
+          <p class="govuk-body">MHCLG uses this information to plan assurer capacity.</p>
+          <p class="govuk-body govuk-!-margin-bottom-0">Give an approximate month if you can. It is fine to select ‘I do not know yet’ if you are not sure.</p>
+        </div>
 
         <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       </form>

@@ -6,9 +6,15 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        title: "Plan summary",
-        intro: councilName + ", cycle starting 2026. Prepared by " + cafLeadName + ", CAF Lead, for approval by " + approverName + "."
+        title: "Plan summary"
       }) }}
+
+      <p class="govuk-body">
+        {{ councilName }}<br>
+        Assessment cycle starting 2026<br>
+        Prepared by {{ cafLeadName }}, CAF Lead<br>
+        For approval by {{ approverName }}
+      </p>
 
       {% include "components/plan-summary.njk" %}
 

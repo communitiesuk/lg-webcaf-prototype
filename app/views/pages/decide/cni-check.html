@@ -9,26 +9,23 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Are you sure none of your critical systems are CNI?"
+        title: "Confirm that none of your critical systems are part of CNI"
       }) }}
-
-      {% set proposalText = "This check and its wording are a v6 proposal, not yet agreed." %}
-      {% include "components/setup-proposal.njk" %}
 
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-visually-hidden">Warning</span>
-          Earlier, you told us your council delivers services in a critical national infrastructure (CNI) sector. You have just said none of your critical systems are CNI.
+          You told us your council delivers services in a CNI sector, but you have not identified any critical systems as part of CNI.
         </strong>
       </div>
 
-      <p class="govuk-body">If a service is CNI, the critical system or systems that support it usually are too.</p>
+      <p class="govuk-body">Critical systems that support a CNI service are usually also part of CNI.</p>
 
       <form method="post" action="/decide/cni/check" novalidate>
-        <button class="govuk-button" data-module="govuk-button" type="submit">Yes, none of them are CNI</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">No critical systems are part of CNI</button>
       </form>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/cni">Go back and check</a>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/cni">Check critical systems</a>
     </div>
   </div>
 {% endblock %}

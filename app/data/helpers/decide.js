@@ -153,7 +153,7 @@ function formatTiming(entry) {
     const name = MONTHS[m - 1] || entry.month;
     return (name + " " + (entry.year || "")).trim();
   }
-  return "Timing to be confirmed";
+  return "Date not confirmed";
 }
 
 // The assessments included in the cycle, in display order: the organisation assessment
@@ -179,7 +179,7 @@ function buildPlanSummary(setup, decide) {
 
   const included = [];
   if (orgIncluded) {
-    included.push({ name: "Organisation assessment", detail: "Not done before · " + formatTiming(timing.organisation) });
+    included.push({ name: "Organisation assessment", detail: "First assessment · " + formatTiming(timing.organisation) });
   }
   const notIncluded = [];
   rankAssessableSystems(setup).forEach((s) => {
@@ -196,7 +196,7 @@ function buildPlanSummary(setup, decide) {
 
   const assessed = alreadyAssessedSystems(setup).map((s) => ({
     name: s.name,
-    detail: "Assessed " + (s.assessedDate || "") + " · Updating is not available yet",
+    detail: "Assessed " + (s.assessedDate || "") + " · You cannot update this assessment yet",
   }));
 
   return { included, notIncluded, assessed };
@@ -226,7 +226,9 @@ function buildPriorityWarning(setup, decide) {
       .forEach((s) => clauses.push(s.name + " is mission critical while a business critical system is included"));
   }
   if (!clauses.length) return null;
-  return "Check what is not included: " + joinWithAnd(clauses) + ".";
+  // Returns the flagged systems as bullet items; the "Check the systems that are not included"
+  // heading and the trailing advice are rendered by components/plan-summary.njk (D07/D11/D21).
+  return { items: clauses };
 }
 
 module.exports = {

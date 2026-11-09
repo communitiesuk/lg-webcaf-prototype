@@ -15,19 +15,19 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Are any of your critical systems critical national infrastructure (CNI)?"
+        title: "Are any of your critical systems part of critical national infrastructure (CNI)?"
       }) }}
 
       {% if cniFlaggedInSetup %}
-        {{ govukInsetText({ text: "You previously told us your council delivers services in a critical national infrastructure (CNI) sector. It is important these systems are prioritised for a CAF for LG assessment." }) }}
+        <p class="govuk-body">You told us your council provides services in a CNI sector.</p>
       {% endif %}
-
-      <p class="govuk-body">Your assurer and MHCLG need to know which systems are CNI. It also helps us rank your systems when you choose what to assess.</p>
+      <p class="govuk-body">Tell us if any of your critical systems are part of CNI.</p>
+      <p class="govuk-hint">Knowing which systems are part of CNI helps your assurer and MHCLG rank your systems when you choose what to assess.</p>
 
       <form method="post" action="/decide/cni" novalidate>
         {{ govukRadios({
           name: "cniAnswer",
-          fieldset: { legend: { text: "Are any of your critical systems critical national infrastructure (CNI)?", classes: "govuk-visually-hidden" } },
+          fieldset: { legend: { text: "Are any of your critical systems part of critical national infrastructure (CNI)?", classes: "govuk-visually-hidden" } },
           items: [
             { value: "yes", text: "Yes", checked: answer == "yes" },
             { value: "no", text: "No", checked: answer == "no" }

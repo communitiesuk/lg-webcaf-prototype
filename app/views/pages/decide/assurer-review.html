@@ -9,13 +9,13 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "ASSURER VIEW · " + councilName,
-        title: "Review their setup and plan",
-        intro: "You can read and comment. You are not signing anything off, and the council's own Approver does that next."
+        title: "Review the council’s setup and plan",
+        intro: "You can review the council’s information and give feedback. You are not approving anything at this stage."
       }) }}
 
       <dl class="govuk-summary-list">
         <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Organisational context</dt>
+          <dt class="govuk-summary-list__key">Organisation context</dt>
           <dd class="govuk-summary-list__value">Read</dd>
           <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View<span class="govuk-visually-hidden"> organisational context</span></a></dd>
         </div>
@@ -31,17 +31,15 @@
         </div>
       </dl>
 
-      <h2 class="govuk-heading-m">The plan for this cycle</h2>
-      <p class="govuk-body">Including the council's rough timings, which help you plan your own time.</p>
+      <h2 class="govuk-heading-m">Plan for this cycle</h2>
+      <p class="govuk-body">The council has provided approximate assessment dates to help you plan your time.</p>
 
       {% include "components/plan-summary.njk" %}
 
-      <p class="govuk-body">If a CNI system has been left out of the plan, you can challenge that here.</p>
-
       <form method="post" action="/decide/assurer-review" novalidate>
         <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="assurerFeedback">Any feedback on the plan? (optional)</label>
-          <div id="assurerFeedback-hint" class="govuk-hint">The council sees this before they send the plan for approval</div>
+          <label class="govuk-label govuk-label--s" for="assurerFeedback">Give feedback on the plan (optional)</label>
+          <div id="assurerFeedback-hint" class="govuk-hint">Tell the council about anything you think they should change before they send the plan for approval.</div>
           <textarea class="govuk-textarea" id="assurerFeedback" name="assurerFeedback" rows="4" aria-describedby="assurerFeedback-hint">{{ feedback }}</textarea>
         </div>
 

@@ -9,12 +9,10 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Review your plan for this cycle"
+        title: "Confirm your plan for this cycle"
       }) }}
 
       {% include "components/plan-summary.njk" %}
-
-      <p class="govuk-body">Your assurer will look at this before it goes for approval.</p>
 
       <form method="post" action="/decide/review" novalidate>
         <button class="govuk-button" data-module="govuk-button" type="submit">Send to your assurer</button>

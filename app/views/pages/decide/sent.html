@@ -2,17 +2,21 @@
    Leads with a confirmation panel so the "plan sent to your assurer" action is clearly
    acknowledged before the onboarding booking, which is the next step. #}
 {% extends "layouts/decide.html" %}
-{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ govukPanel({ titleText: "Plan sent to your assurer" }) }}
+      {{ govukNotificationBanner({ text: "Plan sent to your assurer", type: "success" }) }}
 
-      <h2 class="govuk-heading-m">Book your onboarding calls</h2>
-      <p class="govuk-body">Book your onboarding calls now, so you can talk the plan through with your assurer and resolve anything difficult. You or your assurer can book them, and one call is needed for each type of assessment in your plan. If no assurer is assigned yet, one is assigned after you book.</p>
+      {{ appPageHeader({ caption: "Start a cycle", title: "Book your onboarding calls" }) }}
+
+      <p class="govuk-body">Book an onboarding call for each type of assessment in your plan. You or your assurer can book calls.</p>
+      <p class="govuk-body">Use the calls to talk through your plan and discuss any questions before you start your assessments.</p>
+      <p class="govuk-body">If you do not have an assurer yet, MHCLG will assign one to you after you book your first call.</p>
 
       <dl class="govuk-summary-list">
         {% for row in rows %}
@@ -26,7 +30,7 @@
         {% endfor %}
       </dl>
 
-      <div class="govuk-inset-text">Booking the calls does not hold up your plan. Your assurer can start reviewing it straight away.</div>
+      <div class="govuk-inset-text">Your assurer can start reviewing your plan straight away. Booking calls will not delay this.</div>
 
       <a class="govuk-button" data-module="govuk-button" href="/decide/assurer-review">Continue</a>
     </div>

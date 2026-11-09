@@ -11,13 +11,13 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Which critical system is CNI?"
+        title: "Which critical systems are part of CNI?"
       }) }}
 
       <form method="post" action="/decide/cni/add" novalidate>
         <div class="govuk-form-group">
           <label class="govuk-label govuk-label--s" for="cniSystem-select">Critical system</label>
-          <div id="cniSystem-hint" class="govuk-hint">Start typing the system's name, then choose it from the list</div>
+          <div id="cniSystem-hint" class="govuk-hint">Start typing the name of a critical system, then select it from the list</div>
           <select class="govuk-select" id="cniSystem-select" name="cniSystemId" aria-describedby="cniSystem-hint" data-system-autocomplete>
             <option value="">Select a critical system</option>
             {% for option in options %}

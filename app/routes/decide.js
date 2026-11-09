@@ -54,7 +54,7 @@ module.exports = function (router) {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
     res.render("pages/decide/cni", {
-      pageTitle: "Are any of your critical systems critical national infrastructure (CNI)?",
+      pageTitle: "Are any of your critical systems part of critical national infrastructure (CNI)?",
       backHref: "/setup/task-list",
       cniFlaggedInSetup: isCniFlaggedInSetup(setup),
       answer: decide.cniAnswer,
@@ -80,7 +80,7 @@ module.exports = function (router) {
   router.get("/decide/cni/check", (req, res) => {
     ensureDecide(req.session.data);
     res.render("pages/decide/cni-check", {
-      pageTitle: "Are you sure none of your critical systems are CNI?",
+      pageTitle: "Confirm that none of your critical systems are part of CNI",
       backHref: "/decide/cni",
     });
   });
@@ -100,7 +100,7 @@ module.exports = function (router) {
   router.get("/decide/cni/add", (req, res) => {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     res.render("pages/decide/cni-add", {
-      pageTitle: "Which critical system is CNI?",
+      pageTitle: "Which critical systems are part of CNI?",
       backHref: "/decide/cni",
       options: nonCniSystems(setup).map((s) => ({ id: s.id, name: s.name })),
     });
@@ -126,7 +126,7 @@ module.exports = function (router) {
       criticality: deriveCriticality(s.impact),
     }));
     res.render("pages/decide/cni-added", {
-      pageTitle: `You have added ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
+      pageTitle: `You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
       backHref: "/decide/cni/add",
       added,
     });
@@ -147,7 +147,7 @@ module.exports = function (router) {
     const system = getSystem(setup, req.params.systemId);
     if (!system || !system.cni) return res.redirect("/decide/cni/added");
     res.render("pages/decide/cni-remove", {
-      pageTitle: `Are you sure you want to remove ${system.name} as critical national infrastructure?`,
+      pageTitle: `Are you sure you want to remove CNI status from ${system.name}?`,
       backHref: "/decide/cni/added",
       system,
     });
@@ -248,7 +248,7 @@ module.exports = function (router) {
     const selected = (decide.cycle && decide.cycle.selectedSystems) || [];
     const ranked = rankAssessableSystems(setup);
     res.render("pages/decide/confirm", {
-      pageTitle: "Confirm what this cycle covers",
+      pageTitle: "Confirm what you will assess in this cycle",
       backHref: "/decide/systems",
       orgIncluded: !(setup.organisationAssessment && setup.organisationAssessment.doneBefore),
       selectedNames: ranked.filter((s) => selected.indexOf(s.id) !== -1).map((s) => s.name),
@@ -299,9 +299,9 @@ module.exports = function (router) {
       .map((a) => ({
         id: a.id,
         message:
-          "Select roughly when the " +
+          "Tell us when you expect the " +
           (a.kind === "org" ? "organisation assessment" : a.name) +
-          " will happen, or choose to be confirmed",
+          " to happen, or select ‘I do not know yet’",
       }));
 
     if (errors.length) {
@@ -320,11 +320,11 @@ module.exports = function (router) {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
     res.render("pages/decide/review", {
-      pageTitle: "Review your plan for this cycle",
+      pageTitle: "Confirm your plan for this cycle",
       backHref: "/decide/timing",
       planSummary: buildPlanSummary(setup, decide),
       planWarning:
-        "Your assurer will look at this before it goes for approval. Next, book your onboarding calls, so you can talk the plan through with them.",
+        "Your assurer will review your plan before it goes for approval. Next, arrange a call with your assurer to discuss your plan.",
     });
   });
 
@@ -353,7 +353,7 @@ module.exports = function (router) {
   router.get("/decide/no-assurer", (req, res) => {
     ensureDecide(req.session.data);
     res.render("pages/decide/no-assurer", {
-      pageTitle: "Waiting for your assurer",
+      pageTitle: "Waiting for an assurer",
     });
   });
 
@@ -368,7 +368,7 @@ module.exports = function (router) {
     if (orgIncluded) rows.push(bookingRow("onboarding-org", "Step 1: Onboarding, organisation assessment", acts["onboarding-org"]));
     if (hasSystems) rows.push(bookingRow("onboarding-systems", "Step 1: Onboarding, critical systems", acts["onboarding-systems"]));
     res.render("pages/decide/sent", {
-      pageTitle: "Plan sent to your assurer",
+      pageTitle: "Book your onboarding calls",
       backHref: "/decide/review",
       rows,
     });
@@ -396,7 +396,7 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     const assurer = setup.assurer || {};
     res.render("pages/decide/feedback", {
-      pageTitle: "Your assurer has commented on your plan",
+      pageTitle: "Your assurer has given feedback on your plan",
       backHref: "/decide/sent",
       assurerName: [assurer.name, assurer.organisation].filter(Boolean).join(", "),
       feedback: decide.assurerFeedback || "",
@@ -539,12 +539,12 @@ function approveModel(setup, decide, opts) {
   const hasFeedback = Boolean(decide.assurerFeedback);
   const assurerLine = [assurer.name, assurer.organisation].filter(Boolean).join(", ");
   return {
-    pageTitle: "Approve this cycle's plan",
+    pageTitle: "Approve the plan for this cycle",
     councilName: (setup.council && setup.council.name) || "",
     cafLeadName: (people.cafLead && people.cafLead.name) || "",
     planSummary: buildPlanSummary(setup, decide),
     planWarning: buildPriorityWarning(setup, decide),
-    assurerLine: assurerLine + (hasFeedback ? " · Commented on the plan" : ""),
+    assurerLine: assurerLine + (hasFeedback ? " · Gave feedback on the plan" : ""),
     decision: opts.decision || "",
     reason: opts.reason || "",
     showError: Boolean(opts.showError),
@@ -563,7 +563,7 @@ function bookingRow(activityId, label, entry) {
   return {
     label,
     value,
-    action: done ? "Update" : "Book",
+    action: done ? "Change" : "Book",
     href: (done ? "/assurance-activities/update/" : "/assurance-activities/book/") + activityId + "?return=/decide/sent",
   };
 }
@@ -574,7 +574,7 @@ function assurerReviewModel(setup, decide) {
   const systemCount = (setup.criticalSystems || []).length;
   const allRated = !hasUnratedInScope(setup);
   return {
-    pageTitle: "Review their setup and plan",
+    pageTitle: "Review the council’s setup and plan",
     backHref: "/decide/sent",
     councilName: (setup.council && setup.council.name) || "",
     serviceSummary: serviceCount + " service" + (serviceCount === 1 ? "" : "s") + ", all in scope",
@@ -589,7 +589,7 @@ function assurerReviewModel(setup, decide) {
 // Shared render for the D04/D16 states of "Roughly when will each assessment happen?".
 function renderTiming(res, assessments, errors) {
   res.render("pages/decide/timing", {
-    pageTitle: "Roughly when will each assessment happen?",
+    pageTitle: "When do you expect each assessment to happen?",
     backHref: "/decide/confirm",
     assessments,
     errors,

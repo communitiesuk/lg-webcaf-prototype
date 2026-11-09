@@ -12,14 +12,11 @@
         title: "Which critical systems will you assess?"
       }) }}
 
-      {% set proposalText = "The \"three is the recommended maximum\" guidance is a v6 proposal, not yet agreed. It is guidance, not a limit." %}
-      {% include "components/setup-proposal.njk" %}
-
       <div class="govuk-warning-text">
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
         <strong class="govuk-warning-text__text">
           <span class="govuk-visually-hidden">Warning</span>
-          You have chosen {{ count }} systems. Three is the recommended maximum for one cycle, because each system is 27 outcomes. You can continue if you have the capacity.
+          You have selected {{ count }} critical systems. We recommend selecting up to 3 critical systems to assess in this cycle. This is because you need to assess each system against 27 outcomes. You can continue with {{ count }} critical systems if you have the capacity.
         </strong>
       </div>
 
@@ -35,7 +32,7 @@
       <form method="post" action="/decide/systems/too-many" novalidate>
         <button class="govuk-button" data-module="govuk-button" type="submit">Continue with {{ count }} systems</button>
       </form>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change my choices</a>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change your selection</a>
     </div>
   </div>
 {% endblock %}

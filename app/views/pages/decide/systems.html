@@ -19,7 +19,7 @@
       {% if showError %}
         {{ govukErrorSummary({
           titleText: "There is a problem",
-          errorList: [{ text: "Select at least one critical system, or choose to assess none this cycle", href: "#whichSystems" }]
+          errorList: [{ text: "Select at least one critical system, or select ‘None this cycle’", href: "#whichSystems" }]
         }) }}
       {% endif %}
 
@@ -29,26 +29,27 @@
       }) }}
 
       {% if unrated %}
-        {{ govukInsetText({ text: "Your organisation assessment is included, because your council has not done one yet." }) }}
+        {{ govukInsetText({ text: "Your organisation assessment is included because your council has not completed one yet" }) }}
+        <p class="govuk-body">Select the critical systems you want to assess this cycle.</p>
+        <p class="govuk-body">These systems have not been assessed yet. They are listed by how critical they are. Up to three is recommended.</p>
       {% else %}
-        {{ govukInsetText({ text: "These systems have not been assessed yet. The most critical are listed first, and within each level, any that are CNI. Up to three is recommended." }) }}
+        <p class="govuk-hint">The most critical systems are shown first. CNI systems are shown first within each level.</p>
+        <p class="govuk-body">We recommend selecting up to 3 critical systems to assess in this cycle.</p>
       {% endif %}
-
-      <p class="govuk-body">These systems have not been assessed yet. They are listed by how critical they are. Up to three is recommended.</p>
 
       {% set systemItems = [] %}
       {% for row in rows %}
         {% set _ = systemItems.push({ value: row.id, text: row.name + " — " + row.criticalityLabel, checked: row.checked }) %}
       {% endfor %}
       {% if orgIncluded %}
-        {% set _ = systemItems.push({ value: "none", text: "None this cycle, the organisation assessment only", checked: noneOnly, behaviour: "exclusive" }) %}
+        {% set _ = systemItems.push({ value: "none", text: "None this cycle, organisation assessment only", checked: noneOnly, behaviour: "exclusive" }) %}
       {% endif %}
 
       <form method="post" action="/decide/systems" novalidate>
         {{ govukCheckboxes({
           name: "whichSystems",
           fieldset: { legend: { text: "Which critical systems will you assess?", classes: "govuk-visually-hidden" } },
-          errorMessage: { text: "Select at least one critical system, or choose to assess none this cycle" } if showError else undefined,
+          errorMessage: { text: "Select at least one critical system, or select ‘None this cycle’" } if showError else undefined,
           items: systemItems
         }) }}
 
@@ -59,7 +60,7 @@
 
         {% if unrated and unratedName %}
           {{ govukWarningText({
-            text: unratedName + " has not been rated yet, so it is listed last. Rate it in Setup to rank it properly.",
+            text: unratedName + " is listed last because its criticality has not been rated yet. Rate it in Setup to rank it properly.",
             iconFallbackText: "Warning"
           }) }}
         {% endif %}
@@ -76,7 +77,7 @@
           </dl>
         {% endif %}
 
-        {{ govukInsetText({ text: "Updating an assessment is not available yet. It will come in a later version of the service." }) }}
+        {{ govukInsetText({ text: "You cannot update assessments yet. This will be available in a future version of the service." }) }}
 
         {{ govukButton({ text: "Continue" }) }}
       </form>

@@ -11,8 +11,8 @@
           <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">Important</h2>
         </div>
         <div class="govuk-notification-banner__content">
-          <p class="govuk-notification-banner__heading">Your Approver has returned the plan</p>
-          <p class="govuk-body">{{ approverName }} returned it on {{ returnedDate }}.</p>
+          <p class="govuk-notification-banner__heading">Your plan has been returned</p>
+          <p class="govuk-body">{{ approverName }} returned the plan on {{ returnedDate }}.</p>
         </div>
       </div>
 
@@ -20,10 +20,11 @@
         title: "Your plan has been returned"
       }) }}
 
-      <div class="govuk-inset-text">"{{ returnReason }}"</div>
+      <h2 class="govuk-heading-m">Why your plan has been returned</h2>
+      <div class="govuk-inset-text">Your Approver said: "{{ returnReason }}"</div>
 
-      <h2 class="govuk-heading-m">What you can do</h2>
-      <p class="govuk-body">Change your plan and send it for approval again. Your assurer will see it again if the change affects what they commented on.</p>
+      <h2 class="govuk-heading-m">Change your plan</h2>
+      <p class="govuk-body">Make any changes needed, then send your plan for approval again. Your assurer will review the plan again if the changes affect their previous feedback.</p>
 
       <a class="govuk-button" data-module="govuk-button" href="/decide/systems">Change my plan</a>
     </div>

@@ -9,18 +9,18 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Your assurer has commented on your plan"
+        title: "Your assurer has given feedback on your plan"
       }) }}
 
       <div class="govuk-inset-text">{{ assurerName }}: {{ feedback }}</div>
 
-      <p class="govuk-body">This is advice, not a requirement. You can change your plan or carry on as it is.</p>
+      <p class="govuk-body">Your assurer’s feedback is advice, not a requirement. You can change your plan or continue with your current plan.</p>
 
       <div class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change my plan</a>
+        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change plan</a>
       </div>
       <form method="post" action="/decide/feedback" novalidate>
-        <button class="govuk-button" data-module="govuk-button" type="submit">Carry on, send for approval</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Continue with current plan and send for approval</button>
       </form>
     </div>
   </div>

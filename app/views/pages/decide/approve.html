@@ -12,7 +12,7 @@
             <h2 class="govuk-error-summary__title">There is a problem</h2>
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
-                <li><a href="#returnReason">Enter why you are returning the plan</a></li>
+                <li><a href="#returnReason">Enter a reason for returning the plan</a></li>
               </ul>
             </div>
           </div>
@@ -21,9 +21,11 @@
 
       {{ appPageHeader({
         caption: "APPROVER VIEW · " + councilName,
-        title: "Approve this cycle's plan",
-        intro: cafLeadName + " has asked you to approve what " + councilName + " will assess this cycle. You approve the whole cycle, not each system."
+        title: "Approve the plan for this cycle",
+        intro: cafLeadName + " has asked you to approve what " + councilName + " will assess this cycle."
       }) }}
+
+      <p class="govuk-body">You are approving the whole plan, not each separate assessment.</p>
 
       {% include "components/plan-summary.njk" %}
 
@@ -32,7 +34,7 @@
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Assurer</dt>
           <dd class="govuk-summary-list__value">{{ assurerLine }}</dd>
-          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View<span class="govuk-visually-hidden"> the assurer's comment</span></a></dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/setup/not-in-this-prototype">View feedback<span class="govuk-visually-hidden"> the assurer's comment</span></a></dd>
         </div>
       </dl>
 
@@ -43,20 +45,20 @@
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="approveDecision" name="approveDecision" type="radio" value="approve" {% if decision == "approve" %}checked{% endif %}>
-                <label class="govuk-label govuk-radios__label" for="approveDecision">Approve</label>
+                <label class="govuk-label govuk-radios__label" for="approveDecision">Yes, approve the plan</label>
               </div>
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="approveDecision-2" name="approveDecision" type="radio" value="return" data-aria-controls="return-reveal" {% if decision == "return" %}checked{% endif %}>
-                <label class="govuk-label govuk-radios__label" for="approveDecision-2">Return it with reasons</label>
+                <label class="govuk-label govuk-radios__label" for="approveDecision-2">No, return the plan and give feedback</label>
               </div>
               <div class="govuk-radios__conditional {% if decision != 'return' %}govuk-radios__conditional--hidden{% endif %}" id="return-reveal">
                 <div class="govuk-form-group {% if showError %}govuk-form-group--error{% endif %}">
                   {% if showError %}
                     <p id="returnReason-error" class="govuk-error-message">
-                      <span class="govuk-visually-hidden">Error:</span> Enter why you are returning the plan
+                      <span class="govuk-visually-hidden">Error:</span> Enter a reason for returning the plan
                     </p>
                   {% endif %}
-                  <label class="govuk-label govuk-label--s" for="returnReason">Why are you returning it?</label>
+                  <label class="govuk-label govuk-label--s" for="returnReason">Why are you returning the plan?</label>
                   <div id="returnReason-hint" class="govuk-hint">The CAF Lead will see this</div>
                   <textarea class="govuk-textarea" id="returnReason" name="returnReason" rows="4" aria-describedby="returnReason-hint{% if showError %} returnReason-error{% endif %}">{{ reason }}</textarea>
                 </div>

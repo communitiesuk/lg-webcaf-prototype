@@ -34,13 +34,31 @@
   {% endif %}
 
   {% if planWarning %}
-    <div class="govuk-warning-text">
-      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-      <strong class="govuk-warning-text__text">
-        <span class="govuk-visually-hidden">Warning</span>
-        {{ planWarning }}
-      </strong>
-    </div>
+    {% if planWarning.items %}
+      {# Structured "systems not included" warning (D07/D11/D21): heading, bullets, advice. #}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          Check the systems that are not included
+        </strong>
+      </div>
+      <ul class="govuk-list govuk-list--bullet">
+        {% for item in planWarning.items %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, you can challenge that here.</p>
+    {% else %}
+      {# Simple single-message warning (D05). #}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          {{ planWarning }}
+        </strong>
+      </div>
+    {% endif %}
   {% endif %}
 
   {% if planSummary.assessed.length %}
