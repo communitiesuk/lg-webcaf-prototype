@@ -12,6 +12,7 @@
         title: "Confirm your plan for this cycle"
       }) }}
 
+      {% set planWarningEnding = "feedback" %}
       {% include "components/plan-summary.njk" %}
 
       <form method="post" action="/decide/review" novalidate>

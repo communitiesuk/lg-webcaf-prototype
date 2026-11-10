@@ -4,8 +4,9 @@
 
   Set `planSummary` (from buildPlanSummary) before including. Optionally set `planWarning`
   (a string) to render a warning-text block in the slot between "Not included" and
-  "Already assessed" — each screen supplies its own warning text there. Set `planAudience` to
-  "assurer" on D07 so the warning's last sentence points to the feedback question.
+  "Already assessed" — each screen supplies its own warning text there. Set
+  `planWarningEnding` to "feedback" (D05, D07) so the warning's last sentence reads "you can
+  mention this in your feedback"; otherwise it reads "you can challenge that here" (D11, D21).
 
     {% set planWarning = "..." %}
     {% include "components/plan-summary.njk" %}
@@ -49,7 +50,7 @@
           <li>{{ item }}</li>
         {% endfor %}
       </ul>
-      <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, {{ "you can mention this in your feedback" if planAudience == "assurer" else "you can challenge that here" }}.</p>
+      <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, {{ "you can mention this in your feedback" if planWarningEnding == "feedback" else "you can challenge that here" }}.</p>
     {% elif planWarning.warning %}
       {# Warning line + follow-on paragraph (D05). #}
       <div class="govuk-warning-text">
