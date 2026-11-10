@@ -26,11 +26,12 @@
         title: "Are any of your critical systems part of critical national infrastructure (CNI)?"
       }) }}
 
-      {% if cniFlaggedInSetup %}
-        <p class="govuk-body">You told us your council provides services in a CNI sector.</p>
-      {% endif %}
+      <div class="govuk-inset-text">
+        {% if cniFlaggedInSetup %}<p class="govuk-body">You told us your council provides services in a CNI sector.</p>{% endif %}
+        <p class="govuk-body">Tell us if any of your critical systems are part of CNI.</p>
+      </div>
+
       <p class="govuk-body">It is important to identify which systems are part of CNI so these can be appropriately prioritised for a CAF assessment.</p>
-      <p class="govuk-hint">Knowing which systems are part of CNI helps your assurer and MHCLG rank your systems when you choose what to assess.</p>
 
       <form method="post" action="/decide/cni" novalidate>
         {{ govukRadios({
