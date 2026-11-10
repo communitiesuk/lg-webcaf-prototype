@@ -543,8 +543,23 @@ module.exports = function (router) {
   router.post("/decide/assurer-review", (req, res) => {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
-    decide.assurerFeedback = clean(req.session.data.assurerFeedback);
-    delete req.session.data.assurerFeedback;
+    const data = req.session.data;
+    const answer = clean(data.assurerHasFeedback);
+    const feedback = clean(data.assurerFeedback);
+    delete data.assurerHasFeedback;
+    delete data.assurerFeedback;
+    const errors = [];
+    if (answer !== "yes" && answer !== "no") {
+      errors.push({ id: "assurerHasFeedback", text: "Select yes if you have feedback on this plan" });
+    } else if (answer === "yes" && !feedback) {
+      errors.push({ id: "assurerFeedback", text: "Enter your feedback" });
+    }
+    if (errors.length) {
+      applyDecideMinimalChrome(req, res);
+      return res.render("pages/decide/assurer-review", assurerReviewModel(setup, decide, { answer, feedback, errors }));
+    }
+    // No feedback: the council does not see D08.
+    decide.assurerFeedback = answer === "yes" ? feedback : "";
     decide.plan = decide.plan || {};
     decide.plan.assurerReviewed = true;
     return res.redirect(afterAssurerReview(setup, decide));
@@ -692,6 +707,7 @@ module.exports = function (router) {
       month: parts.month || "",
       year: parts.year || "",
       how: approval.how || "",
+      howOther: approval.howOther || "",
       link: approval.link || "",
     });
   });
@@ -706,13 +722,17 @@ module.exports = function (router) {
       month: clean(data["approvalDate-month"]),
       year: clean(data["approvalDate-year"]),
       how: clean(data.approvalHow),
+      howOther: clean(data.approvalHowOther),
       link: clean(data.approvalLink),
     };
-    ["approvalDate-day", "approvalDate-month", "approvalDate-year", "approvalHow", "approvalLink"].forEach((k) => delete data[k]);
+    ["approvalDate-day", "approvalDate-month", "approvalDate-year", "approvalHow", "approvalHowOther", "approvalLink"].forEach((k) => delete data[k]);
     const errors = [];
     const dateError = validateApprovalDate(entered);
     if (dateError) errors.push({ id: "approvalDate", field: dateError.field, text: dateError.text });
     if (!entered.how) errors.push({ id: "approvalHow", text: "Select how the plan was approved" });
+    else if (entered.how === "another" && !entered.howOther) {
+      errors.push({ id: "approvalHowOther", text: "Describe how the plan was approved" });
+    }
     if (errors.length) return renderRecordApproval(res, setup, decide, entered, errors);
     decide.approval = decide.approval || {};
     decide.approval.decision = "approved";
@@ -720,6 +740,8 @@ module.exports = function (router) {
     decide.approval.date = formatDate(Number(entered.day), Number(entered.month), Number(entered.year));
     decide.approval.dateParts = { day: entered.day, month: entered.month, year: entered.year };
     decide.approval.how = entered.how;
+    // Saved for any screen that later shows the approval method (none does yet).
+    decide.approval.howOther = entered.how === "another" ? entered.howOther : "";
     decide.approval.link = entered.link;
     return res.redirect("/decide/approved");
   });
@@ -808,14 +830,17 @@ function bookingRow(activityId, label, entry) {
 }
 
 // View model for the assurer's D07 review screen.
-function assurerReviewModel(setup, decide) {
+function assurerReviewModel(setup, decide, form) {
+  const values = form || {};
+  const errors = values.errors || [];
+  const reviewed = Boolean(decide.plan && decide.plan.assurerReviewed);
   const serviceCount = (setup.essentialServices || []).length;
   const systemCount = (setup.criticalSystems || []).length;
   const unratedCount = (setup.criticalSystems || []).filter((s) => !deriveCriticality(s.impact)).length;
   const ctx = setup.councilContext || {};
   const contextDone = Boolean(setup.sectorContext && setup.sectorContext.confirmed && ctx.completed);
   return {
-    pageTitle: "Review the council’s setup and plan",
+    pageTitle: (errors.length ? "Error: " : "") + "Review the council’s setup and plan",
     backHref: "/decide/sent",
     councilName: (setup.council && setup.council.name) || "",
     // Everything added in Setup is in scope by definition, so "all in scope" holds.
@@ -826,7 +851,16 @@ function assurerReviewModel(setup, decide) {
       (systemCount === 0 ? "" : unratedCount === 0 ? ", all rated" : ", " + unratedCount + " not yet rated"),
     planSummary: buildPlanSummary(setup, decide),
     planWarning: buildPriorityWarning(setup, decide),
-    feedback: decide.assurerFeedback || "",
+    // Re-shown answers: the submitted form on an error, otherwise the last answer given.
+    answer: form ? values.answer : reviewed ? (decide.assurerFeedback ? "yes" : "no") : "",
+    feedback: form ? values.feedback : reviewed ? decide.assurerFeedback || "" : "",
+    errors,
+    errorById: errors.reduce((acc, e) => {
+      acc[e.id] = e.text;
+      return acc;
+    }, {}),
+    // "Return to your councils": the beta has no assurer councils list yet.
+    councilsHref: "/dashboard/not-in-this-prototype",
   };
 }
 
@@ -911,6 +945,7 @@ function renderRecordApproval(res, setup, decide, values, errors) {
     month: values.month,
     year: values.year,
     how: values.how,
+    howOther: values.howOther,
     link: values.link,
     errors: errs,
     errorById: errs.reduce((acc, e) => {

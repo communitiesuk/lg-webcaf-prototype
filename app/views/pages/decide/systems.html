@@ -63,7 +63,7 @@
         {% if unrated and unratedSystems.length %}
           {% set unratedNames %}{% for u in unratedSystems %}<a class="govuk-link" href="/setup/critical-systems/{{ u.id }}/summary">{{ u.name }}</a>{% if not loop.last %}{{ " and " if loop.revindex == 2 else ", " }}{% endif %}{% endfor %}{% endset %}
           {{ govukWarningText({
-            html: unratedNames + (" are listed last because their criticality has not been rated yet. Rate them in Setup to rank them properly." if unratedSystems.length > 1 else " is listed last because its criticality has not been rated yet. Rate it in Setup to rank it properly."),
+            html: unratedNames + (" do not have a criticality rating yet. Return to Setup to assign them." if unratedSystems.length > 1 else " does not have a criticality rating yet. Return to Setup to assign one."),
             iconFallbackText: "Warning"
           }) }}
         {% endif %}

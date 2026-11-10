@@ -88,8 +88,18 @@
                 <label class="govuk-label govuk-radios__label" for="approvalHow-2">By email</label>
               </div>
               <div class="govuk-radios__item">
-                <input class="govuk-radios__input" id="approvalHow-3" name="approvalHow" type="radio" value="another" {% if how == "another" %}checked{% endif %}>
+                <input class="govuk-radios__input" id="approvalHow-3" name="approvalHow" type="radio" value="another" data-aria-controls="conditional-approvalHow-3" {% if how == "another" %}checked{% endif %}>
                 <label class="govuk-label govuk-radios__label" for="approvalHow-3">Another way</label>
+              </div>
+              <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-approvalHow-3">
+                <div class="govuk-form-group {% if errorById.approvalHowOther %}govuk-form-group--error{% endif %}">
+                  <label class="govuk-label" for="approvalHowOther">Describe how the plan was approved</label>
+                  <div id="approvalHowOther-hint" class="govuk-hint">For example, at a briefing with the portfolio holder.</div>
+                  {% if errorById.approvalHowOther %}
+                    <p id="approvalHowOther-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.approvalHowOther }}</p>
+                  {% endif %}
+                  <input class="govuk-input {% if errorById.approvalHowOther %}govuk-input--error{% endif %}" id="approvalHowOther" name="approvalHowOther" type="text" aria-describedby="approvalHowOther-hint{% if errorById.approvalHowOther %} approvalHowOther-error{% endif %}" value="{{ howOther }}">
+                </div>
               </div>
             </div>
           </fieldset>

@@ -7,10 +7,25 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if errors.length %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="#{{ error.id }}">{{ error.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {{ appPageHeader({
         caption: "ASSURER VIEW · " + councilName,
         title: "Review the council’s setup and plan",
-        intro: "You can review the council’s information and give feedback. You are not approving anything at this stage."
+        intro: "You can review the council’s information and give feedback. You are not approving the plan. The council’s Approver does that."
       }) }}
 
       <dl class="govuk-summary-list">
@@ -34,17 +49,43 @@
       <h2 class="govuk-heading-m">Plan for this cycle</h2>
       <p class="govuk-body">The council has provided approximate assessment dates to help you plan your time.</p>
 
+      {% set planAudience = "assurer" %}
       {% include "components/plan-summary.njk" %}
 
       <form method="post" action="/decide/assurer-review" novalidate>
-        <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="assurerFeedback">Give feedback on the plan (optional)</label>
-          <div id="assurerFeedback-hint" class="govuk-hint">Tell the council about anything you think they should change before they send the plan for approval.</div>
-          <textarea class="govuk-textarea" id="assurerFeedback" name="assurerFeedback" rows="4" aria-describedby="assurerFeedback-hint">{{ feedback }}</textarea>
+        <div class="govuk-form-group {% if errorById.assurerHasFeedback %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset"{% if errorById.assurerHasFeedback %} aria-describedby="assurerHasFeedback-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you have any feedback on this plan?</legend>
+            {% if errorById.assurerHasFeedback %}
+              <p id="assurerHasFeedback-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.assurerHasFeedback }}</p>
+            {% endif %}
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assurerHasFeedback" name="assurerHasFeedback" type="radio" value="yes" data-aria-controls="conditional-assurerHasFeedback" {% if answer == "yes" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assurerHasFeedback">Yes</label>
+              </div>
+              <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-assurerHasFeedback">
+                <div class="govuk-form-group {% if errorById.assurerFeedback %}govuk-form-group--error{% endif %}">
+                  <label class="govuk-label" for="assurerFeedback">Your feedback</label>
+                  <div id="assurerFeedback-hint" class="govuk-hint">Tell the council about anything you think they should change before they send the plan for approval.</div>
+                  {% if errorById.assurerFeedback %}
+                    <p id="assurerFeedback-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.assurerFeedback }}</p>
+                  {% endif %}
+                  <textarea class="govuk-textarea {% if errorById.assurerFeedback %}govuk-textarea--error{% endif %}" id="assurerFeedback" name="assurerFeedback" rows="5" aria-describedby="assurerFeedback-hint{% if errorById.assurerFeedback %} assurerFeedback-error{% endif %}">{{ feedback }}</textarea>
+                </div>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="assurerHasFeedback-2" name="assurerHasFeedback" type="radio" value="no" {% if answer == "no" %}checked{% endif %}>
+                <label class="govuk-label govuk-radios__label" for="assurerHasFeedback-2">No</label>
+              </div>
+            </div>
+          </fieldset>
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Send feedback</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Send to the council</button>
       </form>
+
+      <p class="govuk-body"><a class="govuk-link" href="{{ councilsHref }}">Return to your councils</a></p>
     </div>
   </div>
 {% endblock %}

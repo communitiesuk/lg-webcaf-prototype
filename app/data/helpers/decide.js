@@ -204,7 +204,7 @@ function formatTiming(entry) {
     const name = MONTHS[m - 1] || entry.month;
     return (name + " " + (entry.year || "")).trim();
   }
-  return "Date not confirmed";
+  return "No assessment date given";
 }
 
 // The assessments included in the cycle, in display order: the organisation assessment

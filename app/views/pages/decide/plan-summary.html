@@ -9,12 +9,16 @@
         title: "Plan summary"
       }) }}
 
-      <p class="govuk-body">
-        {{ councilName }}<br>
-        Assessment cycle starting {{ cycleYear }}<br>
-        Prepared by {{ cafLeadName }}, CAF Lead{% if approverName %}<br>
-        For approval by {{ approverName }}{% endif %}
-      </p>
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Council</dt>
+          <dd class="govuk-summary-list__value">{{ councilName }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Assessment cycle</dt>
+          <dd class="govuk-summary-list__value">Starting {{ cycleYear }}</dd>
+        </div>
+      </dl>
 
       {% include "components/plan-summary.njk" %}
 
@@ -24,10 +28,12 @@
           <dt class="govuk-summary-list__key">CAF Lead</dt>
           <dd class="govuk-summary-list__value">{{ cafLeadName }}</dd>
         </div>
-        <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Approver</dt>
-          <dd class="govuk-summary-list__value">{{ approverName }}</dd>
-        </div>
+        {% if approverName %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">Approver</dt>
+            <dd class="govuk-summary-list__value">{{ approverName }}</dd>
+          </div>
+        {% endif %}
         {% if assurerLine %}
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">Assurer</dt>
