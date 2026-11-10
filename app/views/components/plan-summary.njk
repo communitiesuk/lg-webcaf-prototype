@@ -78,10 +78,10 @@
       <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
       <strong class="govuk-warning-text__text">
         <span class="govuk-visually-hidden">Warning</span>
-        {{ planNote.warning }}
+        {{ planNote.warning }}{% if planNote.body %}<br>
+        {{ planNote.body }}{% endif %}
       </strong>
     </div>
-    {% if planNote.body %}<p class="govuk-body">{{ planNote.body }}</p>{% endif %}
   {% endif %}
 
   {% if planSummary.assessed.length %}
