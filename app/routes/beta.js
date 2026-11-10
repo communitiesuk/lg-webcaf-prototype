@@ -16,6 +16,20 @@ function loadExampleCouncil(req) {
   req.session.data.access = seedAccess();
 }
 
+// Starting a cycle (/decide) with the example council: the CNI question (D23) is unanswered and
+// no system is marked as CNI yet, as for a real council arriving from Setup. Later starting points
+// (plan made, assurer, Approver) keep the example's CNI system.
+function clearExampleCni(req) {
+  req.session.data.decide.cniAnswer = "";
+  (req.session.data.setup.criticalSystems || []).forEach((s) => {
+    s.cni = false;
+  });
+}
+
+function isCycleStart(path) {
+  return path === "/decide" || path === "/decide/cni";
+}
+
 // Sign-in scenarios for the /beta/reset picker. Each key matches a scenario in
 // routes/internal-access.js, which seeds the WebCAF user state so the person lands on the right
 // screen after Internal Access. Proposal, not agreed.
@@ -288,6 +302,7 @@ module.exports = function (router) {
     const target = SCENES[req.params.scene];
     if (!target) return res.redirect("/beta");
     reseed(req);
+    if (isCycleStart(target)) clearExampleCni(req);
     return res.redirect(target);
   });
 
@@ -297,6 +312,7 @@ module.exports = function (router) {
     const to = (req.query.to || "").toString();
     if (!to.startsWith("/") || to.startsWith("//")) return res.redirect("/beta");
     loadExampleCouncil(req);
+    if (isCycleStart(to.split("?")[0])) clearExampleCni(req);
     return res.redirect(to);
   });
 
