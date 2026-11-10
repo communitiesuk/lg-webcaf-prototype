@@ -36,8 +36,20 @@ function clean(value) {
 
 // Where "Back" goes from the first Decide screen the person saw: D23 if the CNI screens ran,
 // otherwise the dashboard (Decide is entered from S31 or the dashboard).
-function firstScreenBackHref(setup) {
-  return showCniScreens(setup) ? "/decide/cni" : "/dashboard";
+// Back from D02/D20 returns to the last CNI screen the person actually answered: D26 (their CNI
+// list) after Yes, D24 after confirming No, D23 otherwise. No CNI screens → the dashboard.
+function firstScreenBackHref(setup, decide) {
+  if (!showCniScreens(setup)) return "/dashboard";
+  const answer = decide && decide.cniAnswer;
+  if (answer === "yes" && cniSystems(setup).length) return "/decide/cni/added";
+  if (answer === "no") return "/decide/cni/check";
+  return "/decide/cni";
+}
+
+// Back from D25 (search for a CNI system) returns to where the person came from: the D26 list
+// after "add another", otherwise the D23 question.
+function cniAddBackHref(setup, decide) {
+  return decide.cniAddFrom === "added" && cniSystems(setup).length ? "/decide/cni/added" : "/decide/cni";
 }
 
 // If the plan was sent to an Approver who has since been replaced, and no decision has been made,
@@ -165,6 +177,7 @@ module.exports = function (router) {
     }
     const answer = posted;
     decide.cniAnswer = answer;
+    decide.cniAddFrom = "question";
     // Yes: add CNI systems (D25), or straight to the list (D26) if every system is already CNI.
     if (answer === "yes") return res.redirect(nonCniSystems(setup).length ? "/decide/cni/add" : "/decide/cni/added");
     // No: if CNI was flagged in Setup (S03), show the consistency check (D24).
@@ -199,7 +212,7 @@ module.exports = function (router) {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     // Every system is already CNI — nothing left to add.
     if (!nonCniSystems(setup).length) return res.redirect("/decide/cni/added");
-    renderCniAdd(res, setup, false);
+    renderCniAdd(res, setup, req.session.data.decide, false);
   });
 
   router.post("/decide/cni/add", (req, res) => {
@@ -208,7 +221,7 @@ module.exports = function (router) {
     const systemId = clean(req.session.data.cniSystemId);
     delete req.session.data.cniSystemId;
     const system = getSystem(setup, systemId);
-    if (!system) return renderCniAdd(res, setup, true);
+    if (!system) return renderCniAdd(res, setup, req.session.data.decide, true);
     system.cni = true;
     req.session.data.decide.cniAnswer = "yes";
     return res.redirect("/decide/cni/added");
@@ -229,7 +242,7 @@ module.exports = function (router) {
     }
     res.render("pages/decide/cni-added", {
       pageTitle: `You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
-      backHref: nonCniSystems(setup).length ? "/decide/cni/add" : "/decide/cni",
+      backHref: "/decide/cni",
       added,
     });
   });
@@ -243,12 +256,15 @@ module.exports = function (router) {
       const added = cniSystems(setup).map((s) => ({ id: s.id, name: s.name, criticality: deriveCriticality(s.impact) || "Not yet rated" }));
       return res.render("pages/decide/cni-added", {
         pageTitle: `Error: You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
-        backHref: nonCniSystems(setup).length ? "/decide/cni/add" : "/decide/cni",
+        backHref: "/decide/cni",
         added,
         showError: true,
       });
     }
-    if (answer === "yes") return res.redirect("/decide/cni/add");
+    if (answer === "yes") {
+      req.session.data.decide.cniAddFrom = "added";
+      return res.redirect("/decide/cni/add");
+    }
     return res.redirect("/decide/systems"); // D02 (Batch 2)
   });
 
@@ -345,7 +361,7 @@ module.exports = function (router) {
     ensureDecide(req.session.data);
     res.render("pages/decide/systems-nothing-left", {
       pageTitle: "There is nothing new to assess this cycle",
-      backHref: firstScreenBackHref(req.session.data.setup),
+      backHref: firstScreenBackHref(req.session.data.setup, req.session.data.decide),
     });
   });
 
@@ -903,7 +919,7 @@ function renderSystems(res, setup, decide, opts) {
   const included = orgIncluded(setup);
   res.render("pages/decide/systems", {
     pageTitle: (opts.showError ? "Error: " : "") + "Which critical systems will you assess?",
-    backHref: firstScreenBackHref(setup),
+    backHref: firstScreenBackHref(setup, decide),
     rows: capped ? opts.rows.slice(0, SYSTEM_DISPLAY_CAP) : opts.rows,
     totalCount: total,
     displayCap: SYSTEM_DISPLAY_CAP,
@@ -923,10 +939,10 @@ function renderSystems(res, setup, decide, opts) {
 }
 
 // D25 render (base + error).
-function renderCniAdd(res, setup, showError) {
+function renderCniAdd(res, setup, decide, showError) {
   res.render("pages/decide/cni-add", {
     pageTitle: (showError ? "Error: " : "") + "Which critical systems are part of CNI?",
-    backHref: "/decide/cni",
+    backHref: cniAddBackHref(setup, decide),
     options: nonCniSystems(setup).map((s) => ({ id: s.id, name: s.name })),
     showError,
   });
