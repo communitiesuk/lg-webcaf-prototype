@@ -22,6 +22,16 @@
       <h1 class="govuk-heading-l">Beta prototype</h1>
       <p class="govuk-body">Jump into a journey. Each link re-seeds the example data, so a screen always looks right no matter what you clicked before.</p>
 
+      {# Round 2 research switch. Off: the example councils, N00, the "Research only" footer link, the
+         person switcher and the Prototype only blocks are hidden. #}
+      {% if not researchOn %}
+        <div class="govuk-inset-text">
+          <p class="govuk-body">Research tools are off. The ready-made example councils, the emails page and the other research tools are hidden.</p>
+          <p class="govuk-body govuk-!-margin-bottom-0"><a class="govuk-link" href="/research/on">Turn on research tools</a></p>
+        </div>
+      {% else %}
+      <p class="govuk-body">Research tools are on. <a class="govuk-link" href="/research/off">Turn off research tools</a></p>
+
       {# Researcher reset — the Prototype Kit's built-in clear-data page wipes all session answers.
          Use between research participants so no one inherits the previous person's data. #}
       <p class="govuk-body govuk-!-margin-bottom-6">
@@ -54,6 +64,19 @@
         {% endfor %}
       {% endmacro %}
 
+      <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-1">Round 2 research: Decide, emails and approval</h2>
+      <p class="govuk-hint govuk-!-margin-bottom-3">Scenarios 3 to 12 start from the participant’s own council (their finished setup in this session). Emails appear on <a class="govuk-link" href="/research/emails">Emails sent in this session</a>.</p>
+      {% include "pages/research/_switcher.html" %}
+      <ul class="govuk-list govuk-!-margin-bottom-4">
+        {% for sc in scenarios %}
+          <li class="govuk-!-margin-bottom-3">
+            <a class="govuk-link govuk-link--no-visited-state" href="/research/scenario/{{ sc.key }}">{{ sc.title }}</a>
+            <span class="govuk-hint govuk-!-margin-bottom-0">{{ sc.note }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+
       {% for section in sections %}
         <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
         {{ sectionBlock(section) }}
@@ -75,6 +98,7 @@
 
       <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m govuk-!-margin-top-6 govuk-!-margin-bottom-4">
       <p class="govuk-body-s"><a class="govuk-link" href="/beta/reset">Reset and choose a sign-in scenario</a></p>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

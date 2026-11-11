@@ -1,0 +1,33 @@
+{#
+  Decide tile — Figma "05 Readiness and dashboard · v5", component "Decide tile" (100:327), plus
+  the In progress look from R04b. One macro for every plan state; the text comes from
+  tileFor() in app/data/helpers/plan-state.js (R04 panel state table).
+
+    decideTile({ variant, hint, button: { text, href }, link: { lead, text, href } })
+
+  variant: "not-started" | "in-progress" | "action-needed" | "waiting" | "completed"
+#}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% macro decideTile(tile) %}
+  {% set tags = {
+    "not-started": { text: "Not yet started", classes: "govuk-tag--grey" },
+    "in-progress": { text: "In progress", classes: "govuk-tag--blue" },
+    "action-needed": { text: "Action needed", classes: "govuk-tag--blue" },
+    "waiting": { text: "Waiting", classes: "govuk-tag--grey" },
+    "completed": { text: "Completed", classes: "govuk-tag--green" }
+  } %}
+  {{ govukTaskList({ items: [{
+    title: { text: "Decide what to assess" },
+    href: tile.button.href if tile.button else undefined,
+    hint: { text: tile.hint },
+    status: { tag: tags[tile.variant] }
+  }] }) }}
+  {% if tile.link %}
+    <p class="govuk-body">{{ tile.link.lead }} <a class="govuk-link" href="{{ tile.link.href }}">{{ tile.link.text }}</a></p>
+  {% endif %}
+  {% if tile.button %}
+    {{ govukButton({ text: tile.button.text, href: tile.button.href }) }}
+  {% endif %}
+{% endmacro %}

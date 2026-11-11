@@ -1,0 +1,17 @@
+{# D07b — decide / review-sent — Decide v8 (11 November 2026, proposal). ASSURER view. Confirms the
+   review is sent, with or without feedback, and ends the assurer's part of Decide. #}
+{% extends "layouts/decide.html" %}
+{% from "components/feedback-message.njk" import appConfirmationPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appConfirmationPanel({ title: "Review sent", body: "We have told " + councilName }) }}
+
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">The council will decide whether to change its plan, then send it to its Approver. You do not need to do anything else for now. We will tell you when the plan has been approved.</p>
+
+      <p class="govuk-body"><a class="govuk-link" href="/decide/assurer/councils">Return to your councils</a></p>
+    </div>
+  </div>
+{% endblock %}

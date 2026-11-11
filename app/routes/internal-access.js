@@ -69,6 +69,16 @@ function applySignInScenario(sessionData) {
   return claim;
 }
 
+// Round 2 research build: return after sign-in for email links (/go/:id), as the person the email
+// was for. Returns the path, or "" if there is nothing to return to.
+function takeSignInReturn(sessionData) {
+  const ret = sessionData.signInReturn;
+  if (!ret || !ret.to) return "";
+  delete sessionData.signInReturn;
+  require("../data/helpers/acting-as").signInAs(sessionData, ret.key);
+  return ret.to;
+}
+
 module.exports = function (router) {
   // IA1 — enter your email address.
   router.get("/internal-access", (req, res) => res.redirect("/internal-access/email"));
@@ -112,6 +122,10 @@ module.exports = function (router) {
   });
 
   router.post("/internal-access/code", (req, res) => {
+    // Round 2: an email link was opened while signed out. Sign the person in and return them to
+    // the link (Dashboard Q7). Their account and council are unchanged.
+    const ret = takeSignInReturn(req.session.data);
+    if (ret) return res.redirect(ret);
     const claim = ensureClaim(req.session.data);
     claim.oneLoginEmail = clean(req.session.data.iaEmail); // the email the person typed
     if (!claim.oneLoginEmail) return res.redirect("/internal-access/email"); // nothing typed
@@ -128,6 +142,8 @@ module.exports = function (router) {
   });
 
   router.post("/internal-access/continue", (req, res) => {
+    const ret = takeSignInReturn(req.session.data);
+    if (ret) return res.redirect(ret);
     applySignInScenario(req.session.data);
     return res.redirect(landingForClaim(req.session.data.claim));
   });

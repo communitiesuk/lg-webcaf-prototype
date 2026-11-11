@@ -27,6 +27,10 @@ const {
   formatToday,
   assessedLabel,
 } = require("../data/helpers/decide");
+// The plan state model (round 2 build): the state drives the screen, the dashboard tile and the emails.
+const planStateModel = require("../data/helpers/plan-state");
+const { planState, screenFor, syncApprover } = planStateModel;
+const { currentPersona, currentCouncil, OTHER_COUNCIL } = require("../data/helpers/acting-as");
 // Onboarding bookings are owned by the Assurance activities section (single source of truth).
 const { ensureAssurance } = require("../data/helpers/assurance");
 
@@ -52,21 +56,6 @@ function cniAddBackHref(setup, decide) {
   return decide.cniAddFrom === "added" && cniSystems(setup).length ? "/decide/cni/added" : "/decide/cni";
 }
 
-// If the plan was sent to an Approver who has since been replaced, and no decision has been made,
-// route the plan to the new Approver (D27 if they use the service, else D12) and remember the
-// change for a one-off banner. Old Approver → no longer asked; nothing else is reset.
-function noteApproverChange(setup, decide) {
-  const plan = decide.plan || {};
-  const decision = (decide.approval && decide.approval.decision) || "";
-  const approver = (setup.people && setup.people.approver) || {};
-  if (!plan.sentForApproval || decision || !plan.sentForApprovalTo) return;
-  if (plan.sentForApprovalTo === (approver.name || "")) return;
-  plan.approverChange = { from: plan.sentForApprovalTo, to: approver.name || "", usesService: Boolean(approver.hasAccount) };
-  plan.sentForApprovalTo = approver.name || "";
-  // A recorded (not in-service) Approver cannot approve on D11; the CAF Lead records it on D12.
-  if (!approver.hasAccount) plan.sentForApproval = false;
-}
-
 // Read and clear the one-off "Approver changed" banner.
 function takeApproverChange(decide) {
   const plan = decide.plan || {};
@@ -75,18 +64,56 @@ function takeApproverChange(decide) {
   return change;
 }
 
-// After D07: the council sees the assurer's feedback (D08) only if there is some; otherwise the
-// plan goes straight for approval — D11 (Approver uses the service) or D12 (record it here).
-function afterAssurerReview(setup, decide) {
-  if (decide.assurerFeedback) return "/decide/feedback";
-  return approvalHref(setup);
-}
+// Which plan states each Decide path is open in. Anything else goes to the screen for the current
+// state (CAF Lead), the assurer's councils list (assurer screens) or the dashboard (Approver screens).
+const BUILD_PATHS = ["/decide/cni", "/decide/systems", "/decide/confirm", "/decide/timing", "/decide/review"];
+const BUILD_STATES = ["not_started", "in_progress"];
+const AFTER_ASSIGNMENT = [
+  "with_assurer",
+  "feedback_received",
+  "reviewed_no_feedback",
+  "ready_to_send",
+  "awaiting_approval",
+  "awaiting_recorded_decision",
+  "returned",
+  "approved",
+];
+const COUNCIL_PATHS = {
+  "/decide/approver-needed": ["no_approver"],
+  "/decide/no-assurer": ["waiting_for_assurer_assignment"],
+  "/decide/sent": AFTER_ASSIGNMENT,
+  "/decide/feedback": ["feedback_received"],
+  "/decide/send-for-approval": ["reviewed_no_feedback", "ready_to_send"],
+  "/decide/sent-for-approval": ["awaiting_approval"],
+  "/decide/record-approval": ["awaiting_recorded_decision"],
+  "/decide/returned": ["returned"],
+  "/decide/approved": ["approved"],
+  "/decide/change-plan": ["feedback_received", "returned"],
+};
 
-// The CAF Lead's next screen when the plan goes for approval: D27 "Plan sent for approval" if the
-// Approver uses the service (they approve on D11 themselves), else D12 (record it here).
-function approvalHref(setup) {
-  const approver = (setup.people && setup.people.approver) || {};
-  return approver.hasAccount ? "/decide/sent-for-approval" : "/decide/record-approval";
+function guardDecidePath(req) {
+  const p = req.path.replace(/\/$/, "") || "/decide";
+  const data = req.session.data;
+  const setup = data.setup;
+  const state = planState(data);
+  const own = screenFor(data);
+  if (p === "/decide" || p === "/decide/plan-summary") return null;
+  if (p === "/decide/no-assurer/assign") return hasAssurer(setup) ? own : null;
+  // Assurer screens (D07, D07a, D07b, AL30).
+  if (p === "/decide/assurer/councils" || p === "/decide/review-sent" || p === "/decide/assurer-review/setup") return null;
+  if (p === "/decide/assurer-review") return state === "with_assurer" ? null : "/decide/assurer/councils";
+  // Approver screens (D11, D28a/b).
+  if (p === "/decide/approve") return state === "awaiting_approval" ? null : "/dashboard";
+  if (p === "/decide/approve/done") return state === "approved" || state === "returned" ? null : "/dashboard";
+  // Building the plan (D23 to D05).
+  if (BUILD_PATHS.some((b) => p === b || p.startsWith(b + "/"))) {
+    if (BUILD_STATES.indexOf(state) === -1) return own;
+    if (p.startsWith("/decide/cni") && !showCniScreens(setup)) return "/decide/systems";
+    return null;
+  }
+  const allowed = COUNCIL_PATHS[p];
+  if (allowed) return allowed.indexOf(state) === -1 ? own : null;
+  return null;
 }
 
 module.exports = function (router) {
@@ -96,26 +123,11 @@ module.exports = function (router) {
     if (!req.path.startsWith("/decide")) return next();
     ensureDecide(req.session.data);
     applyDecideChrome(req, res);
-    const setup = req.session.data.setup;
-    // No Approver named in setup (task 7) → nobody can approve the plan. Send the person back
-    // to the setup task list to confirm one (S30 applies the same rule to finishing setup).
-    if (!hasApprover(setup)) return res.redirect("/setup/task-list");
-    // The Approver changed (People › Approver) while a plan was waiting for their decision: the
-    // plan now goes to the new Approver. Remember the change so the next approval screen (D27 or
-    // D12) tells the CAF Lead once. An approved plan is unaffected (D13 keeps who approved it).
-    noteApproverChange(setup, req.session.data.decide);
-
-    // Once the plan is approved it is locked: the plan screens go to D13 (changes are made by
-    // speaking to the assurer, as D13 says). Only D13, D28 and the plan summary stay open.
-    const decision = (req.session.data.decide.approval && req.session.data.decide.approval.decision) || "";
-    const openAfterApproval = ["/decide", "/decide/approved", "/decide/approve/done", "/decide/plan-summary"];
-    if (decision === "approved" && openAfterApproval.indexOf(req.path) === -1) {
-      return res.redirect("/decide/approved");
-    }
-    // The CNI screens only run when the council chose a CNI sector in S03 and has systems.
-    if (req.path.startsWith("/decide/cni") && !showCniScreens(setup)) {
-      return res.redirect("/decide/systems");
-    }
+    // The Approver changed in People while the plan waits for a decision: the plan goes to the
+    // new Approver (D27b or D12b), with N05 and N08 (plan-state.js syncApprover).
+    syncApprover(req.session.data);
+    const target = guardDecidePath(req);
+    if (target && target !== req.path) return res.redirect(target);
     next();
   });
 
@@ -125,25 +137,24 @@ module.exports = function (router) {
   // sector in setup, else straight to D02 (clearing stale CNI flags, as no system can be CNI).
   router.get("/decide", (req, res) => {
     const setup = req.session.data.setup;
-    const decide = req.session.data.decide;
-    const decision = (decide.approval && decide.approval.decision) || "";
+    const state = planState(req.session.data);
     // Approved: Decide is finished and "Assessments" means the assessments themselves, which are
-    // not in this prototype yet. (D13 is still shown straight after approval.)
-    if (decision === "approved") return res.redirect("/dashboard/not-in-this-prototype");
-    if (decision === "returned") return res.redirect("/decide/returned");
-    if (decide.plan && decide.plan.sentToAssurer) {
-      if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
-      if (decide.plan.sentForApproval) return res.redirect(approvalHref(setup));
-      if (decide.plan.assurerReviewed) return res.redirect(afterAssurerReview(setup, decide));
-      return res.redirect("/decide/sent");
-    }
-    if (showCniScreens(setup)) return res.redirect("/decide/cni");
-    if (!isCniFlaggedInSetup(setup)) {
+    // not in this prototype yet. (D13 is still shown straight after approval, and N06 lands on it.)
+    if (state === "approved") return res.redirect("/dashboard/not-in-this-prototype");
+    if (state === "not_started" && !isCniFlaggedInSetup(setup)) {
       (setup.criticalSystems || []).forEach((s) => {
         s.cni = false;
       });
     }
-    return res.redirect("/decide/systems");
+    return res.redirect(screenFor(req.session.data));
+  });
+
+  // D01 — You need to confirm your Approver before you start a cycle (Decide v8, proposal)
+  router.get("/decide/approver-needed", (req, res) => {
+    res.render("pages/decide/approver-needed", {
+      pageTitle: "You need to confirm your Approver before you start a cycle",
+      backHref: "/dashboard",
+    });
   });
 
   // ----- Batch 1: CNI gate -----------------------------------------------------------
@@ -480,16 +491,7 @@ module.exports = function (router) {
   });
 
   router.post("/decide/review", (req, res) => {
-    const setup = ensureDecide(req.session.data) && req.session.data.setup;
-    const decide = req.session.data.decide;
-    decide.plan = decide.plan || {};
-    decide.plan.sentToAssurer = true;
-    // A new (or re-sent, after being returned) plan goes back through review and approval.
-    decide.plan.assurerReviewed = false;
-    decide.plan.sentForApproval = false;
-    decide.plan.sentForApprovalTo = "";
-    decide.approval = decide.approval || {};
-    decide.approval.decision = "";
+    ensureDecide(req.session.data);
     // Sending the plan starts this cycle's onboarding. Reset the cycle's assurance activities to
     // "not booked yet" (the single source of truth, shared with the Assurance section) so D09
     // prompts the user to book them. Bookings made afterwards flow back to D09.
@@ -497,23 +499,16 @@ module.exports = function (router) {
     ["onboarding-org", "onboarding-systems", "pre-call"].forEach((id) => {
       assurance.activities[id] = { status: "not-booked", date: "" };
     });
-    // D09 (assurer assigned) vs D06 (no assurer).
-    if (hasAssurer(setup)) {
-      return res.redirect("/decide/sent");
-    }
-    return res.redirect("/decide/no-assurer");
+    // A new (or re-sent) plan goes back through review and approval. N02 to the assurer if one is
+    // assigned (D09); otherwise D06.
+    planStateModel.sendToAssurer(req.session.data);
+    return res.redirect(screenFor(req.session.data));
   });
 
   // ----- Batch 4: assurer / send flow -------------------------------------------------
 
   // D06 — Waiting for your assurer (393:2539)
   router.get("/decide/no-assurer", (req, res) => {
-    ensureDecide(req.session.data);
-    const setup = req.session.data.setup;
-    // Assigned since (for example via the prototype control) — carry on to D09.
-    if (hasAssurer(setup) && req.session.data.decide.plan && req.session.data.decide.plan.sentToAssurer) {
-      return res.redirect("/decide/sent");
-    }
     res.render("pages/decide/no-assurer", {
       pageTitle: "Waiting for an assurer",
     });
@@ -523,8 +518,9 @@ module.exports = function (router) {
   // to D09 and the assurer review. The assurer is a clearly labelled stub — MHCLG assigns the real
   // one, so there is no user-entered value.
   router.get("/decide/no-assurer/assign", (req, res) => {
-    req.session.data.setup.assurer = { name: "Example assurer", organisation: "", assigned: true, stub: true };
-    return res.redirect("/decide/sent");
+    // N01 to the CAF Lead; the waiting plan goes to the assurer (N02).
+    planStateModel.assignAssurer(req.session.data, { name: "Example assurer", organisation: "Example supplier", stub: true });
+    return res.redirect("/decide");
   });
 
   // D09 — Book your onboarding calls (393:3103)
@@ -532,10 +528,6 @@ module.exports = function (router) {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
     if (!hasAssurer(setup)) return res.redirect("/decide/no-assurer");
-    // Being on D09 means the plan has been sent (also keeps example scenes that open D09 directly
-    // coherent, so /decide resumes here).
-    decide.plan = decide.plan || {};
-    decide.plan.sentToAssurer = true;
     const hasSystems = ((decide.cycle && decide.cycle.selectedSystems) || []).length > 0;
     const acts = ensureAssurance(req.session.data).activities || {};
     const rows = [];
@@ -574,11 +566,50 @@ module.exports = function (router) {
       applyDecideMinimalChrome(req, res);
       return res.render("pages/decide/assurer-review", assurerReviewModel(setup, decide, { answer, feedback, errors }));
     }
-    // No feedback: the council does not see D08.
-    decide.assurerFeedback = answer === "yes" ? feedback : "";
-    decide.plan = decide.plan || {};
-    decide.plan.assurerReviewed = true;
-    return res.redirect(afterAssurerReview(setup, decide));
+    // Yes with feedback → N03, the council sees D08. No → N04, the council goes to D10/D10b.
+    planStateModel.recordAssurerReview(req.session.data, answer === "yes" ? feedback : "");
+    return res.redirect("/decide/review-sent");
+  });
+
+  // D07b — ASSURER: Review sent (Decide v8, proposal). Ends the assurer's part of Decide.
+  router.get("/decide/review-sent", (req, res) => {
+    applyDecideMinimalChrome(req, res);
+    res.render("pages/decide/review-sent", {
+      pageTitle: "Review sent",
+      councilName: currentCouncil(req.session.data).name,
+    });
+  });
+
+  // AL30 — ASSURER: Your councils (Assurance allocation v1, workshop proposal; built for round 2 so
+  // D07, D07b and old N02 links have somewhere to land). The participant's council plus one
+  // labelled example council. Status lines other than "Plan sent for your review" and
+  // "Setup in progress" are the build's own (no Figma copy): flagged in the Figma notes.
+  router.get("/decide/assurer/councils", (req, res) => {
+    const data = req.session.data;
+    applyDecideMinimalChrome(req, res);
+    const state = planState(data);
+    const plan = data.decide.plan || {};
+    const assurer = currentPersona(data).role === "assurer" ? currentPersona(data) : null;
+    const setup = data.setup;
+    let status = "Setup in progress";
+    let action = { text: "View", href: "/decide/assurer-review/setup" };
+    if (state === "with_assurer") {
+      status = "Plan sent for your review";
+      action = { text: "Review", href: "/decide/assurer-review" };
+    } else if (plan.assurerReviewed) {
+      status = "Review sent" + (plan.reviewedOn ? " on " + plan.reviewedOn : "");
+    }
+    const banner = data.oneOffBanner && data.oneOffBanner.where === "councils" ? data.oneOffBanner : null;
+    if (banner) delete data.oneOffBanner;
+    res.render("pages/decide/assurer-councils", {
+      pageTitle: "Your councils",
+      assurerLine: [(setup.assurer && setup.assurer.name) || (assurer && assurer.name), setup.assurer && setup.assurer.organisation].filter(Boolean).join(", "),
+      banner,
+      councils: [
+        { name: currentCouncil(data).name, status, action },
+        { name: OTHER_COUNCIL.name, status: "Setup in progress", action: { text: "View", href: "/dashboard/not-in-this-prototype" } },
+      ],
+    });
   });
 
   // D07a (ADDITION, not in Figma v7) — ASSURER: read-only view of the council's setup, reached
@@ -615,8 +646,6 @@ module.exports = function (router) {
   router.get("/decide/feedback", (req, res) => {
     const setup = ensureDecide(req.session.data) && req.session.data.setup;
     const decide = req.session.data.decide;
-    // No feedback — nothing to show; the plan goes for approval.
-    if (!decide.assurerFeedback) return res.redirect(approvalHref(setup));
     res.render("pages/decide/feedback", {
       pageTitle: "Your assurer has given feedback on your plan",
       backHref: "/decide/sent",
@@ -625,10 +654,42 @@ module.exports = function (router) {
     });
   });
 
+  // D08 "Continue with current plan and send for approval" → D10 (or D10b).
   router.post("/decide/feedback", (req, res) => {
-    const setup = ensureDecide(req.session.data) && req.session.data.setup;
-    // D11 (Approver approves in service) vs D12 (record decision elsewhere).
-    return res.redirect(approvalHref(setup));
+    planStateModel.continueWithPlan(req.session.data);
+    return res.redirect("/decide/send-for-approval");
+  });
+
+  // D08 "Change plan" / D14 "Change my plan": back to D02 with the current selections; the plan is
+  // in progress again.
+  router.post("/decide/change-plan", (req, res) => {
+    planStateModel.changePlan(req.session.data);
+    return res.redirect("/decide/systems");
+  });
+
+  // D10 / D10b — Send your plan for approval (Decide v8). D10 when the Approver has an account
+  // (sends N05, then D27); D10b when they do not (no email; the CAF Lead records it on D12).
+  router.get("/decide/send-for-approval", (req, res) => {
+    const setup = req.session.data.setup;
+    const decide = req.session.data.decide;
+    const approver = (setup.people && setup.people.approver) || {};
+    res.render("pages/decide/send-for-approval", {
+      pageTitle: "Send your plan for approval",
+      backHref: decide.assurerFeedback ? "/decide/feedback" : "/dashboard",
+      inService: Boolean(approver.hasAccount),
+      approverLine: [approver.name, approver.jobTitle].filter(Boolean).join(", "),
+    });
+  });
+
+  router.post("/decide/send-for-approval", (req, res) => {
+    const setup = req.session.data.setup;
+    const approver = (setup.people && setup.people.approver) || {};
+    if (approver.hasAccount) {
+      planStateModel.sendForApproval(req.session.data);
+      return res.redirect("/decide/sent-for-approval");
+    }
+    planStateModel.startRecordingDecision(req.session.data);
+    return res.redirect("/decide/record-approval");
   });
 
   // ----- Batch 5: approval flow + printable plan summary ------------------------------
@@ -639,14 +700,10 @@ module.exports = function (router) {
     const setup = req.session.data.setup;
     const decide = req.session.data.decide;
     const approver = (setup.people && setup.people.approver) || {};
-    if (!approver.hasAccount) return res.redirect("/decide/record-approval");
-    decide.plan = decide.plan || {};
-    decide.plan.sentForApproval = true;
-    decide.plan.sentForApprovalTo = approver.name || "";
     const change = takeApproverChange(decide);
     res.render("pages/decide/sent-for-approval", {
       pageTitle: "Plan sent for approval",
-      approverName: approver.name || "",
+      approverName: (decide.plan && decide.plan.sentForApprovalTo) || approver.name || "",
       approverChange: change,
     });
   });
@@ -692,6 +749,7 @@ module.exports = function (router) {
       decide.approval.decision = "approved";
       decide.approval.by = approver.name || "";
       decide.approval.date = formatToday(); // approved in the service today
+      planStateModel.approverDecides(data, "approved"); // D28a, N06
       return res.redirect("/decide/approve/done");
     }
     if (decision === "return") {
@@ -703,11 +761,12 @@ module.exports = function (router) {
       decide.approval.by = approver.name || "";
       decide.approval.returnReason = reason;
       decide.approval.returnedDate = formatToday();
+      planStateModel.approverDecides(data, "returned"); // D28b, N07
       return res.redirect("/decide/approve/done");
     }
-    // No decision chosen — re-render the page unchanged.
+    // D11e — no decision chosen.
     applyDecideMinimalChrome(req, res);
-    return res.render("pages/decide/approve", approveModel(setup, decide, {}));
+    return res.render("pages/decide/approve", approveModel(setup, decide, { noDecision: true }));
   });
 
   // D12 — council: Record your Approver's decision (393:2726)
@@ -758,6 +817,7 @@ module.exports = function (router) {
     decide.approval.how = entered.how;
     // Saved for any screen that later shows the approval method (none does yet).
     decide.approval.howOther = entered.how === "another" ? entered.howOther : "";
+    planStateModel.recordApproval(req.session.data); // no email: the CAF Lead already knows
     decide.approval.link = entered.link;
     return res.redirect("/decide/approved");
   });
@@ -814,7 +874,7 @@ function approveModel(setup, decide, opts) {
   const hasFeedback = Boolean(decide.assurerFeedback);
   const assurer = assurerLine(setup);
   return {
-    pageTitle: "Approve the plan for this cycle",
+    pageTitle: (opts.showError || opts.noDecision ? "Error: " : "") + "Approve the plan for this cycle",
     councilName: (setup.council && setup.council.name) || "",
     cafLeadName: (people.cafLead && people.cafLead.name) || "",
     planSummary: buildPlanSummary(setup, decide),
@@ -825,6 +885,7 @@ function approveModel(setup, decide, opts) {
     decision: opts.decision || "",
     reason: opts.reason || "",
     showError: Boolean(opts.showError),
+    noDecision: Boolean(opts.noDecision),
   };
 }
 
@@ -857,7 +918,7 @@ function assurerReviewModel(setup, decide, form) {
   const contextDone = Boolean(setup.sectorContext && setup.sectorContext.confirmed && ctx.completed);
   return {
     pageTitle: (errors.length ? "Error: " : "") + "Review the council’s setup and plan",
-    backHref: "/decide/sent",
+    backHref: "/decide/assurer/councils",
     councilName: (setup.council && setup.council.name) || "",
     // Everything added in Setup is in scope by definition, so "all in scope" holds.
     contextSummary: contextDone ? "Completed" : "Not completed",
@@ -875,8 +936,8 @@ function assurerReviewModel(setup, decide, form) {
       acc[e.id] = e.text;
       return acc;
     }, {}),
-    // "Return to your councils": the beta has no assurer councils list yet.
-    councilsHref: "/dashboard/not-in-this-prototype",
+    // "Return to your councils": AL30 (Assurance allocation v1, built for round 2).
+    councilsHref: "/decide/assurer/councils",
   };
 }
 

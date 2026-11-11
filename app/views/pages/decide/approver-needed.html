@@ -1,0 +1,24 @@
+{# D01 — decide / approver-needed — Decide v8 (11 November 2026, proposal). Shown instead of D23 or D02
+   when no Approver is confirmed in Setup task 7 (plan state no_approver). #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "You need to confirm your Approver before you start a cycle"
+      }) }}
+
+      <p class="govuk-body">Your Approver signs off what your council will assess each cycle. Confirm who your Approver is in Set up your council, task 7. Then come back here to start your cycle.</p>
+
+      <div class="govuk-button-group">
+        <a class="govuk-button" data-module="govuk-button" href="/access/approver?return=/decide/approver-needed">Confirm your Approver</a>
+        <a class="govuk-link" href="/dashboard">Back to your dashboard</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

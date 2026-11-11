@@ -1,0 +1,38 @@
+{# N00 — research-only / emails-sent-in-this-session — Figma Decide v8 (proposal, 11 November 2026).
+   Research harness, not a service screen. Only reachable when the research switch is on. #}
+{% extends "layouts/setup.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Research only</span>
+      <h1 class="govuk-heading-l">Emails sent in this session</h1>
+      <p class="govuk-body">Research harness: not part of the service.</p>
+      <p class="govuk-body">The prototype cannot send real email. This page lists what the service would have sent, so a participant can open the email and follow its link.</p>
+
+      {% include "pages/research/_switcher.html" %}
+
+      {% if emails.length %}
+        <p class="govuk-body">Newest first. Each line: who it went to, the subject, and the link.</p>
+        <ol class="govuk-list govuk-list--number">
+          {% for e in emails %}
+            <li class="govuk-!-margin-bottom-4">
+              To {{ e.to.name }} ({{ e.to.role }}) · <a class="govuk-link" href="/research/emails/{{ e.id }}">{{ e.subject }}</a> ({{ e.emailId }})
+              {% if e.hasLink %}
+                · <a class="govuk-link" href="/go/{{ e.id }}">Open the link</a>
+                {% if e.signInAsKey %}
+                  · <a class="govuk-link" href="/research/sign-in-as/{{ e.signInAsKey }}?to=/go/{{ e.id }}">Sign in as {{ e.to.name }} and open the link</a>
+                {% endif %}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p class="govuk-body">No emails have been sent in this session yet.</p>
+      {% endif %}
+
+      <p class="govuk-body-s">Facilitator: a “Research only” link in the prototype footer opens this page. It is not shown to councils and is not built into the service.</p>
+      <p class="govuk-body-s"><a class="govuk-link" href="/beta">Back to the research start page</a></p>
+    </div>
+  </div>
+{% endblock %}

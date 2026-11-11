@@ -1,0 +1,15 @@
+{# A36 — access / you-cannot-view-this-plan — Figma Access management v6 (proposal, 11 November 2026).
+   A signed-in person followed an email link for a council they have no role at. Shows the council
+   name only, never the plan. #}
+{% extends "layouts/setup.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">You cannot view this plan</h1>
+      <p class="govuk-body">The link you followed is for {{ councilName }}’s CAF plan. Your account does not have access to that council.</p>
+      <p class="govuk-body">If you think you should have access, ask the council’s CAF Lead to invite you.</p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ dashboardHref }}">Go to your dashboard</a></p>
+    </div>
+  </div>
+{% endblock %}

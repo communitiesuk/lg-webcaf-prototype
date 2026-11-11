@@ -1,0 +1,16 @@
+{# Research only: who is signed in. Lets the facilitator play another person in the same browser. #}
+<div class="govuk-inset-text">
+  <p class="govuk-body govuk-!-margin-bottom-2"><strong>Signed in as:</strong>
+    {% if signedOut %}nobody (signed out){% else %}{% for o in switcher %}{% if o.current %}{{ o.label }}{% endif %}{% endfor %}{% endif %}
+  </p>
+  <ul class="govuk-list govuk-!-margin-bottom-0">
+    {% for o in switcher %}
+      {% if o.available and not o.current %}
+        <li><a class="govuk-link" href="/research/sign-in-as/{{ o.key }}?to={{ returnTo }}">Sign in as {{ o.label }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if not signedOut %}
+      <li><a class="govuk-link" href="/research/sign-out">Sign out (keeps this session’s data)</a></li>
+    {% endif %}
+  </ul>
+</div>

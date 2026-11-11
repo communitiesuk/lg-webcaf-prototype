@@ -26,7 +26,9 @@
       <h2 class="govuk-heading-m">Change your plan</h2>
       <p class="govuk-body">Make any changes needed, then send your plan for approval again. Your assurer will review the plan again if the changes affect their previous feedback.</p>
 
-      <a class="govuk-button" data-module="govuk-button" href="/decide/systems">Change my plan</a>
+      <form method="post" action="/decide/change-plan" novalidate>
+        <button class="govuk-button" data-module="govuk-button" type="submit">Change my plan</button>
+      </form>
     </div>
   </div>
 {% endblock %}

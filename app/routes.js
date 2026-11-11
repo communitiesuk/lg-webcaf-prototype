@@ -84,6 +84,9 @@ const { patchFileStore, saveBeforeRedirect } = require("./data/helpers/session-s
 patchFileStore();
 router.use(saveBeforeRedirect);
 
+// Round 2 research harness (beta-2): research switch, Approver-change sync. See app/routes/research.js.
+router.use(require("./routes/research").researchMiddleware);
+
 router.use((req, res, next) => {
   res.on("finish", () => {
     const sessionData = req.session && req.session.data ? req.session.data : null;
@@ -269,6 +272,7 @@ require("./routes/readiness")(router);
 require("./routes/assurance")(router);
 require("./routes/access")(router);
 require("./routes/beta")(router);
+require("./routes/research")(router);
 require("./routes/assurer")(router);
 require("./routes/assurer-alpha")(router);
 require("./routes/mhclg")(router);

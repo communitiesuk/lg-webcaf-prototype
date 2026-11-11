@@ -1,0 +1,39 @@
+{# AL30 — assurer / your-councils — Assurance allocation v1 (workshop proposal, 9 November 2026).
+   Built for round 2 so D07, D07b and old N02 links have somewhere to land. ASSURER view. #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if banner %}
+        <div class="govuk-notification-banner" role="region" aria-labelledby="banner-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="banner-title">Important</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ banner.heading }}</p>
+            <p class="govuk-body">{{ banner.body }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ appPageHeader({
+        caption: "ASSURER VIEW" + (" · " + assurerLine if assurerLine else ""),
+        title: "Your councils"
+      }) }}
+
+      <dl class="govuk-summary-list">
+        {% for council in councils %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ council.name }}</dt>
+            <dd class="govuk-summary-list__value">{{ council.status }}</dd>
+            <dd class="govuk-summary-list__actions"><a class="govuk-link" href="{{ council.action.href }}">{{ council.action.text }}<span class="govuk-visually-hidden"> {{ council.name }}</span></a></dd>
+          </div>
+        {% endfor %}
+      </dl>
+
+      <p class="govuk-body">You can see only the councils assigned to you.</p>
+    </div>
+  </div>
+{% endblock %}

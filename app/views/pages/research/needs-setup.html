@@ -1,0 +1,17 @@
+{# Research harness: a round 2 scenario was opened without a finished setup in this session. #}
+{% extends "layouts/setup.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Research only</span>
+      <h1 class="govuk-heading-l">This scenario needs a finished setup</h1>
+      <p class="govuk-body">“{{ scenario.title }}” starts from the participant’s own council. This session does not have a finished setup with an Approver yet.</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>Ask the participant to finish Set up your council (including task 7, Confirm your Approver), then open the scenario again.</li>
+        <li>Or <a class="govuk-link" href="/research/scenario/{{ scenario.key }}?council=example">run it with the example council instead</a>.</li>
+      </ul>
+      <p class="govuk-body"><a class="govuk-link" href="/beta">Back to the research start page</a></p>
+    </div>
+  </div>
+{% endblock %}

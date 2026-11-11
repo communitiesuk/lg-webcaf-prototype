@@ -195,40 +195,23 @@ function selectedSystemNames(sessionData) {
   return ids.map((id) => byId[id] || id);
 }
 
-// Decide progress for the dashboard tile: "not-started" until the person has answered anything in
-// Decide (CNI, systems, confirmation, sending, or a returned plan); otherwise "in-progress".
+// Decide progress (kept for older callers): "not-started" until anything is answered in Decide.
 function decideTaskStatus(sessionData) {
-  const d = (sessionData && sessionData.decide) || {};
-  const cycle = d.cycle || {};
-  const touched =
-    Boolean(d.cniAnswer) ||
-    (cycle.selectedSystems || []).length > 0 ||
-    Boolean(cycle.noneOnly) ||
-    Boolean(cycle.confirmed) ||
-    Boolean(d.plan && d.plan.sentToAssurer) ||
-    Boolean(d.approval && d.approval.decision);
-  return touched ? "in-progress" : "not-started";
+  const state = require("./plan-state").planState(sessionData);
+  return state === "not_started" || state === "no_approver" || state === "setup_incomplete" ? "not-started" : "in-progress";
 }
 
-// View-model for R04 (ready to decide). Setup counts are LIVE; "Last assessment" is example history.
+// View-model for R04 to R04d (ready to decide). The Decide tile comes from the plan state
+// (plan-state.js tileFor, R04 panel state table). Setup counts are LIVE; "Last assessment" is
+// example history.
 function buildReadyToDecideModel(sessionData) {
   const setup = ensureSetup(sessionData);
   const summary = buildSetupSummary(setup);
   const svc = summary.servicesCount;
   const sys = summary.systemsCount;
   const plural = (n) => (n === 1 ? "" : "s");
-  const started = decideTaskStatus(sessionData) === "in-progress";
   return {
-    decideTask: {
-      title: { text: "Decide what to assess" },
-      href: "/decide",
-      hint: { text: "Choose what this cycle covers, then get it approved." },
-      // Reflects Decide progress: "Not yet started" until the person answers anything in Decide.
-      status: started
-        ? { tag: { text: "In progress", classes: "govuk-tag--blue" } }
-        : { tag: { text: "Not yet started", classes: "govuk-tag--grey" } },
-    },
-    decideButtonText: started ? "Continue" : "Start this cycle",
+    decideTile: require("./plan-state").tileFor(sessionData),
     record: {
       setupValue: `Complete, ${svc} essential service${plural(svc)} and ${sys} critical system${plural(sys)}`,
       // Previous assessment history exists only for the example council (the prototype holds no

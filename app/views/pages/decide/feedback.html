@@ -16,9 +16,9 @@
 
       <p class="govuk-body">Your assurer’s feedback is advice, not a requirement. Choose whether to change your plan or continue with it.</p>
 
-      <div class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/systems">Change plan</a>
-      </div>
+      <form method="post" action="/decide/change-plan" novalidate class="govuk-!-margin-bottom-3">
+        <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit">Change plan</button>
+      </form>
       <form method="post" action="/decide/feedback" novalidate>
         <button class="govuk-button" data-module="govuk-button" type="submit">Continue with current plan and send for approval</button>
       </form>

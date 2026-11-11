@@ -1,11 +1,10 @@
-{# R04 dashboard state — ready to decide — Figma node 209:175 #}
-{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
+{# R04 to R04d dashboard — ready to decide, in progress, waiting, action needed — Figma Readiness v5.
+   The Decide tile is one component; its state comes from the plan state (plan-state.js tileFor). #}
+{% from "components/decide-tile.njk" import decideTile %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 <h2 class="govuk-heading-m">What to do next</h2>
-{{ govukTaskList({ items: [ model.decideTask ] }) }}
-{{ govukButton({ text: model.decideButtonText, href: "/decide" }) }}
+{{ decideTile(model.decideTile) }}
 
 <h2 class="govuk-heading-m">Your council record</h2>
 {% set recordRows = [

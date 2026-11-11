@@ -283,6 +283,33 @@ function reseedEmptySetup(req) {
   req.session.data.decide = buildDecideSeedEmpty();
 }
 
+// Round 2 (beta-2): screens after D05 are open only in their plan state, so the example scenes that
+// jump straight to them first move the example plan to that state (plan-state.js). These scenes
+// create the emails that state would have sent, so N00 matches what the screen says.
+function prepareSceneState(req, scene) {
+  const data = req.session.data;
+  const model = require("../data/helpers/plan-state");
+  const acting = require("../data/helpers/acting-as");
+  const ex = data.decide;
+  const feedback = ex.assurerFeedback;
+  const sent = ["decide-sent", "decide-assurer", "decide-approve", "decide-approved"];
+  if (sent.indexOf(scene) === -1) return;
+  data.notify = { emails: [], counter: 0 };
+  ex.cycle.confirmed = true;
+  model.sendToAssurer(data); // with_assurer (K Osei is assigned in the example), N02
+  if (scene === "decide-assurer") return acting.signInAs(data, "assurer");
+  if (scene === "decide-sent") return acting.signInAs(data, "caf-lead");
+  model.recordAssurerReview(data, feedback); // N03
+  model.continueWithPlan(data);
+  model.sendForApproval(data); // the example Approver has an account: N05
+  if (scene === "decide-approve") return acting.signInAs(data, "approver");
+  ex.approval.decision = "approved";
+  ex.approval.by = data.setup.people.approver.name;
+  ex.approval.date = require("../data/helpers/decide").formatToday();
+  model.approverDecides(data, "approved"); // N06
+  acting.signInAs(data, "caf-lead");
+}
+
 module.exports = function (router) {
   router.get("/beta", (req, res) => {
     res.render("pages/beta", {
@@ -293,6 +320,11 @@ module.exports = function (router) {
       sections: SECTIONS.filter((s) => s.inResearch),
       otherSections: SECTIONS.filter((s) => !s.inResearch),
       walkthroughs: WALKTHROUGH_LINKS,
+      // Round 2 research harness: the switch, the person switcher and the scenarios.
+      scenarios: require("./research").SCENARIOS,
+      switcher: require("../data/helpers/acting-as").switcherOptions(req.session.data),
+      signedOut: require("../data/helpers/acting-as").isSignedOut(req.session.data),
+      returnTo: "/beta",
       resetSuccess: (req.query.reset || "").toString() === "success",
     });
   });
@@ -303,6 +335,7 @@ module.exports = function (router) {
     if (!target) return res.redirect("/beta");
     reseed(req);
     if (isCycleStart(target)) clearExampleCni(req);
+    prepareSceneState(req, req.params.scene);
     return res.redirect(target);
   });
 
@@ -398,3 +431,5 @@ module.exports = function (router) {
     return res.redirect("/beta/reset?cleared=1");
   });
 };
+
+module.exports.loadExampleCouncil = loadExampleCouncil;

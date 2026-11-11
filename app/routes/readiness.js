@@ -125,7 +125,12 @@ module.exports = function (router) {
     } else if (state === "collaborator") {
       model = buildCollaboratorModel();
     }
+    // R04e: a one-off banner after an email link whose step has passed (set by /go/:id).
+    const data = req.session.data;
+    const oneOffBanner = data.oneOffBanner && data.oneOffBanner.where === "dashboard" ? data.oneOffBanner : null;
+    if (oneOffBanner) delete data.oneOffBanner;
     res.render("pages/dashboard/index", {
+      oneOffBanner,
       pageTitle: state === "collaborator" ? "Your tasks" : "Your CAF dashboard",
       state,
       model,

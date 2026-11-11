@@ -1,0 +1,47 @@
+{# D10 / D10b — decide / send-for-approval — Decide v8 (11 November 2026). D10 when the Approver has an
+   account (Send for approval sends N05, then D27); D10b when they do not (no email; the CAF Lead
+   shares the plan summary and records the decision on D12). #}
+{% extends "layouts/decide.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appPageHeader({
+        caption: "Start a cycle",
+        title: "Send your plan for approval"
+      }) }}
+
+      {% if inService %}
+        <p class="govuk-body">Your assurer has reviewed your plan. Now send it to your Approver, who signs off the whole plan for this cycle.</p>
+      {% else %}
+        <p class="govuk-body">Your assurer has reviewed your plan. Now your Approver needs to sign off the whole plan for this cycle.</p>
+        <p class="govuk-body">Your Approver does not use this service. Share the plan with them, then record their decision here.</p>
+      {% endif %}
+
+      <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">Approver</dt>
+          <dd class="govuk-summary-list__value">{{ approverLine }}</dd>
+          <dd class="govuk-summary-list__actions"><a class="govuk-link" href="/access/approver?return=/decide/send-for-approval">Change<span class="govuk-visually-hidden"> the Approver</span></a></dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">How they will approve</dt>
+          <dd class="govuk-summary-list__value">{{ "In this service" if inService else "You will record their decision" }}</dd>
+        </div>
+      </dl>
+
+      <form method="post" action="/decide/send-for-approval" novalidate>
+        {% if inService %}
+          <div class="govuk-inset-text">We will email your Approver and ask them to review the plan in this service. We will tell you when they have decided.</div>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Send for approval</button>
+        {% else %}
+          <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">Print a plan summary to share with your approver</a></p>
+          <button class="govuk-button" data-module="govuk-button" type="submit">Record their decision</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+{% endblock %}

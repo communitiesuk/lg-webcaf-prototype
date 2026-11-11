@@ -1,0 +1,29 @@
+{# N01 to N08 — one GOV.UK Notify email, as it would arrive (Figma Decide v8, "Emails (GOV.UK Notify)").
+   Research harness. The link always goes through the /go resolver. #}
+{% extends "layouts/setup.html" %}
+
+{% block content %}
+  <a class="govuk-back-link" href="/research/emails">Back to emails sent in this session</a>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-m">Research only · {{ record.emailId }} · sent {{ record.sentLabel }}</span>
+      <dl class="govuk-summary-list govuk-!-margin-top-4">
+        <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">From</dt><dd class="govuk-summary-list__value">{{ email.from }}</dd></div>
+        <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">To</dt><dd class="govuk-summary-list__value">{{ email.to }}</dd></div>
+        <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">Subject</dt><dd class="govuk-summary-list__value">{{ email.subject }}</dd></div>
+      </dl>
+
+      <div style="border: 1px solid #b1b4b6; padding: 20px;">
+        <p class="govuk-body"><strong>GOV.UK</strong></p>
+        <p class="govuk-body">{{ email.greeting }}</p>
+        {% for para in email.paragraphs %}
+          <p class="govuk-body">{{ para }}</p>
+        {% endfor %}
+        {% if email.link %}
+          <p class="govuk-body">{{ email.link.before }}<a class="govuk-link" href="/go/{{ record.id }}">{{ email.link.text }}</a></p>
+        {% endif %}
+        <p class="govuk-body-s govuk-!-margin-bottom-0">{{ email.footer[0] }}<br>{{ email.footer[1] }}</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -30,13 +30,15 @@
 
       <a class="govuk-button" data-module="govuk-button" href="/dashboard">Back to your dashboard</a>
 
-      {# Prototype-only control (not part of the service). #}
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-      <p class="govuk-caption-m">Prototype only</p>
-      <p class="govuk-body">Simulate your Approver making a decision. This is not part of the service.</p>
-      <ul class="govuk-list">
-        <li><a class="govuk-link" href="/decide/approve">Open the Approver’s view of the plan</a>. Approve the plan for this cycle (D11).</li>
-      </ul>
+      {# Research only (hidden when the research switch is off). #}
+      {% if researchOn %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-m">Prototype only</p>
+        <p class="govuk-body">Your Approver has been sent an email (N05). Sign in as the Approver and follow its link to decide. This is not part of the service.</p>
+        <ul class="govuk-list">
+          <li><a class="govuk-link" href="/research/emails">Emails sent in this session</a></li>
+        </ul>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

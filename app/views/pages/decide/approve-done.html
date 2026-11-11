@@ -18,17 +18,15 @@
       {% endif %}
       <p class="govuk-body">You do not need to do anything else.</p>
 
-      {# Prototype-only control (not part of the service). #}
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-      <p class="govuk-caption-m">Prototype only</p>
-      <p class="govuk-body">Return to the CAF Lead’s view. This is not part of the service.</p>
-      <ul class="govuk-list">
-        {% if decision == "approved" %}
-          <li><a class="govuk-link" href="/decide/approved">See what the CAF Lead sees</a>. Cycle approved (D13).</li>
-        {% else %}
-          <li><a class="govuk-link" href="/decide/returned">See what the CAF Lead sees</a>. Your plan has been returned (D14).</li>
-        {% endif %}
-      </ul>
+      {# Research only (hidden when the research switch is off). #}
+      {% if researchOn %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-m">Prototype only</p>
+        <p class="govuk-body">The CAF Lead has been sent an email ({{ "N06" if decision == "approved" else "N07" }}). Sign in as the CAF Lead and follow its link. This is not part of the service.</p>
+        <ul class="govuk-list">
+          <li><a class="govuk-link" href="/research/emails">Emails sent in this session</a></li>
+        </ul>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

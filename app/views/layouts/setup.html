@@ -30,14 +30,16 @@
 {% endblock %}
 
 {% block footer %}
-  {{ govukFooter({
-    meta: {
-      items: [
-        { href: "/support", text: "Get help with the CAF" },
-        { href: "/cookies", text: "Cookies" },
-        { href: "/setup/not-in-this-prototype", text: "Accessibility statement" },
-        { href: "/setup/not-in-this-prototype", text: "Privacy notice" }
-      ]
-    }
-  }) }}
+  {% set footerItems = [
+    { href: "/support", text: "Get help with the CAF" },
+    { href: "/cookies", text: "Cookies" },
+    { href: "/setup/not-in-this-prototype", text: "Accessibility statement" },
+    { href: "/setup/not-in-this-prototype", text: "Privacy notice" }
+  ] %}
+  {# Research harness (round 2): N00 "Emails sent in this session". Only when the research switch is
+     on; never shown to a council otherwise. #}
+  {% if researchOn %}
+    {% set _ = footerItems.push({ href: "/research/emails", text: "Research only" }) %}
+  {% endif %}
+  {{ govukFooter({ meta: { items: footerItems } }) }}
 {% endblock %}

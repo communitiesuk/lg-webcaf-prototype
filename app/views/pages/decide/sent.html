@@ -35,13 +35,15 @@
       {# The CAF Lead now waits for their assurer's review, so Continue returns to the dashboard. #}
       <a class="govuk-button" data-module="govuk-button" href="/dashboard">Continue</a>
 
-      {# Prototype-only control (not part of the service). #}
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-      <p class="govuk-caption-m">Prototype only</p>
-      <p class="govuk-body">Simulate your assurer reviewing the plan. This is not part of the service.</p>
-      <ul class="govuk-list">
-        <li><a class="govuk-link" href="/decide/assurer-review">Open the assurer’s view of the plan</a>. Review the council’s setup and plan (D07).</li>
-      </ul>
+      {# Research only (hidden when the research switch is off). #}
+      {% if researchOn %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-m">Prototype only</p>
+        <p class="govuk-body">Your assurer has been sent an email (N02). Sign in as the assurer and follow its link to review the plan. This is not part of the service.</p>
+        <ul class="govuk-list">
+          <li><a class="govuk-link" href="/research/emails">Emails sent in this session</a></li>
+        </ul>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

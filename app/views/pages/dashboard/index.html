@@ -6,6 +6,18 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {# R04e — after an old email link (Readiness v5, proposal). Shown once. #}
+      {% if oneOffBanner %}
+        <div class="govuk-notification-banner" role="region" aria-labelledby="one-off-banner-title" data-module="govuk-notification-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="one-off-banner-title">Important</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ oneOffBanner.heading }}</p>
+            <p class="govuk-body">{{ oneOffBanner.body }}</p>
+          </div>
+        </div>
+      {% endif %}
       <span class="govuk-caption-l">{{ councilName }}</span>
       <h1 class="govuk-heading-xl">{{ "Your tasks" if state == "collaborator" else "Your CAF dashboard" }}</h1>
 
@@ -37,5 +49,5 @@
     </div>
   {% endif %}
 
-  {% include "pages/dashboard/_state-switcher.html" %}
+  {% if researchOn %}{% include "pages/dashboard/_state-switcher.html" %}{% endif %}
 {% endblock %}

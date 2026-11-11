@@ -6,13 +6,17 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {% if showError %}
+      {% if showError or noDecision %}
         <div class="govuk-error-summary" data-module="govuk-error-summary">
           <div role="alert">
             <h2 class="govuk-error-summary__title">There is a problem</h2>
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
-                <li><a href="#returnReason">Enter a reason for returning the plan</a></li>
+                {% if noDecision %}
+                  <li><a href="#approveDecision">Select yes if you approve this plan</a></li>
+                {% else %}
+                  <li><a href="#returnReason">Enter a reason for returning the plan</a></li>
+                {% endif %}
               </ul>
             </div>
           </div>
@@ -46,9 +50,12 @@
       {% endif %}
 
       <form method="post" action="/decide/approve" novalidate>
-        <div class="govuk-form-group">
-          <fieldset class="govuk-fieldset">
+        <div class="govuk-form-group {% if noDecision %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset"{% if noDecision %} aria-describedby="approveDecision-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you approve this plan?</legend>
+            {% if noDecision %}
+              <p id="approveDecision-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select yes if you approve this plan</p>
+            {% endif %}
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="approveDecision" name="approveDecision" type="radio" value="approve" {% if decision == "approve" %}checked{% endif %}>
