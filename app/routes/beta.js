@@ -310,6 +310,12 @@ function prepareSceneState(req, scene) {
   acting.signInAs(data, "caf-lead");
 }
 
+const ROUND_2_OTHER_KEYS = ["fresh-start", "example-council"];
+const ROUND_2_OTHER_LABELS = {
+  "fresh-start": "Start from registration instead",
+  "example-council": "Example council, for comparison",
+};
+
 module.exports = function (router) {
   // The research start page is split by who uses it (13 November): a hub, one page per research
   // round (facilitators), and every screen with example data (the team). All the start-point URLs
@@ -336,7 +342,14 @@ module.exports = function (router) {
     const acting = require("../data/helpers/acting-as");
     res.render("pages/beta/round-2", {
       pageTitle: "Round 2 research",
-      scenarios: require("./research").SCENARIOS,
+      // One main task (Setup then Decide); scenarios 3 to 12 are optional follow-ons; scenario 2
+      // (AS01 before setup is finished) is part of the main task's notes.
+      main: require("./research").SETUP_AND_DECIDE,
+      extras: require("./research").SCENARIOS.filter((s) => ROUND_2_OTHER_KEYS.concat("setup-part-way").indexOf(s.key) === -1),
+      others: ROUND_2_OTHER_KEYS.map((key) => {
+        const sc = require("./research").SCENARIOS.find((s) => s.key === key);
+        return Object.assign({}, sc, { label: ROUND_2_OTHER_LABELS[key] });
+      }),
       switcher: acting.switcherOptions(req.session.data),
       signedOut: acting.isSignedOut(req.session.data),
       returnTo: "/beta/round-2",

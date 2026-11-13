@@ -1,4 +1,5 @@
-{# Round 2 research: Decide what to assess, emails and approval. Facilitator start points. #}
+{# Round 2 research: Set up your council and Decide what to assess, tested together as one task.
+   One main start link; the follow-on scenarios are optional. Facilitator page, not service content. #}
 {% extends "layouts/main.html" %}
 
 {% block beforeContent %}<a class="govuk-back-link" href="/beta">Back to the research start page</a>{% endblock %}
@@ -8,14 +9,45 @@
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l">Research</span>
       <h1 class="govuk-heading-l">Round 2 research</h1>
-      <p class="govuk-body">Decide what to assess, emails and approval. Scenarios 3 to 12 start from the participant’s own council (their finished setup in this session). Emails appear on <a class="govuk-link" href="/research/emails">Emails sent in this session</a>.</p>
       {% include "pages/beta/_new-session.html" %}
-      {% include "pages/research/_switcher.html" %}
 
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Main task: set up your council, then decide what to assess</h2>
+      <a href="{{ main.href }}" role="button" draggable="false" class="govuk-button govuk-button--start" data-module="govuk-button">
+        Start the main task
+        <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19" viewBox="0 0 33 40" aria-hidden="true" focusable="false"><path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z"/></svg>
+      </a>
+      <p class="govuk-body">The participant is signed in as {{ main.person.fullName }}, {{ main.person.jobTitle }}, the CAF Lead of {{ main.council.name }} (example). The council is registered and nothing is set up yet. They start on the Set up your council task list.</p>
+      <p class="govuk-body">What to expect:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>They work through the Setup tasks, including Confirm your Approver (task 7), then Check your setup.</li>
+        <li>If they open Assessments in the navigation before setup is finished, they see AS01 with the tasks still to do, each linked. After setup, Assessments shows the Decide tile (AS01b).</li>
+        <li>From the dashboard they start Decide from the tile. The CNI questions (D23) appear only if they chose a CNI sector in Setup.</li>
+        <li>The task ends at D05 Send to your assurer, then D06, because a newly registered council has no assurer yet.</li>
+      </ul>
+
+      <details class="govuk-details govuk-!-margin-top-6">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">If there’s time: what happens after the plan is sent ({{ extras | length }} scenarios)</span>
+        </summary>
+        <div class="govuk-details__text">
+          <p class="govuk-body">These carry on from the council the participant has just set up. Emails appear on <a class="govuk-link" href="/research/emails">Emails sent in this session</a>.</p>
+          {% include "pages/research/_switcher.html" %}
+          <ul class="govuk-list">
+            {% for sc in extras %}
+              <li class="govuk-!-margin-bottom-3">
+                <a class="govuk-link govuk-link--no-visited-state" href="/research/scenario/{{ sc.key }}">{{ sc.title }}</a>
+                <span class="govuk-hint govuk-!-margin-bottom-0">{{ sc.note }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </details>
+
+      <h2 class="govuk-heading-s govuk-!-margin-top-6">Other start points</h2>
       <ul class="govuk-list">
-        {% for sc in scenarios %}
+        {% for sc in others %}
           <li class="govuk-!-margin-bottom-3">
-            <a class="govuk-link govuk-link--no-visited-state" href="/research/scenario/{{ sc.key }}">{{ sc.title }}</a>
+            <a class="govuk-link govuk-link--no-visited-state" href="/research/scenario/{{ sc.key }}">{{ sc.label }}</a>
             <span class="govuk-hint govuk-!-margin-bottom-0">{{ sc.note }}</span>
           </li>
         {% endfor %}

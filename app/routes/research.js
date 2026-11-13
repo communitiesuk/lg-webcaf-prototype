@@ -20,7 +20,8 @@ const {
   cniSystems,
   includedAssessments,
 } = require("../data/helpers/decide");
-const { buildDecideSeedEmpty } = require("../data/seed/setup");
+const { buildDecideSeedEmpty, buildSetupSeedEmpty } = require("../data/seed/setup");
+const { buildAccessEmpty } = require("../data/helpers/access");
 const { ensureAssurance } = require("../data/helpers/assurance");
 const planStateModel = require("../data/helpers/plan-state");
 const { planState, syncApprover } = planStateModel;
@@ -328,6 +329,37 @@ const SCENARIOS = [
   },
 ];
 
+// Round 2 main task (13 November): set up the council, then decide what to assess. Registration and
+// claiming were tested in round 1, so the participant starts signed in as the CAF Lead of a claimed
+// council with nothing set up: Setup task list → dashboard → Decide tile → D05/D06.
+// Example council and person (Eastvale is one of the three fictional demo councils).
+const SETUP_AND_DECIDE = {
+  href: "/research/start-setup-and-decide",
+  council: { id: "eastvale", name: "Eastvale District Council" },
+  person: { fullName: "Sam Rivera", jobTitle: "Head of IT" },
+  email: "s.rivera@eastvale.gov.uk",
+};
+
+function startSetupAndDecide(data) {
+  Object.keys(data).forEach((k) => {
+    if (k !== "research") delete data[k];
+  });
+  data.claim = {
+    council: Object.assign({}, SETUP_AND_DECIDE.council),
+    person: Object.assign({}, SETUP_AND_DECIDE.person),
+    oneLoginEmail: SETUP_AND_DECIDE.email,
+  };
+  data.setup = buildSetupSeedEmpty();
+  data.decide = buildDecideSeedEmpty();
+  data.access = buildAccessEmpty();
+  const me = data.access.people[0];
+  me.name = SETUP_AND_DECIDE.person.fullName;
+  me.firstName = SETUP_AND_DECIDE.person.fullName.split(" ")[0];
+  me.email = SETUP_AND_DECIDE.email;
+  ensureSetup(data); // copies the council name from the claim
+  acting.signInAs(data, "caf-lead");
+}
+
 function scenarioReady(data) {
   const setup = data.setup || {};
   return Boolean(setup.completed && hasApprover(setup) && (rankAssessableSystems(setup).length || orgIncluded(setup)));
@@ -403,6 +435,12 @@ function routes(router) {
     return res.redirect("/research/emails");
   });
 
+  // Round 2 main task: start on the Setup task list as the CAF Lead of a claimed, empty council.
+  router.get(SETUP_AND_DECIDE.href, (req, res) => {
+    startSetupAndDecide(req.session.data);
+    return res.redirect("/setup/task-list");
+  });
+
   // Scenarios.
   router.get("/research/scenario/:key", (req, res) => {
     const data = req.session.data;
@@ -456,5 +494,6 @@ function routes(router) {
 module.exports = routes;
 module.exports.researchMiddleware = researchMiddleware;
 module.exports.SCENARIOS = SCENARIOS;
+module.exports.SETUP_AND_DECIDE = SETUP_AND_DECIDE;
 module.exports.researchOn = researchOn;
 module.exports.setResearch = setResearch;
