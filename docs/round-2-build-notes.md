@@ -22,7 +22,7 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 ## Decisions made in the build
 
 - **D01 replaced by AS01 (13 November).** `no_approver` is folded into `setup_incomplete`. "Assessments" in the service navigation always opens AS01 (`/your-assessments`; `/assessments` belongs to the alpha prototype). AS01 lists the unfinished Setup tasks; AS01b shows the Decide tile; AS01c shows the approval line, View your plan and the cycle's assessments (rows go to "not built" until Prepare P01 is built). Previous assessments shows only for the example council (same rule as the R04 Last assessment row). The tile on AS01 starts Decide with `?from=assessments`, so Back on the first Decide screen (D23, or D02 without CNI) returns to AS01; otherwise to the dashboard. D-2026-144 (proposed), Q24.
-- **Claim's own navigation** still has "Assessments" → `/self-assessment` (Registration was out of scope).
+- **Claim's own navigation** (07 Access granted and the reviewer screens) now also opens AS01 from "Assessments", so the navigation is the same on every page (13 November).
 - **Banner rules beyond the R04e table.** N03/N04 after the plan was pulled back to in progress (Change plan): dashboard, no banner. N03/N04 when the plan is ready to send but not sent: D10/D10b (the screen for the state). N05 after an Approver change: A36 for the replaced Approver (D11 panel).
 - **Someone at the council opening another person's email** (for example the CAF Lead opening N02): their own starting page, no banner. Not covered by the panels.
 - **AL30 status lines.** "Plan sent for your review" and "Setup in progress" are from Figma. "Review sent on [date]" is the build's own (no Figma copy). AL30 needs design.
@@ -38,4 +38,4 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 
 ## Figma housekeeping found during the build
 
-- R04 Content panel, CHANGED IN THIS VERSION, still says "Assessments in the navigation goes to Decide". Since AS01 it goes to AS01.
+- R04 Content panel, CHANGED IN THIS VERSION, said "Assessments in the navigation goes to Decide". Updated in Figma on 13 November to "goes to AS01 Assessments (from 12 November; it no longer opens Decide)".
