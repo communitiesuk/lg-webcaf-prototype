@@ -1,0 +1,24 @@
+{# Round 1 research: Get started, Claim your council, Set up your council. Facilitator start points. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}<a class="govuk-back-link" href="/beta">Back to the research start page</a>{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Research</span>
+      <h1 class="govuk-heading-l">Round 1 research</h1>
+      <p class="govuk-body">Get started, Claim your council and Set up your council. Each walkthrough starts at the start page with a clean session for a brand-new user. Share a link with a participant.</p>
+      {% include "pages/beta/_new-session.html" %}
+
+      <ol class="govuk-list govuk-list--number">
+        {% for w in walkthroughs %}
+          <li class="govuk-!-margin-bottom-3">
+            <a class="govuk-link govuk-link--no-visited-state" href="{{ w.href }}">{{ w.title }}</a>
+            {% if w.hint %}<span class="govuk-hint govuk-!-margin-bottom-0">{{ w.hint }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+{% endblock %}

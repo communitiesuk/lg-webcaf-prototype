@@ -243,20 +243,20 @@ const WALKTHROUGH_VARIANTS = {
 // v10 research starting points. Some land on a screen directly; #2 and #8 depend on the choice the
 // researcher makes on 28 / 01 (noted in the label). Changed in build, prototype, pending sign-off.
 const WALKTHROUGH_LINKS = [
-  { href: "/beta/walkthrough", label: "First person registering a council — type e.g. name@leeds.gov.uk, then choose ‘No’ when asked about other councils" },
-  { href: "/beta/walkthrough/ask-other-councils", label: "Registering and also requesting other councils — choose ‘Yes’ when asked about other councils" },
-  { href: "/beta/walkthrough/shared-service", label: "Shared-service email covering several councils — type name@westvale-shared.gov.uk" },
-  { href: "/beta/walkthrough/partner-domain", label: "A council’s own email that also covers a partner council — type d.rao@eastvale.gov.uk" },
-  { href: "/beta/walkthrough/joining-with-caflead", label: "Joining a council that already has a CAF Lead" },
-  { href: "/beta/walkthrough/joining-no-caflead", label: "Joining a council that has no CAF Lead yet" },
-  { href: "/claim/requests-to-join", label: "Approver’s list of requests to join" },
-  { href: "/claim/review-request?as=registered", label: "The person who registered the council reviews a request" },
-  { href: "/claim/access-granted", label: "First registration approved" },
-  { href: "/claim/joined", label: "Join request approved (Collaborator role)" },
-  { href: "/beta/walkthrough/being-checked", label: "Council still being checked by MHCLG" },
-  { href: "/beta/walkthrough/already-have-access", label: "Someone who already has access" },
-  { href: "/beta/walkthrough/not-my-council", label: "Says ‘this is not my council’" },
-  { href: "/beta/walkthrough/blocked", label: "Blocked at sign-in, no council access — type e.g. name@gmail.com" },
+  { href: "/beta/walkthrough", title: "First person registering a council", hint: "Type an email such as name@leeds.gov.uk, then choose No when asked about other councils." },
+  { href: "/beta/walkthrough/ask-other-councils", title: "Registering and also requesting other councils", hint: "Choose Yes when asked about other councils." },
+  { href: "/beta/walkthrough/shared-service", title: "Shared-service email covering several councils", hint: "Type name@westvale-shared.gov.uk." },
+  { href: "/beta/walkthrough/partner-domain", title: "A council’s own email that also covers a partner council", hint: "Type d.rao@eastvale.gov.uk." },
+  { href: "/beta/walkthrough/joining-with-caflead", title: "Joining a council that already has a CAF Lead" },
+  { href: "/beta/walkthrough/joining-no-caflead", title: "Joining a council that has no CAF Lead yet" },
+  { href: "/claim/requests-to-join", title: "Approver’s list of requests to join" },
+  { href: "/claim/review-request?as=registered", title: "The person who registered the council reviews a request" },
+  { href: "/claim/access-granted", title: "First registration approved" },
+  { href: "/claim/joined", title: "Join request approved (Collaborator role)" },
+  { href: "/beta/walkthrough/being-checked", title: "Council still being checked by MHCLG" },
+  { href: "/beta/walkthrough/already-have-access", title: "Someone who already has access" },
+  { href: "/beta/walkthrough/not-my-council", title: "Says ‘this is not my council’" },
+  { href: "/beta/walkthrough/blocked", title: "Blocked at sign-in, no council access", hint: "Type an email such as name@gmail.com." },
 ];
 
 // Delete any accumulated state and load the canonical Setup + Decide example council.
@@ -311,21 +311,44 @@ function prepareSceneState(req, scene) {
 }
 
 module.exports = function (router) {
+  // The research start page is split by who uses it (13 November): a hub, one page per research
+  // round (facilitators), and every screen with example data (the team). All the start-point URLs
+  // (/beta/walkthrough/..., /research/scenario/..., /beta/go/...) are unchanged.
+  const researchOn = (req) => Boolean(req.session.data.research && req.session.data.research.on);
+
   router.get("/beta", (req, res) => {
     res.render("pages/beta", {
       pageTitle: "Beta prototype",
-      // Only the sections in this research round (Get started, Claim, Set up) show by default;
-      // the rest are tucked into a collapsed "Other sections" block so researchers are not
-      // distracted. Flip `inResearch` on a section to move it between the two.
-      sections: SECTIONS.filter((s) => s.inResearch),
-      otherSections: SECTIONS.filter((s) => !s.inResearch),
-      walkthroughs: WALKTHROUGH_LINKS,
-      // Round 2 research harness: the switch, the person switcher and the scenarios.
-      scenarios: require("./research").SCENARIOS,
-      switcher: require("../data/helpers/acting-as").switcherOptions(req.session.data),
-      signedOut: require("../data/helpers/acting-as").isSignedOut(req.session.data),
-      returnTo: "/beta",
       resetSuccess: (req.query.reset || "").toString() === "success",
+    });
+  });
+
+  router.get("/beta/round-1", (req, res) => {
+    if (!researchOn(req)) return res.redirect("/beta");
+    res.render("pages/beta/round-1", {
+      pageTitle: "Round 1 research",
+      walkthroughs: WALKTHROUGH_LINKS,
+    });
+  });
+
+  router.get("/beta/round-2", (req, res) => {
+    if (!researchOn(req)) return res.redirect("/beta");
+    const acting = require("../data/helpers/acting-as");
+    res.render("pages/beta/round-2", {
+      pageTitle: "Round 2 research",
+      scenarios: require("./research").SCENARIOS,
+      switcher: acting.switcherOptions(req.session.data),
+      signedOut: acting.isSignedOut(req.session.data),
+      returnTo: "/beta/round-2",
+    });
+  });
+
+  router.get("/beta/screens", (req, res) => {
+    if (!researchOn(req)) return res.redirect("/beta");
+    res.render("pages/beta/screens", {
+      pageTitle: "All screens",
+      // Research-round sections first, then the rest, as before.
+      sections: SECTIONS.filter((s) => s.inResearch).concat(SECTIONS.filter((s) => !s.inResearch)),
     });
   });
 

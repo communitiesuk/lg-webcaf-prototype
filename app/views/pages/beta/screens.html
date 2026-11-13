@@ -1,0 +1,33 @@
+{# All screens (team only): every section's jump links with example data, each section collapsed. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}<a class="govuk-back-link" href="/beta">Back to the research start page</a>{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Team only</span>
+      <h1 class="govuk-heading-l">All screens</h1>
+      <p class="govuk-body">Jump to any screen. Each link re-seeds its example data, so a screen always looks right whatever you clicked before. Not for participants.</p>
+
+      {% for section in sections %}
+        <details class="govuk-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ section.title }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            <p class="govuk-hint">{{ section.description }}</p>
+            {% for group in section.groups %}
+              {% if group.subtitle %}<h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ group.subtitle }}</h3>{% endif %}
+              <ul class="govuk-list govuk-!-margin-bottom-4">
+                {% for link in group.links %}
+                  <li class="govuk-!-margin-bottom-1"><a class="govuk-link govuk-link--no-visited-state" href="{{ group.base }}{{ link.key }}">{{ link.label }}</a></li>
+                {% endfor %}
+              </ul>
+            {% endfor %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}
