@@ -66,7 +66,7 @@ function buildSetupNavigation(currentPath) {
   return [
     { text: "Dashboard", href: "/dashboard" },
     { text: "Your council", href: "/setup/task-list", active: onSetup },
-    { text: "Assessments", href: "/decide" },
+    { text: "Assessments", href: "/your-assessments" }, // AS01
     { text: "People", href: "/access" },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
     // Changed in build, prototype, pending design sign-off.

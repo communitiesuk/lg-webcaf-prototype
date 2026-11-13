@@ -265,6 +265,7 @@ require("./routes/council-context")(router);
 require("./routes/onboarding")(router);
 require("./routes/setup")(router);
 require("./routes/decide")(router);
+require("./routes/assessments-landing")(router); // AS01, beta-2
 require("./routes/claim")(router);
 require("./routes/internal-access")(router);
 require("./routes/get-started")(router);

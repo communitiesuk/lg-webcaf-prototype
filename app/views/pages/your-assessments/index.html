@@ -1,0 +1,44 @@
+{# AS01 / AS01b / AS01c — council / assessments — Figma Decide v8, row "Assessments section"
+   (12 November 2026, proposal). One page for "Assessments" in the service navigation, in every state.
+   Copy is a proposal for content design. #}
+{% extends "layouts/decide.html" %}
+{% from "components/decide-tile.njk" import decideTile %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">{{ councilName }}</span>
+      <h1 class="govuk-heading-xl">Assessments</h1>
+
+      {% if state == "setup_incomplete" %}
+        {# AS01 — setup not finished #}
+        <p class="govuk-body">You need to finish setting up your council before you can choose what to assess.</p>
+        <p class="govuk-body">Still to do in Set up your council:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for task in tasks %}
+            <li><a class="govuk-link" href="{{ task.href }}">{{ task.name }}</a></li>
+          {% endfor %}
+        </ul>
+        <a class="govuk-button" data-module="govuk-button" href="{{ continueHref }}">Continue setting up</a>
+
+      {% elif state == "approved" %}
+        {# AS01c — plan approved #}
+        <h2 class="govuk-heading-m">This cycle</h2>
+        <p class="govuk-body">{{ approvalLine }}</p>
+        <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">View your plan</a></p>
+        {{ govukTaskList({ items: assessments }) }}
+
+      {% else %}
+        {# AS01b — this cycle not approved yet #}
+        <h2 class="govuk-heading-m">This cycle</h2>
+        {{ decideTile(tile) }}
+      {% endif %}
+
+      {% if previousResults %}
+        <h2 class="govuk-heading-m">Previous assessments</h2>
+        <p class="govuk-body"><a class="govuk-link" href="/dashboard/previous-results">View previous CAF results</a></p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

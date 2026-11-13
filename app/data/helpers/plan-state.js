@@ -8,8 +8,7 @@
 // differ: Decide v8 (D01, D10, D10b, D27, D27b, D12, N01 to N08) and Readiness v5 (R04 panel state
 // table, R04e banners).
 //
-//   setup_incomplete                Setup not finished                               (derived)
-//   no_approver                     no Approver named in Setup task 7                (derived)
+//   setup_incomplete                Setup not finished, including no Approver        (derived) AS01
 //   not_started                     nothing answered in Decide                       (derived)
 //   in_progress                     started, not sent to the assurer                 (derived, or set by "Change my plan")
 //   waiting_for_assurer_assignment  sent, no assurer assigned                        D06
@@ -82,11 +81,9 @@ function planState(sessionData) {
   migrate(setup, decide);
   const stored = planOf(decide).state;
   if (SENT_STATES.indexOf(stored) !== -1) return stored;
-  // No Approver is checked first: S30 will not finish setup without one, so "setup finished, no
-  // Approver" cannot happen. Checking it first means the Assessments link shows D01 (as its panel
-  // says) instead of silently going to the Setup task list.
-  if (!hasApprover(setup)) return "no_approver";
-  if (!setupComplete(setup)) return "setup_incomplete";
+  // Setup cannot be finished without an Approver (S30), so a missing Approver is part of
+  // setup_incomplete. AS01 lists what is left, including "Confirm your Approver". D01 is replaced.
+  if (!setupComplete(setup) || !hasApprover(setup)) return "setup_incomplete";
   if (stored === "in_progress" || hasStarted(decide)) return "in_progress";
   return "not_started";
 }
@@ -119,9 +116,7 @@ function screenFor(sessionData) {
   const decide = sessionData.decide || {};
   switch (planState(sessionData)) {
     case "setup_incomplete":
-      return "/setup/task-list";
-    case "no_approver":
-      return "/decide/approver-needed";
+      return "/your-assessments"; // AS01, setup not finished
     case "not_started":
       return showCniScreens(setup) ? "/decide/cni" : "/decide/systems";
     case "in_progress":
@@ -158,7 +153,6 @@ function tileFor(sessionData) {
   const cont = { text: "Continue", href: "/decide" };
   switch (planState(sessionData)) {
     case "not_started":
-    case "no_approver":
       return { variant: "not-started", hint: buildHint, button: { text: "Start this cycle", href: "/decide" } };
     case "in_progress":
       return { variant: "in-progress", hint: buildHint, button: cont };

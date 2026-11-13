@@ -42,8 +42,12 @@ function clean(value) {
 // otherwise the dashboard (Decide is entered from S31 or the dashboard).
 // Back from D02/D20 returns to the last CNI screen the person actually answered: D26 (their CNI
 // list) after Yes, D24 after confirming No, D23 otherwise. No CNI screens → the dashboard.
+function enteredFromHref(decide) {
+  return decide && decide.enteredFrom === "assessments" ? "/your-assessments" : "/dashboard";
+}
+
 function firstScreenBackHref(setup, decide) {
-  if (!showCniScreens(setup)) return "/dashboard";
+  if (!showCniScreens(setup)) return enteredFromHref(decide);
   const answer = decide && decide.cniAnswer;
   if (answer === "yes" && cniSystems(setup).length) return "/decide/cni/added";
   if (answer === "no") return "/decide/cni/check";
@@ -79,7 +83,6 @@ const AFTER_ASSIGNMENT = [
   "approved",
 ];
 const COUNCIL_PATHS = {
-  "/decide/approver-needed": ["no_approver"],
   "/decide/no-assurer": ["waiting_for_assurer_assignment"],
   "/decide/sent": AFTER_ASSIGNMENT,
   "/decide/feedback": ["feedback_received"],
@@ -138,23 +141,18 @@ module.exports = function (router) {
   router.get("/decide", (req, res) => {
     const setup = req.session.data.setup;
     const state = planState(req.session.data);
-    // Approved: Decide is finished and "Assessments" means the assessments themselves, which are
-    // not in this prototype yet. (D13 is still shown straight after approval, and N06 lands on it.)
-    if (state === "approved") return res.redirect("/dashboard/not-in-this-prototype");
+    // Where the person came from, so Back on the first Decide screen returns there (dashboard, or
+    // AS01 Assessments, whose Decide tile adds ?from=assessments).
+    req.session.data.decide.enteredFrom = req.query.from === "assessments" ? "assessments" : "dashboard";
+    // Approved: Decide is finished; the cycle's assessments are on AS01c. (D13 is still shown
+    // straight after approval, and N06 lands on it.)
+    if (state === "approved") return res.redirect("/your-assessments");
     if (state === "not_started" && !isCniFlaggedInSetup(setup)) {
       (setup.criticalSystems || []).forEach((s) => {
         s.cni = false;
       });
     }
     return res.redirect(screenFor(req.session.data));
-  });
-
-  // D01 — You need to confirm your Approver before you start a cycle (Decide v8, proposal)
-  router.get("/decide/approver-needed", (req, res) => {
-    res.render("pages/decide/approver-needed", {
-      pageTitle: "You need to confirm your Approver before you start a cycle",
-      backHref: "/dashboard",
-    });
   });
 
   // ----- Batch 1: CNI gate -----------------------------------------------------------
@@ -165,7 +163,7 @@ module.exports = function (router) {
     const decide = req.session.data.decide;
     res.render("pages/decide/cni", {
       pageTitle: "Are any of your critical systems part of critical national infrastructure (CNI)?",
-      backHref: "/dashboard",
+      backHref: enteredFromHref(decide),
       cniFlaggedInSetup: isCniFlaggedInSetup(setup),
       answer: decide.cniAnswer,
     });
@@ -180,7 +178,7 @@ module.exports = function (router) {
     if (posted !== "yes" && posted !== "no") {
       return res.render("pages/decide/cni", {
         pageTitle: "Error: Are any of your critical systems part of critical national infrastructure (CNI)?",
-        backHref: "/dashboard",
+        backHref: enteredFromHref(decide),
         cniFlaggedInSetup: isCniFlaggedInSetup(setup),
         answer: "",
         showError: true,

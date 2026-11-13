@@ -218,9 +218,9 @@ const SCENARIOS = [
     fresh: true,
   },
   {
-    key: "no-approver",
-    title: "2. No Approver yet",
-    note: "As 1, but ask the participant to skip Setup task 7. Expect D01 when they press Start this cycle on the dashboard.",
+    key: "setup-part-way",
+    title: "2. Assessments before setup is finished",
+    note: "Clears the session. The participant registers and leaves Set up your council part-way (including task 7, Confirm your Approver), then opens Assessments in the navigation. Expect AS01 listing exactly the tasks not completed, each linking to its task. Once they finish setup, Assessments shows AS01b.",
     fresh: true,
   },
   {

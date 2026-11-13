@@ -31,11 +31,11 @@ function ensureDecide(sessionData) {
 
 // Council service navigation for Decide — "Assessments" is the active section.
 function buildDecideCouncilNavigation(currentPath) {
-  const active = typeof currentPath === "string" && currentPath.startsWith("/decide");
+  const active = typeof currentPath === "string" && (currentPath.startsWith("/decide") || currentPath === "/your-assessments");
   return [
     { text: "Dashboard", href: "/dashboard" },
     { text: "Your council", href: "/setup/task-list" },
-    { text: "Assessments", href: "/decide", active },
+    { text: "Assessments", href: "/your-assessments", active }, // AS01
     { text: "People", href: "/access" },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
     // Changed in build, prototype, pending design sign-off.

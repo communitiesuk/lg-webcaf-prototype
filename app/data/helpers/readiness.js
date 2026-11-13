@@ -99,7 +99,7 @@ function applyFullAccessChrome(req, res) {
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard", active: path === "/dashboard" },
     { text: "Your council", href: "/setup/task-list" },
-    { text: "Assessments", href: "/decide" },
+    { text: "Assessments", href: "/your-assessments" }, // AS01
     { text: "People", href: "/access", active: path.startsWith("/access") },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
     // Changed in build, prototype, pending design sign-off.
@@ -198,7 +198,7 @@ function selectedSystemNames(sessionData) {
 // Decide progress (kept for older callers): "not-started" until anything is answered in Decide.
 function decideTaskStatus(sessionData) {
   const state = require("./plan-state").planState(sessionData);
-  return state === "not_started" || state === "no_approver" || state === "setup_incomplete" ? "not-started" : "in-progress";
+  return state === "not_started" || state === "setup_incomplete" ? "not-started" : "in-progress";
 }
 
 // View-model for R04 to R04d (ready to decide). The Decide tile comes from the plan state

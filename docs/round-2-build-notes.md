@@ -12,8 +12,7 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 | D12 returned | D12 records Approved or Returned | D12 only records an approval (D13). Returns only come from D11. |
 | in_progress tile | Action needed · Continue | In progress · Continue (R04b) |
 | approved tile | Done | Completed. R05b is drawn without the Decide tile, so the approved dashboard stays R05 as built (the R04 table says the tile reads Completed: Figma to resolve). |
-| setup_incomplete | Tile with "finish setup first" | R03: Decide tile not shown |
-| no_approver | Tile hint "Confirm your Approver first" | Tile as Not started; Start this cycle opens D01 |
+| setup_incomplete | Tile "Not started", hint says finish setup first | R03: Decide tile not shown (R04 panel, row 1). AS01 explains what is left. |
 | with_assurer tile | Waiting | Waiting, plus "You can book your onboarding calls while you wait." and link (R04c) |
 | N02 | Only on D05 | Also when an assurer is assigned to a plan that is already waiting (D06) |
 | N08 | Approver changed while awaiting_approval | Also from D12b; sent only when the previous Approver was asked in the service (only they had N05) |
@@ -22,7 +21,8 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 
 ## Decisions made in the build
 
-- **D01 reachability.** S30 will not finish setup without an Approver, so "setup finished, no Approver" cannot happen. `no_approver` is checked before `setup_incomplete`, so the Assessments link shows D01 during setup. The dashboard tile never shows D01 (the dashboard is R03 until setup is finished). Relates to D01 panel, Q18.
+- **D01 replaced by AS01 (13 November).** `no_approver` is folded into `setup_incomplete`. "Assessments" in the service navigation always opens AS01 (`/your-assessments`; `/assessments` belongs to the alpha prototype). AS01 lists the unfinished Setup tasks; AS01b shows the Decide tile; AS01c shows the approval line, View your plan and the cycle's assessments (rows go to "not built" until Prepare P01 is built). Previous assessments shows only for the example council (same rule as the R04 Last assessment row). The tile on AS01 starts Decide with `?from=assessments`, so Back on the first Decide screen (D23, or D02 without CNI) returns to AS01; otherwise to the dashboard. D-2026-144 (proposed), Q24.
+- **Claim's own navigation** still has "Assessments" → `/self-assessment` (Registration was out of scope).
 - **Banner rules beyond the R04e table.** N03/N04 after the plan was pulled back to in progress (Change plan): dashboard, no banner. N03/N04 when the plan is ready to send but not sent: D10/D10b (the screen for the state). N05 after an Approver change: A36 for the replaced Approver (D11 panel).
 - **Someone at the council opening another person's email** (for example the CAF Lead opening N02): their own starting page, no banner. Not covered by the panels.
 - **AL30 status lines.** "Plan sent for your review" and "Setup in progress" are from Figma. "Review sent on [date]" is the build's own (no Figma copy). AL30 needs design.
@@ -35,3 +35,7 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 - Choosing which council to switch to (multi-council sessions).
 - N01 "also send if the assurer changes (reallocation)": wording to agree.
 - N06 to the assurer (Q12).
+
+## Figma housekeeping found during the build
+
+- R04 Content panel, CHANGED IN THIS VERSION, still says "Assessments in the navigation goes to Decide". Since AS01 it goes to AS01.
