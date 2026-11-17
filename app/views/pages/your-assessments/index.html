@@ -24,9 +24,9 @@
 
       {% elif state == "approved" %}
         {# AS01c — plan approved #}
-        <h2 class="govuk-heading-m">This cycle</h2>
+        <h2 class="govuk-heading-m">{{ cycleLabel }} assessment cycle</h2>
         <p class="govuk-body">{{ approvalLine }}</p>
-        <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">View your plan</a></p>
+        <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">View your assessment plan for this year</a></p>
         {{ govukTaskList({ items: assessments }) }}
 
       {% else %}

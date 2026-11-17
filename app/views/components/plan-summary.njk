@@ -7,14 +7,18 @@
   "Already assessed" — each screen supplies its own warning text there. Set
   `planWarningEnding` to "feedback" (D07, assurer) for "you can mention this in your feedback", or
   "change" (D05, CAF Lead) for "you can change your plan to include it"; otherwise it reads
-  "you can challenge that here" (D11, D21).
+  "you can challenge that here" (D05).
+  Headings differ by screen in Figma v8: set `planIncludedHeading` / `planNotIncludedHeading`
+  (defaults "Included in this cycle" / "Not included in this cycle", as D11 and D21). Set
+  `planAssessedSuffix` to change "You cannot update this assessment yet" (D11 reads "This
+  assessment cannot be updated yet").
 
     {% set planWarning = "..." %}
     {% include "components/plan-summary.njk" %}
 #}
 {% if planSummary %}
 
-  <h2 class="govuk-heading-m">Included this cycle</h2>
+  <h2 class="govuk-heading-m">{{ planIncludedHeading or "Included in this cycle" }}</h2>
   <dl class="govuk-summary-list">
     {% for row in planSummary.included %}
       <div class="govuk-summary-list__row">
@@ -25,7 +29,7 @@
   </dl>
 
   {% if planSummary.notIncluded.length %}
-    <h2 class="govuk-heading-m">Not included this cycle</h2>
+    <h2 class="govuk-heading-m">{{ planNotIncludedHeading or "Not included in this cycle" }}</h2>
     <dl class="govuk-summary-list">
       {% for row in planSummary.notIncluded %}
         <div class="govuk-summary-list__row">
@@ -51,7 +55,7 @@
           <li>{{ item }}</li>
         {% endfor %}
       </ul>
-      <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, {% if planWarningEnding == "feedback" %}you can mention this in your feedback{% elif planWarningEnding == "change" %}you can change your plan to include it{% else %}you can challenge that here{% endif %}.</p>
+      <p class="govuk-body">Consider whether these systems should be included in this cycle. If a CNI system has been left out of the plan, {% if planWarningEnding == "feedback" %}you can mention this in your feedback{% else %}you can challenge that here{% endif %}.</p>
     {% elif planWarning.warning %}
       {# Warning line + follow-on paragraph (D05). #}
       <div class="govuk-warning-text">
@@ -74,28 +78,28 @@
     {% endif %}
   {% endif %}
 
-  {# Optional note after the warning slot (D05: the assurer reviews the plan next). #}
-  {% if planNote %}
-    <div class="govuk-warning-text">
-      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-      <strong class="govuk-warning-text__text">
-        <span class="govuk-visually-hidden">Warning</span>
-        {{ planNote.warning }}{% if planNote.body %}<br>
-        {{ planNote.body }}{% endif %}
-      </strong>
-    </div>
-  {% endif %}
-
   {% if planSummary.assessed.length %}
     <h2 class="govuk-heading-m">Already assessed</h2>
     <dl class="govuk-summary-list">
       {% for row in planSummary.assessed %}
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">{{ row.name }}</dt>
-          <dd class="govuk-summary-list__value">{{ row.detail }}</dd>
+          <dd class="govuk-summary-list__value">{{ row.detail | replace("You cannot update this assessment yet", planAssessedSuffix) if planAssessedSuffix else row.detail }}</dd>
         </div>
       {% endfor %}
     </dl>
+  {% endif %}
+
+  {# Optional note after the plan (D05: the assurer reviews the plan next). #}
+  {% if planNote %}
+    <div class="govuk-warning-text">
+      <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <strong class="govuk-warning-text__text">
+        <span class="govuk-visually-hidden">Warning</span>
+        {{ planNote.warning }}{% if planNote.body %}<br><br>
+        {{ planNote.body }}{% endif %}
+      </strong>
+    </div>
   {% endif %}
 
 {% endif %}

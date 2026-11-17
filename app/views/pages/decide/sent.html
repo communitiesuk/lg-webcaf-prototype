@@ -12,7 +12,7 @@
     <div class="govuk-grid-column-two-thirds">
       {{ govukNotificationBanner({ text: "Plan sent to your assurer", type: "success" }) }}
 
-      {{ appPageHeader({ caption: "Start a cycle", title: "Book your onboarding calls" }) }}
+      {{ appPageHeader({ caption: "Start your " + cycleLabel + " assessment cycle", title: "Book your onboarding calls" }) }}
 
       <p class="govuk-body">Book an onboarding call for each type of assessment in your plan. You or your assurer can book calls.</p>
       <p class="govuk-body">Use the calls to talk through your plan and discuss any questions before you start your assessments.</p>
@@ -30,7 +30,7 @@
         {% endfor %}
       </dl>
 
-      <div class="govuk-inset-text">Your assurer can start reviewing your plan straight away. You do not need to wait until your calls are booked.</div>
+      <div class="govuk-inset-text">Your assurer can start reviewing your plan straight away. Booking calls will not delay your assurer from reviewing your plan.</div>
 
       {# The CAF Lead now waits for their assurer's review, so Continue returns to the dashboard. #}
       <a class="govuk-button" data-module="govuk-button" href="/dashboard">Continue</a>

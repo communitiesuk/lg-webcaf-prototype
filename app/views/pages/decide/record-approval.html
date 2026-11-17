@@ -36,11 +36,11 @@
 
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: "Record your Approver's decision",
-        intro: "Your Approver does not use this service. Record their approval here so there is a record of the decision."
+        title: "Record your approver’s decision",
+        intro: "Your approver does not use this service. Record their approval here so there is a record of the decision."
       }) }}
 
-      <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">Print a plan summary to share with your Approver</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="/decide/plan-summary">Print a plan summary to share with your approver</a></p>
 
       <dl class="govuk-summary-list">
         <div class="govuk-summary-list__row">
@@ -94,7 +94,7 @@
               <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-approvalHow-3">
                 <div class="govuk-form-group {% if errorById.approvalHowOther %}govuk-form-group--error{% endif %}">
                   <label class="govuk-label" for="approvalHowOther">Describe how the plan was approved</label>
-                  <div id="approvalHowOther-hint" class="govuk-hint">For example, at a briefing with the portfolio holder.</div>
+                  <div id="approvalHowOther-hint" class="govuk-hint">For example: At a briefing with the portfolio holder</div>
                   {% if errorById.approvalHowOther %}
                     <p id="approvalHowOther-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errorById.approvalHowOther }}</p>
                   {% endif %}

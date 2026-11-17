@@ -8,7 +8,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Confirm what you will assess in this cycle"
       }) }}
 
@@ -22,7 +22,7 @@
         {% endif %}
 
         <div class="govuk-summary-list__row">
-          <dt class="govuk-summary-list__key">Critical systems</dt>
+          <dt class="govuk-summary-list__key">Critical systems included in this cycle</dt>
           <dd class="govuk-summary-list__value">
             {% if selectedNames.length %}{{ selectedNames | join(", ") }}{% else %}None this cycle, organisation assessment only{% endif %}
           </dd>
@@ -33,7 +33,7 @@
 
         {% if notIncludedNames.length %}
           <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Not included this cycle</dt>
+            <dt class="govuk-summary-list__key">Critical systems not included this cycle</dt>
             <dd class="govuk-summary-list__value">{{ notIncludedNames | join(", ") }}</dd>
             <dd class="govuk-summary-list__actions">
               <a class="govuk-link" href="/decide/systems">Change<span class="govuk-visually-hidden"> what is not included this cycle</span></a>

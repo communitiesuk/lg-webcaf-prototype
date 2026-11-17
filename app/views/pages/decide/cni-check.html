@@ -8,7 +8,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Confirm that none of your critical systems are part of CNI"
       }) }}
 
@@ -25,7 +25,7 @@
       <form method="post" action="/decide/cni/check" novalidate>
         <button class="govuk-button" data-module="govuk-button" type="submit">No critical systems are part of CNI</button>
       </form>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/cni">Check critical systems</a>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/decide/cni">Review critical systems</a>
     </div>
   </div>
 {% endblock %}

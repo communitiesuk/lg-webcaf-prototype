@@ -8,11 +8,12 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Confirm your plan for this cycle"
       }) }}
 
-      {% set planWarningEnding = "change" %}
+      {% set planIncludedHeading = "Included this cycle" %}
+      {% set planNotIncludedHeading = "Not included this cycle, but high priority" %}
       {% include "components/plan-summary.njk" %}
 
       <form method="post" action="/decide/review" novalidate>

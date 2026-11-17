@@ -1,6 +1,7 @@
 {# D02 / D22 / D15 — decide / systems — Figma nodes 393:2337 (base), 393:3058 (unrated), 393:2834 (error) #}
 {# One screen, three states: base, unrated-system variant, and the no-selection error.
-   Content-rich page: H1 is the page heading; the checkboxes carry a visually-hidden legend. #}
+   Figma v8 (17 November): H1 "Select assessments for 2027 to 2028"; the checkboxes have a visible
+   legend "Select which critical systems you will assess", then the ranking inset and recommendation. #}
 {% extends "layouts/decide.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
@@ -24,8 +25,8 @@
       {% endif %}
 
       {{ appPageHeader({
-        caption: "Start a cycle",
-        title: "Which critical systems will you assess?"
+        caption: "Start your " + cycleLabel + " assessment cycle",
+        title: "Select assessments for " + cycleLabel
       }) }}
 
       {% if orgIncluded %}
@@ -35,8 +36,6 @@
         <p class="govuk-body">Select the critical systems you want to assess this cycle.</p>
         <p class="govuk-body">These systems have not been assessed yet. They are listed by how critical they are. Up to three is recommended.</p>
       {% else %}
-        <p class="govuk-hint">The most critical systems are shown first. CNI systems are shown first within each level.</p>
-        <p class="govuk-body">We recommend selecting up to 3 critical systems to assess in this cycle.</p>
       {% endif %}
 
       {% set systemItems = [] %}
@@ -50,7 +49,8 @@
       <form method="post" action="/decide/systems" novalidate>
         {{ govukCheckboxes({
           name: "whichSystems",
-          fieldset: { legend: { text: "Which critical systems will you assess?", classes: "govuk-visually-hidden" } },
+          fieldset: { legend: { text: "Select which critical systems you will assess" } },
+          formGroup: { beforeInputs: { html: '<div class="govuk-inset-text govuk-!-margin-top-2"><p class="govuk-body">The most critical systems are shown first.</p><p class="govuk-body">CNI systems are shown first within each level.</p></div><p class="govuk-body">We recommend selecting up to 3 critical systems to assess in this cycle.</p>' } } if not unrated else undefined,
           errorMessage: { text: errorText } if showError else undefined,
           items: systemItems
         }) }}

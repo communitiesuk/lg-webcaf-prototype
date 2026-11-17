@@ -13,7 +13,8 @@
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
                 {% if noDecision %}
-                  <li><a href="#approveDecision">Select yes if you approve this plan</a></li>
+                  <li><a href="#approveDecision">Select Yes if you approve this plan</a></li>
+                  <li><a href="#approveDecision-2">Select No if you want to return the plan and give feedback</a></li>
                 {% else %}
                   <li><a href="#returnReason">Enter a reason for returning the plan</a></li>
                 {% endif %}
@@ -31,6 +32,8 @@
 
       <div class="govuk-inset-text">You are approving the whole plan, not each separate assessment.</div>
 
+      {% set planWarningEnding = "feedback" %}
+      {% set planAssessedSuffix = "This assessment cannot be updated yet" %}
       {% include "components/plan-summary.njk" %}
 
       {% if assurerLine %}
@@ -54,7 +57,7 @@
           <fieldset class="govuk-fieldset"{% if noDecision %} aria-describedby="approveDecision-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">Do you approve this plan?</legend>
             {% if noDecision %}
-              <p id="approveDecision-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select yes if you approve this plan</p>
+              <p id="approveDecision-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select Yes if you approve this plan</p>
             {% endif %}
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">

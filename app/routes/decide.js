@@ -119,6 +119,9 @@ function guardDecidePath(req) {
   return null;
 }
 
+// The cycle being planned, as Figma v8 writes it ("Start your 2027 to 2028 assessment cycle").
+const CYCLE_LABEL = "2027 to 2028";
+
 module.exports = function (router) {
   // Decide chrome + seed for every /decide request (council chrome by default; the
   // assurer/approver screens in later batches override to the minimal nav per-route).
@@ -126,6 +129,7 @@ module.exports = function (router) {
     if (!req.path.startsWith("/decide")) return next();
     ensureDecide(req.session.data);
     applyDecideChrome(req, res);
+    res.locals.cycleLabel = CYCLE_LABEL;
     // The Approver changed in People while the plan waits for a decision: the plan goes to the
     // new Approver (D27b or D12b), with N05 and N08 (plan-state.js syncApprover).
     syncApprover(req.session.data);
@@ -251,6 +255,7 @@ module.exports = function (router) {
     }
     res.render("pages/decide/cni-added", {
       pageTitle: `You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
+      heading: `You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
       backHref: "/decide/cni",
       added,
     });
@@ -265,6 +270,7 @@ module.exports = function (router) {
       const added = cniSystems(setup).map((s) => ({ id: s.id, name: s.name, criticality: deriveCriticality(s.impact) || "Not yet rated" }));
       return res.render("pages/decide/cni-added", {
         pageTitle: `Error: You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
+        heading: `You have selected ${added.length} CNI system${added.length === 1 ? "" : "s"}`,
         backHref: "/decide/cni",
         added,
         showError: true,
@@ -480,10 +486,10 @@ module.exports = function (router) {
       planSummary: buildPlanSummary(setup, decide),
       // "Check the systems that are not included" — only when true.
       planWarning: buildPriorityWarning(setup, decide),
-      // Figma v7 D05 note, shown after the plan summary.
+      // Figma v8 D05 note, shown after the plan summary.
       planNote: {
-        warning: "Your assurer will review your plan before it goes for approval.",
-        body: "Next, arrange a call with your assurer to discuss your plan.",
+        warning: "Your assurer will review your plan before it is sent to your approver.",
+        body: "On the next screen, you can arrange a call with your assurer to discuss your plan.",
       },
     });
   });
@@ -556,7 +562,7 @@ module.exports = function (router) {
     delete data.assurerFeedback;
     const errors = [];
     if (answer !== "yes" && answer !== "no") {
-      errors.push({ id: "assurerHasFeedback", text: "Select yes if you have feedback on this plan" });
+      errors.push({ id: "assurerHasFeedback", text: "Select ‘Yes’ if you want to give feedback on this plan" });
     } else if (answer === "yes" && !feedback) {
       errors.push({ id: "assurerFeedback", text: "Enter your feedback" });
     }
@@ -618,7 +624,7 @@ module.exports = function (router) {
     const ctx = setup.councilContext || {};
     const cni = ctx.cni && ctx.cni !== "none" ? sectorLabel(ctx.cni) : "None";
     res.render("pages/decide/assurer-setup", {
-      pageTitle: "The council’s setup",
+      pageTitle: "Overview of council setup",
       backHref: "/decide/assurer-review",
       councilName: (setup.council && setup.council.name) || "",
       context: {
@@ -840,7 +846,7 @@ module.exports = function (router) {
     const approver = (setup.people && setup.people.approver) || {};
     const approval = decide.approval || {};
     res.render("pages/decide/returned", {
-      pageTitle: "Your plan has been returned",
+      pageTitle: "Why your plan has been returned",
       approverName: approval.by || approver.name || "",
       returnedDate: approval.returnedDate || "",
       returnReason: approval.returnReason || "",
@@ -920,7 +926,7 @@ function assurerReviewModel(setup, decide, form) {
     councilName: (setup.council && setup.council.name) || "",
     // Everything added in Setup is in scope by definition, so "all in scope" holds.
     contextSummary: contextDone ? "Completed" : "Not completed",
-    serviceSummary: serviceCount + " service" + (serviceCount === 1 ? "" : "s") + ", all in scope",
+    serviceSummary: serviceCount + " service" + (serviceCount === 1 ? "" : "s"), // Figma v8 D07: "3 services"
     systemSummary:
       systemCount + " system" + (systemCount === 1 ? "" : "s") + ", all in scope" +
       (systemCount === 0 ? "" : unratedCount === 0 ? ", all rated" : ", " + unratedCount + " not yet rated"),
@@ -942,7 +948,7 @@ function assurerReviewModel(setup, decide, form) {
 // Shared render for the D04/D16 states of "Roughly when will each assessment happen?".
 function renderTiming(res, assessments, errors) {
   res.render("pages/decide/timing", {
-    pageTitle: "When do you expect each assessment to happen?",
+    pageTitle: assessments.length === 1 ? "When do you expect the assessment to happen?" : "When do you expect each assessment to happen?",
     backHref: "/decide/confirm",
     assessments,
     errors,
@@ -977,7 +983,7 @@ function renderSystems(res, setup, decide, opts) {
   const capped = total > SYSTEM_DISPLAY_CAP && !opts.showAll && !selectedBelowCap;
   const included = orgIncluded(setup);
   res.render("pages/decide/systems", {
-    pageTitle: (opts.showError ? "Error: " : "") + "Which critical systems will you assess?",
+    pageTitle: (opts.showError ? "Error: " : "") + "Select assessments for " + CYCLE_LABEL,
     backHref: firstScreenBackHref(setup, decide),
     rows: capped ? opts.rows.slice(0, SYSTEM_DISPLAY_CAP) : opts.rows,
     totalCount: total,
@@ -1012,7 +1018,7 @@ function renderRecordApproval(res, setup, decide, values, errors) {
   const approver = (setup.people && setup.people.approver) || {};
   const errs = errors || [];
   res.render("pages/decide/record-approval", {
-    pageTitle: (errs.length ? "Error: " : "") + "Record your Approver's decision",
+    pageTitle: (errs.length ? "Error: " : "") + "Record your approver’s decision",
     backHref: decide.assurerFeedback ? "/decide/feedback" : "/decide/sent",
     approverName: approver.name || "",
     approverLine: [approver.name, approver.jobTitle].filter(Boolean).join(", "),

@@ -26,7 +26,8 @@ function unfinishedSetupTasks(setup) {
   const tl = buildSetupTaskList(setup);
   return [...tl.preServices, ...tl.servicesAndSystems, ...tl.finish]
     .filter((t) => statusLabel(t) !== "Completed")
-    .map((t) => ({ name: t.title.text.replace(/^\d+\.\s*/, ""), href: t.href }));
+    // AS01 (Figma v8) words tasks 4 to 6 as actions: "Identify your essential services".
+    .map((t) => ({ name: t.title.text.replace(/^\d+\.\s*/, "").replace(/^Your /, "Identify your "), href: t.href }));
 }
 
 module.exports = function (router) {
@@ -38,6 +39,7 @@ module.exports = function (router) {
     const state = planState(data);
     const model = {
       pageTitle: "Assessments",
+      cycleLabel: "2027 to 2028",
       councilName: councilNameFor(data),
       state,
       previousResults: isExampleCouncil(data),
@@ -53,7 +55,11 @@ module.exports = function (router) {
       // One row per assessment in plan order; tags follow R05. The hint is the objectives only
       // (AS01c): the tag carries the status.
       model.assessments = buildCycleInProgressModel(data).assessments.map((a) =>
-        Object.assign({}, a, { hint: { text: a.hint.text.split(". ")[0] + "." } })
+        Object.assign({}, a, {
+          // AS01c names the organisation row "Organisational assessment" (other Decide screens: "Organisation").
+          title: Object.assign({}, a.title, { text: a.title.text === "Organisation assessment" ? "Organisational assessment" : a.title.text }),
+          hint: { text: a.hint.text.split(". ")[0] + "." },
+        })
       );
     } else {
       const tile = tileFor(data);

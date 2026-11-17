@@ -25,7 +25,7 @@
       {{ appPageHeader({
         caption: "ASSURER VIEW · " + councilName,
         title: "Review the council’s setup and plan",
-        intro: "You can review the council’s information and give feedback. You are not approving the plan. The council’s Approver does that."
+        intro: "Review the council’s information and give feedback. The council can then update the plan and share it with their approver."
       }) }}
 
       <dl class="govuk-summary-list">
@@ -47,9 +47,10 @@
       </dl>
 
       <h2 class="govuk-heading-m">Plan for this cycle</h2>
-      <p class="govuk-body">The council has provided approximate assessment dates to help you plan your time.</p>
+      <p class="govuk-body">Where possible, the council has provided approximate assessment dates to help you plan your time.</p>
 
       {% set planWarningEnding = "feedback" %}
+      {% set planNotIncludedHeading = "Not included this cycle" %}
       {% include "components/plan-summary.njk" %}
 
       <form method="post" action="/decide/assurer-review" novalidate>

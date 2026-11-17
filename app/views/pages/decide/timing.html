@@ -24,9 +24,13 @@
       {% endif %}
 
       {{ appPageHeader({
-        caption: "Start a cycle",
-        title: "When do you expect each assessment to happen?"
+        caption: "Start your " + cycleLabel + " assessment cycle",
+        title: pageTitle
       }) }}
+      <div class="govuk-inset-text">
+        <p class="govuk-body">MHCLG uses this information to plan assurer capacity.</p>
+        <p class="govuk-body govuk-!-margin-bottom-0">Give an approximate month if you can. Select ‘I do not know yet’ if you are not sure.</p>
+      </div>
 
 
       <form method="post" action="/decide/timing" novalidate>
@@ -73,10 +77,6 @@
           </div>
         {% endfor %}
 
-        <div class="govuk-inset-text">
-          <p class="govuk-body">MHCLG uses this information to plan assurer capacity.</p>
-          <p class="govuk-body govuk-!-margin-bottom-0">Give an approximate month if you can. It is fine to select ‘I do not know yet’ if you are not sure.</p>
-        </div>
 
         <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       </form>

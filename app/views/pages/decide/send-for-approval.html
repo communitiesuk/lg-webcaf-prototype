@@ -10,14 +10,14 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Send your plan for approval"
       }) }}
 
       {% if inService %}
-        <p class="govuk-body">Your assurer has reviewed your plan. Now send it to your Approver, who signs off the whole plan for this cycle.</p>
+        <p class="govuk-body">Your assurer has reviewed your plan. You can now send it to your Approver. They will sign off the whole plan for this cycle.</p>
       {% else %}
-        <p class="govuk-body">Your assurer has reviewed your plan. Now your Approver needs to sign off the whole plan for this cycle.</p>
+        <p class="govuk-body">Your assurer has reviewed your plan. You can now share it with your Approver. They will sign off the whole plan for this cycle.</p>
         <p class="govuk-body">Your Approver does not use this service. Share the plan with them, then record their decision here.</p>
       {% endif %}
 

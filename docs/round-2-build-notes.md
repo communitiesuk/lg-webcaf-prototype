@@ -39,3 +39,30 @@ Access management v6 (A36), Assurance allocation v1 (AL30).
 ## Figma housekeeping found during the build
 
 - R04 Content panel, CHANGED IN THIS VERSION, said "Assessments in the navigation goes to Decide". Updated in Figma on 13 November to "goes to AS01 Assessments (from 12 November; it no longer opens Decide)".
+
+## Figma v8 copy pass, 17 November 2026
+
+The prototype now matches the screen wording on "08 Decide what to assess · v8" (screens, not the
+Content panels). Where frames of the same page disagree, the main frame was followed:
+
+- D02 heading "Select assessments for 2027 to 2028" is used in every state of the page (D02b, D02c,
+  D15 and D22 frames still show "Which critical systems will you assess?").
+- D04e still has "Your CAF Lead and Approver will be the same for every assessment this cycle." It
+  was removed from D04 on 10 November, so it is not shown.
+- D05/D07/D11/D21 plan headings differ by screen and are mirrored per screen. The warning ending:
+  D05 "you can challenge that here"; D07, D11 and D21 "you can mention this in your feedback"
+  (D11b and D11e say "challenge that here").
+- D07e intro "The council has provided…" is older than D07 "Where possible, the council has
+  provided…"; D07 followed. D07 services row reads "3 services" (D07e: "3 services, all in scope").
+- D10b typo "nwo" read as "now".
+- D11 reads "This assessment cannot be updated yet" (D11e: "You cannot update this assessment yet").
+- D11e has two error summary lines for one question (Select Yes… / Select No…). Mirrored; GOV.UK
+  usually has one message per question.
+- D23e and D26e inline errors "Select a response from below" differ from their summary messages.
+  Mirrored; GOV.UK expects the same message in both places.
+- D12c link hint "For example: Meeting minutes…" kept as D12 ("For example, meeting minutes…").
+- D22 "None this cycle — organisation assessment only" kept as D02 (comma).
+- "Assessed 2025 to 2026" in Figma; the example seed holds a date ("Assessed March 2025"), shared
+  with Setup, so it is not changed here.
+- AS01c "Organisational assessment" (every other Decide screen says "Organisation assessment").
+- AS01 lists Setup tasks 4 to 6 as "Identify your …"; the Setup task list itself says "Your …".

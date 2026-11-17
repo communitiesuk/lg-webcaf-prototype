@@ -8,7 +8,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Which critical systems will you assess?"
       }) }}
 
@@ -24,6 +24,7 @@
 
       {# The selection is read-only here (the checkboxes in Figma could not change anything);
          "Change your selection" returns to D02 to change it. #}
+      <p class="govuk-body">You have selected:</p>
       <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
         {% for row in rows %}
           <li>{{ row.name }} — {{ row.criticalityLabel }}</li>

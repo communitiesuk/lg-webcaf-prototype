@@ -13,7 +13,7 @@
             <h2 class="govuk-error-summary__title">There is a problem</h2>
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
-                <li><a href="#addAnotherCni">Select yes if any other critical systems are part of CNI</a></li>
+                <li><a href="#addAnotherCni">Select if any other critical systems are part of CNI</a></li>
               </ul>
             </div>
           </div>
@@ -22,7 +22,7 @@
 
       {{ appPageHeader({
         caption: "Start a cycle",
-        title: pageTitle
+        title: heading
       }) }}
 
       <dl class="govuk-summary-list">
@@ -44,7 +44,7 @@
               <h2 class="govuk-fieldset__heading">Are any other critical systems part of CNI?</h2>
             </legend>
             {% if showError %}
-              <p id="addAnotherCni-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select yes if any other critical systems are part of CNI</p>
+              <p id="addAnotherCni-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> Select a response from below</p>
             {% endif %}
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">

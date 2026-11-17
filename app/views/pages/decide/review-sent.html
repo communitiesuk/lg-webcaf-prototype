@@ -6,10 +6,11 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appConfirmationPanel({ title: "Review sent", body: "We have told " + councilName }) }}
+      {{ appConfirmationPanel({ title: "Review sent", body: "We have told " + councilName + " that you have submitted your review" }) }}
 
       <h2 class="govuk-heading-m">What happens next</h2>
-      <p class="govuk-body">The council will decide whether to change its plan, then send it to its Approver. You do not need to do anything else for now. We will tell you when the plan has been approved.</p>
+      <p class="govuk-body">The council will decide whether to change its plan based on your feedback. It will then send the plan to its Approver.</p>
+      <p class="govuk-body">You do not need to do anything else for now. We will tell you when the plan has been approved.</p>
 
       <p class="govuk-body"><a class="govuk-link" href="/decide/assurer/councils">Return to your councils</a></p>
     </div>

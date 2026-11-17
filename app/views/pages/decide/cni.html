@@ -17,12 +17,12 @@
       {% if showError %}
         {{ govukErrorSummary({
           titleText: "There is a problem",
-          errorList: [{ text: "Select yes if any of your critical systems are part of CNI", href: "#cniAnswer" }]
+          errorList: [{ text: "Select if any of your critical systems are part of CNI", href: "#cniAnswer" }]
         }) }}
       {% endif %}
 
       {{ appPageHeader({
-        caption: "Start a cycle",
+        caption: "Start your " + cycleLabel + " assessment cycle",
         title: "Are any of your critical systems part of critical national infrastructure (CNI)?"
       }) }}
 
@@ -37,7 +37,7 @@
         {{ govukRadios({
           name: "cniAnswer",
           fieldset: { legend: { text: "Are any of your critical systems part of critical national infrastructure (CNI)?", classes: "govuk-visually-hidden" } },
-          errorMessage: { text: "Select yes if any of your critical systems are part of CNI" } if showError else undefined,
+          errorMessage: { text: "Select a response from below" } if showError else undefined,
           items: [
             { value: "yes", text: "Yes", checked: answer == "yes" },
             { value: "no", text: "No", checked: answer == "no" }
