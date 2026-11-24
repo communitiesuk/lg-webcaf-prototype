@@ -27,9 +27,18 @@
         {{ govukSummaryList({ card: { title: { text: c.title } }, rows: rows }) }}
       {% endfor %}
 
-      <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this critical system</a></p>
-
-      {{ govukButton({ text: "Return to critical systems", href: "/setup/critical-systems" }) }}
+      {% if continueHref %}
+        {# Shown while any question is unanswered: picks up at the first one, skips the rest that are
+           answered, and returns here. Not in Figma (24 November 2026). #}
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Continue adding details", href: continueHref }) }}
+          {{ govukButton({ text: "Return to critical systems", href: "/setup/critical-systems", classes: "govuk-button--secondary" }) }}
+        </div>
+        <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this critical system</a></p>
+      {% else %}
+        <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this critical system</a></p>
+        {{ govukButton({ text: "Return to critical systems", href: "/setup/critical-systems" }) }}
+      {% endif %}
     </div>
   </div>
 {% endblock %}

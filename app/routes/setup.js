@@ -110,7 +110,34 @@ function carry(req) {
 // sequence; ?from=add:service:<id> when the system was added from a service page (S37), where the
 // sequence ends instead (S37 return rule). "Save and come back later" leaves the sequence.
 const ADD_STEPS = ["edit", "corporate-services", "platforms", "supplier", "shared-with-councils", "hosting", "owner", "impact"];
-const isAdd = (from) => from === "add" || from.startsWith("add:service:");
+// ?from=resume (or resume:service:<id>) is "Continue adding details" on S52: the same sequence,
+// skipping questions already answered, back to S52 at the end.
+const isAdd = (from) => from === "add" || from.startsWith("add:service:") || from === "resume" || from.startsWith("resume:");
+const isResume = (from) => from === "resume" || from.startsWith("resume:");
+
+// Whether a question in the sequence still needs an answer.
+function stepUnanswered(sys, step) {
+  const sup = sys.supplier || {};
+  switch (step) {
+    case "edit": return !sys.description || !sys.assessedBefore || (!(sys.serviceIds || []).length && !(sys.functionIds || []).length && !sys.servicesLater);
+    case "corporate-services": return !(sys.otherFunctions || []).length && !sys.otherFunctionsNone;
+    case "platforms": return !sys.platformsLater && !(sys._platformCount > 0);
+    case "supplier": return !sup.managed;
+    case "which-supplier": return ["fully", "partially"].includes(sup.managed) && !sup.supplierId;
+    case "shared-with-councils": return !(sys.shared || {}).answer;
+    case "hosting": return !(sys.hosting || {}).type;
+    case "owner": return !(sys.owner || {}).name;
+    case "impact": return !record.deriveCriticality(sys.impact);
+    default: return false;
+  }
+}
+// The first unanswered question after `step` (or from the start), in sequence order.
+function firstUnansweredStep(setup, sys, after) {
+  const view = Object.assign({}, sys, { _platformCount: record.platformsForSystem(setup, sys.id).length });
+  const order = ["edit", "corporate-services", "platforms", "supplier", "which-supplier", "shared-with-councils", "hosting", "owner", "impact"];
+  const start = after ? order.indexOf(after) + 1 : 0;
+  return order.slice(start).find((s) => stepUnanswered(view, s)) || "";
+}
 
 function nextAddStep(step) {
   if (step === "which-supplier") return "shared-with-councils";
@@ -127,6 +154,7 @@ function prevAddStep(sys, step) {
 
 // The end of the sequence (or leaving it early): S52, or the service page with its banner.
 function leaveAdd(req, sys, from, finished) {
+  if (from.startsWith("resume")) return systemSummaryHref(sys, from.startsWith("resume:") ? from.slice(7) : "");
   if (from.startsWith("add:service:")) {
     const svc = getService(req.session.data.setup, from.slice(12));
     if (svc) {
@@ -154,7 +182,7 @@ function afterSystemQuestion(req, res, sys, step, branch) {
   if (ret === "summary") return res.redirect(systemSummaryHref(sys, from));
   if (from === "check") return res.redirect("/setup/coverage-check");
   if (isAdd(from)) {
-    const next = nextAddStep(step);
+    const next = isResume(from) ? firstUnansweredStep(req.session.data.setup, sys, step) : nextAddStep(step);
     return res.redirect(next ? `/setup/critical-systems/${sys.id}/${next}?from=${encodeURIComponent(from)}` : leaveAdd(req, sys, from, true));
   }
   return res.redirect(systemSummaryHref(sys));
@@ -168,6 +196,7 @@ function questionBack(req, sys, step) {
   if (isAdd(from)) {
     const prev = prevAddStep(sys, step);
     if (prev) return `/setup/critical-systems/${sys.id}/${prev}?from=${encodeURIComponent(from)}`;
+    if (isResume(from)) return systemSummaryHref(sys, from.startsWith("resume:") ? from.slice(7) : "");
     return from.startsWith("add:service:") ? `/setup/essential-services/${from.slice(12)}` : "/setup/critical-systems";
   }
   return systemSummaryHref(sys);
@@ -918,6 +947,11 @@ module.exports = function (router) {
       backHref: s52BackHref(setup, from),
       system: sys,
       cards: buildSystemCards(setup, sys, from),
+      continueHref: (() => {
+        const step = firstUnansweredStep(setup, sys);
+        const resume = from && from.startsWith("service:") ? "resume:" + from : from === "check" ? "resume:check" : "resume";
+        return step ? `/setup/critical-systems/${sys.id}/${step}?from=${encodeURIComponent(resume)}` : "";
+      })(),
       removeHref: `/setup/critical-systems/${sys.id}/remove` + (from ? `?from=${encodeURIComponent(from)}` : ""),
     });
   }));

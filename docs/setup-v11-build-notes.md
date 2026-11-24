@@ -114,3 +114,7 @@ Round 1 research: people landed on S52 straight after S14 and saw "Not answered"
 - **Adding a system from a service page** (S37d "Add a critical system") runs the same questions, then returns to the service page with the S37c banner (S37 return rule).
 - **Change links on S52** still open one question and return to S52. The S24 walk is unchanged.
 - **Not built:** S52b ("complete the rest in any order"), the drawn alternative for Q33.
+- **"Continue adding details" on S52** (not in Figma). Shown while any question is unanswered, as the primary button, with "Return to critical systems" as secondary.
+  - It opens the first unanswered question and skips any later ones already answered.
+  - It returns to S52, keeping where S52 itself returns to (service page or S24).
+  - "Save and come back later" is offered on each page and returns to S52.
