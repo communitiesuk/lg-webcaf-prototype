@@ -121,7 +121,7 @@ const SETUP_SCENARIOS = [
   {
     key: "platform-unlinked",
     title: "5. Platform linked to nothing",
-    note: "Five platforms, one linked to nothing. Expect S39 In progress on that row, and S24 “… is not linked to any service or system” with “Link the platform” opening S45.",
+    note: "Five platforms, one linked to nothing. Expect S39 In progress on that row, and S24 “… is not linked to any service or system” with “Link it to a service or system” opening S45.",
     build: (data) => {
       const setup = freshCouncil(data, METROPOLITAN);
       contextDone(setup);

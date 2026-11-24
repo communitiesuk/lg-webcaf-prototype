@@ -356,7 +356,8 @@ function pruneSuppliers(setup) {
 
 // --- S24 issues -------------------------------------------------------------------------
 
-// One row per issue, in the order drawn on S24. Each action opens the page that fixes it.
+// One row per issue, in the order drawn on S24. Each action opens the page that fixes it. `hidden`
+// names the item for screen reader users, read after the link text (24 November 2026).
 function setupIssues(setup) {
   const rows = [];
   const missing = systems(setup).filter((s) => !detailsComplete(s));
@@ -364,7 +365,7 @@ function setupIssues(setup) {
     rows.push({
       key: "details",
       text: `${missing.length} critical ${plural(missing.length, "system")} still ${missing.length === 1 ? "needs" : "need"} an owner and impact ratings.`,
-      actions: [{ text: "Add the missing details", href: `/setup/critical-systems/${missing[0].id}/summary?from=check` }],
+      actions: [{ text: "Add the missing details", hidden: missing[0].name, href: `/setup/critical-systems/${missing[0].id}/summary?from=check` }],
     });
   }
   services(setup)
@@ -374,8 +375,8 @@ function setupIssues(setup) {
         key: "service:" + svc.id,
         text: `${svc.name} has no critical system linked to it.`,
         actions: [
-          { text: "Add a system or record why none is needed", href: `/setup/essential-services/${svc.id}?from=check` },
-          { text: "Record why none is needed", href: `/setup/essential-services/${svc.id}/no-system-reason` },
+          { text: "Add a system or record why none is needed", hidden: svc.name, href: `/setup/essential-services/${svc.id}?from=check` },
+          { text: "Record why none is needed", hidden: svc.name, href: `/setup/essential-services/${svc.id}/no-system-reason` },
         ],
       });
     });
@@ -385,7 +386,7 @@ function setupIssues(setup) {
       rows.push({
         key: "system:" + sys.id,
         text: `${sys.name} is not linked to any essential service.`,
-        actions: [{ text: "Link it to a service", href: `/setup/critical-systems/${sys.id}/edit?from=check` }],
+        actions: [{ text: "Link it to a service", hidden: sys.name, href: `/setup/critical-systems/${sys.id}/edit?from=check` }],
       });
     });
   platforms(setup)
@@ -394,7 +395,7 @@ function setupIssues(setup) {
       rows.push({
         key: "platform:" + p.id,
         text: `${p.name} is not linked to any service or system.`,
-        actions: [{ text: "Link the platform", href: `/setup/shared-infrastructure/${p.id}/relies?from=check` }],
+        actions: [{ text: "Link it to a service or system", hidden: p.name, href: `/setup/shared-infrastructure/${p.id}/relies?from=check` }],
       });
     });
   return rows;

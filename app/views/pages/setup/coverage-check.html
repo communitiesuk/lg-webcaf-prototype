@@ -30,7 +30,7 @@
               <dd class="govuk-summary-list__actions">
                 <ul class="govuk-summary-list__actions-list">
                   {% for a in issue.actions %}
-                    <li class="govuk-summary-list__actions-list-item"><a class="govuk-link" href="{{ a.href }}">{{ a.text }}</a></li>
+                    <li class="govuk-summary-list__actions-list-item"><a class="govuk-link" href="{{ a.href }}">{{ a.text }}{% if a.hidden %}<span class="govuk-visually-hidden">: {{ a.hidden }}</span>{% endif %}</a></li>
                   {% endfor %}
                 </ul>
               </dd>
