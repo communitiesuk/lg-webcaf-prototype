@@ -1,9 +1,8 @@
-{# R03 dashboard state — setup in progress — Figma node 209:142 #}
+{# R03 dashboard state — setup in progress — Figma node 209:142. No "Continue setting up" button
+   (Michael, 24 November 2026): the task list row is the way in, so the Setup task list drives it. #}
 {% from "govuk/components/task-list/macro.njk" import govukTaskList %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 <h2 class="govuk-heading-m">What to do next</h2>
 {{ govukTaskList({ items: [ model.setupTask ] }) }}
-{{ govukButton({ text: "Continue setting up", href: "/setup/task-list" }) }}
 
 {% include "components/dashboard-also-on-this-page.njk" %}
