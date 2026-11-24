@@ -190,6 +190,7 @@ module.exports = function (router) {
         noneOfThese: none,
       },
       anythingElse: clean(f.ccAnythingElse),
+      answered: true,
     };
     return res.redirect(s30Or(req, "/setup/previous-assessment"));
   });

@@ -82,3 +82,4 @@ Fixed before research. Each was checked by following the journey in the prototyp
   - S09 goes back to S35 when opened from S35.
   - S16 keeps where S52 returns to.
 - **S24a** has no inset, as drawn.
+- **Task 2 "Your council's context"** is Completed once S02 is confirmed, S03 is saved and S03a is answered. S03 has no required questions and no error states in Figma, so leaving a question blank no longer holds the task at In progress. Stored as `councilContext.answered`.

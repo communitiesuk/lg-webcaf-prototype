@@ -80,6 +80,7 @@ function buildSetupSeed() {
       otTypes: ["Traffic signals and urban traffic control", "CCTV and public space surveillance"],
       itTransformation: { recent: true, recentDetail: "Moved to Microsoft 365 in 2025", upcoming: false, upcomingDetail: "", noneOfThese: false },
       anythingElse: "",
+      answered: true,
     },
 
     // S04, S05.
@@ -204,6 +205,7 @@ function buildSetupSeedEmpty() {
       otTypes: [],
       itTransformation: { recent: false, recentDetail: "", upcoming: false, upcomingDetail: "", noneOfThese: false },
       anythingElse: "",
+      answered: false,
     },
     methodology: { approach: "", notes: "", link: "" },
     essentialServices: [],

@@ -43,6 +43,7 @@ function contextDone(setup) {
     otTypes: ["CCTV and public space surveillance"],
     itTransformation: { recent: false, recentDetail: "", upcoming: false, upcomingDetail: "", noneOfThese: true },
     anythingElse: "",
+    answered: true,
   };
   setup.organisationAssessment = { answer: "no" };
   setup.methodology = { approach: "five-lens", notes: "", link: "" };

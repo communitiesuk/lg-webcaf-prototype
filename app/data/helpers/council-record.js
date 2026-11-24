@@ -248,10 +248,10 @@ function systemComplete(setup, sys) {
   return detailsComplete(sys) && systemLinked(setup, sys);
 }
 
+// S03 has no required questions (no error states in Figma), so it is done once the page is saved,
+// whatever is left blank. `answered` records that the person saved it.
 function contextComplete(setup) {
-  const cc = setup.councilContext || {};
-  const it = cc.itTransformation || {};
-  return (cc.cniSectors || []).length > 0 && (cc.otTypes || []).length > 0 && Boolean(it.recent || it.upcoming || it.noneOfThese);
+  return Boolean((setup.councilContext || {}).answered);
 }
 function contextStarted(setup) {
   const cc = setup.councilContext || {};
@@ -439,7 +439,11 @@ function concentrationNote(setup) {
 const OLD_CORPORATE = new Set(OTHER_FUNCTION_OPTIONS.map((o) => o.value));
 
 function migrate(setup) {
-  if (!setup || setup.recordVersion === 11) return setup;
+  if (!setup) return setup;
+  if (setup.recordVersion === 11) {
+    if (setup.councilContext && setup.councilContext.answered === undefined) setup.councilContext.answered = contextStarted(setup);
+    return setup;
+  }
   setup.council = setup.council || { name: "", type: "" };
   if (setup.council.type && !COUNCIL_TYPES.includes(setup.council.type)) {
     setup.council.type = /metropolitan/i.test(setup.council.type) ? "metropolitan_borough" : "";
@@ -460,6 +464,8 @@ function migrate(setup) {
       anythingElse: cc.anythingElse || "",
     };
   }
+  // Records saved before 24 November (evening) had no `answered`: any answer counts as saved.
+  if (setup.councilContext.answered === undefined) setup.councilContext.answered = contextStarted(setup);
   delete setup.sectorContextComment;
   const oa = setup.organisationAssessment || {};
   const mapAnswer = { yes: "within_3_years", dontknow: "dont_know" };
