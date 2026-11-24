@@ -22,7 +22,7 @@
         {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
       {% endif %}
 
-      {{ appPageHeader({ caption: "Your critical systems", title: "Add a critical system" }) }}
+      {{ appPageHeader({ caption: "Your critical systems", title: heading or "Add a critical system" }) }}
 
       <form method="post" action="{{ action }}" novalidate>
         {% include "pages/setup/critical-systems/_carry.njk" %}
@@ -51,7 +51,7 @@
         {% set _ = serviceItems.push({ value: "later", text: "Not sure yet, I’ll link it later", behaviour: "exclusive", checked: system.servicesLater }) %}
         {% set servicesHint %}
           These are the essential services and functions you have already added. Add more from Your essential services.
-          <br><a class="govuk-link" href="/setup/essential-services">Add or change your essential services</a>
+          <br><button class="app-link-button" type="submit" name="action" value="services">Add or change your essential services</button>
         {% endset %}
         {{ govukCheckboxes({
           idPrefix: "supportedServices",

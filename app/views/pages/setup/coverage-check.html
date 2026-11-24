@@ -39,7 +39,7 @@
         </dl>
 
         <div class="govuk-button-group">
-          {{ govukButton({ text: "Go to the first missing detail", href: "/setup/coverage-check/next" }) }}
+          {{ govukButton({ text: "Go to the first missing detail", href: "/setup/coverage-check/next?start=1" }) }}
           {{ govukButton({ text: "Continue anyway", href: "/setup/check-your-setup", classes: "govuk-button--secondary" }) }}
         </div>
       {% else %}
@@ -48,7 +48,6 @@
           <p class="govuk-body">You can continue to check and confirm your setup.</p>
         {% endset %}
         {{ govukNotificationBanner({ html: bannerHtml }) }}
-        {% if concentration %}<div class="govuk-inset-text">{{ concentration }}</div>{% endif %}
         {{ govukButton({ text: "Continue to check and confirm", href: "/setup/check-your-setup" }) }}
       {% endif %}
     </div>

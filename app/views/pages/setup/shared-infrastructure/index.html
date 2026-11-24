@@ -26,7 +26,7 @@
       <div class="govuk-button-group">
         {{ govukButton({ text: "Add a platform", href: "/setup/shared-infrastructure/add-platform", classes: "govuk-button--secondary" }) }}
       </div>
-      {{ govukButton({ text: "Back to Set up your council", href: "/setup/task-list" }) }}
+      {{ govukButton({ text: returnLabel or "Back to Set up your council", href: continueHref }) }}
     </div>
   </div>
 {% endblock %}

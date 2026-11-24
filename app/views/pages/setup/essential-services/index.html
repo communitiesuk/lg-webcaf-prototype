@@ -18,9 +18,9 @@
       {{ govukTaskList({ idPrefix: "service", items: rows }) }}
 
       <div class="govuk-button-group">
-        {{ govukButton({ text: "Add a service that is not on the list" if banner else "Add an essential service", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
+        {{ govukButton({ text: "Add an essential service", href: "/setup/essential-services/choose", classes: "govuk-button--secondary" }) }}
       </div>
-      {{ govukButton({ text: "Save and continue", href: "/setup/task-list" }) }}
+      {{ govukButton({ text: returnLabel or "Save and continue", href: continueHref }) }}
     </div>
   </div>
 {% endblock %}

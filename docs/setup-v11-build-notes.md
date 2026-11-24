@@ -64,3 +64,21 @@ Not built: S43 (Parked), S14b and S52b (alternative row), anything dimmed.
 - S14: the "Add or change your essential services" link.
 - S36, S39 and S23: task list rows.
 - S39a: layout and copy.
+
+## End-to-end usability pass, 24 November 2026
+
+Fixed before research. Each was checked by following the journey in the prototype.
+
+- **The S24 walk** ("Go to the first missing detail") skips pages already opened in the same walk. A question saved without an answer moves on instead of opening again.
+- **S12c "Add a supplier that is not listed"** keeps what was typed: name, type, who manages it. The new supplier is selected on return.
+- **S14 "Add or change your essential services"** keeps what was typed. Save and continue on S36 then returns to the form, with the answers still there.
+- **Changing an existing system (S14) or platform (S12c).** The heading is the system or platform name, not "Add a critical system" or "Add a core infrastructure platform". **Not in Figma; needs a frame.**
+- **S36 "Add an essential service"** opens S35, with the services already added ticked. The S36 panel says S09, but then nothing leads back to the full list once any service exists. S35 still has "Add an essential service not listed" (S09). **Deviation from the S36 panel.**
+- **S35 on a return visit.** A listed service that has something added is kept if unticked. A hint under it says to remove it from its own page. **Not in Figma.**
+- **S09** never adds a service twice. A name from the tier list counts as a listed service.
+- **S30 Change links to S36, S39 and S23.** These lists remember S30. Their back link and main button go back there ("Back to check your setup", **not in Figma**). This is cleared on the task list and on S30.
+- **Back links:**
+  - S04 goes back to S03a when reached from it.
+  - S09 goes back to S35 when opened from S35.
+  - S16 keeps where S52 returns to.
+- **S24a** has no inset, as drawn.

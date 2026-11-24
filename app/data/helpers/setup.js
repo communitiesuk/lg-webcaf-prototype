@@ -467,10 +467,10 @@ function buildSetupCheck(setup) {
       row("Methodology", record.methodologyComplete(setup) ? (setup.methodology.approach === "five-lens" ? "GovAssure Five Lens Model" : "Your own approach") : "", "/setup/methodology?from=s30"),
     ] },
     { title: "Your services and systems", rows: [
-      row("Essential services", svcs.length ? `${svcs.length} added` : "", "/setup/essential-services", "None added"),
-      row("Core infrastructure", plats.length ? `${plats.length} shared ${plural(plats.length, "platform")}, ${unlinkedPlats ? `${unlinkedPlats} not linked yet` : "linked to your services"}` : "", "/setup/shared-infrastructure", "None added"),
-      row("Critical systems", syss.length ? `${syss.length} added${sysAll ? ", all with owners and ratings" : ""}` : "", "/setup/critical-systems", "None added"),
-      row("How critical your systems are", criticalityDistribution(setup), "/setup/critical-systems", "None added"),
+      row("Essential services", svcs.length ? `${svcs.length} added` : "", "/setup/essential-services?return=/setup/check-your-setup", "None added"),
+      row("Core infrastructure", plats.length ? `${plats.length} shared ${plural(plats.length, "platform")}, ${unlinkedPlats ? `${unlinkedPlats} not linked yet` : "linked to your services"}` : "", "/setup/shared-infrastructure?return=/setup/check-your-setup", "None added"),
+      row("Critical systems", syss.length ? `${syss.length} added${sysAll ? ", all with owners and ratings" : ""}` : "", "/setup/critical-systems?return=/setup/check-your-setup", "None added"),
+      row("How critical your systems are", criticalityDistribution(setup), "/setup/critical-systems?return=/setup/check-your-setup", "None added"),
     ] },
   ];
 }

@@ -401,18 +401,20 @@ function setupIssues(setup) {
 }
 
 // "Go to the first missing detail": the next question to answer, one at a time, in the same order.
-function firstMissingDetail(setup) {
-  for (const sys of systems(setup)) {
-    if (!(sys.owner && sys.owner.name)) return `/setup/critical-systems/${sys.id}/owner?from=walk`;
-    if (!deriveCriticality(sys.impact)) return `/setup/critical-systems/${sys.id}/impact?from=walk`;
-  }
-  const svc = services(setup).find((s) => !s.noSystemReason && systemsForService(setup, s).length === 0);
-  if (svc) return `/setup/essential-services/${svc.id}/systems?from=walk`;
-  const sys = systems(setup).find((s) => !systemLinked(setup, s));
-  if (sys) return `/setup/critical-systems/${sys.id}/edit?from=walk`;
-  const plat = platforms(setup).find((p) => !platformLinked(p));
-  if (plat) return `/setup/shared-infrastructure/${plat.id}/relies?from=walk`;
-  return "";
+// `visited` holds the pages already opened in this walk, so a question saved without an answer is
+// skipped rather than opened again.
+function firstMissingDetail(setup, visited) {
+  const seen = new Set(visited || []);
+  const candidates = [];
+  systems(setup).forEach((sys) => {
+    if (!(sys.owner && sys.owner.name)) candidates.push(`/setup/critical-systems/${sys.id}/owner?from=walk`);
+    if (!deriveCriticality(sys.impact)) candidates.push(`/setup/critical-systems/${sys.id}/impact?from=walk`);
+  });
+  services(setup).filter((s) => !s.noSystemReason && systemsForService(setup, s).length === 0)
+    .forEach((s) => candidates.push(`/setup/essential-services/${s.id}/systems?from=walk`));
+  systems(setup).filter((s) => !systemLinked(setup, s)).forEach((s) => candidates.push(`/setup/critical-systems/${s.id}/edit?from=walk`));
+  platforms(setup).filter((p) => !platformLinked(p)).forEach((p) => candidates.push(`/setup/shared-infrastructure/${p.id}/relies?from=walk`));
+  return candidates.find((u) => !seen.has(u)) || "";
 }
 
 // S24 inset: the platform the most depends on, when it supports more than one thing.
