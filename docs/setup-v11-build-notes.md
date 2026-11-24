@@ -82,4 +82,10 @@ Fixed before research. Each was checked by following the journey in the prototyp
   - S09 goes back to S35 when opened from S35.
   - S16 keeps where S52 returns to.
 - **S24a** has no inset, as drawn.
-- **Task 2 "Your council's context"** is Completed once S02 is confirmed, S03 is saved and S03a is answered. S03 has no required questions and no error states in Figma, so leaving a question blank no longer holds the task at In progress. Stored as `councilContext.answered`.
+- **S03 answers are required** (MHCLG, 24 November): a CNI sector or "Not applicable", the OT types or "None of these", and "Do any of the following also apply", with text for each box ticked. "Anything else" stays optional. Task 2 is Completed once S02 is confirmed, S03 is saved without errors, and S03a is answered.
+  The error copy below was written in the build. **Not in Figma yet; Michael to add:**
+  - "Select a CNI sector, or select 'Not applicable'"
+  - "Select the types of operational technology your council runs, or select 'None of these'"
+  - "Select if any of these apply to your council, or select 'None of these'"
+  - "Enter what the recent IT transformation was, and roughly when"
+  - "Enter what the upcoming IT transformation is, and roughly when"

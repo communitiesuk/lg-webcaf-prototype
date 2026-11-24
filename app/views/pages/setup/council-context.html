@@ -2,7 +2,8 @@
    CNI: a select of the national CNI sectors without Government, plus "Not applicable".
    OT: checkboxes, eleven types and an exclusive "None of these" (draft list, Chris to confirm, Q19).
    IT transformation: two checkboxes with a conditional text box each, an exclusive "None of these",
-   and "Examples of IT transformation" in a Details component. Labelled copy: content review. #}
+   and "Examples of IT transformation" in a Details component. Labelled copy: content review.
+   All three questions are required (MHCLG, 24 November 2026); the error state is not in Figma yet. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
@@ -10,12 +11,19 @@
 {% from "govuk/components/textarea/macro.njk" import govukTextarea %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if errors and errors.length %}
+        {% set errorList = [] %}
+        {% for e in errors %}{% set _ = errorList.push({ text: e.text, href: "#" + e.id }) %}{% endfor %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
+      {% endif %}
+      {% set errs = errorById or {} %}
       {{ appPageHeader({
         caption: "Organisational context",
         title: "Your council context",
@@ -33,6 +41,7 @@
           name: "councilContextCni",
           label: { text: "Critical national infrastructure (CNI) sector", classes: "govuk-label--s" },
           hint: { text: "Select any CNI sectors that apply to specific services your council provides, such as Transport. Where no other CNI sectors apply, select ‘Not applicable’." },
+          errorMessage: { text: errs.councilContextCni } if errs.councilContextCni else undefined,
           items: cniItems
         }) }}
 
@@ -45,6 +54,7 @@
           name: "councilContextOt",
           fieldset: { legend: { text: "Operational Technology (OT)", classes: "govuk-fieldset__legend--s" } },
           hint: { text: "Select all the types of operational technology your council runs or is responsible for, or select ‘None of these’." },
+          errorMessage: { text: errs.councilContextOt } if errs.councilContextOt else undefined,
           items: otItems
         }) }}
 
@@ -68,6 +78,7 @@
             rows: 5,
             label: { text: "What was it, and roughly when?" },
             hint: { text: "For example, moved to Microsoft 365 in 2025" },
+            errorMessage: { text: errs.recentItDetail } if errs.recentItDetail else undefined,
             value: it.recentDetail
           }) }}
         {% endset %}
@@ -77,14 +88,18 @@
             name: "upcomingItDetail",
             rows: 5,
             label: { text: "What is planned, and roughly when?" },
+            errorMessage: { text: errs.upcomingItDetail } if errs.upcomingItDetail else undefined,
             value: it.upcomingDetail
           }) }}
         {% endset %}
 
-        <div class="govuk-form-group">
-          <fieldset class="govuk-fieldset" aria-describedby="councilContextIt-hint">
+        <div class="govuk-form-group{% if errs.councilContextIt %} govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" aria-describedby="councilContextIt-hint{% if errs.councilContextIt %} councilContextIt-error{% endif %}">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Do any of the following also apply to your council?</legend>
             <div id="councilContextIt-hint">{{ itHintHtml | safe }}</div>
+            {% if errs.councilContextIt %}
+              <p id="councilContextIt-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errs.councilContextIt }}</p>
+            {% endif %}
             {{ govukCheckboxes({
               idPrefix: "councilContextIt",
               name: "councilContextIt",

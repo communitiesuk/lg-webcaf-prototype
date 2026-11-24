@@ -172,6 +172,9 @@ module.exports = function (router) {
       otTypes: record.OT_TYPES,
     });
   });
+  // S03 answers are required (MHCLG, 24 November 2026): a CNI sector or Not applicable, the OT types
+  // or None of these, and the IT transformation question, with detail for each box ticked. Only
+  // "Anything else" is optional. Error copy written in the build; not in Figma yet.
   router.post("/setup/council-context", (req, res) => {
     const setup = ensureSetup(req.session.data);
     const f = take(req, ["councilContextCni", "councilContextOt", "councilContextIt", "recentItDetail", "upcomingItDetail", "ccAnythingElse"]);
@@ -179,8 +182,8 @@ module.exports = function (router) {
     const it = toList(f.councilContextIt);
     const none = it.includes("none");
     const cni = clean(f.councilContextCni);
-    setup.councilContext = {
-      cniSectors: cni ? [cni] : [],
+    const answers = {
+      cniSectors: record.CNI_SECTORS.includes(cni) ? [cni] : [],
       otTypes: ot.includes("none") ? ["None of these"] : ot.filter((v) => record.OT_TYPES.includes(v)),
       itTransformation: {
         recent: !none && it.includes("recent"),
@@ -190,8 +193,28 @@ module.exports = function (router) {
         noneOfThese: none,
       },
       anythingElse: clean(f.ccAnythingElse),
-      answered: true,
     };
+    const errors = [];
+    const itA = answers.itTransformation;
+    if (!answers.cniSectors.length) errors.push({ id: "councilContextCni", text: "Select a CNI sector, or select ‘Not applicable’" });
+    if (!answers.otTypes.length) errors.push({ id: "councilContextOt", text: "Select the types of operational technology your council runs, or select ‘None of these’" });
+    if (!itA.recent && !itA.upcoming && !itA.noneOfThese) errors.push({ id: "councilContextIt", text: "Select if any of these apply to your council, or select ‘None of these’" });
+    if (itA.recent && !itA.recentDetail) errors.push({ id: "recentItDetail", text: "Enter what the recent IT transformation was, and roughly when" });
+    if (itA.upcoming && !itA.upcomingDetail) errors.push({ id: "upcomingItDetail", text: "Enter what the upcoming IT transformation is, and roughly when" });
+    if (errors.length) {
+      const back = clean(req.session.data.from) === "s30";
+      return res.render("pages/setup/council-context", {
+        pageTitle: "Error: Your council context",
+        backHref: back ? "/setup/check-your-setup" : "/setup/sector-context",
+        from: back ? "s30" : "",
+        context: answers,
+        cniSectors: record.CNI_SECTORS,
+        otTypes: record.OT_TYPES,
+        errors,
+        errorById: Object.fromEntries(errors.map((e) => [e.id, e.text])),
+      });
+    }
+    setup.councilContext = Object.assign(answers, { answered: true });
     return res.redirect(s30Or(req, "/setup/previous-assessment"));
   });
 

@@ -248,10 +248,12 @@ function systemComplete(setup, sys) {
   return detailsComplete(sys) && systemLinked(setup, sys);
 }
 
-// S03 has no required questions (no error states in Figma), so it is done once the page is saved,
-// whatever is left blank. `answered` records that the person saved it.
+// S03's three questions are required (MHCLG, 24 November): a CNI sector or Not applicable, the OT
+// types or None of these, and the IT transformation question. `answered` records a valid save.
 function contextComplete(setup) {
-  return Boolean((setup.councilContext || {}).answered);
+  const cc = setup.councilContext || {};
+  const it = cc.itTransformation || {};
+  return Boolean(cc.answered) && (cc.cniSectors || []).length > 0 && (cc.otTypes || []).length > 0 && Boolean(it.recent || it.upcoming || it.noneOfThese);
 }
 function contextStarted(setup) {
   const cc = setup.councilContext || {};
