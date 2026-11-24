@@ -1,0 +1,39 @@
+{# S37d — setup / essential-services / [service] / systems — Setup v11. Link existing critical systems
+   to this service, A to Z. Unticking removes the link only. "Add a critical system" saves the ticks,
+   then opens S14 with this service ticked (it returns to the service page). Labelled: content review. #}
+{% extends "layouts/setup.html" %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <form method="post" action="/setup/essential-services/{{ service.id }}/systems" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
+        {{ govukCheckboxes({
+          idPrefix: "serviceSystems",
+          name: "serviceSystems",
+          fieldset: {
+            legend: {
+              html: '<span class="govuk-caption-l">' + service.name + '</span>' + pageTitle,
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          hint: { text: "Select all the critical systems that support this essential service. The list only includes critical systems you have already added." },
+          items: options
+        }) }}
+        {% if not options.length %}
+          <p class="govuk-body">You have not added any critical systems yet.</p>
+        {% endif %}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Add a critical system", classes: "govuk-button--secondary", name: "action", value: "add" }) }}
+        </div>
+        {{ govukButton({ text: "Save and continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

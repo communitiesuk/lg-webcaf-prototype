@@ -1,0 +1,10 @@
+{# One-off success banner after an action in Setup (S37c, S50, and S23 / S39 / S39a after a change).
+   Set by routes/setup.js setBanner(); shown once. #}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% if banner %}
+  {% set bannerHtml %}
+    <h3 class="govuk-notification-banner__heading">{{ banner.heading }}</h3>
+    {% if banner.body %}<p class="govuk-body">{{ banner.body }}</p>{% endif %}
+  {% endset %}
+  {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
+{% endif %}

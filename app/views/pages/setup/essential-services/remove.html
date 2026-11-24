@@ -1,4 +1,4 @@
-{# S46 — setup / remove-an-essential-service — Figma node 393:1465 #}
+{# S46 — setup / remove-an-essential-service — Setup v11. Consequences are worked out from the record. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -9,7 +9,7 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: service.name,
-        title: "Remove " + (service.name | lower) + "?",
+        title: pageTitle,
         intro: "If you remove this service:"
       }) }}
 
@@ -30,7 +30,7 @@
       <form method="post" action="/setup/essential-services/{{ service.id }}/remove" novalidate>
         <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
       </form>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ service.id }}/functions">Cancel</a>
+      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ service.id }}">Cancel</a>
     </div>
   </div>
 {% endblock %}

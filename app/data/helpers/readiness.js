@@ -98,7 +98,7 @@ function applyFullAccessChrome(req, res) {
   const path = req.path;
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard", active: path === "/dashboard" },
-    { text: "Your council", href: "/setup/task-list" },
+    { text: "Services and systems", href: "/setup/task-list" },
     { text: "Assessments", href: "/your-assessments" }, // AS01
     { text: "People", href: "/access", active: path.startsWith("/access") },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
@@ -230,7 +230,7 @@ function buildCycleInProgressModel(sessionData) {
   // has just had its plan approved, so nothing is started yet.
   const example = isExampleCouncil(sessionData);
   const setup = sessionData.setup || {};
-  const orgIncluded = !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
+  const orgIncluded = !require("./council-record").orgAssessedRecently(setup);
   const assessments = [];
   if (orgIncluded) {
     assessments.push(

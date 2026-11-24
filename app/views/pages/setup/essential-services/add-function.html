@@ -1,25 +1,33 @@
-{# S10b — setup / add-a-function — Figma node 393:1080 #}
+{# S10b — setup / add-a-function — Setup v11. Also "Change" on a function from the service page (S37),
+   with the name filled in; from S37 it returns there with a banner. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: service.name,
-        title: "Add a function"
-      }) }}
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#" + error.field }] }) }}
+      {% endif %}
 
-      <form method="post" action="/setup/essential-services/{{ service.id }}/functions/add" novalidate>
-        <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="newFunctionName">Name of the function</label>
-          <div id="newFunctionName-hint" class="govuk-hint">For example: benefits management</div>
-          <input class="govuk-input" id="newFunctionName" name="newFunctionName" type="text" value="" aria-describedby="newFunctionName-hint">
-        </div>
+      {{ appPageHeader({ caption: service.name, title: "Change a function" if fn else "Add a function" }) }}
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Add this function</button>
+      <form method="post" action="{{ action }}" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
+        {{ govukInput({
+          id: "newFunctionName",
+          name: "newFunctionName",
+          label: { text: "Name of the function", classes: "govuk-label--s" },
+          hint: { text: "For example: benefits management" },
+          errorMessage: { text: error.text } if error else undefined,
+          value: name
+        }) }}
+        {{ govukButton({ text: "Save and continue" if fn else "Add this function" }) }}
       </form>
     </div>
   </div>

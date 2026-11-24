@@ -1,4 +1,5 @@
-{# S15 — setup / system-supplier — Figma node 393:356 #}
+{# S15 — setup / system-supplier — Setup v11. "I don't know" removed (Chris); the hint says who to ask.
+   The in-scope inset was removed in v11. #}
 {% extends "layouts/setup.html" %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
@@ -17,19 +18,18 @@
       {% endset %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/supplier" novalidate>
-        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+        {% include "pages/setup/critical-systems/_carry.njk" %}
         {{ govukRadios({
           name: "managedBySupplier",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
+          hint: { text: "If you are not sure, ask the system owner or your IT service desk before you answer. Supplier contracts and service agreements usually tell you who manages what." },
           items: [
-            { value: "fully", text: "Yes, fully", checked: system.managedBySupplier == "fully" },
-            { value: "partially", text: "Yes, partially", checked: system.managedBySupplier == "partially" },
-            { value: "council", text: "No, the council manages it", checked: system.managedBySupplier == "council" },
-            { value: "dontknow", text: "I don't know", checked: system.managedBySupplier == "dontknow" }
+            { value: "fully", text: "Yes, fully", checked: system.supplier.managed == "fully" },
+            { value: "partially", text: "Yes, partially", checked: system.supplier.managed == "partially" },
+            { value: "no", text: "No, the council manages it", checked: system.supplier.managed == "no" }
           ]
         }) }}
 
-        {{ govukInsetText({ text: "Do not exclude a system just because a supplier manages it. You will decide whether to include it in a separate step." }) }}
 
         {{ govukButton({ text: "Continue" }) }}
       </form>

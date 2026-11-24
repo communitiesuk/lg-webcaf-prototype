@@ -1,4 +1,4 @@
-{# S16 — setup / which-supplier — Figma node 393:393 #}
+{# S16 — setup / which-supplier — Setup v11 #}
 {# Multi-field page (supplier choice + optional note): H1 is the page heading; the radios
    carry a visually-hidden legend, per the GDS pattern for pages with more than one question. #}
 {% extends "layouts/setup.html" %}
@@ -20,11 +20,11 @@
 
       {% set supplierItems = [] %}
       {% for s in suppliers %}
-        {% set _ = supplierItems.push({ value: s.id, text: s.name, checked: system.supplierId == s.id }) %}
+        {% set _ = supplierItems.push({ value: s.id, text: s.name, checked: chosen == s.id }) %}
       {% endfor %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/which-supplier" novalidate>
-        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+        {% include "pages/setup/critical-systems/_carry.njk" %}
         {{ govukRadios({
           name: "whichSupplier",
           fieldset: { legend: { text: "Which supplier manages all or part of this critical system?", classes: "govuk-visually-hidden" } },
@@ -33,7 +33,7 @@
         }) }}
 
         <div class="govuk-!-margin-bottom-5">
-          {{ govukButton({ text: "Add a supplier", href: "/setup/suppliers/add?return=system:" + system.id, classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add a supplier", href: addSupplierHref, classes: "govuk-button--secondary" }) }}
         </div>
 
         {{ govukTextarea({
@@ -42,7 +42,7 @@
           label: { text: "What does the supplier manage, and what does the council manage? (optional)", classes: "govuk-label--s" },
           hint: { text: "For example: The supplier hosts and patches the application. The council manages user access." },
           rows: 3,
-          value: system.supplierNote
+          value: system.supplier.note
         }) }}
 
         {{ govukButton({ text: "Save and continue" }) }}

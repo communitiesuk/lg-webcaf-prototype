@@ -274,6 +274,7 @@ require("./routes/assurance")(router);
 require("./routes/access")(router);
 require("./routes/beta")(router);
 require("./routes/research")(router);
+require("./routes/research-setup")(router); // Setup v11 research scenarios, beta-3
 require("./routes/assurer")(router);
 require("./routes/assurer-alpha")(router);
 require("./routes/mhclg")(router);

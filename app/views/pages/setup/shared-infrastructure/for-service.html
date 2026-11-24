@@ -1,4 +1,5 @@
-{# S38 — setup / core-infrastructure-for-this-service — Figma node 393:1238 #}
+{# S38 — setup / core-infrastructure-for-this-service — Setup v11. Both buttons return to the service
+   page (S37). Never to S13. #}
 {% extends "layouts/setup.html" %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
@@ -18,14 +19,15 @@
 
       {% set platformItems = [] %}
       {% for p in platforms %}
-        {% set _ = platformItems.push({ value: p.id, text: p.name, checked: p.checked }) %}
+        {% set _ = platformItems.push(p) %}
       {% endfor %}
 
       <form method="post" action="/setup/essential-services/{{ service.id }}/core-infrastructure" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
         {{ govukCheckboxes({
           name: "servicePlatforms",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { text: "This might include shared platforms such as identity, network, hosting, integration and monitoring. Tick all that apply to this service, or add a new platform." },
+          hint: { html: '<p class="govuk-hint">This might include shared platforms such as identity, network, hosting, integration and monitoring.</p><p class="govuk-hint govuk-!-margin-bottom-0">Tick all that apply to this service, or add a new platform.</p>' },
           items: platformItems
         }) }}
 
@@ -35,7 +37,7 @@
         }) }}
 
         <div class="govuk-!-margin-bottom-3">
-          {{ govukButton({ text: "Add a platform", href: "/setup/shared-infrastructure/add-platform?return=service:" + service.id, classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add a platform", href: addPlatformHref, classes: "govuk-button--secondary" }) }}
         </div>
         <div class="govuk-!-margin-bottom-3">
           {{ govukButton({ text: "Save and continue", name: "action", value: "continue" }) }}

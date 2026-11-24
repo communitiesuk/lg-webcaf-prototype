@@ -1,4 +1,4 @@
-{# S05 — setup / methodology-detail — Figma node 481:2429 (v7) #}
+{# S05 — setup / methodology-detail — Setup v11 #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -12,13 +12,14 @@
         title: "Tell us about your approach"
       }) }}
 
-      <div class="govuk-inset-text">Your own methodology is fine as long as it gives the same level of detail as the five lens approach, and you explain it to your independent assurer.</div>
+      <div class="govuk-inset-text">You can use your own methodology if it covers the same level of detail as the five-lens approach and you can explain it to your independent assurer.</div>
 
       <form method="post" action="/setup/methodology-detail" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
         <div class="govuk-form-group">
-          <label class="govuk-label govuk-label--s" for="methodologyDetail">How do you identify your essential services and critical systems?</label>
-          <div id="methodologyDetail-hint" class="govuk-hint">Give enough detail so your assurer can understand the approach you used.</div>
-          <textarea class="govuk-textarea" id="methodologyDetail" name="methodologyDetail" rows="5" aria-describedby="methodologyDetail-hint">{{ methodology.detail }}</textarea>
+          <label class="govuk-label govuk-label--s" for="methodologyNotes">How do you identify your essential services and critical systems?</label>
+          <div id="methodologyNotes-hint" class="govuk-hint">Give enough detail so your assurer can understand the approach you used.</div>
+          <textarea class="govuk-textarea" id="methodologyNotes" name="methodologyNotes" rows="5" aria-describedby="methodologyNotes-hint">{{ methodology.notes }}</textarea>
         </div>
 
         <div class="govuk-form-group">

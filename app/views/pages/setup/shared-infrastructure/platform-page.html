@@ -1,0 +1,47 @@
+{# S39a — setup / shared-infrastructure / [platform] — Setup v11. The platform's details and what
+   relies on it, as summary cards. Every Change opens one question and returns here. Nothing linked
+   reads "Not linked yet", never blank. Layout and copy: content review. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% include "components/setup-banner.njk" %}
+
+      {{ appPageHeader({ caption: "Your core infrastructure", title: platform.name }) }}
+
+      <p class="govuk-body">Review the infrastructure platform details and the essential services and critical systems that rely on it.</p>
+      <p class="govuk-body">Use the links in each section to add or make changes. After you add or change something, you will return to this page.</p>
+
+      {% set editHref = "/setup/shared-infrastructure/" + platform.id + "/edit" %}
+      {% set reliesHref = "/setup/shared-infrastructure/" + platform.id + "/relies" %}
+      {{ govukSummaryList({
+        card: { title: { text: "About the platform" } },
+        rows: [
+          { key: { text: "Name" }, value: { text: platform.name }, actions: { items: [{ href: editHref, text: "Change", visuallyHiddenText: "name" }] } },
+          { key: { text: "Type" }, value: { text: platform.type or "Not answered" }, actions: { items: [{ href: editHref, text: "Change" if platform.type else "Enter answer", visuallyHiddenText: "type" }] } },
+          { key: { text: "Who manages it" }, value: { text: page.managed or "Not answered" }, actions: { items: [{ href: editHref, text: "Change" if page.managed else "Enter answer", visuallyHiddenText: "who manages it" }] } }
+        ]
+      }) }}
+
+      {% set servicesHtml %}{% if page.services.length %}{{ page.services | join("<br>") | safe }}{% else %}Not linked yet{% endif %}{% endset %}
+      {% set systemsHtml %}{% if page.systems.length %}{{ page.systems | join("<br>") | safe }}{% else %}Not linked yet{% endif %}{% endset %}
+      {{ govukSummaryList({
+        card: { title: { text: "What relies on it" } },
+        rows: [
+          { key: { text: "Essential services" }, value: { html: servicesHtml }, actions: { items: [{ href: reliesHref, text: "Change" if page.services.length else "Link", visuallyHiddenText: "essential services" }] } },
+          { key: { text: "Critical systems" }, value: { html: systemsHtml }, actions: { items: [{ href: reliesHref, text: "Change" if page.systems.length else "Link", visuallyHiddenText: "critical systems" }] } }
+        ]
+      }) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="/setup/shared-infrastructure/{{ platform.id }}/remove">Remove this platform</a></p>
+
+      {{ govukButton({ text: "Back to your shared infrastructure", href: "/setup/shared-infrastructure" }) }}
+    </div>
+  </div>
+{% endblock %}

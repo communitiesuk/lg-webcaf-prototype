@@ -1,42 +1,32 @@
-{# S39 — setup / your-shared-infrastructure (hub) — Figma node 393:886 #}
+{# S39 — setup / your-core-infrastructure — Setup v11. A task list: the name opens the platform page
+   (S39a); the hint gives type and what it supports; Completed once linked to anything, otherwise
+   In progress. A banner shows after a removal. The guidance link opens in a new tab. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: "Your core infrastructure",
-        title: "Your shared infrastructure",
-        intro: "Add the platforms your services and systems rely on, such as identity, network, hosting and monitoring. You can add them here or when adding a service or system. Each platform only needs to be added once."
-      }) }}
+      {% include "components/setup-banner.njk" %}
 
-      <dl class="govuk-summary-list">
-        {% for row in rows %}
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ row.name }}</dt>
-            <dd class="govuk-summary-list__value">{{ row.summary }}</dd>
-            <dd class="govuk-summary-list__actions">
-              {% if row.action == "Change" %}
-                <a class="govuk-link" href="/setup/shared-infrastructure/{{ row.id }}/edit">Change<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
-              {% else %}
-                <a class="govuk-link" href="/setup/shared-infrastructure/{{ row.id }}/relies">Link it<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
-              {% endif %}
-            </dd>
-          </div>
-        {% endfor %}
-      </dl>
+      {{ appPageHeader({ caption: "Your core infrastructure", title: "Your core infrastructure" }) }}
 
-      <div class="govuk-inset-text">
-        You may see a system count of 0 because no critical systems have been added yet. Once you start adding critical systems, the system counts will help you check that your assessment covers the right services, systems and platforms.
+      <p class="govuk-body">Add the platforms your services and systems rely on, such as identity, network, hosting and monitoring.</p>
+      <p class="govuk-body">You can add them here or when adding a service or system. Each platform only needs to be added once.</p>
+      <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/five-lens-approach/" rel="noreferrer noopener" target="_blank">Read the guidance on identifying core infrastructure (opens in new tab)</a></p>
+
+      {% if rows.length %}
+        {{ govukTaskList({ idPrefix: "platform", items: rows }) }}
+      {% endif %}
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Add a platform", href: "/setup/shared-infrastructure/add-platform", classes: "govuk-button--secondary" }) }}
       </div>
-
-      <p class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=hub">Add a platform</a>
-      </p>
-      <a class="govuk-button" data-module="govuk-button" href="/setup/task-list">Back to Set up your council</a>
+      {{ govukButton({ text: "Back to Set up your council", href: "/setup/task-list" }) }}
     </div>
   </div>
 {% endblock %}

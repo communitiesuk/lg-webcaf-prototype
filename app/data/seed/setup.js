@@ -14,99 +14,92 @@
 // D02 mock's own example, added so the shared seed renders Decide's "Which critical systems
 // will you assess?" faithfully (two Mission-tier systems; the over-limit path).
 
-// --- Static reference list: the essential-services pick list on S35 -----------------
-// PLACEHOLDER LIST per the design ("the real list is coming from Leon"). Verbatim order.
-const ESSENTIAL_SERVICE_OPTIONS = [
-  "Adult social care",
-  "Children's social care",
-  "Revenue and benefits",
-  "Housing and homelessness",
-  "Waste collection and recycling",
-  "Planning and building control",
-  "Environmental health and licensing",
-  "Highways and transport",
-  "Electoral services",
-  "Customer contact and the council website",
-];
+// The S35 lists by council tier live in app/data/helpers/council-record.js (SERVICES_BY_TIER).
+// Kept for anything that still imports the old flat list: the single-tier list.
+const ESSENTIAL_SERVICE_OPTIONS = require("../helpers/council-record").SERVICES_BY_TIER.single;
 
 // Council register for the S18 "Search for a council" autocomplete (which councils share this
 // system). Uses the SAME real council list as Claim (app/data/councils.js, 330 real + 3 fictional
-// demo councils) so the two registers are consistent. The demo councils (Eastvale, Northmoor) that
-// the seed shows as already shared remain in the list. Changed in build, prototype, pending sign-off.
+// demo councils) so the two registers are consistent.
 const COUNCIL_REGISTER = require("../councils").map((c) => c.name);
 
-// --- The seeded (populated) Setup state the design depicts ---------------------------
+// A critical system in the record format (Setup v11). Only answers are stored.
+function system(fields) {
+  return Object.assign(
+    {
+      id: "",
+      name: "",
+      description: "",
+      serviceIds: [],
+      functionIds: [],
+      servicesLater: false,
+      otherFunctions: [],
+      otherFunctionsDetail: "",
+      otherFunctionsNone: false,
+      platformsLater: false,
+      supplier: { managed: "", supplierId: "", note: "" },
+      shared: { answer: "", councils: [] },
+      hosting: { type: "", provider: "", secondary: "" },
+      owner: { name: "", jobTitle: "" },
+      impact: { confidentiality: "", integrity: "", availability: "" },
+      assessedBefore: "",
+      cni: false, // set in Decide (D23, D25, D26)
+    },
+    fields
+  );
+}
+
+// --- The populated example council (Westborough), EXAMPLE DATA, NOT REAL ---------------------
+// Left part-way on purpose, so S24 has something to show: Social care has no platforms, Waste
+// collection has nothing yet, two systems are not linked to a service, one has no owner or ratings
+// and SIEM and monitoring is linked to nothing.
 function buildSetupSeed() {
   return {
     seeded: true,
+    recordVersion: 11,
     exampleData: true, // EXAMPLE DATA, NOT REAL
     exampleCouncil: true, // the populated example council (not one a participant registered)
 
-    council: {
-      name: "Westborough Borough Council",
-      type: "metropolitan borough council",
-    },
+    council: { name: "Westborough Borough Council", type: "metropolitan_borough" },
 
-    // People (confirmed via Access management, out of scope here — shown on S30).
     people: {
       cafLead: { name: "Jo Hart", confirmed: true },
-      // jobTitle added for Decide (D12/D21). hasAccount drives the D08 branch:
-      // true → D11 (Approver approves in service); false → D12 (record decision elsewhere).
-      // EXAMPLE DATA, NOT REAL.
+      // hasAccount: true → the Approver approves in the service (D11); false → D12.
       approver: { name: "Cllr M Devlin", jobTitle: "Cabinet Member for Resources", confirmed: true, hasAccount: true },
     },
 
-    // Assigned assurer — used by Decide (D07/D08/D11/D21). Setup does not capture this;
-    // added here as shared EXAMPLE DATA. `assigned` drives D05→D09 vs D05→D06.
+    // Assigned assurer, used by Decide only. `assigned` drives D05 → D09 rather than D06.
     assurer: { name: "K Osei", organisation: "Bridewell", assigned: true },
 
-    // S03a: whether the council has done its organisation assessment before — used by Decide
-    // (included this cycle unless "yes"; D20 nothing-left). EXAMPLE DATA, NOT REAL.
-    organisationAssessment: { answer: "no", doneBefore: false },
+    organisationAssessment: { answer: "no" }, // S03a
+    sectorContext: { confirmed: true }, // S02
 
-    // Task 2a — S02 sector context (read-only, confirmed).
-    sectorContext: { confirmed: true },
-
-    // Task 2b — S03 council context (v7). CNI/OT are dropdown values (realistic example list);
-    // checkboxes ticked and detail fields empty as drawn. CNI is seeded to a sector so it stays
-    // flagged for Decide's D24 CNI consistency check (Boolean(councilContext.cni)).
+    // S03. A CNI sector is chosen, so Decide asks D23.
     councilContext: {
-      cni: "emergency-services",
-      operationalTechnology: "",
-      recentItTransformation: true,
-      recentItTransformationDetail: "",
-      upcomingItTransformation: false,
-      upcomingItTransformationDetail: "",
-      lgr: false, // LGR option removed from the page (work paused); seed cleared to stay coherent
-      lgrDetail: "",
-      noneOfThese: false,
+      cniSectors: ["Transport"],
+      otTypes: ["Traffic signals and urban traffic control", "CCTV and public space surveillance"],
+      itTransformation: { recent: true, recentDetail: "Moved to Microsoft 365 in 2025", upcoming: false, upcomingDetail: "", noneOfThese: false },
       anythingElse: "",
-      completed: true,
     },
 
-    // Task 3 — S04/S05 methodology.
+    // S04, S05.
     methodology: {
-      approach: "five-lens", // "five-lens" | "other"
-      // Example values used when "another methodology" (S05) is visited:
-      detail:
-        "We used our business continuity plan. Services were ranked by the impact of losing them for more than 24 hours.",
+      approach: "five-lens",
+      notes: "We used our business continuity plan. Services were ranked by the impact of losing them for more than 24 hours.",
       link: "https://westborough.example/methodology",
-      completed: true,
     },
 
-    // Task 4 — essential services (3). Counts on S01/S36/S30 derive from these.
     essentialServices: [
       {
         id: "svc-revenue-benefits",
-        name: "Revenue and benefits",
+        name: "Revenues and benefits",
         source: "list",
         functions: [
           { id: "fn-benefits-management", name: "Benefits management" },
           { id: "fn-revenue-collection", name: "Revenue collection" },
         ],
         noSystemReason: "",
-        // infraStatus drives the hub's final status part: "complete" | "to_do" | "link_later"
-        infraStatus: "complete",
+        infraLater: false,
       },
       {
         id: "svc-adult-social-care",
@@ -117,7 +110,7 @@ function buildSetupSeed() {
           { id: "fn-safeguarding", name: "Safeguarding" },
         ],
         noSystemReason: "",
-        infraStatus: "to_do",
+        infraLater: false,
       },
       {
         id: "svc-waste-collection",
@@ -125,238 +118,94 @@ function buildSetupSeed() {
         source: "list",
         functions: [],
         noSystemReason: "",
-        infraStatus: "link_later",
+        infraLater: true,
       },
     ],
 
-    // Task 5 — shared infrastructure platforms (5).
-    // Platforms are the SINGLE SOURCE OF TRUTH for links: each lists the services and
-    // systems that rely on it (linkedServices / linkedSystems). Every per-service and
-    // per-system platform count is derived from these. `type` is the short label the
-    // S39 hub shows. (The design's per-platform counts were mutually inconsistent across
-    // frames; these are reconciled so S36, S20, S39 and the S01 task hint all agree.)
+    // Platforms hold the service and system links (each link is stored once).
     platforms: [
-      {
-        id: "plat-entra",
-        name: "Entra ID",
-        type: "Identity and access management",
-        managedBy: "council",
-        supplierId: "",
-        linkedServices: ["svc-revenue-benefits"],
-        linkedSystems: ["sys-northgate", "sys-social-care", "sys-website"],
-      },
-      {
-        id: "plat-network",
-        name: "Council network and VPN",
-        type: "Network",
-        managedBy: "council",
-        supplierId: "",
-        linkedServices: ["svc-revenue-benefits"],
-        linkedSystems: ["sys-northgate", "sys-social-care", "sys-website", "sys-housing", "sys-traffic"],
-      },
-      {
-        id: "plat-azure",
-        name: "Azure landing zone",
-        type: "Hosting",
-        managedBy: "council",
-        supplierId: "",
-        linkedServices: ["svc-revenue-benefits"],
-        linkedSystems: ["sys-northgate", "sys-website"],
-      },
-      {
-        id: "plat-integration",
-        name: "Integration and API gateway",
-        type: "Integration",
-        managedBy: "council",
-        supplierId: "",
-        linkedServices: [],
-        linkedSystems: ["sys-website"],
-      },
-      {
-        id: "plat-siem",
-        name: "SIEM and monitoring",
-        type: "Logging and monitoring",
-        managedBy: "council",
-        supplierId: "",
-        linkedServices: [],
-        linkedSystems: [],
-      },
+      { id: "plat-entra", name: "Entra ID", type: "Identity and access management", managedBy: "council", supplierId: "", linkedServices: ["svc-revenue-benefits"], linkedSystems: ["sys-northgate", "sys-social-care", "sys-website"] },
+      { id: "plat-network", name: "Council network and VPN", type: "Network and connectivity", managedBy: "council", supplierId: "", linkedServices: ["svc-revenue-benefits"], linkedSystems: ["sys-northgate", "sys-social-care", "sys-website", "sys-housing", "sys-traffic"] },
+      { id: "plat-azure", name: "Azure landing zone", type: "Hosting, cloud or compute", managedBy: "council", supplierId: "", linkedServices: ["svc-revenue-benefits"], linkedSystems: ["sys-northgate", "sys-website"] },
+      { id: "plat-integration", name: "Integration and API gateway", type: "Integration and APIs", managedBy: "council", supplierId: "", linkedServices: [], linkedSystems: ["sys-website"] },
+      { id: "plat-siem", name: "SIEM and monitoring", type: "Security, logging and monitoring", managedBy: "council", supplierId: "", linkedServices: [], linkedSystems: [] },
     ],
 
-    // Shared supplier list (reused by S12c and S16).
-    suppliers: [
-      { id: "sup-nec", name: "NEC Software Solutions" },
-      { id: "sup-novatech", name: "NovaTech Managed Services" },
-      { id: "sup-microsoft", name: "Microsoft" },
-    ],
+    suppliers: [{ id: "sup-nec", name: "NEC Software Solutions" }],
 
-    // Task 6 — critical systems (4).
     criticalSystems: [
-      {
+      system({
         id: "sys-northgate",
         name: "Northgate Revenues and Benefits",
-        description:
-          "Processes council tax, business rates and housing benefit. If compromised, the council could not bill or pay benefit, and residents' financial data could be exposed.",
-        supportedServices: ["fn-benefits-management", "fn-revenue-collection"],
+        description: "Processes council tax, business rates and housing benefit. If compromised, the council could not bill or pay benefit, and residents' financial data could be exposed.",
+        functionIds: ["fn-benefits-management", "fn-revenue-collection"],
         assessedBefore: "no",
-        corporateServices: ["finance-accounting", "procurement-contract", "other"],
-        corporateServicesOther: "Electronic document signing",
-        managedBySupplier: "partially",
-        supplierId: "sup-nec",
-        supplierNote: "",
-        sharedWithCouncils: true,
-        councils: ["Eastvale District Council", "Northmoor County Council"],
-        hosting: {
-          type: "third-party",
-          provider: "Microsoft Azure, UK South",
-          secondary: "Microsoft Azure, UK West",
-        },
+        otherFunctions: ["finance-accounting", "procurement-contract", "other"],
+        otherFunctionsDetail: "Electronic document signing",
+        supplier: { managed: "partially", supplierId: "sup-nec", note: "" },
+        shared: { answer: "yes", councils: ["Eastvale District Council", "Northmoor County Council"] },
+        hosting: { type: "third-party", provider: "Microsoft Azure, UK South", secondary: "Microsoft Azure, UK West" },
         owner: { name: "Marcus Webb", jobTitle: "Head of Revenues and Benefits" },
         impact: { confidentiality: "high", integrity: "high", availability: "high" },
-        recovery: { mtd: "24 hours", rto: "8 hours", rpo: "1 hour" },
-        inPlan: true,
-        detailsComplete: true,
-        cni: false, // per-system CNI flag (set in Decide D23/D25/D26)
-      },
-      {
+      }),
+      system({
         id: "sys-social-care",
         name: "Social care case management",
-        description: "",
-        supportedServices: ["svc-adult-social-care"],
+        serviceIds: ["svc-adult-social-care"],
         assessedBefore: "no",
-        corporateServices: [],
-        corporateServicesOther: "",
-        managedBySupplier: "",
-        supplierId: "",
-        supplierNote: "",
-        sharedWithCouncils: false,
-        councils: [],
-        hosting: { type: "", provider: "", secondary: "" },
         owner: { name: "Dana Price", jobTitle: "Head of Adult Social Care" },
         impact: { confidentiality: "high", integrity: "medium", availability: "medium" },
-        recovery: { mtd: "", rto: "", rpo: "" },
-        inPlan: false,
-        detailsComplete: true,
-        cni: false,
-      },
-      {
+      }),
+      system({
         id: "sys-website",
         name: "Council website and forms",
-        description: "",
-        supportedServices: [],
-        assessedBefore: "yes",
-        assessedBeforeRecord: "Website and online forms, assessed March 2025",
+        functionIds: ["fn-revenue-collection"],
+        assessedBefore: "within_3_years",
         assessedDate: "March 2025",
-        corporateServices: [],
-        corporateServicesOther: "",
-        managedBySupplier: "",
-        supplierId: "",
-        supplierNote: "",
-        sharedWithCouncils: false,
-        councils: [],
-        hosting: { type: "", provider: "", secondary: "" },
-        owner: { name: "", jobTitle: "" },
-        impact: { confidentiality: "", integrity: "", availability: "" },
-        recovery: { mtd: "", rto: "", rpo: "" },
-        inPlan: false,
-        detailsComplete: false,
-        cni: false,
-      },
-      {
+      }),
+      system({
         id: "sys-housing",
         name: "Housing management system",
-        description: "",
-        supportedServices: [], // not linked to a service yet
         assessedBefore: "no",
-        corporateServices: [],
-        corporateServicesOther: "",
-        managedBySupplier: "",
-        supplierId: "",
-        supplierNote: "",
-        sharedWithCouncils: false,
-        councils: [],
-        hosting: { type: "", provider: "", secondary: "" },
         owner: { name: "Priya Shah", jobTitle: "Head of Housing" },
         impact: { confidentiality: "high", integrity: "high", availability: "high" },
-        recovery: { mtd: "", rto: "", rpo: "" },
-        inPlan: false,
-        detailsComplete: true,
-        cni: false,
-      },
-      {
+      }),
+      system({
         id: "sys-traffic",
         name: "Urban traffic control",
-        description: "",
-        supportedServices: [], // not linked to a service yet (CNI example)
         assessedBefore: "no",
-        corporateServices: [],
-        corporateServicesOther: "",
-        managedBySupplier: "",
-        supplierId: "",
-        supplierNote: "",
-        sharedWithCouncils: false,
-        councils: [],
-        hosting: { type: "", provider: "", secondary: "" },
         owner: { name: "Sam Okafor", jobTitle: "Head of Highways" },
         impact: { confidentiality: "high", integrity: "medium", availability: "medium" },
-        recovery: { mtd: "", rto: "", rpo: "" },
-        inPlan: false,
-        detailsComplete: true,
-        cni: true, // CNI example (per the Decide README)
-      },
+        cni: true,
+      }),
     ],
   };
 }
 
-// --- Empty Setup state (build from scratch) ------------------------------------------
-// The claimed council and CAF Lead (the claimant) are account-level and kept, but every setup task is undone: the Approver is NOT yet confirmed (task 7 does it,
-// via /access/approver), and there is no confirmed context, methodology, services,
-// platforms, suppliers or critical systems. Used by the "/beta" Start empty (Setup) mode.
+// --- Empty Setup (a council with nothing set up yet) -------------------------------------------
+// The council's name and type come from Claim (ensureSetup copies them). CAF Lead and Approver are
+// not confirmed here; Claim or Access sets them.
 function buildSetupSeedEmpty() {
   return {
     seeded: true,
+    recordVersion: 11,
     exampleData: true,
-
-    // The council's name comes from registration (ensureSetup copies it from the claim).
-    council: {
-      name: "",
-      type: "",
-    },
-
+    council: { name: "", type: "" },
     people: {
-      // CAF Lead not confirmed — from an empty council the user confirms it in task 1 (Access A22),
-      // so the task list starts "Not started" and the dashboard reads "Not started", not in progress.
-      // Changed in build, prototype, pending design sign-off.
       cafLead: { name: "", confirmed: false },
-      // Approver not yet confirmed — the user records it in task 7 (Access A27).
       approver: { name: "", jobTitle: "", confirmed: false, hasAccount: false },
     },
-
-    // No assurer: MHCLG assigns one, and a newly registered council has not been assigned one yet
-    // (Decide D05 goes to D06 "Waiting for an assurer"). Only Decide reads this.
+    // No assurer: a newly registered council has not been assigned one (Decide D05 → D06).
     assurer: { name: "", organisation: "", assigned: false },
-    organisationAssessment: { answer: "", doneBefore: false }, // S03a not answered yet
-
-    // Task 2 — not confirmed yet.
+    organisationAssessment: { answer: "" },
     sectorContext: { confirmed: false },
     councilContext: {
-      cni: "",
-      operationalTechnology: "",
-      recentItTransformation: false,
-      recentItTransformationDetail: "",
-      upcomingItTransformation: false,
-      upcomingItTransformationDetail: "",
-      lgr: false,
-      lgrDetail: "",
-      noneOfThese: false,
+      cniSectors: [],
+      otTypes: [],
+      itTransformation: { recent: false, recentDetail: "", upcoming: false, upcomingDetail: "", noneOfThese: false },
       anythingElse: "",
-      completed: false,
     },
-
-    // Task 3 — no methodology chosen.
-    methodology: { approach: "", detail: "", link: "", completed: false },
-
-    // Tasks 4–6 — nothing added yet.
+    methodology: { approach: "", notes: "", link: "" },
     essentialServices: [],
     platforms: [],
     suppliers: [],
@@ -414,6 +263,7 @@ function buildDecideSeedEmpty() {
 }
 
 module.exports = {
+  system,
   ESSENTIAL_SERVICE_OPTIONS,
   COUNCIL_REGISTER,
   buildSetupSeed,

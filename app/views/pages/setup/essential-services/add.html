@@ -1,35 +1,35 @@
-{# S09 — setup / add-a-service-not-on-the-list — Figma node 393:176 #}
-{# S32 error state (name missing) — Figma node 393:852 #}
+{# S09 — setup / essential-services / add — Setup v11. S32 is its error state. #}
 {% extends "layouts/setup.html" %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "components/page-header.njk" import appPageHeader %}
-{% from "components/feedback-message.njk" import appErrorSummary %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appErrorSummary(error) }}
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#" + error.field }] }) }}
+      {% endif %}
 
       {{ appPageHeader({
         caption: "Your essential services",
-        title: "Add an essential service"
+        title: "Add an essential service",
+        intro: "Add a service that is not on the list of essential services " + councilsLabel + " usually deliver."
       }) }}
 
       <form method="post" action="/setup/essential-services/add" novalidate>
-        <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
-          <label class="govuk-label govuk-label--s" for="newServiceName">Name of the service</label>
-          <div id="newServiceName-hint" class="govuk-hint">For example: Revenue and benefits</div>
-          {% if error %}
-            <p class="govuk-error-message" id="newServiceName-error">
-              <span class="govuk-visually-hidden">Error:</span>
-              {{ (error.items | selectattr('field','equalto','newServiceName') | list | first).text }}
-            </p>
-          {% endif %}
-          <input class="govuk-input" id="newServiceName" name="newServiceName" type="text" value="{{ name }}" aria-describedby="newServiceName-hint{% if error %} newServiceName-error{% endif %}">
-        </div>
-
-        <button class="govuk-button" data-module="govuk-button" type="submit">Add this service</button>
+        {{ govukInput({
+          id: "newServiceName",
+          name: "newServiceName",
+          label: { text: "Name of the service", classes: "govuk-label--s" },
+          hint: { text: "For example: Revenue and benefits" },
+          errorMessage: { text: error.text } if error else undefined,
+          value: name
+        }) }}
+        {{ govukButton({ text: "Add this service" }) }}
       </form>
     </div>
   </div>

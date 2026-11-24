@@ -1,28 +1,35 @@
-{# S12c — setup / add-core-infrastructure-platform — Figma node 393:937 — PROPOSAL (who manages) #}
+{# S12c — setup / add-core-infrastructure-platform — Setup v11. Eight platform types (Chris Linnell).
+   Adding from S39 goes on to S45; from S38 or S20 it returns there with the platform ticked;
+   changing from S39a returns to S39a. #}
 {# Built with nothing pre-selected and the "Which supplier?" reveal collapsed, per brief
    (the design frame shows two radios selected at once, which is an illustration quirk). #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
-{% set formAction = ("/setup/shared-infrastructure/" + platformId + "/edit") if mode == "edit" else "/setup/shared-infrastructure/add-platform" %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#platformName" }] }) }}
+      {% endif %}
       {{ appPageHeader({
         caption: caption,
         title: "Add a core infrastructure platform"
       }) }}
 
-      <form method="post" action="{{ formAction }}" novalidate>
-        {% if mode != "edit" %}<input type="hidden" name="returnTo" value="{{ returnTo }}">{% endif %}
+      <form method="post" action="{{ action }}" novalidate>
+        {% if link %}<input type="hidden" name="link" value="{{ link }}">{% endif %}
+        {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
 
-        <div class="govuk-form-group">
+        <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="platformName">Name of platform</label>
           <div id="platformName-hint" class="govuk-hint">For example: Entra ID</div>
-          <input class="govuk-input" id="platformName" name="platformName" type="text" value="{{ platform.name }}" aria-describedby="platformName-hint">
+          {% if error %}<p id="platformName-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error.text }}</p>{% endif %}
+          <input class="govuk-input{% if error %} govuk-input--error{% endif %}" id="platformName" name="platformName" type="text" value="{{ platform.name }}" aria-describedby="platformName-hint{% if error %} platformName-error{% endif %}">
         </div>
 
         <div class="govuk-form-group">
@@ -77,10 +84,8 @@
         <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and continue" if mode == "edit" else "Add this platform" }}</button>
       </form>
 
-      {% if mode == "edit" %}
-        <p class="govuk-body">
-          <a class="govuk-link" href="/setup/shared-infrastructure/{{ platformId }}/remove">Remove this platform</a>
-        </p>
+      {% if removeHref %}
+        <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this platform</a></p>
       {% endif %}
     </div>
   </div>

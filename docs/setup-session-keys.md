@@ -1,98 +1,73 @@
-# Setup section — session data keys
+# Setup — the council record (Setup v11)
 
-All state for the "Set up your council" (Setup v6) section lives under
-`req.session.data.setup`. Seeded by `ensureSetup()` in `app/data/helpers/setup.js`
-from `app/data/seed/setup.js`. **Example data, not real.** This file is the contract
-for Decide (and any later section) to read Setup data.
+All Setup state lives in `req.session.data.setup`. It is the contract Decide, the dashboard and AS01
+read. **Only answers are stored.** Every list, count, status, issue and summary is worked out from the
+record in `app/data/helpers/council-record.js`; nothing stores "which screen to show" or "task
+complete". The one stored fact of that kind is `setup.completed`, which records that the CAF Lead
+pressed Confirm and finish setup on S30.
 
-Transient form fields (POSTed, then read and deleted by the route) are listed per
-screen so they are not confused with the persisted model.
+`ensureSetup()` (`app/data/helpers/setup.js`) creates an empty record, converts a record saved in the
+old format (`migrate()`), and copies the council name and type from the council identified at Claim.
 
-## `setup` (persisted model)
+Field names Decide already read are kept (`essentialServices`, `criticalSystems`, `people.approver`,
+`councilContext`); their contents follow the v11 model.
 
-| Key | Type | Set by | Notes |
-|---|---|---|---|
-| `setup.seeded` | bool | ensureSetup | guard flag |
-| `setup.exampleData` | bool | seed | always true in prototype |
-| `setup.council.name` | string | seed | "Westborough Borough Council" |
-| `setup.council.type` | string | seed | "metropolitan borough council" |
-| `setup.people.cafLead` | `{name, confirmed}` | seed | confirmed in Access management (out of scope) |
-| `setup.people.approver` | `{name, confirmed}` | seed | — |
-| `setup.sectorContext.confirmed` | bool | S02 | read-only confirm |
-| `setup.councilContext.cni` | bool | S03 | CNI sector flag (proposal) |
-| `setup.councilContext.operationalTechnology` | bool | S03 | reveals `operationalTechnologyDetail` |
-| `setup.councilContext.operationalTechnologyDetail` | string | S03 | — |
-| `setup.councilContext.recentItTransformation` | bool | S03 | reveals `recentItTransformationDetail` |
-| `setup.councilContext.recentItTransformationDetail` | string | S03 | — |
-| `setup.councilContext.upcomingItTransformation` | bool | S03 | reveals `upcomingItTransformationDetail` |
-| `setup.councilContext.upcomingItTransformationDetail` | string | S03 | reveal label inferred — see batch notes |
-| `setup.councilContext.lgr` | bool | S03 | reveals `lgrDetail` |
-| `setup.councilContext.lgrDetail` | string | S03 | — |
-| `setup.councilContext.noneOfThese` | bool | S03 | exclusive; clears the above |
-| `setup.councilContext.anythingElse` | string | S03 | optional free text |
-| `setup.councilContext.completed` | bool | S03 | — |
-| `setup.methodology.approach` | "five-lens" \| "other" | S04 | — |
-| `setup.methodology.detail` | string | S05 | only when "other" |
-| `setup.methodology.link` | string | S05 | optional |
-| `setup.methodology.completed` | bool | S04 | — |
-| `setup.essentialServices[]` | array | S09/S10/S35/S36 | `{id, name, source, functions[], platforms[], noSystemReason, status}` |
-| `setup.platforms[]` | array | S12c/S38/S39 | `{id, name, type, managedBy, supplierId, linkedServices[], linkedSystems[]}` — **source of truth for all platform links** |
-| `setup.suppliers[]` | array | S41 | `{id, name}` — shared by S12c and S16 |
-| `setup.criticalSystems[]` | array | S14 onward | see shape below |
+## Links are stored once
 
-### `setup.criticalSystems[]` shape
+| Link | Stored on | Other direction |
+|---|---|---|
+| service ↔ platform | `platform.linkedServices` | `platformsForService()` |
+| system ↔ platform | `platform.linkedSystems` | `platformsForSystem()` |
+| system ↔ service or function | `system.serviceIds`, `system.functionIds` | `systemsForService()`, `servicesForSystem()` |
 
-`{ id, name, description, supportedServices[], assessedBefore ("yes"|"no"|"dontknow"),`
-`assessedBeforeRecord?, corporateServices[], corporateServicesOther, platforms[],`
-`managedBySupplier ("fully"|"partially"|"council"|"dontknow"|""), supplierId, supplierNote,`
-`sharedWithCouncils (bool), councils[], hosting{type, provider, secondary},`
-`owner{name, jobTitle}, impact{confidentiality, integrity, availability}, recovery{mtd, rto, rpo},`
-`inPlan (bool), detailsComplete (bool) }`
+A system supports a service when it is linked to the service, or to one of the service's functions.
 
-Criticality is **derived** from `impact` (not stored as an input).
+## The record
 
-## Transient form fields by screen
+| Key | Shape | Set by |
+|---|---|---|
+| `council.name` | string | Claim (copied by ensureSetup) |
+| `council.type` | `county` \| `district` \| `unitary` \| `metropolitan_borough` \| `london_borough` \| `city_of_london` \| `isles_of_scilly` | Claim, from the council register type |
+| tier | worked out: county → upper, district → lower, otherwise single | `tierFor()` |
+| `people.cafLead` | `{ name, confirmed, pending }` | Claim (v15) / Access A22 |
+| `people.approver` | `{ name, jobTitle, confirmed, pending, hasAccount }` | Access A29 |
+| `sectorContext.confirmed` | bool | S02 Continue |
+| `councilContext.cniSectors` | `[sector]`; never "Government"; may be `["Not applicable"]` | S03 |
+| `councilContext.otTypes` | the 11 types, or `["None of these"]` | S03 |
+| `councilContext.itTransformation` | `{ recent, recentDetail, upcoming, upcomingDetail, noneOfThese }` | S03 |
+| `councilContext.anythingElse` | string | S03 |
+| `organisationAssessment.answer` | `within_3_years` \| `more_than_3_years` \| `no` \| `dont_know` | S03a |
+| `methodology` | `{ approach: five-lens \| other, notes, link }` | S04, S05 |
+| `essentialServices[]` | `{ id, name, source: list \| added, functions: [{id, name}], noSystemReason, infraLater }` | S35, S09, S10b, S38, S42 |
+| `platforms[]` | `{ id, name, type (8 types), managedBy, supplierId, linkedServices, linkedSystems }` | S12c, S38, S45, S20 |
+| `suppliers[]` | `{ id, name }`; removed when nothing uses them | S41 |
+| `criticalSystems[]` | see below | S14 and the S52 questions |
+| `completed` | bool | S30 |
 
-- **S03** council-context: `councilContextApplies` (array: cni, ot, recent-it, upcoming-it, lgr), `councilContextNone` ("none", exclusive), `otDetail`, `recentItDetail`, `upcomingItDetail`, `lgrDetail`, `ccAnythingElse`.
-- **S04** methodology: `methodologyApproach` ("five-lens" | "other").
-- **S05** methodology-detail: `methodologyDetail`, `methodologyLink`.
-- **S35** choose services: `essentialServiceChoices` (array of service names from the pick list).
-- **S09** add service: `newServiceName`.
-- **S10b** add function: `newFunctionName`.
-- **S38** core infrastructure for a service: `servicePlatforms` (array of platform ids), `action` ("continue" | "later").
-- **S12c** add/edit platform: `platformName`, `platformType`, `platformManager` ("council" | "supplier-fully" | "supplier-partly" | "shared"), `whichSupplier` (supplier id), `returnTo` (where it was opened from).
-- **S45** what relies on a platform: `reliesServices` (array), `reliesSystems` (array), `reliesLater` ("later").
-- **S20** a system's platforms: `systemPlatforms` (array), `systemPlatformsLater` ("later").
-- **S14** add a critical system: `systemName`, `systemDescription`, `supportedServices` (array of service/function ids), `notSureServices` ("later"), `assessedBefore` ("yes" | "no" | "dontknow").
-- **S19** corporate services: `corporateServices` (array), `corporateServicesOther`, `noneCorporate` ("none").
-- **S15** supplier?: `managedBySupplier` ("fully" | "partially" | "council" | "dontknow").
-- **S16** which supplier: `whichSupplier` (supplier id), `supplierNote`.
-- **S41** add supplier: `supplierName`, `returnTo`.
-- **S17** shared with councils: `sharedWithCouncils` ("yes" | "no").
-- **S18** which councils: `whichCouncils` (array of council names, incl. any added via the accessible-autocomplete); `councilSearchSelect` (the autocomplete's enhanced-select value, not persisted).
-- **S21** hosting: `hostingType` ("third-party" | "on-premises" | "council-cloud"), `hostingProvider`, `hostingSecondary`.
-- **S27** owner: `ownerName`, `ownerJobTitle`.
-- **S28** impact ratings: `impactConfidentiality`, `impactIntegrity`, `impactAvailability` ("low" | "medium" | "high").
-- **S29** recovery: `recoveryMtd`, `recoveryRto`, `recoveryRpo`.
-- **S42** why no system: `noSystemReason` (stored on the service; clears the S24 warning).
-- **S30** check your setup: confirming sets `setup.completed = true`.
+A critical system:
 
-A system's `detailsComplete` becomes true once it has an owner **and** impact ratings.
-The S24 warnings and S30 summary are fully derived from the current state.
+| Key | Shape | Set by |
+|---|---|---|
+| `id`, `name`, `description` | string | S14 |
+| `serviceIds`, `functionIds` | ids | S14, S37d |
+| `servicesLater` | bool ("Not sure yet, I'll link it later") | S14 |
+| `otherFunctions`, `otherFunctionsDetail`, `otherFunctionsNone` | S19 values | S19 |
+| `platformsLater` | bool ("None yet, I'll link this later") | S20 |
+| `supplier` | `{ managed: fully \| partially \| no, supplierId, note }` | S15, S16 |
+| `shared` | `{ answer: yes \| no, councils: [name] }` | S17, S18 |
+| `hosting` | `{ type, provider, secondary }` | S21 |
+| `owner` | `{ name, jobTitle }` | S27 |
+| `impact` | `{ confidentiality, integrity, availability }` low \| medium \| high | S28 |
+| `assessedBefore` | `within_3_years` \| `more_than_3_years` \| `no` \| `dont_know` | S14 |
+| `assessedDate` | string, example council only | seed |
+| `cni` | bool | Decide (D23, D25, D26) |
 
-A system can be removed only when `!inPlan && assessedBefore !== "yes"` (`systemCanBeRemoved`);
-otherwise S48 (cannot remove) is shown. `hosting` is `{type, provider, secondary}`.
+Worked out, never stored: criticality (S28 rule), "details complete" (owner and all three ratings),
+every status on S01, S23, S36 and S39, the S24 issues, and whether a system can be removed (S48 when it
+is in this cycle's approved plan, or was assessed before).
 
-A critical system's `supportedServices[]` holds service ids and/or function ids. `assessedDate`
-(e.g. "March 2025") is example data shown on the S23 hub. Criticality is derived from `impact`
-via `deriveCriticality`.
+## Decide reads
 
-A service's/system's platforms are **derived** from `platforms[].linkedServices` / `linkedSystems`
-(not stored on the service/system). `managedBy` on a platform parallels a critical system's
-`managedBySupplier`.
-
-Each `essentialServices[]` entry adds `infraStatus` ("complete" | "to_do" | "link_later"),
-which drives the S36 hub status line and the S01 task hint. `source` is "list" (from S35)
-or "custom" (from S09).
-
-_Later batches will extend this file as screens are built._
+- `cniSectorChosen()`: a CNI sector other than "Not applicable" (D23 is asked).
+- `orgAssessedRecently()` / `systemAssessedRecently()`: only "within the last 3 years" counts as
+  already assessed. More than 3 years ago, No and I don't know are assessed again.

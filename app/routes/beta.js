@@ -356,6 +356,15 @@ module.exports = function (router) {
     });
   });
 
+  // Round 3 (beta-3): Setup v11 scenarios (pass 1); Claim v15 scenarios follow in pass 2.
+  router.get("/beta/round-3", (req, res) => {
+    if (!researchOn(req)) return res.redirect("/beta");
+    res.render("pages/beta/round-3", {
+      pageTitle: "Round 3 research",
+      setupScenarios: require("./research-setup").SETUP_SCENARIOS,
+    });
+  });
+
   router.get("/beta/screens", (req, res) => {
     if (!researchOn(req)) return res.redirect("/beta");
     res.render("pages/beta/screens", {

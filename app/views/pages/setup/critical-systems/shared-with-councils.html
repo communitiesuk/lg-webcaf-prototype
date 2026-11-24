@@ -1,4 +1,4 @@
-{# S17 — setup / shared-with-councils — Figma node 393:433 #}
+{# S17 — setup / shared-with-councils — Setup v11 #}
 {% extends "layouts/setup.html" %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
@@ -16,13 +16,13 @@
       {% endset %}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/shared-with-councils" novalidate>
-        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+        {% include "pages/setup/critical-systems/_carry.njk" %}
         {{ govukRadios({
           name: "sharedWithCouncils",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
           items: [
-            { value: "yes", text: "Yes", checked: system.sharedWithCouncils },
-            { value: "no", text: "No" }
+            { value: "yes", text: "Yes", checked: system.shared.answer == "yes" },
+            { value: "no", text: "No", checked: system.shared.answer == "no" }
           ]
         }) }}
 

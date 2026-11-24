@@ -1,4 +1,5 @@
-{# S20 — setup / shared-platforms-it-relies-on — Figma node 393:1031 #}
+{# S20 — setup / shared-platforms-it-relies-on — Setup v11. Pre-ticked with the platforms of the services
+   this system supports when nothing is linked yet. Save returns to S52. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -10,30 +11,30 @@
       {{ appPageHeader({
         caption: system.name,
         title: "Which shared platforms does this critical system rely on?",
-        intro: "The core infrastructure platforms linked to this critical system’s services have already been selected.",
+        intro: "Core infrastructure already identified as supporting this critical system has been automatically selected.",
         intro2: "Review the list and add or remove platforms as needed."
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/platforms" novalidate>
-        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+        {% include "pages/setup/critical-systems/_carry.njk" %}
         <div class="govuk-form-group">
           <div class="govuk-checkboxes" data-module="govuk-checkboxes">
             {% for p in platforms %}
               <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="systemPlatforms-{{ loop.index }}" name="systemPlatforms" type="checkbox" value="{{ p.id }}" {% if p.checked %}checked{% endif %}>
-                <label class="govuk-label govuk-checkboxes__label" for="systemPlatforms-{{ loop.index }}">{{ p.name }}</label>
+                <input class="govuk-checkboxes__input" id="systemPlatforms-{{ loop.index }}" name="systemPlatforms" type="checkbox" value="{{ p.value }}" {% if p.checked %}checked{% endif %}>
+                <label class="govuk-label govuk-checkboxes__label" for="systemPlatforms-{{ loop.index }}">{{ p.text }}</label>
               </div>
             {% endfor %}
             <div class="govuk-checkboxes__divider">or</div>
             <div class="govuk-checkboxes__item">
-              <input class="govuk-checkboxes__input" id="systemPlatformsLater" name="systemPlatforms" type="checkbox" value="later" data-behaviour="exclusive">
-              <label class="govuk-label govuk-checkboxes__label" for="systemPlatformsLater">None yet, I'll link this later</label>
+              <input class="govuk-checkboxes__input" id="systemPlatformsLater" name="systemPlatforms" type="checkbox" value="later" data-behaviour="exclusive"{% if later %} checked{% endif %}>
+              <label class="govuk-label govuk-checkboxes__label" for="systemPlatformsLater">None yet, I’ll link this later</label>
             </div>
           </div>
         </div>
 
         <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/shared-infrastructure/add-platform?return=system:{{ system.id }}">Add a platform</a>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ addPlatformHref }}">Add a platform</a>
         </div>
         <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       </form>

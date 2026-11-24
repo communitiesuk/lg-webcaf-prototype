@@ -1,43 +1,26 @@
-{# S36 — setup / essential-services-hub — Figma node 393:261 #}
-{# S50 success state after a removal — Figma node 393:1600 #}
+{# S36 — setup / essential-services — Setup v11. A task list, one row per service; the hint and status
+   are worked out from the record. S50 is this page with a banner after a removal. A row opens the
+   service page (S37), or the first step (S10) for a service with nothing added yet. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
-{% from "components/feedback-message.njk" import appNotificationBanner %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% if removed %}
-        {{ appNotificationBanner({
-          type: "success",
-          heading: removed + " has been removed",
-          body: ("The critical system " + orphan + " is no longer linked to any essential services.") if orphan else null
-        }) }}
-      {% endif %}
+      {% include "components/setup-banner.njk" %}
 
-      {{ appPageHeader({
-        caption: "Your essential services",
-        title: "Summary of your essential services"
-      }) }}
+      {{ appPageHeader({ caption: "Your essential services", title: "Summary of your essential services" }) }}
 
-      <dl class="govuk-summary-list">
-        {% for row in rows %}
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ row.name }}</dt>
-            <dd class="govuk-summary-list__value">{{ row.summary }}</dd>
-            <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="/setup/essential-services/{{ row.id }}/functions">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
-            </dd>
-          </div>
-        {% endfor %}
-      </dl>
+      {{ govukTaskList({ idPrefix: "service", items: rows }) }}
 
-      <p class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/add">Add an essential service</a>
-      </p>
-      <a class="govuk-button" data-module="govuk-button" href="/setup/task-list">Save and continue</a>
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Add a service that is not on the list" if banner else "Add an essential service", href: "/setup/essential-services/add", classes: "govuk-button--secondary" }) }}
+      </div>
+      {{ govukButton({ text: "Save and continue", href: "/setup/task-list" }) }}
     </div>
   </div>
 {% endblock %}

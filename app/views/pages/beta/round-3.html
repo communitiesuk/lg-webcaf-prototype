@@ -1,0 +1,26 @@
+{# Round 3 research (beta-3): Set up your council v11. Each scenario sets session data only, then opens
+   the page in its note. The participant plays the CAF Lead. Facilitator page, not service content. #}
+{% extends "layouts/main.html" %}
+
+{% block beforeContent %}<a class="govuk-back-link" href="/beta">Back to the research start page</a>{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Research</span>
+      <h1 class="govuk-heading-l">Round 3 research</h1>
+      {% include "pages/beta/_new-session.html" %}
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Set up your council (v11)</h2>
+      <p class="govuk-body">The participant is signed in as the CAF Lead of an example council (Westborough Borough Council, a metropolitan borough, or Eastvale District Council). Their CAF Lead role is already confirmed, as it is after Claim v15.</p>
+      <ul class="govuk-list">
+        {% for sc in setupScenarios %}
+          <li class="govuk-!-margin-bottom-3">
+            <a class="govuk-link govuk-link--no-visited-state" href="/research/setup/{{ sc.key }}">{{ sc.title }}</a>
+            <span class="govuk-hint govuk-!-margin-bottom-0">{{ sc.note }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}

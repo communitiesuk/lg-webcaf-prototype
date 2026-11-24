@@ -1,21 +1,9 @@
-{# S30 — setup / check-your-answers — Figma node 393:759 #}
-{# Note: the design uses H2 section headings above the summary lists and a "Confirm and
-   finish setup" button (diverges from the project's check-answers convention). Built as
-   designed. Values are DERIVED from the current state (mid-journey), so they reflect the
-   real setup rather than the design frame's fully-complete example. #}
+{# S30 — setup / check-your-setup — Setup v11. S30a is its error state (a CAF Lead or Approver not named).
+   Rows are worked out from the record: unanswered reads "Not answered" with "Enter". Sector context has
+   no Change (S02 is read only from v11). After setup is finished this page is read only. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
-
-{% macro row(key, value, href, anchorId, action) %}
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">{{ key }}</dt>
-    <dd class="govuk-summary-list__value">{{ value }}</dd>
-    <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="{{ href }}"{% if anchorId %} id="{{ anchorId }}"{% endif %}>{{ action or "Change" }}<span class="govuk-visually-hidden"> {{ key }}</span></a>
-    </dd>
-  </div>
-{% endmacro %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
@@ -26,43 +14,25 @@
         {{ govukErrorSummary({ titleText: "There is a problem", errorList: errorList }) }}
       {% endif %}
 
-      {{ appPageHeader({
-        caption: "Check and confirm",
-        title: "Check your setup"
-      }) }}
+      {{ appPageHeader({ caption: "Check and confirm", title: "Check your setup" }) }}
 
-      {% set cafLeadValue = (summary.cafLead + ", confirmed") if summary.cafLeadConfirmed else ((summary.cafLead + ", invitation sent") if summary.cafLeadPending else "Not confirmed yet") %}
-      {% set approverValue = (summary.approver + ", confirmed") if summary.approverConfirmed else ((summary.approver + ", invitation sent") if summary.approverPending else "Not confirmed yet") %}
-
-      {% set cafLeadAction = "Change" if (summary.cafLeadConfirmed or summary.cafLeadPending) else "Confirm" %}
-      {% set approverAction = "Change" if (summary.approverConfirmed or summary.approverPending) else "Confirm" %}
-
-      <h2 class="govuk-heading-m">Your people</h2>
-      <dl class="govuk-summary-list">
-        {{ row("CAF Lead", cafLeadValue, "/access/caf-lead?return=/setup/check-your-setup", "cafLead-change", cafLeadAction) }}
-        {{ row("Approver", approverValue, "/access/approver?return=/setup/check-your-setup", "approver-change", approverAction) }}
-      </dl>
-      <div class="govuk-inset-text">Setup is only complete once a CAF Lead and an Approver have been named.</div>
-
-      <h2 class="govuk-heading-m govuk-!-margin-top-6">Your organisational context</h2>
-      <dl class="govuk-summary-list">
-        {{ row("Sector context", "Read and confirmed" if summary.sectorConfirmed else "Not confirmed", "/setup/sector-context") }}
-        {{ row("Council context", "Provided" if summary.councilContextProvided else "Not provided", "/setup/council-context") }}
-        {{ row("Organisation assessment done before", summary.orgAssessedBefore, "/setup/previous-assessment") }}
-      </dl>
-
-      <h2 class="govuk-heading-m govuk-!-margin-top-6">How you identify services and systems</h2>
-      <dl class="govuk-summary-list">
-        {{ row("Methodology", summary.methodology, "/setup/methodology") }}
-      </dl>
-
-      <h2 class="govuk-heading-m govuk-!-margin-top-6">Your services and systems</h2>
-      <dl class="govuk-summary-list">
-        {{ row("Essential services", summary.servicesCount + " added", "/setup/essential-services") }}
-        {{ row("Core infrastructure", summary.platformsCount + " shared platforms, linked to your services", "/setup/shared-infrastructure") }}
-        {{ row("Critical systems", (summary.systemsCount + " added, all with owners and ratings") if summary.systemsAllComplete else (summary.systemsCount + " added"), "/setup/critical-systems") }}
-        {{ row("How critical your systems are", summary.criticality, "/setup/critical-systems") }}
-      </dl>
+      {% for section in sections %}
+        <h2 class="govuk-heading-m{% if not loop.first %} govuk-!-margin-top-6{% endif %}">{{ section.title }}</h2>
+        <dl class="govuk-summary-list">
+          {% for r in section.rows %}
+            <div class="govuk-summary-list__row{% if not r.action or isComplete %} govuk-summary-list__row--no-actions{% endif %}">
+              <dt class="govuk-summary-list__key">{{ r.key }}</dt>
+              <dd class="govuk-summary-list__value">{{ r.value }}</dd>
+              {% if r.action and not isComplete %}
+                <dd class="govuk-summary-list__actions">
+                  <a class="govuk-link" href="{{ r.action.href }}"{% if r.id %} id="{{ r.id }}"{% endif %}>{{ r.action.text }}<span class="govuk-visually-hidden"> {{ r.action.hidden }}</span></a>
+                </dd>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </dl>
+        {% if section.note %}<div class="govuk-inset-text">{{ section.note }}</div>{% endif %}
+      {% endfor %}
 
       {% if not isComplete %}
         <form method="post" action="/setup/check-your-setup" novalidate>

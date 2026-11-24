@@ -356,7 +356,11 @@ function startSetupAndDecide(data) {
   me.name = SETUP_AND_DECIDE.person.fullName;
   me.firstName = SETUP_AND_DECIDE.person.fullName.split(" ")[0];
   me.email = SETUP_AND_DECIDE.email;
-  ensureSetup(data); // copies the council name from the claim
+  ensureSetup(data); // copies the council name and type from the claim
+  // Claim v15: the CAF Lead is confirmed before anyone can open Setup (task 1 always Completed).
+  require("../data/helpers/access").setCafLead(data.access, me.id);
+  data.access.auditTrail = [];
+  data.setup.people.cafLead = { name: SETUP_AND_DECIDE.person.fullName, confirmed: true };
   acting.signInAs(data, "caf-lead");
 }
 

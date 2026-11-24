@@ -44,7 +44,7 @@ function applyClaimGrantedChrome(req, res, person, councilName) {
   res.locals.currentUser = { name: (person && person.fullName) || "", orgName: councilName || "" };
   res.locals.navigation = [
     { text: "Dashboard", href: "/dashboard" },
-    { text: "Your council", href: "/setup/task-list" },
+    { text: "Services and systems", href: "/setup/task-list" },
     { text: "Assessments", href: "/your-assessments" }, // AS01, same as every other page
     { text: "People", href: "/access" }, // same as every other page
     // "Switch council" removed from nav — a person can be linked to only one council for now.

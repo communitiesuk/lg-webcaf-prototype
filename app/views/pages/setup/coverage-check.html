@@ -1,64 +1,55 @@
-{# S24 — setup / coverage-check — Figma node 393:591 — PROPOSAL (finish with unlinked items) #}
+{# S24 — setup / review your progress — Setup v11. S24a when there is nothing to review.
+   An Important banner "[n] things to review", then one row per issue (worked out from the record), each
+   with an action link to the page that fixes it. "Go to the first missing detail" opens the first
+   unanswered question and walks the rest, one at a time. No "scope" issue in v11. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
-{% from "components/feedback-message.njk" import appNotificationBanner %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: "Check and confirm",
-        title: "Review your progress"
-      }) }}
+      {{ appPageHeader({ caption: "Check and confirm", title: "Review your progress" }) }}
 
-      {% if warnings.length %}
-        {{ appNotificationBanner({
-          type: "information",
-          heading: warnings.length + (" thing to review" if warnings.length == 1 else " things to review"),
-          body: "You can continue without making changes. These are suggestions to help you complete your assessment."
-        }) }}
+      {% if issues.length %}
+        {% set bannerHtml %}
+          <h3 class="govuk-notification-banner__heading">{{ issues.length }} {{ "thing" if issues.length == 1 else "things" }} to review</h3>
+          <p class="govuk-body">You can continue without making changes. These are suggestions to help you complete your assessment.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ html: bannerHtml }) }}
+
+        {% if concentration %}<div class="govuk-inset-text">{{ concentration }}</div>{% endif %}
+
+        <dl class="govuk-summary-list">
+          {% for issue in issues %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key govuk-!-font-weight-regular">{{ issue.text }}</dt>
+              <dd class="govuk-summary-list__actions">
+                <ul class="govuk-summary-list__actions-list">
+                  {% for a in issue.actions %}
+                    <li class="govuk-summary-list__actions-list-item"><a class="govuk-link" href="{{ a.href }}">{{ a.text }}</a></li>
+                  {% endfor %}
+                </ul>
+              </dd>
+            </div>
+          {% endfor %}
+        </dl>
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Go to the first missing detail", href: "/setup/coverage-check/next" }) }}
+          {{ govukButton({ text: "Continue anyway", href: "/setup/check-your-setup", classes: "govuk-button--secondary" }) }}
+        </div>
       {% else %}
-        {{ appNotificationBanner({
-          type: "information",
-          heading: "There is nothing to review",
-          body: "You can continue to check and confirm your setup."
-        }) }}
-      {% endif %}
-
-      {% if concentration %}
-        <div class="govuk-inset-text">{{ concentration }}</div>
-      {% endif %}
-
-      {% for warning in warnings %}
-        <div class="govuk-warning-text">
-          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
-          <strong class="govuk-warning-text__text">
-            <span class="govuk-visually-hidden">Warning</span>
-            {{ warning }}
-          </strong>
-        </div>
-      {% endfor %}
-
-      {% if needsDetails %}
-        <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Add the missing details</a>
-        </div>
-      {% endif %}
-      {% if noSystemService %}
-        <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/add">Add a system for {{ noSystemService.name }}</a>
-        </div>
-        <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/essential-services/{{ noSystemService.id }}/no-system-reason">Record why no system is needed</a>
-        </div>
-      {% endif %}
-
-      {% if warnings.length %}
-        <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue anyway</a>
-      {% else %}
-        <a class="govuk-button" data-module="govuk-button" href="/setup/check-your-setup">Continue to check and confirm</a>
+        {% set bannerHtml %}
+          <h3 class="govuk-notification-banner__heading">There is nothing to review</h3>
+          <p class="govuk-body">You can continue to check and confirm your setup.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ html: bannerHtml }) }}
+        {% if concentration %}<div class="govuk-inset-text">{{ concentration }}</div>{% endif %}
+        {{ govukButton({ text: "Continue to check and confirm", href: "/setup/check-your-setup" }) }}
       {% endif %}
     </div>
   </div>

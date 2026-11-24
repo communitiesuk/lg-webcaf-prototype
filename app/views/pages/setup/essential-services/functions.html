@@ -1,4 +1,5 @@
-{# S10 — setup / service-functions — Figma node 393:214 #}
+{# S10 — setup / service-functions — Setup v11. The first step for a new service (then S38, then S37).
+   "Remove this service" moved to the service page (S37) in v10. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -34,9 +35,6 @@
         <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
       </form>
 
-      <p class="govuk-body">
-        <a class="govuk-link" href="/setup/essential-services/{{ service.id }}/remove">Remove this service</a>
-      </p>
     </div>
   </div>
 {% endblock %}

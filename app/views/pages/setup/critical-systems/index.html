@@ -1,35 +1,29 @@
-{# S23 — setup / critical-systems-hub (with entries) — Figma node 393:535 #}
+{# S23 — setup / critical-systems — Setup v11. A task list: the name opens the system's page (S52);
+   the hint gives the owner and criticality, or what is still to add; Completed or In progress.
+   A banner shows after a removal. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/task-list/macro.njk" import govukTaskList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: "Your critical systems",
-        title: "Your critical systems",
-        intro: "Add an owner and impact rating for each critical system.",
-        intro2: "You can do this now, or come back to it later."
-      }) }}
+      {% include "components/setup-banner.njk" %}
 
-      <dl class="govuk-summary-list">
-        {% for row in rows %}
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ row.name }}</dt>
-            <dd class="govuk-summary-list__value">{{ row.summary }}</dd>
-            <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="{{ row.href }}">{{ row.action }}<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
-            </dd>
-          </div>
-        {% endfor %}
-      </dl>
+      {{ appPageHeader({ caption: "Your critical systems", title: "Your critical systems" }) }}
 
-      <p class="govuk-!-margin-bottom-3">
-        <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/add">Add a critical system</a>
-      </p>
-      <a class="govuk-button" data-module="govuk-button" href="/setup/task-list">Save and continue</a>
+      <p class="govuk-body">Add an owner and impact rating for each critical system.</p>
+      <p class="govuk-body">You can do this now, or come back to it later.</p>
+
+      {{ govukTaskList({ idPrefix: "system", items: rows }) }}
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Add a critical system", href: "/setup/critical-systems/add", classes: "govuk-button--secondary" }) }}
+      </div>
+      {{ govukButton({ text: "Save and continue", href: "/setup/task-list" }) }}
     </div>
   </div>
 {% endblock %}

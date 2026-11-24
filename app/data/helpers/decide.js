@@ -16,6 +16,7 @@ const {
   getSystem,
   deriveCriticality,
 } = require("./setup");
+const record = require("./council-record");
 
 // Ensure both Setup and Decide session state exist (idempotent). Both start empty; the example
 // council's Decide choices are only loaded explicitly by a research starting point
@@ -34,7 +35,7 @@ function buildDecideCouncilNavigation(currentPath) {
   const active = typeof currentPath === "string" && (currentPath.startsWith("/decide") || currentPath === "/your-assessments");
   return [
     { text: "Dashboard", href: "/dashboard" },
-    { text: "Your council", href: "/setup/task-list" },
+    { text: "Services and systems", href: "/setup/task-list" },
     { text: "Assessments", href: "/your-assessments", active }, // AS01
     { text: "People", href: "/access" },
     // "Switch council" removed from nav — one council per person for now (pending multi-council).
@@ -74,11 +75,10 @@ function applyDecideMinimalChrome(req, res) {
 
 // --- Entry rules ----------------------------------------------------------------------
 
-// S03 records a CNI sector as a dropdown value. "none" (explicitly chosen) and "" (not answered)
-// both mean no CNI sector, so the CNI screens (D23-D26a) are skipped.
+// S03 records the council's CNI sectors. "Not applicable" (or nothing) means no CNI sector, so the
+// CNI screens (D23-D26a) are skipped.
 function isCniFlaggedInSetup(setup) {
-  const cni = setup && setup.councilContext && setup.councilContext.cni;
-  return Boolean(cni && cni !== "none");
+  return Boolean(setup) && record.cniSectorChosen(setup);
 }
 
 // The CNI screens only make sense when the council chose a CNI sector AND has critical systems.
@@ -103,7 +103,8 @@ function assurerLine(setup) {
 }
 
 function orgIncluded(setup) {
-  return !(setup.organisationAssessment && setup.organisationAssessment.doneBefore);
+  // Included unless the council did one within the last 3 years (S03a).
+  return !record.orgAssessedRecently(setup);
 }
 
 // Today as "9 November 2026" — used when the Approver approves or returns the plan in service.
@@ -140,12 +141,12 @@ const CRITICALITY_RANK = {
 
 // Systems that have NOT been assessed in a previous cycle — candidates for this cycle.
 function assessableSystems(setup) {
-  return (setup.criticalSystems || []).filter((s) => s.assessedBefore !== "yes");
+  return (setup.criticalSystems || []).filter((s) => !record.systemAssessedRecently(s));
 }
 
 // Systems already assessed in a previous cycle — the read-only "Already assessed" list.
 function alreadyAssessedSystems(setup) {
-  return (setup.criticalSystems || []).filter((s) => s.assessedBefore === "yes");
+  return (setup.criticalSystems || []).filter((s) => record.systemAssessedRecently(s));
 }
 
 // True if any in-scope (assessable) system has no impact rating yet (drives the D22 variant).

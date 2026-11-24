@@ -1,165 +1,141 @@
 // app/data/helpers/setup.js
 //
-// Helpers for the "Set up your council" (Setup v6) prototype section.
-// Owns: the Setup persona and chrome (service name + service navigation), seeding of the
-// Setup session state, and the S01 task-list model. All Setup session state lives under
-// req.session.data.setup (see docs/setup-session-keys.md). The Setup section is kept
-// isolated from the rest of the prototype: chrome is painted via res.locals, not by
-// mutating the shared prototype session user.
+// "Set up your council" (Setup v11, Figma "07 Set up your council · v11 (content review)").
+// Owns the Setup chrome (service name and navigation) and the view models for each screen. Every
+// list, count, status and summary is worked out from the council record (council-record.js); see
+// docs/setup-session-keys.md for the record itself.
+
+const { buildSetupSeedEmpty, ESSENTIAL_SERVICE_OPTIONS, COUNCIL_REGISTER } = require("../seed/setup");
+const record = require("./council-record");
 
 const {
-  buildSetupSeedEmpty,
-  ESSENTIAL_SERVICE_OPTIONS,
-  COUNCIL_REGISTER,
-} = require("../seed/setup");
+  plural,
+  byName,
+  slugify,
+  getService,
+  getPlatform,
+  getSystem,
+  getSupplier,
+  deriveCriticality,
+  detailsComplete,
+  platformsForService,
+  platformsForSystem,
+  servicesForSystem,
+  systemsForService,
+  systemLinked,
+  supportedLabels,
+  serviceStatus,
+  platformLinked,
+  systemComplete,
+} = record;
 
-function slugify(value) {
-  return (value || "")
-    .toString()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-// Design persona (Figma Setup v6). Shown in the service navigation.
+// The example council's CAF Lead, shown in the header only when the example council is loaded.
 const SETUP_USER = {
   name: "Jo Hart",
   orgName: "Westborough Borough Council",
   role: "council",
 };
 
-// Service name as named in the brief and drawn in the Figma service navigation.
-// NOTE: differs from the global config.json serviceName ("CAF for Local Government").
-// Overridden via res.locals for /setup pages only. Logged as a deviation.
 const SETUP_SERVICE_NAME = "Assess and manage your council's cyber resilience";
 
-// Holding page for links that leave the Setup section (Access management, Decide, etc.).
+// Holding page for links that leave the Setup section.
 const HOLDING_HREF = "/setup/not-in-this-prototype";
 
-// Ensure the Setup session state exists (idempotent). With no Setup in the session it starts
-// EMPTY — nothing is set up yet. The populated example council (buildSetupSeed) is only ever
-// loaded explicitly, by a named research starting point (see routes/beta.js loadExampleCouncil),
-// so example data never reaches someone who registered and set up their own council.
+// Ensure the Setup record exists (idempotent), in the v11 format. It starts EMPTY; the example
+// council is only loaded by a named research starting point (routes/beta.js loadExampleCouncil).
+// The council's name and type come from the council identified at Claim.
 function ensureSetup(sessionData) {
   if (!sessionData) return null;
   if (!sessionData.setup || !sessionData.setup.seeded) {
     sessionData.setup = buildSetupSeedEmpty();
   }
-  // Keep the Setup council name in step with the council identified at claim (from the
-  // signed-in email), so the task-list and S30 captions match the nav identity. Demo
-  // scenarios with no claim journey keep the seeded name.
+  record.migrate(sessionData.setup);
   const claimCouncil = sessionData.claim && sessionData.claim.council;
   if (claimCouncil && claimCouncil.name) {
     sessionData.setup.council.name = claimCouncil.name;
+    const registered = claimCouncil.id && require("../councils").find((c) => c.id === claimCouncil.id);
+    const type = record.councilTypeFromRegister(registered || claimCouncil);
+    if (type) sessionData.setup.council.type = type;
   }
   return sessionData.setup;
 }
 
-// Service navigation matching the Figma design (order and labels verbatim).
-// "Your council" is the active section for every /setup page except the holding page.
+// Service navigation. "Your council" is "Services and systems" from v11 (23 November 2026), same
+// route. It is the current section on every /setup page except the holding page.
 function buildSetupNavigation(currentPath) {
-  const onSetup =
-    typeof currentPath === "string" &&
-    currentPath.startsWith("/setup") &&
-    currentPath !== HOLDING_HREF;
-
+  const onSetup = typeof currentPath === "string" && currentPath.startsWith("/setup") && currentPath !== HOLDING_HREF;
   return [
     { text: "Dashboard", href: "/dashboard" },
-    { text: "Your council", href: "/setup/task-list", active: onSetup },
+    { text: "Services and systems", href: "/setup/task-list", active: onSetup },
     { text: "Assessments", href: "/your-assessments" }, // AS01
     { text: "People", href: "/access" },
-    // "Switch council" removed from nav — one council per person for now (pending multi-council).
-    // Changed in build, prototype, pending design sign-off.
     { text: "Sign out", href: "/get-started/sign-out" },
   ];
 }
 
-// S01 task-list model. Only tasks 4-6 (services / infrastructure / systems) carry hint text
-// now — a dynamic progress line reflecting the current counts. The static descriptive hints on
-// the other tasks were removed (they restated the title). Grouped to match the design:
-// pre-services tasks, then "Your services and systems", then "Finish setting up".
+// --- Statuses (task list style: Completed plain text, In progress blue, Not yet started grey) ---
+
+const COMPLETED = { text: "Completed" };
+const IN_PROGRESS = { tag: { text: "In progress", classes: "govuk-tag--blue" } };
+const NOT_STARTED = { tag: { text: "Not yet started", classes: "govuk-tag--grey" } };
+const STATUS = { completed: COMPLETED, in_progress: IN_PROGRESS, not_started: NOT_STARTED };
+
+function peopleStatus(p) {
+  return p && p.confirmed ? COMPLETED : p && p.pending ? IN_PROGRESS : NOT_STARTED;
+}
+
+// S01. Statuses and hints are worked out from the record (S01 panel rules, plus the rules agreed
+// on 24 November for tasks 4 to 6: Completed when every row on the task's list is Completed).
 function buildSetupTaskList(setup) {
   setup = setup || {};
-  const services = setup.essentialServices || [];
-  const platforms = setup.platforms || [];
-  const systems = setup.criticalSystems || [];
-  const ctx = setup.councilContext || {};
-  const sector = setup.sectorContext || {};
-  const method = setup.methodology || {};
+  const svcs = setup.essentialServices || [];
+  const plats = setup.platforms || [];
+  const syss = setup.criticalSystems || [];
   const people = setup.people || {};
-  const cafLead = people.cafLead || {};
+
+  const ctxDone = setup.sectorContext && setup.sectorContext.confirmed && record.contextComplete(setup) && record.orgAnswered(setup);
+  const ctxStarted = (setup.sectorContext && setup.sectorContext.confirmed) || record.contextStarted(setup) || record.orgAnswered(setup);
+  const methodStarted = Boolean((setup.methodology || {}).approach);
+
+  const svcRowsDone = svcs.length > 0 && svcs.every((s) => serviceStatus(setup, s) === "completed");
+  const svcToLink = svcs.filter((s) => !platformsForService(setup, s.id).length && !s.infraLater).length;
+  const platUnlinked = plats.filter((p) => !platformLinked(p)).length;
+  const sysUnlinked = syss.filter((s) => !systemLinked(setup, s)).length;
+  const sysNoDetails = syss.filter((s) => !detailsComplete(s)).length;
+
   const approver = people.approver || {};
-  // People tasks: confirmed (recorded / existing user) -> Completed; pending (invited, awaiting
-  // acceptance) -> In progress; otherwise Not yet started.
-  const peopleStatus = (p) => (p.confirmed ? completed : p.pending ? inProgress : notStarted);
-
-  // Task list statuses: "Completed" is plain text with no tag; "In progress" is a blue tag;
-  // "Not yet started" is a grey tag. "In progress" matches the dashboard "Set up your council" tile.
-  const completed = { text: "Completed" };
-  const inProgress = { tag: { text: "In progress", classes: "govuk-tag--blue" } };
-  const notStarted = { tag: { text: "Not yet started", classes: "govuk-tag--grey" } };
-
-  // Statuses and hints are derived from the Setup state, so the list is correct for both
-  // the populated demo and an empty (build-from-scratch) council.
-  // Task 2 also covers S03a (organisation assessment done before?).
-  const orgAnswered = Boolean(setup.organisationAssessment && setup.organisationAssessment.answer);
-  const ctxDone = sector.confirmed && ctx.completed && orgAnswered;
-  const ctxStarted = sector.confirmed || ctx.completed || orgAnswered;
-  const svcToLink = services.filter((s) => s.infraStatus === "to_do").length;
-  const platUnlinked = platforms.filter(
-    (p) => (p.linkedServices || []).length === 0 && (p.linkedSystems || []).length === 0
-  ).length;
-  const sysUnlinked = systems.filter((s) => (s.supportedServices || []).length === 0).length;
-  const plural = (n) => (n === 1 ? "" : "s");
-
   const preServices = [
-    {
-      title: { text: "1. Confirm your CAF Lead" },
-      href: "/access/caf-lead?return=/setup/task-list",
-      status: peopleStatus(cafLead),
-    },
-    {
-      title: { text: "2. Organisational context" },
-      href: "/setup/sector-context",
-      status: ctxDone ? completed : ctxStarted ? inProgress : notStarted,
-    },
-    {
-      title: { text: "3. How you identify services and systems" },
-      href: "/setup/methodology",
-      status: method.completed ? completed : notStarted,
-    },
+    { title: { text: "1. Confirm your CAF Lead" }, href: "/access/caf-lead?return=/setup/task-list", status: peopleStatus(people.cafLead) },
+    { title: { text: "2. Your council’s context" }, href: "/setup/sector-context", status: ctxDone ? COMPLETED : ctxStarted ? IN_PROGRESS : NOT_STARTED },
+    { title: { text: "3. How you identify services and systems" }, href: "/setup/methodology", status: record.methodologyComplete(setup) ? COMPLETED : methodStarted ? IN_PROGRESS : NOT_STARTED },
   ];
+
+  const svcHint = [`${svcs.length} added`];
+  if (svcToLink) svcHint.push(`${svcToLink} still to link to infrastructure`);
+  const platHint = [`${plats.length} ${plural(plats.length, "platform")}`];
+  if (platUnlinked) platHint.push(`${platUnlinked} not linked to anything yet`);
+  const sysHint = [`${syss.length} added`];
+  if (sysUnlinked) sysHint.push(`${sysUnlinked} not linked to a service yet`);
+  if (sysNoDetails) sysHint.push(`${sysNoDetails} still ${sysNoDetails === 1 ? "needs" : "need"} an owner and impact ratings`);
 
   const servicesAndSystems = [
     {
       title: { text: "4. Your essential services" },
-      href: "/setup/essential-services/choose",
-      hint: {
-        text: services.length
-          ? `${services.length} added${svcToLink ? ` · ${svcToLink} still to link to infrastructure` : ""}`
-          : "Add the services your council delivers",
-      },
-      status: services.length ? inProgress : notStarted,
+      href: svcs.length ? "/setup/essential-services" : "/setup/essential-services/choose",
+      hint: svcs.length && !svcRowsDone ? { text: svcHint.join(" · ") } : undefined,
+      status: !svcs.length ? NOT_STARTED : svcRowsDone ? COMPLETED : IN_PROGRESS,
     },
     {
       title: { text: "5. Your shared infrastructure" },
-      href: "/setup/shared-infrastructure",
-      hint: {
-        text: platforms.length
-          ? `${platforms.length} platform${plural(platforms.length)}${platUnlinked ? ` · ${platUnlinked} not linked to anything yet` : ""}`
-          : "Add the platforms your services share",
-      },
-      status: platforms.length ? inProgress : notStarted,
+      href: plats.length ? "/setup/shared-infrastructure" : "/setup/shared-infrastructure/add-platform",
+      hint: plats.length && platUnlinked ? { text: platHint.join(" · ") } : undefined,
+      status: !plats.length ? NOT_STARTED : platUnlinked ? IN_PROGRESS : COMPLETED,
     },
     {
       title: { text: "6. Your critical systems" },
       href: "/setup/critical-systems",
-      hint: {
-        text: systems.length
-          ? `${systems.length} added${sysUnlinked ? ` · ${sysUnlinked} not linked to a service yet` : ""}`
-          : "Add your most critical systems",
-      },
-      status: systems.length ? inProgress : notStarted,
+      hint: syss.length && (sysUnlinked || sysNoDetails) ? { text: sysHint.join(" · ") } : undefined,
+      status: !syss.length ? NOT_STARTED : syss.every((s) => systemComplete(setup, s)) ? COMPLETED : IN_PROGRESS,
     },
   ];
 
@@ -167,488 +143,280 @@ function buildSetupTaskList(setup) {
     {
       title: { text: "7. Confirm your Approver" },
       href: "/access/approver?return=/setup/task-list",
+      hint: approver.pending && !approver.confirmed ? { text: "Invitation sent, waiting for them to accept" } : undefined,
       status: peopleStatus(approver),
     },
     {
       title: { text: "8. Check and confirm" },
       href: "/setup/coverage-check",
-      status: setup.completed ? completed : notStarted,
+      hint: setup.completed ? undefined : { text: "See anything still to link, then finish" },
+      status: setup.completed ? COMPLETED : NOT_STARTED,
     },
   ];
 
   return { preServices, servicesAndSystems, finish };
 }
 
-// --- Essential services -------------------------------------------------------------
+// --- Essential services ------------------------------------------------------------------
 
-function getService(setup, serviceId) {
-  return (setup.essentialServices || []).find((s) => s.id === serviceId) || null;
+// A service with nothing added yet starts the guided sequence (S10, S38, then S37). Otherwise the
+// row opens the service page (S37). S36 panel.
+function serviceHasNothing(setup, svc) {
+  return serviceStatus(setup, svc) === "not_started";
+}
+function serviceHref(setup, svc) {
+  return serviceHasNothing(setup, svc) ? `/setup/essential-services/${svc.id}/functions` : `/setup/essential-services/${svc.id}`;
 }
 
-// Count critical systems linked to a service, by service id or any of its function ids.
-function countLinkedSystems(setup, service) {
-  return linkedSystemsFor(setup, service).length;
-}
-
-function linkedSystemsFor(setup, service) {
-  const ids = new Set([service.id, ...(service.functions || []).map((f) => f.id)]);
-  return (setup.criticalSystems || []).filter((sys) =>
-    (sys.supportedServices || []).some((ref) => ids.has(ref))
-  );
-}
-
-// Build the S36 hub summary rows, formatted exactly as the design does.
-function buildServiceHubRows(setup) {
+// S36 task-list rows. The hint says what is linked; Completed rows have no hint (as drawn).
+function buildServiceRows(setup) {
   return (setup.essentialServices || []).map((svc) => {
-    const fnCount = (svc.functions || []).length;
-    const platCount = platformsForService(setup, svc.id).length;
-    const sysCount = countLinkedSystems(setup, svc);
-
-    const parts = [];
-    parts.push(fnCount > 0 ? `${fnCount} function${fnCount === 1 ? "" : "s"}` : "Functions to do");
-    if (platCount > 0) parts.push(`${platCount} platform${platCount === 1 ? "" : "s"}`);
-    parts.push(
-      sysCount > 0
-        ? `${sysCount} critical system${sysCount === 1 ? "" : "s"}`
-        : "No critical systems linked yet"
-    );
-    if (svc.infraStatus === "complete") parts.push("Complete");
-    else if (svc.infraStatus === "link_later") parts.push("Infrastructure: link later");
-    else parts.push("Infrastructure to do");
-
-    return {
-      id: svc.id,
-      name: svc.name,
-      summary: parts.join(" · "),
-      action: svc.infraStatus === "complete" ? "Change" : "Continue",
-    };
-  });
-}
-
-// Consequences shown on S46 when removing a service. Derived from actual state.
-function buildRemoveServiceConsequences(setup, service) {
-  const fnCount = (service.functions || []).length;
-  const platCount = platformsForService(setup, service.id).length;
-  // Systems that would be left with no essential service after removing this one.
-  const orphaned = linkedSystemsFor(setup, service).filter((sys) => {
-    const remainingRefs = (sys.supportedServices || []).filter((ref) => {
-      if (ref === service.id) return false;
-      return !(service.functions || []).some((f) => f.id === ref);
-    });
-    return remainingRefs.length === 0;
-  });
-
-  const bullets = [];
-  bullets.push(`remove its ${fnCount} function${fnCount === 1 ? "" : "s"}`);
-  if (platCount > 0) {
-    bullets.push(
-      `unlink ${platCount} shared platform${platCount === 1 ? "" : "s"} from it; the platforms stay on your list`
-    );
-  }
-  orphaned.forEach((sys) => {
-    bullets.push(`leave 1 critical system, ${sys.name}, not linked to any essential service`);
-  });
-
-  return { bullets, orphaned };
-}
-
-// Reconcile the essential services list with the S35 pick-list selection.
-// Keeps existing (rich) services whose name is still ticked, drops unticked list
-// services, and adds empty services for newly ticked names. Custom services
-// (source !== "list") are left untouched.
-function reconcileChosenServices(setup, selectedNames) {
-  const chosen = new Set(selectedNames);
-  const existing = setup.essentialServices || [];
-
-  const kept = existing.filter(
-    (svc) => svc.source !== "list" || chosen.has(svc.name)
-  );
-  const keptNames = new Set(kept.map((s) => s.name));
-
-  selectedNames.forEach((name) => {
-    if (!keptNames.has(name)) {
-      kept.push({
-        id: `svc-${slugify(name)}`,
-        name,
-        source: "list",
-        functions: [],
-        platforms: [],
-        noSystemReason: "",
-        infraStatus: "to_do",
-      });
-      keptNames.add(name);
+    const status = serviceStatus(setup, svc);
+    const fns = (svc.functions || []).length;
+    const plats = platformsForService(setup, svc.id).length;
+    const syss = systemsForService(setup, svc).length;
+    let hint;
+    if (status === "not_started") {
+      hint = "No functions, platforms or critical systems yet";
+    } else if (status === "in_progress") {
+      hint = [
+        fns ? `${fns} ${plural(fns, "function")}` : "No functions yet",
+        syss ? `${syss} critical ${plural(syss, "system")}` : svc.noSystemReason ? "No critical system needed" : "No critical systems linked yet",
+        plats ? `${plats} ${plural(plats, "platform")}` : svc.infraLater ? "Infrastructure: link later" : "Infrastructure not linked yet",
+      ].join(" · ");
     }
-  });
-
-  setup.essentialServices = kept;
-}
-
-// --- Shared infrastructure (platforms) ----------------------------------------------
-
-// S12c "What type of platform is it?" radio options (verbatim, in order).
-const PLATFORM_TYPE_OPTIONS = [
-  "Identity and access management",
-  "Network",
-  "Hosting or cloud control plane",
-  "Integration or API gateway",
-  "Logging and monitoring",
-  "Something else",
-];
-
-function getPlatform(setup, platformId) {
-  return (setup.platforms || []).find((p) => p.id === platformId) || null;
-}
-
-function getSystem(setup, systemId) {
-  return (setup.criticalSystems || []).find((s) => s.id === systemId) || null;
-}
-
-function platformsForService(setup, serviceId) {
-  return (setup.platforms || []).filter((p) =>
-    (p.linkedServices || []).includes(serviceId)
-  );
-}
-
-function platformsForSystem(setup, systemId) {
-  return (setup.platforms || []).filter((p) =>
-    (p.linkedSystems || []).includes(systemId)
-  );
-}
-
-function plural(n) {
-  return n === 1 ? "" : "s";
-}
-
-// S39 hub rows: platform, type, support counts, and whether to Change or Link it.
-function buildInfraHubRows(setup) {
-  return (setup.platforms || []).map((p) => {
-    const svcCount = (p.linkedServices || []).length;
-    const sysCount = (p.linkedSystems || []).length;
-    let support;
-    if (svcCount > 0 && sysCount > 0) {
-      support = `Supports ${svcCount} service${plural(svcCount)} and ${sysCount} system${plural(sysCount)}`;
-    } else if (svcCount > 0) {
-      support = `Supports ${svcCount} service${plural(svcCount)}`;
-    } else if (sysCount > 0) {
-      support = `Supports ${sysCount} system${plural(sysCount)}`;
-    } else {
-      support = "Not linked to any service or system yet";
-    }
-    const linked = svcCount > 0 || sysCount > 0;
-    return {
-      id: p.id,
-      name: p.name,
-      summary: `${p.type} · ${support}`,
-      action: linked ? "Change" : "Link it",
-    };
+    return { title: { text: svc.name }, href: serviceHref(setup, svc), hint: hint ? { text: hint } : undefined, status: STATUS[status] };
   });
 }
 
-// S45 model: all services and systems, pre-ticked with what this platform links.
-function buildPlatformReliesModel(setup, platform) {
+// One line for a system on S37: "Mission critical · Details complete" / "Assessed March 2025 · Details to do".
+function systemLine(sys) {
+  const parts = [];
+  const crit = deriveCriticality(sys.impact);
+  if (sys.assessedDate) parts.push(`Assessed ${sys.assessedDate}`);
+  else if (crit) parts.push(crit);
+  parts.push(detailsComplete(sys) ? "Details complete" : "Details to do");
+  return parts.join(" · ");
+}
+
+// S37 / S37b: the service page, three summary cards. Empty cards show one row saying so.
+function buildServicePage(setup, svc) {
+  const base = `/setup/essential-services/${svc.id}`;
+  const fns = svc.functions || [];
+  const plats = platformsForService(setup, svc.id).slice().sort(byName);
+  const syss = systemsForService(setup, svc).slice().sort(byName);
   return {
-    services: (setup.essentialServices || []).map((s) => ({
-      id: s.id,
-      name: s.name,
-      checked: (platform.linkedServices || []).includes(s.id),
-    })),
-    systems: (setup.criticalSystems || []).map((s) => ({
-      id: s.id,
-      name: s.name,
-      checked: (platform.linkedSystems || []).includes(s.id),
-    })),
+    functions: {
+      action: { text: "Add a function", href: `${base}/functions/add?from=service` },
+      rows: fns.map((f) => ({ key: f.name, change: { href: `${base}/functions/${f.id}/change`, text: "Change", hidden: f.name } })),
+      empty: "No functions added yet",
+    },
+    infrastructure: {
+      action: { text: "Link or unlink infrastructure", href: `${base}/core-infrastructure?from=service` },
+      rows: plats.map((p) => ({ key: p.name, value: p.type })),
+      empty: svc.infraLater ? "Not linked yet" : "No core infrastructure linked yet",
+      emptyValue: svc.infraLater ? "You chose to link infrastructure later" : "",
+    },
+    systems: {
+      action: { text: "Link or unlink critical systems", href: `${base}/systems?from=service` },
+      rows: syss.map((s) => ({
+        key: s.name,
+        value: systemLine(s),
+        change: { href: `/setup/critical-systems/${s.id}/summary?from=service:${svc.id}`, text: detailsComplete(s) ? "Change" : "Add details", hidden: s.name },
+      })),
+      empty: svc.noSystemReason ? "No critical system needed" : "No critical systems linked yet",
+      emptyValue: svc.noSystemReason || "",
+    },
   };
 }
 
-// S38 / S20 model: all platforms, pre-ticked with those linked to a service/system.
-function buildPlatformChoices(setup, linkedIds) {
-  const linked = new Set(linkedIds || []);
+// S46 consequences, worked out from the record.
+function buildRemoveServiceConsequences(setup, svc) {
+  const fns = (svc.functions || []).length;
+  const plats = platformsForService(setup, svc.id).length;
+  const orphaned = systemsForService(setup, svc).filter((sys) => servicesForSystem(setup, sys).length === 1);
+  const bullets = [];
+  if (fns) bullets.push(`its ${fns} ${plural(fns, "function")} will be removed. You will need to add them again if you need them later`);
+  if (plats) bullets.push(`it will no longer be linked to ${plats} shared ${plural(plats, "platform")}. The platforms will not be removed`);
+  orphaned.forEach((sys) => bullets.push(`the critical system ${sys.name} will no longer be linked to any essential services`));
+  return { bullets, orphaned };
+}
+
+// --- Core infrastructure (platforms) ------------------------------------------------------
+
+function platformSupportLine(p) {
+  const svc = (p.linkedServices || []).length;
+  const sys = (p.linkedSystems || []).length;
+  if (!svc && !sys) return "Not linked to a service or system yet";
+  const parts = [];
+  if (svc) parts.push(`${svc} ${plural(svc, "service")}`);
+  if (sys) parts.push(`${sys} ${plural(sys, "system")}`);
+  return "Supports " + parts.join(" and ");
+}
+
+// S39 task-list rows: type and what it supports; Completed once linked to anything.
+function buildPlatformRows(setup) {
   return (setup.platforms || []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    checked: linked.has(p.id),
+    title: { text: p.name },
+    href: `/setup/shared-infrastructure/${p.id}`,
+    hint: { text: [p.type, platformSupportLine(p)].filter(Boolean).join(" · ") },
+    status: platformLinked(p) ? COMPLETED : IN_PROGRESS,
   }));
 }
 
-// S49 remove-platform consequence sentence, derived.
-function buildRemovePlatformConsequences(platform) {
-  const svcCount = (platform.linkedServices || []).length;
-  const sysCount = (platform.linkedSystems || []).length;
-  return `This core infrastructure platform supports ${svcCount} essential service${plural(svcCount)} and ${sysCount} critical system${plural(sysCount)}. If you remove it, these links will be removed.`;
+function platformManagedLine(setup, p) {
+  const label = record.PLATFORM_MANAGED_LABELS[p.managedBy] || "";
+  const supplier = p.supplierId ? getSupplier(setup, p.supplierId) : null;
+  return supplier && label ? `${label}: ${supplier.name}` : label;
 }
 
-// Remove a service from every platform that lists it.
-function unlinkServiceFromPlatforms(setup, serviceId) {
-  (setup.platforms || []).forEach((p) => {
-    p.linkedServices = (p.linkedServices || []).filter((id) => id !== serviceId);
-  });
+// S39a: the platform page.
+function buildPlatformPage(setup, p) {
+  const services = (setup.essentialServices || []).filter((s) => (p.linkedServices || []).includes(s.id)).map((s) => s.name);
+  const systems = (setup.criticalSystems || []).filter((s) => (p.linkedSystems || []).includes(s.id)).map((s) => s.name);
+  return { managed: platformManagedLine(setup, p), services, systems };
 }
 
-// --- Critical systems ---------------------------------------------------------------
-
-// S19 "What else does this system do for the council?" options (verbatim, in order).
-const CORPORATE_SERVICE_OPTIONS = [
-  { value: "email-communication", label: "Email and communication" },
-  { value: "office-productivity", label: "Office productivity" },
-  { value: "document-storage", label: "Document storage and management" },
-  { value: "hr", label: "HR" },
-  { value: "payroll", label: "Payroll" },
-  { value: "finance-accounting", label: "Finance and accounting" },
-  { value: "procurement-contract", label: "Procurement and contract management" },
-  { value: "crm", label: "Customer relationship management" },
-  { value: "help-desk", label: "Help desk / IT support" },
-  { value: "data-analytics", label: "Data management / analytics" },
-  { value: "other", label: "Other" },
-];
-
-// Overall criticality derived from the three impact ratings (S28 shows this).
-function deriveCriticality(impact) {
-  const score = { low: 1, medium: 2, high: 3 };
-  const c = score[impact && impact.confidentiality];
-  const i = score[impact && impact.integrity];
-  const a = score[impact && impact.availability];
-  if (!c || !i || !a) return "";
-  const total = c + i + a;
-  if (total >= 8) return "Mission critical";
-  if (total >= 6) return "Business critical";
-  if (total >= 4) return "Business supporting";
-  return "Non-critical";
+// S49 consequence sentence, using the same counts as S39.
+function buildRemovePlatformConsequence(p) {
+  const svc = (p.linkedServices || []).length;
+  const sys = (p.linkedSystems || []).length;
+  return `This core infrastructure platform supports ${svc} essential ${plural(svc, "service")} and ${sys} critical ${plural(sys, "system")}. If you remove it, these links will be removed.`;
 }
 
-// S23 hub rows: system name, status line, and the right action.
-function buildCriticalSystemsHubRows(setup) {
+// S45 / S38 / S20 option lists.
+function buildPlatformChoices(setup, linkedIds) {
+  const linked = new Set(linkedIds || []);
+  return (setup.platforms || []).map((p) => ({ value: p.id, text: p.name, checked: linked.has(p.id) }));
+}
+
+// --- Critical systems --------------------------------------------------------------------
+
+// S23 task-list rows: owner and criticality when complete; otherwise what is still to add.
+function buildSystemRows(setup) {
   return (setup.criticalSystems || []).map((sys) => {
-    const linked = (sys.supportedServices || []).length > 0;
     const parts = [];
-    if (sys.assessedDate) parts.push(`Assessed ${sys.assessedDate}`);
-    if (sys.detailsComplete) {
-      const crit = deriveCriticality(sys.impact);
-      if (crit) parts.push(crit);
-      parts.push("Details complete");
-    } else if (!linked) {
-      parts.push("Not linked to a service yet");
+    const svcs = servicesForSystem(setup, sys).map((s) => s.name);
+    if (systemComplete(setup, sys)) {
+      parts.push(sys.owner.name, deriveCriticality(sys.impact));
     } else {
-      parts.push("Details to do");
+      if (sys.assessedDate) parts.push(`Assessed ${sys.assessedDate}`);
+      else if (svcs.length) parts.push(svcs.join(", "));
+      if (!svcs.length) parts.push("Not linked to a service yet");
+      if (!detailsComplete(sys)) {
+        const missing = [];
+        if (!(sys.owner && sys.owner.name)) missing.push("Owner");
+        if (!deriveCriticality(sys.impact)) missing.push(missing.length ? "impact" : "Impact");
+        parts.push(`${missing.join(" and ")} not added yet`);
+      }
     }
-    // Every system opens its check-answers summary — the one place to add or change any detail
-    // (the service link, owner, impact ratings, recovery, platforms, supplier, hosting). The
-    // status line above flags what is still outstanding.
-    const action = sys.detailsComplete ? "Change" : "Add details";
-    const href = `/setup/critical-systems/${sys.id}/summary`;
-    return { id: sys.id, name: sys.name, summary: parts.join(" · "), action, href };
+    return {
+      title: { text: sys.name },
+      href: `/setup/critical-systems/${sys.id}/summary`,
+      hint: { text: parts.join(" · ") },
+      status: systemComplete(setup, sys) ? COMPLETED : IN_PROGRESS,
+    };
   });
 }
 
-// Readable labels for the stored values, used by the per-system check-answers summary (S30-style).
-const SUPPLIER_MANAGED_LABELS = {
-  fully: "Yes, fully",
-  partially: "Yes, partially",
-  council: "No, the council manages it",
-  dontknow: "I don't know",
-};
-const ASSESSED_BEFORE_LABELS = { yes: "Yes", no: "No", dontknow: "I don't know" };
-const HOSTING_TYPE_LABELS = {
-  "third-party": "Third-party hosting",
-  "on-premises": "On premises",
-  "council-cloud": "Council-managed cloud",
-};
+const SUPPLIER_LABELS = { fully: "Yes, fully", partially: "Yes, partially", no: "No, the council manages it" };
+const HOSTING_LABELS = { "third-party": "Third-party hosting", "on-premises": "On premises", "council-cloud": "Council-managed cloud" };
 const IMPACT_LABELS = { low: "Low", medium: "Medium", high: "High" };
 
-function supportedServiceLabels(setup, system) {
-  const map = new Map(buildSupportedServiceOptions(setup).map((o) => [o.value, o.label]));
-  return (system.supportedServices || []).map((v) => map.get(v) || v);
-}
+// S52: five summary cards. Values come from stored answers only: unanswered → "Not answered" with
+// "Enter answer"; "None of these" → "None"; deferred → "Not linked yet" with "Link". One Change per
+// question page; each returns to S52 (the `ret` query carries where S52 itself returns to).
+function buildSystemCards(setup, sys, ret) {
+  const base = `/setup/critical-systems/${sys.id}`;
+  const q = "?return=summary" + (ret ? "&from=" + encodeURIComponent(ret) : "");
+  const row = (key, value, href, opts) => {
+    opts = opts || {};
+    const answered = value !== undefined && value !== null && value !== "";
+    return {
+      key,
+      value: answered ? value : opts.later ? "Not linked yet" : "Not answered",
+      action: href ? { href: href + q, text: answered ? "Change" : opts.later ? "Link" : "Enter answer", hidden: opts.hidden || key.toLowerCase() } : null,
+    };
+  };
 
-function corporateServiceLabels(system) {
-  const map = new Map(CORPORATE_SERVICE_OPTIONS.map((o) => [o.value, o.label]));
-  return (system.corporateServices || []).map((v) =>
-    v === "other" ? system.corporateServicesOther || "Other" : map.get(v) || v
-  );
-}
+  const supported = supportedLabels(setup, sys);
+  const others = sys.otherFunctionsNone
+    ? "None"
+    : (sys.otherFunctions || []).map((v) => (v === "other" ? sys.otherFunctionsDetail || "Other" : (record.OTHER_FUNCTION_OPTIONS.find((o) => o.value === v) || {}).label || v)).join(", ");
+  const plats = platformsForSystem(setup, sys.id).map((p) => p.name).join(", ");
+  const sup = sys.supplier || {};
+  const supplier = sup.managed ? SUPPLIER_LABELS[sup.managed] + ((sup.managed === "fully" || sup.managed === "partially") && getSupplier(setup, sup.supplierId) ? ": " + getSupplier(setup, sup.supplierId).name : "") : "";
+  const shared = sys.shared || {};
+  const sharedValue = shared.answer === "yes" ? "Yes" + ((shared.councils || []).length ? ": " + shared.councils.join(", ") : "") : shared.answer === "no" ? "No" : "";
+  const h = sys.hosting || {};
+  const hosting = [HOSTING_LABELS[h.type], h.provider, h.secondary ? "Secondary: " + h.secondary : ""].filter(Boolean).join(" · ");
+  const owner = sys.owner && sys.owner.name ? [sys.owner.name, sys.owner.jobTitle].filter(Boolean).join(", ") : "";
+  const imp = sys.impact || {};
+  const impact = deriveCriticality(imp) ? `Confidentiality: ${IMPACT_LABELS[imp.confidentiality]}<br>Integrity: ${IMPACT_LABELS[imp.integrity]}<br>Availability: ${IMPACT_LABELS[imp.availability]}` : "";
 
-// Per-system check-answers rows. Every field has a Change link back to the page where it was
-// answered, carrying ?return=summary so saving returns here. "Overall criticality" is calculated
-// from the three impact ratings and has no Change link.
-function buildCriticalSystemDetail(setup, system) {
-  const base = `/setup/critical-systems/${system.id}`;
-  const join = (arr) => (arr && arr.length ? arr.join(", ") : "");
-  const supplier = system.supplierId ? getSupplier(setup, system.supplierId) : null;
-  const impact = system.impact || {};
-  const recovery = system.recovery || {};
-  const hosting = system.hosting || {};
-
-  const rows = [
-    { key: "Name", value: system.name, changeHref: `${base}/edit?return=summary` },
-    { key: "What it does", value: system.description, changeHref: `${base}/edit?return=summary` },
-    { key: "Services it supports", value: join(supportedServiceLabels(setup, system)), changeHref: `${base}/edit?return=summary` },
-    { key: "Assessed against the CAF before", value: ASSESSED_BEFORE_LABELS[system.assessedBefore] || "", changeHref: `${base}/edit?return=summary` },
-    { key: "Other council services or functions", value: join(corporateServiceLabels(system)), changeHref: `${base}/corporate-services?return=summary` },
-    { key: "Managed by a third-party supplier", value: SUPPLIER_MANAGED_LABELS[system.managedBySupplier] || "", changeHref: `${base}/supplier?return=summary` },
+  return [
+    { title: "About the system", rows: [
+      row("Name", sys.name, `${base}/edit`),
+      row("What it does", sys.description, `${base}/edit`),
+      row("Assessed against the CAF before", { within_3_years: "Yes, within the last 3 years", more_than_3_years: "Yes, more than 3 years ago", no: "No", dont_know: "I don’t know" }[sys.assessedBefore], `${base}/edit`),
+    ] },
+    { title: "What it supports", rows: [
+      row("Services it supports", supported.join(", ") || (sys.servicesLater ? "" : ""), `${base}/edit`, { later: sys.servicesLater }),
+      row("Other council services or functions", others, `${base}/corporate-services`),
+      row("Shared platforms it relies on", plats, `${base}/platforms`, { later: sys.platformsLater }),
+    ] },
+    { title: "Supplier and sharing", rows: [
+      row("Managed by a third-party supplier", supplier, `${base}/supplier`),
+      row("Shared with other councils", sharedValue, `${base}/shared-with-councils`),
+    ] },
+    { title: "Hosting", rows: [row("Where it is hosted", hosting, `${base}/hosting`)] },
+    { title: "Ownership and impact", rows: [
+      row("System owner", owner, `${base}/owner`),
+      Object.assign(row("Impact if compromised", impact, `${base}/impact`), { html: true }),
+      { key: "Overall criticality", value: deriveCriticality(imp) || "Not yet rated", note: "Worked out from the three impact ratings.", action: null },
+    ] },
   ];
-  if (system.managedBySupplier === "fully" || system.managedBySupplier === "partially") {
-    rows.push({ key: "Supplier", value: supplier ? supplier.name : "", changeHref: `${base}/which-supplier?return=summary` });
-  }
-  rows.push({ key: "Shared with other councils", value: system.sharedWithCouncils ? "Yes" : "No", changeHref: `${base}/shared-with-councils?return=summary` });
-  if (system.sharedWithCouncils) {
-    rows.push({ key: "Councils it is shared with", value: join(system.councils), changeHref: `${base}/councils?return=summary` });
-  }
-  const hostingParts = [];
-  if (hosting.type) hostingParts.push(HOSTING_TYPE_LABELS[hosting.type] || hosting.type);
-  if (hosting.provider) hostingParts.push(hosting.provider);
-  if (hosting.secondary) hostingParts.push(`Secondary: ${hosting.secondary}`);
-  rows.push({ key: "Where it is hosted", value: hostingParts.join(" · "), changeHref: `${base}/hosting?return=summary` });
-
-  const platformNames = platformsForSystem(setup, system.id).map((p) => p.name);
-  rows.push({ key: "Shared platforms it relies on", value: join(platformNames), changeHref: `${base}/platforms?return=summary` });
-
-  const ownerParts = [];
-  if (system.owner && system.owner.name) ownerParts.push(system.owner.name);
-  if (system.owner && system.owner.jobTitle) ownerParts.push(system.owner.jobTitle);
-  rows.push({ key: "System owner", value: ownerParts.join(", "), changeHref: `${base}/owner?return=summary` });
-
-  rows.push({ key: "Confidentiality impact", value: IMPACT_LABELS[impact.confidentiality] || "", changeHref: `${base}/impact?return=summary` });
-  rows.push({ key: "Integrity impact", value: IMPACT_LABELS[impact.integrity] || "", changeHref: `${base}/impact?return=summary` });
-  rows.push({ key: "Availability impact", value: IMPACT_LABELS[impact.availability] || "", changeHref: `${base}/impact?return=summary` });
-  rows.push({ key: "Overall criticality", value: deriveCriticality(impact) || "", calculated: true });
-
-  rows.push({ key: "Maximum tolerable downtime (MTD)", value: recovery.mtd || "", changeHref: `${base}/recovery?return=summary` });
-  rows.push({ key: "Recovery time objective (RTO)", value: recovery.rto || "", changeHref: `${base}/recovery?return=summary` });
-  rows.push({ key: "Recovery point objective (RPO)", value: recovery.rpo || "", changeHref: `${base}/recovery?return=summary` });
-
-  return rows;
 }
 
-// S14 "Which essential services or functions does it support?" options.
-// A service with functions contributes one option per function ("Service — Function");
-// a service with no functions contributes a single service-level option.
-function buildSupportedServiceOptions(setup) {
+// S14 options: one per function ("Service — Function"), or one per service with no functions.
+// A system linked to a service with functions shows all its functions ticked.
+function buildSupportedServiceOptions(setup, sys) {
+  const fnIds = new Set((sys && sys.functionIds) || []);
+  const svcIds = new Set((sys && sys.serviceIds) || []);
   const options = [];
   (setup.essentialServices || []).forEach((svc) => {
-    if ((svc.functions || []).length > 0) {
-      svc.functions.forEach((fn) => {
-        options.push({ value: fn.id, label: `${svc.name} — ${fn.name}` });
-      });
+    if ((svc.functions || []).length) {
+      svc.functions.forEach((f) => options.push({ value: "fn:" + f.id, text: `${svc.name} — ${f.name}`, checked: fnIds.has(f.id) || svcIds.has(svc.id) }));
     } else {
-      options.push({ value: svc.id, label: svc.name });
+      options.push({ value: "svc:" + svc.id, text: svc.name, checked: svcIds.has(svc.id) });
     }
   });
   return options;
 }
 
-function getSupplier(setup, supplierId) {
-  return (setup.suppliers || []).find((s) => s.id === supplierId) || null;
-}
-
-// A system can be removed only if it is not in this cycle's plan and was never assessed.
-function systemCanBeRemoved(system) {
-  return !system.inPlan && system.assessedBefore !== "yes";
-}
-
-// S47 remove-system consequence bullets, derived.
-function buildRemoveSystemConsequences(setup, system) {
-  const platformCount = platformsForSystem(setup, system.id).length;
+// S47 consequences.
+function buildRemoveSystemConsequences(setup, sys) {
+  const plats = platformsForSystem(setup, sys.id).length;
   const bullets = [];
-  if (platformCount > 0) {
-    bullets.push(
-      `remove its links to ${platformCount} shared platform${plural(platformCount)}; the platforms stay`
-    );
-  }
-  if (system.supplierId) {
-    bullets.push("keep its supplier on your list if anything else uses it");
-  }
-  return { bullets };
+  if (plats) bullets.push(`it will no longer be linked to ${plats} shared infrastructure ${plural(plats, "platform")}. The platforms will not be removed`);
+  if (sys.supplier && sys.supplier.supplierId) bullets.push("its supplier will stay on your list, if it is used elsewhere");
+  return bullets;
 }
 
-// Remove a system from every platform that lists it.
-function unlinkSystemFromPlatforms(setup, systemId) {
-  (setup.platforms || []).forEach((p) => {
-    p.linkedSystems = (p.linkedSystems || []).filter((id) => id !== systemId);
-  });
-}
-
-// S21 inset — names the hosting/cloud platform this system relies on, if any.
-function deriveHostingPlatformName(setup, system) {
-  const hosting = platformsForSystem(setup, system.id).find((p) =>
-    (p.type || "").toLowerCase().includes("hosting")
-  );
+// S21 inset: the hosting platform this system relies on, if any.
+function deriveHostingPlatformName(setup, sys) {
+  const hosting = platformsForSystem(setup, sys.id).find((p) => /hosting/i.test(p.type || ""));
   return hosting ? hosting.name : "";
 }
 
-// S27 caption progress counter, e.g. "2 of 4 systems".
-function systemDetailCounter(setup, system) {
+// S27 / S28 caption: "2 of 3 systems".
+function systemDetailCounter(setup, sys) {
   const all = setup.criticalSystems || [];
-  const index = all.findIndex((s) => s.id === system.id);
-  return `${index + 1} of ${all.length} systems`;
+  return `${all.findIndex((s) => s.id === sys.id) + 1} of ${all.length} systems`;
 }
 
-// --- Coverage check (S24) & check-your-setup (S30) ----------------------------------
+// --- S30 Check your setup --------------------------------------------------------------------
 
-function servicesWithoutSystem(setup) {
-  return (setup.essentialServices || []).filter(
-    (svc) => !svc.noSystemReason && countLinkedSystems(setup, svc) === 0
-  );
-}
-
-function unlinkedSystems(setup) {
-  return (setup.criticalSystems || []).filter(
-    (s) => (s.supportedServices || []).length === 0
-  );
-}
-
-function systemsNeedingDetails(setup) {
-  return (setup.criticalSystems || []).filter(
-    (s) => (s.supportedServices || []).length > 0 && !s.detailsComplete
-  );
-}
-
-function unlinkedPlatforms(setup) {
-  return (setup.platforms || []).filter(
-    (p) => (p.linkedServices || []).length === 0 && (p.linkedSystems || []).length === 0
-  );
-}
-
-// S24 warning list, derived from the current state (order matches the design).
-function buildCoverageWarnings(setup) {
-  const warnings = [];
-  const need = systemsNeedingDetails(setup);
-  if (need.length > 0) {
-    warnings.push(
-      `${need.length} critical system${plural(need.length)} still ${need.length === 1 ? "needs" : "need"} an owner and impact ratings.`
-    );
-  }
-  servicesWithoutSystem(setup).forEach((svc) => {
-    warnings.push(`${svc.name} has no critical system linked to it.`);
-  });
-  unlinkedSystems(setup).forEach((sys) => {
-    warnings.push(`${sys.name} is not linked to any essential service.`);
-  });
-  unlinkedPlatforms(setup).forEach((p) => {
-    warnings.push(`${p.name} is not linked to any service or system.`);
-  });
-  return warnings;
-}
-
-// S24 concentration inset — the most-depended-on platform and its coverage.
-function buildConcentrationInset(setup) {
-  const platforms = setup.platforms || [];
-  let top = null;
-  let topScore = -1;
-  platforms.forEach((p) => {
-    const score = (p.linkedServices || []).length + (p.linkedSystems || []).length;
-    if (score > topScore) {
-      topScore = score;
-      top = p;
-    }
-  });
-  if (!top || topScore <= 0) return null;
-  const totalSvc = (setup.essentialServices || []).length;
-  const totalSys = (setup.criticalSystems || []).length;
-  const svc = (top.linkedServices || []).length;
-  const sys = (top.linkedSystems || []).length;
-  return `${top.name} supports ${svc} of your ${totalSvc} essential service${plural(totalSvc)} and ${sys} of your ${totalSys} critical system${plural(totalSys)}. If it failed, everything would be affected. You may want to mention this to your assurer.`;
-}
-
-// S30 "How critical your systems are" line, derived.
 function criticalityDistribution(setup) {
   const order = ["Mission critical", "Business critical", "Business supporting", "Non-critical"];
   const counts = {};
@@ -658,66 +426,87 @@ function criticalityDistribution(setup) {
     if (!c) notRated += 1;
     else counts[c] = (counts[c] || 0) + 1;
   });
-  const parts = [];
-  order.forEach((lvl) => {
-    if (counts[lvl]) parts.push(`${counts[lvl]} ${lvl}`);
-  });
+  const parts = order.filter((l) => counts[l]).map((l) => `${counts[l]} ${l}`);
   if (notRated) parts.push(`${notRated} not yet rated`);
   return parts.join(" · ");
 }
 
-// S30 summary values, derived.
+function personLine(p) {
+  if (p && p.name && p.confirmed) return `${p.name}, confirmed`;
+  if (p && p.name && p.pending) return `${p.name}, invitation sent`;
+  return "";
+}
+
+// S30 sections. Unanswered rows read "Not answered" with "Enter"; Sector context has no Change.
+function buildSetupCheck(setup) {
+  const people = setup.people || {};
+  const svcs = setup.essentialServices || [];
+  const plats = setup.platforms || [];
+  const syss = setup.criticalSystems || [];
+  const row = (key, value, href, emptyText, enterText) => ({
+    key,
+    value: value || emptyText || "Not answered",
+    action: href ? { href, text: value ? "Change" : enterText || "Enter", hidden: key.toLowerCase() } : null,
+    id: null,
+  });
+  const cafLead = personLine(people.cafLead);
+  const approver = personLine(people.approver);
+  const unlinkedPlats = plats.filter((p) => !platformLinked(p)).length;
+  const sysAll = syss.length && syss.every((s) => detailsComplete(s));
+  return [
+    { title: "Your people", rows: [
+      Object.assign(row("CAF Lead", cafLead, "/access/caf-lead?return=/setup/check-your-setup", "Not confirmed yet", "Confirm"), { id: "cafLead-change" }),
+      Object.assign(row("Approver", approver, "/access/approver?return=/setup/check-your-setup", "Not confirmed yet", "Confirm"), { id: "approver-change" }),
+    ], note: "Setup is only complete once a CAF Lead and an Approver have been named." },
+    { title: "Your council’s context", rows: [
+      { key: "Sector context", value: setup.sectorContext && setup.sectorContext.confirmed ? "Read and confirmed" : "Not read yet", action: null },
+      row("Council context", record.contextComplete(setup) ? "Completed" : record.contextStarted(setup) ? "Started" : "", "/setup/council-context?from=s30"),
+      row("Organisational assessment done before", { within_3_years: "Yes, within the last 3 years", more_than_3_years: "Yes, more than 3 years ago", no: "No", dont_know: "I don’t know" }[(setup.organisationAssessment || {}).answer], "/setup/previous-assessment?from=s30"),
+    ] },
+    { title: "How you identify services and systems", rows: [
+      row("Methodology", record.methodologyComplete(setup) ? (setup.methodology.approach === "five-lens" ? "GovAssure Five Lens Model" : "Your own approach") : "", "/setup/methodology?from=s30"),
+    ] },
+    { title: "Your services and systems", rows: [
+      row("Essential services", svcs.length ? `${svcs.length} added` : "", "/setup/essential-services", "None added"),
+      row("Core infrastructure", plats.length ? `${plats.length} shared ${plural(plats.length, "platform")}, ${unlinkedPlats ? `${unlinkedPlats} not linked yet` : "linked to your services"}` : "", "/setup/shared-infrastructure", "None added"),
+      row("Critical systems", syss.length ? `${syss.length} added${sysAll ? ", all with owners and ratings" : ""}` : "", "/setup/critical-systems", "None added"),
+      row("How critical your systems are", criticalityDistribution(setup), "/setup/critical-systems", "None added"),
+    ] },
+  ];
+}
+
+// Counts the dashboard reads (R04 council record row).
 function buildSetupSummary(setup) {
-  const systems = setup.criticalSystems || [];
-  const allComplete = systems.length > 0 && systems.every((s) => s.detailsComplete);
   return {
-    cafLead: setup.people.cafLead.name,
-    cafLeadConfirmed: setup.people.cafLead.confirmed,
-    cafLeadPending: setup.people.cafLead.pending,
-    approver: setup.people.approver.name,
-    approverConfirmed: setup.people.approver.confirmed,
-    approverPending: setup.people.approver.pending,
-    sectorConfirmed: setup.sectorContext.confirmed,
-    councilContextProvided: setup.councilContext.completed,
-    orgAssessedBefore: { yes: "Yes", no: "No", dontknow: "I don't know" }[(setup.organisationAssessment || {}).answer] || "Not answered",
-    methodology:
-      setup.methodology.approach === "five-lens"
-        ? "GovAssure Five Lens Model"
-        : "Your own methodology",
     servicesCount: (setup.essentialServices || []).length,
     platformsCount: (setup.platforms || []).length,
-    systemsCount: systems.length,
-    systemsAllComplete: allComplete,
+    systemsCount: (setup.criticalSystems || []).length,
     criticality: criticalityDistribution(setup),
   };
 }
 
-// The signed-in person's identity, from what they typed when signing in and claiming (name from
-// Claim "Your details"). Falls back to the seeded SETUP_USER for the demo scenarios.
-// Changed in build, prototype, pending design sign-off.
+// --- Identity and chrome -------------------------------------------------------------------
+
+// The signed-in person, from what they gave at sign-in and Claim.
 function signedInSetupUser(req) {
   const claim = (req.session && req.session.data && req.session.data.claim) || {};
   const org = (claim.council && claim.council.name) || SETUP_USER.orgName;
   if (claim.person && claim.person.fullName) return { name: claim.person.fullName, orgName: org, role: "council" };
-  // User-driven: derive the name from the signed-in email rather than a hardcoded persona.
   if (claim.oneLoginEmail) return { name: require("../claim-example-data").displayNameFromEmail(claim.oneLoginEmail), orgName: org, role: "council" };
   return null;
 }
 
-// The example persona (Jo Hart, Westborough) — only when the example council is loaded. Nobody
-// signed in and no example council → no identity in the header (never an invented person).
+// The example persona (Jo Hart, Westborough), only when the example council is loaded.
 function exampleCouncilPersona(req) {
   const setup = req.session && req.session.data && req.session.data.setup;
   return setup && setup.exampleCouncil ? SETUP_USER : null;
 }
 
-// Apply Setup chrome to res.locals for a /setup request, without touching session auth.
 function applySetupChrome(req, res) {
   res.locals.serviceName = SETUP_SERVICE_NAME;
   res.locals.showNavigation = true;
   res.locals.currentUser = signedInSetupUser(req) || exampleCouncilPersona(req);
   res.locals.navigation = buildSetupNavigation(req.path);
-  // Setup owns its own page chrome; suppress the generic journey breadcrumbs/progress.
   res.locals.showJourney = false;
   res.locals.breadcrumbs = [];
   res.locals.progress = null;
@@ -735,36 +524,27 @@ module.exports = {
   buildSetupNavigation,
   buildSetupTaskList,
   applySetupChrome,
-  getService,
-  countLinkedSystems,
-  buildServiceHubRows,
-  buildRemoveServiceConsequences,
-  reconcileChosenServices,
   slugify,
-  PLATFORM_TYPE_OPTIONS,
+  getService,
   getPlatform,
   getSystem,
-  platformsForService,
-  platformsForSystem,
-  buildInfraHubRows,
-  buildPlatformReliesModel,
-  buildPlatformChoices,
-  buildRemovePlatformConsequences,
-  unlinkServiceFromPlatforms,
-  CORPORATE_SERVICE_OPTIONS,
-  deriveCriticality,
-  buildCriticalSystemsHubRows,
-  buildCriticalSystemDetail,
-  buildSupportedServiceOptions,
   getSupplier,
-  systemCanBeRemoved,
+  deriveCriticality,
+  serviceHref,
+  buildServiceRows,
+  buildServicePage,
+  buildRemoveServiceConsequences,
+  buildPlatformRows,
+  buildPlatformPage,
+  buildRemovePlatformConsequence,
+  buildPlatformChoices,
+  buildSystemRows,
+  buildSystemCards,
+  buildSupportedServiceOptions,
   buildRemoveSystemConsequences,
-  unlinkSystemFromPlatforms,
   deriveHostingPlatformName,
   systemDetailCounter,
-  buildCoverageWarnings,
-  buildConcentrationInset,
-  servicesWithoutSystem,
-  systemsNeedingDetails,
+  buildSetupCheck,
   buildSetupSummary,
+  criticalityDistribution,
 };

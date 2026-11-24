@@ -1,33 +1,34 @@
-{# S41 — setup / add-a-supplier — Figma node 393:1341 #}
-{# S51 error state (supplier name missing) — Figma node 393:1634 #}
+{# S41 — setup / add-a-supplier — Setup v11. S51 is its error state. Returns to where it was opened
+   from (S16 or S12c) with the new supplier chosen. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
-{% from "components/feedback-message.njk" import appErrorSummary %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appErrorSummary(error) }}
+      {% if error %}{{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error.text, href: "#supplierName" }] }) }}{% endif %}
 
       {{ appPageHeader({
         caption: caption,
         title: "Add a supplier"
       }) }}
 
-      <form method="post" action="/setup/suppliers/add{% if returnTo %}?return={{ returnTo }}{% endif %}" novalidate>
-        <input type="hidden" name="returnTo" value="{{ returnTo }}">
+      <form method="post" action="/setup/suppliers/add" novalidate>
+        <input type="hidden" name="back" value="{{ back }}">
+        <input type="hidden" name="link" value="{{ link }}">
         <div class="govuk-form-group {% if error %}govuk-form-group--error{% endif %}">
           <label class="govuk-label govuk-label--s" for="supplierName">Supplier name</label>
           <div id="supplierName-hint" class="govuk-hint">This should be the name of the company, not the product.<br>For example: NEC Software Solutions (rather than Northgate)</div>
           {% if error %}
             <p class="govuk-error-message" id="supplierName-error">
               <span class="govuk-visually-hidden">Error:</span>
-              {{ (error.items | selectattr('field','equalto','supplierName') | list | first).text }}
+              {{ error.text }}
             </p>
           {% endif %}
-          <input class="govuk-input" id="supplierName" name="supplierName" type="text" value="{{ name }}" aria-describedby="supplierName-hint{% if error %} supplierName-error{% endif %}">
+          <input class="govuk-input{% if error %} govuk-input--error{% endif %}" id="supplierName" name="supplierName" type="text" value="{{ name }}" aria-describedby="supplierName-hint{% if error %} supplierName-error{% endif %}">
         </div>
 
         <button class="govuk-button" data-module="govuk-button" type="submit">Add this supplier</button>

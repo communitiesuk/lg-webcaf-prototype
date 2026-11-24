@@ -1,20 +1,22 @@
-{# S13 — setup / critical-systems (empty) — Figma node 393:316 #}
+{# S13 — setup / critical-systems (none added yet) — Setup v11. The guidance link opens in a new tab. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: "Your critical systems",
-        title: "Your critical systems",
-        intro: "Add all your critical systems, even if you have not added your essential services yet. You can link each critical system to the services it supports now or do it later.",
-        intro2: "A critical system is a network or information system your essential services depend on."
-      }) }}
+      {% include "components/setup-banner.njk" %}
 
-      <a class="govuk-button" data-module="govuk-button" href="/setup/critical-systems/add">Add a critical system</a>
+      {{ appPageHeader({ caption: "Your critical systems", title: "Your critical systems" }) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/" rel="noreferrer noopener" target="_blank">Read the guidance on identifying critical systems (opens in new tab)</a></p>
+      <p class="govuk-body">Add all your critical systems, even if you have not added your essential services yet. You can link each critical system to the services it supports now or do it later.</p>
+      <p class="govuk-body">A critical system is a network or information system your essential services depend on.</p>
+
+      {{ govukButton({ text: "Add a critical system", href: "/setup/critical-systems/add" }) }}
     </div>
   </div>
 {% endblock %}

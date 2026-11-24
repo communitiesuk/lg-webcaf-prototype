@@ -622,17 +622,18 @@ module.exports = function (router) {
     const setup = req.session.data.setup;
     applyDecideMinimalChrome(req, res);
     const ctx = setup.councilContext || {};
-    const cni = ctx.cni && ctx.cni !== "none" ? sectorLabel(ctx.cni) : "None";
+    const record = require("../data/helpers/council-record");
+    const cni = (ctx.cniSectors || []).join(", ") || "None";
     res.render("pages/decide/assurer-setup", {
       pageTitle: "Overview of council setup",
       backHref: "/decide/assurer-review",
       councilName: (setup.council && setup.council.name) || "",
       context: {
         sectorConfirmed: Boolean(setup.sectorContext && setup.sectorContext.confirmed),
-        councilContextProvided: Boolean(ctx.completed),
-        cniSector: ctx.completed ? cni : "",
-        orgAssessedBefore: { yes: "Yes", no: "No", dontknow: "I don't know" }[(setup.organisationAssessment || {}).answer] || "Not answered",
-        methodology: setup.methodology && setup.methodology.completed
+        councilContextProvided: record.contextComplete(setup),
+        cniSector: record.contextStarted(setup) ? cni : "",
+        orgAssessedBefore: record.ASSESSED_BEFORE_LABELS[(setup.organisationAssessment || {}).answer] || "Not answered",
+        methodology: record.methodologyComplete(setup)
           ? (setup.methodology.approach === "five-lens" ? "GovAssure Five Lens Model" : "Their own methodology")
           : "",
       },
@@ -640,7 +641,7 @@ module.exports = function (router) {
       systems: (setup.criticalSystems || []).map((s) => {
         const parts = [deriveCriticality(s.impact) || "Not yet rated"];
         if (s.cni) parts.push("CNI");
-        parts.push(s.assessedBefore === "yes" ? assessedLabel(s) : "Not yet assessed");
+        parts.push(record.systemAssessedRecently(s) ? assessedLabel(s) : "Not yet assessed");
         return { name: s.name, detail: parts.join(" · ") };
       }),
     });
@@ -962,12 +963,6 @@ function renderTiming(res, assessments, errors) {
       return acc;
     }, {}),
   });
-}
-
-// "emergency-services" -> "Emergency services" (S03 CNI sector values).
-function sectorLabel(value) {
-  const s = (value || "").replace(/-/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // Display cap: how many ranked systems to list before "Show all".

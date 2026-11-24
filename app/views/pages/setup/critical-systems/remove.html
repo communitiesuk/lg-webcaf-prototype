@@ -1,4 +1,5 @@
-{# S47 — setup / remove-a-critical-system — Figma node 393:1501 #}
+{# S47 — setup / remove-a-critical-system — Setup v11. Only when the system is not in this cycle's
+   approved plan and has never been assessed (otherwise S48). Suppliers nothing else uses are removed. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -7,22 +8,30 @@
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: system.name,
-        title: "Remove " + (system.name | lower) + "?",
-        intro: "This critical system is not included in the approved assessment for this cycle. If you remove it:"
-      }) }}
+      {{ appPageHeader({ caption: system.name, title: pageTitle }) }}
 
-      <ul class="govuk-list govuk-list--bullet">
-        {% for bullet in consequences.bullets %}
-          <li>{{ bullet }}</li>
-        {% endfor %}
-      </ul>
+      {% if bullets.length %}
+        <p class="govuk-body">If you remove it:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for b in bullets %}<li>{{ b }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          You cannot undo this. If you need this critical system later, you will have to add it and its details again.
+        </strong>
+      </div>
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/remove" novalidate>
-        <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
+        <div class="govuk-button-group">
+          <button class="govuk-button govuk-button--warning" data-module="govuk-button" type="submit">Yes, remove it</button>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ backHref }}">Cancel</a>
+        </div>
       </form>
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems/{{ system.id }}/edit">Cancel</a>
     </div>
   </div>
 {% endblock %}

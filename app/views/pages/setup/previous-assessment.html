@@ -1,10 +1,10 @@
-{# S03a — setup / previous-assessment — ADDITION, not in Figma (needs design).
-   Task 2 "Organisational context". Whether the council has completed a CAF organisation assessment
-   (objectives A and D) before. Decide uses it to include or leave out the organisation assessment. #}
+{# S03a — setup / previous-assessment — Setup v11. S03ae is its error state (same screen, mirrored).
+   Four answers (v11): within the last 3 years, more than 3 years ago, No, I don't know. Decide treats
+   only "within the last 3 years" as already assessed. #}
 {% extends "layouts/setup.html" %}
-{% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
@@ -15,27 +15,29 @@
       {% if showError %}
         {{ govukErrorSummary({
           titleText: "There is a problem",
-          errorList: [{ text: "Select yes if your council has completed a CAF organisation assessment before", href: "#orgAssessedBefore" }]
+          errorList: [{ text: "Select ‘Yes’ if your council has completed a CAF organisational assessment before", href: "#orgAssessedBefore" }]
         }) }}
       {% endif %}
 
       <form method="post" action="/setup/previous-assessment" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
+        {% set hintHtml %}
+          <p class="govuk-hint">An organisational assessment covers objective A (Managing security risk) and objective D (Minimising the impact of cyber security incidents). It should be completed once and then reviewed and updated every 3 years.</p>
+          <p class="govuk-hint">Include assessments you completed using the CAF Excel workbooks before this digital service existed.</p>
+          {{ govukInsetText({ text: "If you have not done an organisational assessment before or it has been more than 3 years, this will automatically be included in your first assessment cycle." }) }}
+        {% endset %}
         {{ govukRadios({
           name: "orgAssessedBefore",
           fieldset: {
             legend: {
-              html: '<span class="govuk-caption-l">Organisational context</span>Has your council completed a CAF organisation assessment before?',
+              html: '<span class="govuk-caption-l">Organisational context</span>Has your council completed a CAF organisational assessment before?',
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }
           },
-          hint: { text: "The organisation assessment covers objectives A and D. Include assessments done before this service existed." },
-          errorMessage: { text: "Select yes if your council has completed a CAF organisation assessment before" } if showError else undefined,
-          items: [
-            { value: "yes", text: "Yes", checked: answer == "yes" },
-            { value: "no", text: "No", checked: answer == "no" },
-            { value: "dontknow", text: "I don't know", checked: answer == "dontknow" }
-          ]
+          hint: { html: hintHtml },
+          errorMessage: { text: "Select ‘Yes’ if your council has completed a CAF organisational assessment before" } if showError else undefined,
+          items: options
         }) }}
 
         {{ govukButton({ text: "Continue" }) }}

@@ -1,23 +1,25 @@
-{# S48 — setup / cannot-remove-this-system — Figma node 393:1536 #}
+{# S48 — setup / cannot-remove-a-critical-system — Setup v11. Shown when the system is in this cycle's
+   approved plan, or has been assessed before. The paragraph shown follows the reason. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <a class="govuk-back-link" href="{{ backHref }}">Back</a>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {{ appPageHeader({
-        caption: system.name,
-        title: "You cannot remove " + system.name
-      }) }}
+      {{ appPageHeader({ caption: system.name, title: "You cannot remove " + system.name }) }}
 
-      <p class="govuk-body">This critical system is included in the approved assessment for this cycle.</p>
-      <p class="govuk-body">To remove it from this assessment cycle, speak to your assurer.</p>
-      <p class="govuk-body">Previously assessed systems stay in your list along with your past assessment results.</p>
-      <p class="govuk-body">If you no longer use a system, mark it as no longer in use.</p>
+      {% if reason == "in_plan" %}
+        <p class="govuk-body">This critical system is included in the approved plan for your current assessment cycle.</p>
+        <p class="govuk-body">To remove it from this assessment cycle, speak to your assurer.</p>
+      {% else %}
+        <p class="govuk-body">Previously assessed systems stay in your list along with your past assessment results.</p>
+        <p class="govuk-body">If you no longer use a system, mark it as no longer in use.</p>
+      {% endif %}
 
-      <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="/setup/critical-systems">Back to your critical systems</a>
+      {{ govukButton({ text: "Back to your critical systems", href: "/setup/critical-systems" }) }}
     </div>
   </div>
 {% endblock %}

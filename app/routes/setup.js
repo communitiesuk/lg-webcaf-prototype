@@ -1,135 +1,111 @@
 // app/routes/setup.js
-// "Set up your council" (Setup v6) prototype section.
-// Source of truth: Figma file mnOq3QRhTdiliuSuzQoNsX, page 393:2 (Setup v6).
-// Batch 1: S01 task list, S02 sector context, S03 council context, S04 methodology,
-// S05 methodology detail, plus the shared out-of-scope holding page.
+// "Set up your council" (Setup v11, Figma "07 Set up your council · v11 (content review)").
+// Every route reads and writes the council record (data/helpers/council-record.js); lists, counts
+// and statuses are worked out from it. Return rules:
+//   ?from=service   an action started on the service page (S37) returns there, with a banner (S37c)
+//   ?from=check     an action started on S24 returns to S24
+//   ?from=walk      "Go to the first missing detail": each save opens the next missing detail
+//   ?from=s30       a Change link on S30 returns to S30
+//   ?return=summary a Change link on S52 returns to S52 (with its own ?from carried along)
 
+const record = require("../data/helpers/council-record");
 const {
   ensureSetup,
   applySetupChrome,
   buildSetupTaskList,
-  ESSENTIAL_SERVICE_OPTIONS,
   COUNCIL_REGISTER,
   getService,
-  buildServiceHubRows,
-  buildRemoveServiceConsequences,
-  reconcileChosenServices,
-  slugify,
-  PLATFORM_TYPE_OPTIONS,
   getPlatform,
   getSystem,
-  platformsForService,
-  platformsForSystem,
-  buildInfraHubRows,
-  buildPlatformReliesModel,
-  buildPlatformChoices,
-  buildRemovePlatformConsequences,
-  unlinkServiceFromPlatforms,
-  CORPORATE_SERVICE_OPTIONS,
-  buildCriticalSystemsHubRows,
-  buildCriticalSystemDetail,
-  buildSupportedServiceOptions,
   getSupplier,
-  systemCanBeRemoved,
+  deriveCriticality,
+  buildServiceRows,
+  buildServicePage,
+  buildRemoveServiceConsequences,
+  buildPlatformRows,
+  buildPlatformPage,
+  buildRemovePlatformConsequence,
+  buildPlatformChoices,
+  buildSystemRows,
+  buildSystemCards,
+  buildSupportedServiceOptions,
   buildRemoveSystemConsequences,
-  unlinkSystemFromPlatforms,
   deriveHostingPlatformName,
   systemDetailCounter,
-  deriveCriticality,
-  buildCoverageWarnings,
-  buildConcentrationInset,
-  servicesWithoutSystem,
-  systemsNeedingDetails,
-  buildSetupSummary,
+  buildSetupCheck,
 } = require("../data/helpers/setup");
 
-// Council type by name, for showing the type beside each council on S18 (same as Claim screen 29),
-// e.g. "Newcastle Upon Tyne City Council (Metropolitan)". The stored value stays the plain name.
-// Changed in build, prototype, pending design sign-off.
+// S18 shows the council type beside each council, as Claim screen 29 does.
 const COUNCIL_TYPE_BY_NAME = new Map(require("../data/councils").map((c) => [c.name, c.type]));
 function councilWithType(name) {
   const t = COUNCIL_TYPE_BY_NAME.get(name);
   return t ? name + " (" + t + ")" : name;
 }
 
-function toList(value) {
-  if (Array.isArray(value)) return value;
-  if (value === undefined || value === null || value === "") return [];
-  return [value];
+const toList = (v) => (Array.isArray(v) ? v : v === undefined || v === null || v === "" ? [] : [v]);
+const clean = (v) => (v || "").toString().trim();
+
+// Read and remove posted fields from the shared data bag.
+function take(req, keys) {
+  const out = {};
+  keys.forEach((k) => {
+    out[k] = req.session.data[k];
+    delete req.session.data[k];
+  });
+  return out;
 }
 
-function clean(value) {
-  return (value || "").toString().trim();
+// A local /setup/ path only.
+function safeSetupPath(v) {
+  v = clean(v);
+  return v.startsWith("/setup/") && !v.startsWith("//") ? v : "";
 }
 
-// Per-system check-answers "Change" links carry ?return=summary. These helpers let each critical-
-// system question page send the user back to the summary after saving, instead of continuing the
-// add-a-system chain. The marker is passed to the form as a hidden `csReturn` field.
-function fromSummary(req) {
-  return clean(req.query.return) === "summary";
+// One-off success banner (S37c, S50, S23 and S39 after a removal).
+function setBanner(req, heading, body) {
+  req.session.data.setupBanner = { heading, body: body || "" };
 }
-function systemSummaryHref(system) {
-  return `/setup/critical-systems/${encodeURIComponent(system.id)}/summary`;
-}
-// Read + consume the hidden marker on POST. Returns the summary href if set, else null.
-function summaryReturnHref(req, system) {
-  const marker = clean(req.session.data.csReturn);
-  delete req.session.data.csReturn;
-  return marker === "summary" ? systemSummaryHref(system) : null;
+function takeBanner(req) {
+  const b = req.session.data.setupBanner;
+  delete req.session.data.setupBanner;
+  return b || null;
 }
 
-// S12c add-mode back link + caption, based on where it was opened from (?return=).
-function platformReturnHref(req, setup) {
-  const ret = clean(req.query.return);
-  if (ret.startsWith("service:")) {
-    return `/setup/essential-services/${encodeURIComponent(ret.slice(8))}/core-infrastructure`;
+const servicePageHref = (svc) => `/setup/essential-services/${svc.id}`;
+const systemSummaryHref = (sys, from) => `/setup/critical-systems/${sys.id}/summary` + (from ? `?from=${encodeURIComponent(from)}` : "");
+
+// Where S52 returns to ("Back" and the end of an action), from its ?from value.
+function s52BackHref(setup, from) {
+  if (from === "check") return "/setup/coverage-check";
+  if (from && from.startsWith("service:")) {
+    const svc = getService(setup, from.slice(8));
+    if (svc) return servicePageHref(svc);
   }
-  if (ret.startsWith("system:")) {
-    return `/setup/critical-systems/${encodeURIComponent(ret.slice(7))}/platforms`;
-  }
-  return "/setup/shared-infrastructure";
+  return "/setup/critical-systems";
 }
 
-function platformReturnCaption(req, setup) {
-  const ret = clean(req.query.return);
-  if (ret.startsWith("service:")) {
-    const svc = getService(setup, ret.slice(8));
-    if (svc) return svc.name;
-  }
-  if (ret.startsWith("system:")) {
-    const sys = getSystem(setup, ret.slice(7));
-    if (sys) return sys.name;
-  }
-  return "Your shared infrastructure";
+// Hidden fields a question page carries so its POST knows where to go.
+function carry(req) {
+  return { csReturn: clean(req.query.return) === "summary" ? "summary" : "", csFrom: clean(req.query.from) };
 }
 
-// S41 add-supplier back link + caption, based on where it was opened from (?return=).
-function supplierReturnHrefFor(ret, setup) {
-  if (ret.startsWith("system:")) {
-    return `/setup/critical-systems/${encodeURIComponent(ret.slice(7))}/which-supplier`;
-  }
-  return "/setup/shared-infrastructure/add-platform";
+// After a system question is saved: the next missing detail, S52, S24, or the default next page.
+function afterSystemQuestion(req, res, sys, nextHref) {
+  const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
+  if (clean(csFrom) === "walk") return res.redirect("/setup/coverage-check/next");
+  if (clean(csReturn) === "summary") return res.redirect(systemSummaryHref(sys, clean(csFrom)));
+  if (clean(csFrom) === "check") return res.redirect("/setup/coverage-check");
+  return res.redirect(nextHref || systemSummaryHref(sys));
 }
 
-function supplierReturnCaptionFor(ret, setup) {
-  if (ret.startsWith("system:")) {
-    const sys = getSystem(setup, ret.slice(7));
-    if (sys) return sys.name;
-  }
-  return "Your shared infrastructure";
-}
-
-function supplierReturnHref(req, setup) {
-  return supplierReturnHrefFor(clean(req.query.return), setup);
-}
-
-function supplierReturnCaption(req, setup) {
-  return supplierReturnCaptionFor(clean(req.query.return), setup);
+// Back link for a system question.
+function questionBack(req, sys, fallback) {
+  if (clean(req.query.return) === "summary") return systemSummaryHref(sys, clean(req.query.from));
+  if (clean(req.query.from) === "check" || clean(req.query.from) === "walk") return "/setup/coverage-check";
+  return fallback || systemSummaryHref(sys);
 }
 
 module.exports = function (router) {
-  // Setup chrome + seed for every /setup request. Keeps the section isolated from the
-  // rest of the prototype (no mutation of the shared signed-in user).
   router.use((req, res, next) => {
     if (!req.path.startsWith("/setup")) return next();
     ensureSetup(req.session.data);
@@ -137,1287 +113,1039 @@ module.exports = function (router) {
     next();
   });
 
-  // Section entry → task list.
   router.get("/setup", (req, res) => res.redirect("/setup/task-list"));
 
-  // S01 — Task list (Figma 393:18)
+  // S01 Set up your council
   router.get("/setup/task-list", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const tasks = buildSetupTaskList(setup);
     res.render("pages/setup/task-list", {
       pageTitle: "Set up your council",
       councilName: setup.council.name,
-      tasks,
+      tasks: buildSetupTaskList(setup),
     });
   });
 
-  // S02 — Your sector context (Figma 393:72)
+  // ----- Tasks 2 and 3 --------------------------------------------------------------------
+
+  const fromS30 = (req) => clean(req.query.from) === "s30" || clean(req.session.data.from) === "s30";
+  const s30Or = (req, href) => {
+    const back = clean(req.session.data.from) === "s30";
+    delete req.session.data.from;
+    return back ? "/setup/check-your-setup" : href;
+  };
+
+  // S02 Your sector context: read only; Continue confirms it. (S02a and S02b removed in v11.)
   router.get("/setup/sector-context", (req, res) => {
-    res.render("pages/setup/sector-context", {
-      pageTitle: "Your sector context",
-      backHref: "/setup/task-list",
-      commentReceived: req.query.comment === "received", // S02b — success banner
-    });
+    res.render("pages/setup/sector-context", { pageTitle: "Your sector context", backHref: "/setup/task-list" });
   });
-
   router.post("/setup/sector-context", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    setup.sectorContext.confirmed = true;
+    ensureSetup(req.session.data).sectorContext.confirmed = true;
     return res.redirect("/setup/council-context");
   });
 
-  // S02a — Tell us what looks wrong (Figma 482:2291). Free text only; stored in session, does not
-  // change the sector context or block setup. Send → S02b (sector context with a success banner).
-  router.get("/setup/sector-context/wrong", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    res.render("pages/setup/sector-context-wrong", {
-      pageTitle: "Tell us what looks wrong",
-      comment: setup.sectorContextComment || "",
-    });
-  });
-
-  router.post("/setup/sector-context/wrong", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    setup.sectorContextComment = clean(req.session.data.sectorContextComment);
-    delete req.session.data.sectorContextComment;
-    return res.redirect("/setup/sector-context?comment=received"); // S02b
-  });
-
-  // S03 — Your council context (Figma 481:3415, v7). CNI and OT are dropdowns; placeholder lists.
+  // S03 Your council context
   router.get("/setup/council-context", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const cc = setup.councilContext;
     res.render("pages/setup/council-context", {
       pageTitle: "Your council context",
-      backHref: "/setup/sector-context",
-      context: {
-        cni: cc.cni, // v7: selected CNI sector value (placeholder list); "" when none
-        ot: cc.operationalTechnology, // v7: selected OT type value (placeholder list); "" when none
-        recentIt: cc.recentItTransformation,
-        upcomingIt: cc.upcomingItTransformation,
-        lgr: cc.lgr,
-        none: cc.noneOfThese,
-        recentItDetail: cc.recentItTransformationDetail,
-        upcomingItDetail: cc.upcomingItTransformationDetail,
-        lgrDetail: cc.lgrDetail,
-        anythingElse: cc.anythingElse,
-      },
+      backHref: fromS30(req) ? "/setup/check-your-setup" : "/setup/sector-context",
+      from: fromS30(req) ? "s30" : "",
+      context: setup.councilContext,
+      cniSectors: record.CNI_SECTORS,
+      otTypes: record.OT_TYPES,
     });
   });
-
   router.post("/setup/council-context", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    // "None of these" is now an exclusive option within the same checkbox group, so the framework
-    // keeps it mutually exclusive with the positive options client-side. Read it from that group.
-    const selected = toList(req.session.data.councilContextApplies);
-    const none = selected.includes("none");
-    const has = (value) => !none && selected.includes(value);
-
+    const f = take(req, ["councilContextCni", "councilContextOt", "councilContextIt", "recentItDetail", "upcomingItDetail", "ccAnythingElse"]);
+    const ot = toList(f.councilContextOt).map(clean).filter(Boolean);
+    const it = toList(f.councilContextIt);
+    const none = it.includes("none");
+    const cni = clean(f.councilContextCni);
     setup.councilContext = {
-      // v7: CNI and OT are dropdowns, stored as the selected value under the existing keys.
-      // "None of these" clears the checkboxes only, not the dropdowns (they are separate questions).
-      cni: clean(req.session.data.councilContextCni),
-      operationalTechnology: clean(req.session.data.councilContextOt),
-      recentItTransformation: has("recent-it"),
-      recentItTransformationDetail: none ? "" : clean(req.session.data.recentItDetail),
-      upcomingItTransformation: has("upcoming-it"),
-      upcomingItTransformationDetail: none ? "" : clean(req.session.data.upcomingItDetail),
-      lgr: has("lgr"),
-      lgrDetail: none ? "" : clean(req.session.data.lgrDetail),
-      noneOfThese: none,
-      anythingElse: clean(req.session.data.ccAnythingElse),
-      completed: true,
+      cniSectors: cni ? [cni] : [],
+      otTypes: ot.includes("none") ? ["None of these"] : ot.filter((v) => record.OT_TYPES.includes(v)),
+      itTransformation: {
+        recent: !none && it.includes("recent"),
+        recentDetail: !none && it.includes("recent") ? clean(f.recentItDetail) : "",
+        upcoming: !none && it.includes("upcoming"),
+        upcomingDetail: !none && it.includes("upcoming") ? clean(f.upcomingItDetail) : "",
+        noneOfThese: none,
+      },
+      anythingElse: clean(f.ccAnythingElse),
     };
-
-    // Consume transient form fields.
-    [
-      "councilContextApplies",
-      "councilContextCni",
-      "councilContextOt",
-      "recentItDetail",
-      "upcomingItDetail",
-      "lgrDetail",
-      "ccAnythingElse",
-    ].forEach((key) => delete req.session.data[key]);
-
-    return res.redirect("/setup/previous-assessment");
+    return res.redirect(s30Or(req, "/setup/previous-assessment"));
   });
 
-  // S03a (ADDITION, not in Figma) — Has your council completed a CAF organisation assessment before?
-  // Decides whether Decide includes the organisation assessment (objectives A and D) this cycle,
-  // and makes D20 "nothing new to assess" possible. Mirrors the per-system "assessed before" question.
+  // S03a Has your council completed a CAF organisational assessment before? S03ae is its error state.
   router.get("/setup/previous-assessment", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    renderPreviousAssessment(res, (setup.organisationAssessment || {}).answer || "", false);
+    renderPreviousAssessment(res, (setup.organisationAssessment || {}).answer || "", false, fromS30(req));
   });
-
   router.post("/setup/previous-assessment", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const answer = clean(req.session.data.orgAssessedBefore);
-    delete req.session.data.orgAssessedBefore;
-    if (["yes", "no", "dontknow"].indexOf(answer) === -1) {
-      return renderPreviousAssessment(res, "", true);
+    const answer = clean(take(req, ["orgAssessedBefore"]).orgAssessedBefore);
+    if (!record.ASSESSED_BEFORE.includes(answer)) {
+      return renderPreviousAssessment(res, "", true, clean(req.session.data.from) === "s30");
     }
-    // "I don't know" is treated like "No": the organisation assessment is included this cycle.
-    setup.organisationAssessment = { answer, doneBefore: answer === "yes" };
-    return res.redirect("/setup/methodology");
+    setup.organisationAssessment = { answer };
+    return res.redirect(s30Or(req, "/setup/methodology"));
   });
 
-  // S04 — How will you identify your essential services and critical systems? (Figma 393:100)
+  // S04 Tell us how you will identify your essential services and critical systems
   router.get("/setup/methodology", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/methodology", {
       pageTitle: "Tell us how you will identify your essential services and critical systems",
-      backHref: "/setup/previous-assessment",
+      backHref: fromS30(req) ? "/setup/check-your-setup" : "/setup/task-list",
+      from: fromS30(req) ? "s30" : "",
       approach: setup.methodology.approach,
     });
   });
-
   router.post("/setup/methodology", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const approach =
-      clean(req.session.data.methodologyApproach) === "other" ? "other" : "five-lens";
+    const approach = clean(take(req, ["methodologyApproach"]).methodologyApproach) === "other" ? "other" : "five-lens";
     setup.methodology.approach = approach;
-    setup.methodology.completed = true;
-    delete req.session.data.methodologyApproach;
-    if (approach === "other") return res.redirect("/setup/methodology-detail");
-    return res.redirect("/setup/task-list");
+    if (approach === "other") {
+      const back = clean(req.session.data.from) === "s30";
+      delete req.session.data.from;
+      return res.redirect("/setup/methodology-detail" + (back ? "?from=s30" : ""));
+    }
+    return res.redirect(s30Or(req, "/setup/task-list"));
   });
 
-  // S05 — Tell us about your methodology (Figma 393:139)
+  // S05 Tell us about your approach
   router.get("/setup/methodology-detail", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/methodology-detail", {
       pageTitle: "Tell us about your approach",
-      backHref: "/setup/methodology",
+      backHref: "/setup/methodology" + (fromS30(req) ? "?from=s30" : ""),
+      from: fromS30(req) ? "s30" : "",
       methodology: setup.methodology,
     });
   });
-
   router.post("/setup/methodology-detail", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    setup.methodology.detail = clean(req.session.data.methodologyDetail);
-    setup.methodology.link = clean(req.session.data.methodologyLink);
-    delete req.session.data.methodologyDetail;
-    delete req.session.data.methodologyLink;
-    return res.redirect("/setup/task-list");
+    const f = take(req, ["methodologyNotes", "methodologyLink"]);
+    setup.methodology.notes = clean(f.methodologyNotes);
+    setup.methodology.link = clean(f.methodologyLink);
+    return res.redirect(s30Or(req, "/setup/task-list"));
   });
 
-  // ----- Batch 2: Essential services -------------------------------------------------
+  // ----- Task 4: Your essential services ---------------------------------------------------
 
-  // S35 — Which essential services does your council deliver? (Figma 393:1189)
-  //       + S40 error state (nothing selected) (Figma 393:1290)
+  // S35 Which essential services does your council deliver? (list by tier). S40 is its error state;
+  // S35b is this page for a lower-tier council.
+  function renderChoose(res, setup, ticked, showError) {
+    res.render("pages/setup/essential-services/choose", {
+      pageTitle: (showError ? "Error: " : "") + "Which essential services does your council deliver?",
+      backHref: "/setup/task-list",
+      councilsLabel: record.councilTypePlural(setup),
+      options: record.essentialServiceOptions(setup).map((name) => ({ value: name, text: name, checked: ticked.has(name) })),
+      showError,
+    });
+  }
   router.get("/setup/essential-services/choose", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const chosen = new Set(
-      (setup.essentialServices || []).map((s) => s.name)
-    );
-    res.render("pages/setup/essential-services/choose", {
-      pageTitle: "Which essential services does your council deliver?",
-      backHref: "/setup/task-list",
-      options: ESSENTIAL_SERVICE_OPTIONS.map((name) => ({
-        name,
-        checked: chosen.has(name),
-      })),
-    });
+    renderChoose(res, setup, new Set((setup.essentialServices || []).filter((s) => s.source === "list").map((s) => s.name)), false);
   });
-
   router.post("/setup/essential-services/choose", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const action = clean(req.session.data.action);
-    const selected = toList(req.session.data.essentialServiceChoices)
-      .map(clean)
-      .filter(Boolean);
-    delete req.session.data.essentialServiceChoices;
-    delete req.session.data.action;
-
-    // "Add an essential service" submits the form so any ticked selections are kept, then opens
-    // the add-a-service page. No "select at least one" error here (they may be adding the first).
-    if (action === "add") {
-      reconcileChosenServices(setup, selected);
-      return res.redirect("/setup/essential-services/add");
+    const f = take(req, ["essentialServiceChoices", "action"]);
+    const chosen = toList(f.essentialServiceChoices).map(clean).filter((n) => record.essentialServiceOptions(setup).includes(n));
+    const adding = clean(f.action) === "add";
+    if (!adding && !chosen.length && !(setup.essentialServices || []).length) {
+      return renderChoose(res, setup, new Set(), true);
     }
-
-    if (selected.length === 0) {
-      return res.render("pages/setup/essential-services/choose", {
-        pageTitle: "Error: Which essential services does your council deliver?",
-        backHref: "/setup/task-list",
-        error: {
-          items: [
-            {
-              field: "essentialServiceChoices",
-              text: "Select at least one essential service, or add one that is not on the list",
-            },
-          ],
-        },
-        options: ESSENTIAL_SERVICE_OPTIONS.map((name) => ({
-          name,
-          checked: selected.includes(name),
-        })),
-      });
-    }
-
-    reconcileChosenServices(setup, selected);
-    return res.redirect("/setup/essential-services");
+    // Add newly ticked services. Unticking a listed service removes it only if nothing is added to
+    // it yet; a service with functions, links or a reason is kept (it is removed on S46).
+    const existing = new Set((setup.essentialServices || []).map((s) => s.name));
+    chosen.forEach((name) => {
+      if (!existing.has(name)) {
+        setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name, source: "list", functions: [], noSystemReason: "", infraLater: false });
+      }
+    });
+    (setup.essentialServices || [])
+      .filter((s) => s.source === "list" && !chosen.includes(s.name) && record.serviceStatus(setup, s) === "not_started")
+      .forEach((s) => record.removeService(setup, s.id));
+    return res.redirect(adding ? "/setup/essential-services/add" : "/setup/essential-services");
   });
 
-  // S36 — Your essential services (hub) (Figma 393:261)
-  //       + S50 success state after a removal (Figma 393:1600)
+  // S36 Your essential services (task list). S50 is this page with a banner after a removal.
   router.get("/setup/essential-services", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const removed = clean(req.query.removed);
-    const orphan = clean(req.query.orphan);
+    if (!(setup.essentialServices || []).length) return res.redirect("/setup/essential-services/choose");
     res.render("pages/setup/essential-services/index", {
       pageTitle: "Summary of your essential services",
       backHref: "/setup/task-list",
-      rows: buildServiceHubRows(setup),
-      removed: removed || null,
-      orphan: orphan || null,
+      rows: buildServiceRows(setup),
+      banner: takeBanner(req),
     });
   });
 
-  // S09 — Add an essential service that is not on the list (Figma 393:176)
-  //       + S32 error state (name missing) (Figma 393:852)
+  // S09 Add an essential service (not on the list). S32 is its error state.
   router.get("/setup/essential-services/add", (req, res) => {
+    const setup = ensureSetup(req.session.data);
     res.render("pages/setup/essential-services/add", {
       pageTitle: "Add an essential service",
-      backHref: "/setup/essential-services",
+      backHref: (setup.essentialServices || []).length ? "/setup/essential-services" : "/setup/essential-services/choose",
+      councilsLabel: record.councilTypePlural(setup),
       name: "",
     });
   });
-
   router.post("/setup/essential-services/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const name = clean(req.session.data.newServiceName);
-    delete req.session.data.newServiceName;
-
+    const name = clean(take(req, ["newServiceName"]).newServiceName);
     if (!name) {
       return res.render("pages/setup/essential-services/add", {
         pageTitle: "Error: Add an essential service",
         backHref: "/setup/essential-services",
+        councilsLabel: record.councilTypePlural(setup),
         name: "",
-        error: {
-          items: [{ field: "newServiceName", text: "Enter the name of the service" }],
-        },
+        error: { field: "newServiceName", text: "Enter the name of the service" },
       });
     }
-
-    setup.essentialServices.push({
-      id: `svc-${slugify(name)}`,
-      name,
-      source: "custom",
-      functions: [],
-      platforms: [],
-      noSystemReason: "",
-      infraStatus: "to_do",
-    });
+    setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name, source: "added", functions: [], noSystemReason: "", infraLater: false });
     return res.redirect("/setup/essential-services");
   });
 
-  // S10 — What are the key functions of this service? (Figma 393:214)
-  router.get("/setup/essential-services/:serviceId/functions", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
+  // Load the service in :serviceId, or go back to S36.
+  function withService(handler) {
+    return (req, res) => {
+      const setup = ensureSetup(req.session.data);
+      const svc = getService(setup, req.params.serviceId);
+      if (!svc) return res.redirect("/setup/essential-services");
+      return handler(req, res, setup, svc);
+    };
+  }
+  const fromService = (req) => clean(req.query.from) === "service" || clean(req.session.data.from) === "service";
+
+  // S37 the service page (S37b when nothing is linked; S37c with a banner after an action).
+  router.get("/setup/essential-services/:serviceId", withService((req, res, setup, svc) => {
+    const from = clean(req.query.from);
+    res.render("pages/setup/essential-services/service", {
+      pageTitle: svc.name,
+      backHref: from === "check" ? "/setup/coverage-check" : "/setup/essential-services",
+      service: svc,
+      page: buildServicePage(setup, svc),
+      banner: takeBanner(req),
+    });
+  }));
+
+  // S10 List the main functions (first step for a new service). Save and continue → S38.
+  router.get("/setup/essential-services/:serviceId/functions", withService((req, res, setup, svc) => {
     res.render("pages/setup/essential-services/functions", {
       pageTitle: "List the main functions of this essential service",
       backHref: "/setup/essential-services",
-      service,
+      service: svc,
     });
-  });
+  }));
+  router.post("/setup/essential-services/:serviceId/functions", withService((req, res, setup, svc) => {
+    return res.redirect(`/setup/essential-services/${svc.id}/core-infrastructure`);
+  }));
+  router.get("/setup/essential-services/:serviceId/functions/:functionId/remove", withService((req, res, setup, svc) => {
+    record.removeFunction(setup, svc, req.params.functionId);
+    return res.redirect(`/setup/essential-services/${svc.id}/functions`);
+  }));
 
-  router.post("/setup/essential-services/:serviceId/functions", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    // S10 "Save and continue" → S38 core infrastructure for this service (Batch 3).
-    return res.redirect(
-      `/setup/essential-services/${encodeURIComponent(service.id)}/core-infrastructure`
-    );
-  });
-
-  // Remove a function (inline "Remove" on S10)
-  router.get(
-    "/setup/essential-services/:serviceId/functions/:functionId/remove",
-    (req, res) => {
-      const setup = ensureSetup(req.session.data);
-      const service = getService(setup, req.params.serviceId);
-      if (!service) return res.redirect("/setup/essential-services");
-      service.functions = (service.functions || []).filter(
-        (f) => f.id !== req.params.functionId
-      );
-      return res.redirect(
-        `/setup/essential-services/${encodeURIComponent(service.id)}/functions`
-      );
-    }
-  );
-
-  // S10b — Add a function (Figma 393:1080)
-  router.get("/setup/essential-services/:serviceId/functions/add", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    res.render("pages/setup/essential-services/add-function", {
-      pageTitle: "Add a function",
-      backHref: `/setup/essential-services/${encodeURIComponent(service.id)}/functions`,
-      service,
+  // S10b Add a function, or change one (from S37). From S37 it returns there with a banner.
+  function renderFunction(res, svc, opts) {
+    res.render("pages/setup/essential-services/add-function", Object.assign({
+      pageTitle: (opts.error ? "Error: " : "") + (opts.fn ? "Change a function" : "Add a function"),
+      service: svc,
+      name: "",
+    }, opts));
+  }
+  router.get("/setup/essential-services/:serviceId/functions/add", withService((req, res, setup, svc) => {
+    renderFunction(res, svc, {
+      backHref: fromService(req) ? servicePageHref(svc) : `/setup/essential-services/${svc.id}/functions`,
+      action: `/setup/essential-services/${svc.id}/functions/add`,
+      from: fromService(req) ? "service" : "",
     });
-  });
-
-  router.post("/setup/essential-services/:serviceId/functions/add", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    const name = clean(req.session.data.newFunctionName);
-    delete req.session.data.newFunctionName;
-    if (name) {
-      service.functions = service.functions || [];
-      service.functions.push({ id: `fn-${slugify(name)}`, name });
+  }));
+  router.post("/setup/essential-services/:serviceId/functions/add", withService((req, res, setup, svc) => {
+    const { newFunctionName, from } = take(req, ["newFunctionName", "from"]);
+    const name = clean(newFunctionName);
+    const toService = clean(from) === "service";
+    if (!name) {
+      return renderFunction(res, svc, {
+        backHref: toService ? servicePageHref(svc) : `/setup/essential-services/${svc.id}/functions`,
+        action: `/setup/essential-services/${svc.id}/functions/add`,
+        from: toService ? "service" : "",
+        error: { field: "newFunctionName", text: "Enter the name of the function" },
+      });
     }
-    return res.redirect(
-      `/setup/essential-services/${encodeURIComponent(service.id)}/functions`
-    );
-  });
+    svc.functions = svc.functions || [];
+    svc.functions.push({ id: record.newId("fn", name, svc.functions), name });
+    if (toService) {
+      setBanner(req, `${name} has been added to ${svc.name}`);
+      return res.redirect(servicePageHref(svc));
+    }
+    return res.redirect(`/setup/essential-services/${svc.id}/functions`);
+  }));
+  router.get("/setup/essential-services/:serviceId/functions/:functionId/change", withService((req, res, setup, svc) => {
+    const fn = (svc.functions || []).find((f) => f.id === req.params.functionId);
+    if (!fn) return res.redirect(servicePageHref(svc));
+    renderFunction(res, svc, { fn, name: fn.name, backHref: servicePageHref(svc), action: `/setup/essential-services/${svc.id}/functions/${fn.id}/change`, from: "service" });
+  }));
+  router.post("/setup/essential-services/:serviceId/functions/:functionId/change", withService((req, res, setup, svc) => {
+    const fn = (svc.functions || []).find((f) => f.id === req.params.functionId);
+    const { newFunctionName } = take(req, ["newFunctionName", "from"]);
+    if (!fn) return res.redirect(servicePageHref(svc));
+    const name = clean(newFunctionName);
+    if (!name) {
+      return renderFunction(res, svc, { fn, name: "", backHref: servicePageHref(svc), action: req.originalUrl, from: "service", error: { field: "newFunctionName", text: "Enter the name of the function" } });
+    }
+    fn.name = name;
+    setBanner(req, `The function has been changed to ${name}`);
+    return res.redirect(servicePageHref(svc));
+  }));
 
-  // S46 — Are you sure you want to remove [service]? (Figma 393:1465)
-  router.get("/setup/essential-services/:serviceId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
+  // S38 core infrastructure for a service. Both buttons return to the service page (S37).
+  router.get("/setup/essential-services/:serviceId/core-infrastructure", withService((req, res, setup, svc) => {
+    const from = clean(req.query.from);
+    res.render("pages/setup/shared-infrastructure/for-service", {
+      pageTitle: `List the core infrastructure platforms that support ${svc.name.toLowerCase()}`,
+      backHref: from === "service" ? servicePageHref(svc) : `/setup/essential-services/${svc.id}/functions`,
+      service: svc,
+      from,
+      platforms: buildPlatformChoices(setup, record.platformsForService(setup, svc.id).map((p) => p.id)),
+      addPlatformHref: `/setup/shared-infrastructure/add-platform?link=service:${svc.id}&back=${encodeURIComponent(`/setup/essential-services/${svc.id}/core-infrastructure${from ? "?from=" + from : ""}`)}`,
+    });
+  }));
+  router.post("/setup/essential-services/:serviceId/core-infrastructure", withService((req, res, setup, svc) => {
+    const { servicePlatforms, action, from } = take(req, ["servicePlatforms", "action", "from"]);
+    const ticked = toList(servicePlatforms);
+    if (clean(action) === "later") {
+      svc.infraLater = true;
+    } else {
+      (setup.platforms || []).forEach((p) => {
+        p.linkedServices = (p.linkedServices || []).filter((id) => id !== svc.id);
+        if (ticked.includes(p.id)) p.linkedServices.push(svc.id);
+      });
+      svc.infraLater = false;
+    }
+    if (clean(from) === "service") setBanner(req, `Core infrastructure for ${svc.name} has been updated`);
+    return res.redirect(servicePageHref(svc));
+  }));
+
+  // S37d Which critical systems support [service]? A to Z. "Add a critical system" opens S14 with
+  // this service ticked, and returns to the service page.
+  router.get("/setup/essential-services/:serviceId/systems", withService((req, res, setup, svc) => {
+    const linked = new Set(record.systemsForService(setup, svc).map((s) => s.id));
+    const from = clean(req.query.from);
+    res.render("pages/setup/essential-services/systems", {
+      pageTitle: `Which critical systems support ${svc.name}?`,
+      backHref: from === "walk" || from === "check" ? "/setup/coverage-check" : servicePageHref(svc),
+      service: svc,
+      from,
+      options: (setup.criticalSystems || []).slice().sort(record.byName).map((s) => ({ value: s.id, text: s.name, checked: linked.has(s.id) })),
+    });
+  }));
+  router.post("/setup/essential-services/:serviceId/systems", withService((req, res, setup, svc) => {
+    const { serviceSystems, action, from } = take(req, ["serviceSystems", "action", "from"]);
+    const ticked = new Set(toList(serviceSystems));
+    const before = new Set(record.systemsForService(setup, svc).map((s) => s.id));
+    const added = [];
+    const removed = [];
+    (setup.criticalSystems || []).forEach((sys) => {
+      const want = ticked.has(sys.id);
+      if (want && !before.has(sys.id)) { record.setSystemServiceLink(setup, sys, svc, true); added.push(sys); }
+      if (!want && before.has(sys.id)) { record.setSystemServiceLink(setup, sys, svc, false); removed.push(sys); }
+    });
+    if (clean(action) === "add") {
+      return res.redirect(`/setup/critical-systems/add?service=${svc.id}&from=service`);
+    }
+    if (clean(from) === "walk") return res.redirect("/setup/coverage-check/next");
+    if (clean(from) === "check") return res.redirect("/setup/coverage-check");
+    if (added.length === 1 && !removed.length) {
+      setBanner(req, `${added[0].name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
+    } else if (added.length || removed.length) {
+      const parts = [];
+      if (added.length) parts.push(`${added.length} critical ${record.plural(added.length, "system")} linked`);
+      if (removed.length) parts.push(`${removed.length} unlinked`);
+      setBanner(req, `Critical systems for ${svc.name} updated: ${parts.join(", ")}`);
+    }
+    return res.redirect(servicePageHref(svc));
+  }));
+
+  // S46 Remove [service]? → S36 with the S50 banner.
+  router.get("/setup/essential-services/:serviceId/remove", withService((req, res, setup, svc) => {
     res.render("pages/setup/essential-services/remove", {
-      pageTitle: `Remove ${service.name.toLowerCase()}?`,
-      backHref: `/setup/essential-services/${encodeURIComponent(service.id)}/functions`,
-      service,
-      consequences: buildRemoveServiceConsequences(setup, service),
+      pageTitle: `Remove ${svc.name.toLowerCase()}?`,
+      backHref: servicePageHref(svc),
+      service: svc,
+      consequences: buildRemoveServiceConsequences(setup, svc),
     });
-  });
+  }));
+  router.post("/setup/essential-services/:serviceId/remove", withService((req, res, setup, svc) => {
+    const { orphaned } = record.removeService(setup, svc.id);
+    const body = orphaned.length
+      ? `This means that the critical ${record.plural(orphaned.length, "system")} ${orphaned.map((s) => s.name).join(" and ")} ${orphaned.length === 1 ? "is" : "are"} no longer linked to any essential services.`
+      : "";
+    setBanner(req, `${svc.name} has been removed`, body);
+    return res.redirect((setup.essentialServices || []).length ? "/setup/essential-services" : "/setup/essential-services/choose");
+  }));
 
-  router.post("/setup/essential-services/:serviceId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    const { orphaned } = buildRemoveServiceConsequences(setup, service);
-    unlinkServiceFromPlatforms(setup, service.id);
-    setup.essentialServices = (setup.essentialServices || []).filter(
-      (s) => s.id !== service.id
-    );
-    const params = new URLSearchParams({ removed: service.name });
-    if (orphaned.length) params.set("orphan", orphaned[0].name);
-    return res.redirect(`/setup/essential-services?${params.toString()}`);
-  });
+  // S42 Why does [service] not need a critical system? → back to S24 (or the next missing detail).
+  router.get("/setup/essential-services/:serviceId/no-system-reason", withService((req, res, setup, svc) => {
+    res.render("pages/setup/essential-services/no-system-reason", {
+      pageTitle: `Why does ${svc.name.toLowerCase()} not need a critical system?`,
+      backHref: "/setup/coverage-check",
+      service: svc,
+      from: clean(req.query.from),
+    });
+  }));
+  router.post("/setup/essential-services/:serviceId/no-system-reason", withService((req, res, setup, svc) => {
+    const { noSystemReason, from } = take(req, ["noSystemReason", "from"]);
+    svc.noSystemReason = clean(noSystemReason);
+    return res.redirect(clean(from) === "walk" ? "/setup/coverage-check/next" : "/setup/coverage-check");
+  }));
 
-  // ----- Batch 3: Shared infrastructure ----------------------------------------------
+  // ----- Task 5: core infrastructure ------------------------------------------------------
 
-  // S39 — Your shared infrastructure (hub) (Figma 393:886)
+  // S39 Your core infrastructure (task list), with a banner after a removal.
   router.get("/setup/shared-infrastructure", (req, res) => {
     const setup = ensureSetup(req.session.data);
     res.render("pages/setup/shared-infrastructure/index", {
-      pageTitle: "Your shared infrastructure",
+      pageTitle: "Your core infrastructure",
       backHref: "/setup/task-list",
-      rows: buildInfraHubRows(setup),
+      rows: buildPlatformRows(setup),
+      banner: takeBanner(req),
     });
   });
 
-  // S38 — What core infrastructure supports [service]? (Figma 393:1238)
-  router.get("/setup/essential-services/:serviceId/core-infrastructure", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    res.render("pages/setup/shared-infrastructure/for-service", {
-      pageTitle: `List the core infrastructure platforms that support ${service.name.toLowerCase()}`,
-      backHref: `/setup/essential-services/${encodeURIComponent(service.id)}/functions`,
-      service,
-      platforms: buildPlatformChoices(
-        setup,
-        platformsForService(setup, service.id).map((p) => p.id)
-      ),
-    });
-  });
-
-  router.post("/setup/essential-services/:serviceId/core-infrastructure", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/essential-services");
-    const action = clean(req.session.data.action);
-    const ticked = toList(req.session.data.servicePlatforms);
-    delete req.session.data.servicePlatforms;
-    delete req.session.data.action;
-
-    if (action !== "later") {
-      (setup.platforms || []).forEach((p) => {
-        p.linkedServices = (p.linkedServices || []).filter((id) => id !== service.id);
-        if (ticked.includes(p.id)) p.linkedServices.push(service.id);
-      });
-      service.infraStatus = "complete";
-      // Finishing a service returns to the essential services list, so the person can pick the
-      // next service. It does not push them into critical systems (round-1 research defect).
-      return res.redirect("/setup/essential-services");
-    }
-    service.infraStatus = "link_later";
-    return res.redirect("/setup/essential-services");
-  });
-
-  // S12c — Add a platform (Figma 393:937) — PROPOSAL (who manages)
+  // S12c Add a platform. ?link=service:<id>|system:<id> links the new platform; ?back= returns there.
+  function renderPlatform(res, setup, opts) {
+    res.render("pages/setup/shared-infrastructure/platform", Object.assign({
+      pageTitle: (opts.error ? "Error: " : "") + "Add a core infrastructure platform",
+      typeOptions: record.PLATFORM_TYPES,
+      suppliers: setup.suppliers || [],
+    }, opts));
+  }
+  function platformCaption(setup, link) {
+    if (link.startsWith("service:")) return (getService(setup, link.slice(8)) || {}).name || "Your core infrastructure";
+    if (link.startsWith("system:")) return (getSystem(setup, link.slice(7)) || {}).name || "Your core infrastructure";
+    return "Your core infrastructure";
+  }
   router.get("/setup/shared-infrastructure/add-platform", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    res.render("pages/setup/shared-infrastructure/platform", {
-      pageTitle: "Add a core infrastructure platform",
-      backHref: platformReturnHref(req, setup),
+    const link = clean(req.query.link);
+    const back = safeSetupPath(req.query.back) || ((setup.platforms || []).length ? "/setup/shared-infrastructure" : "/setup/task-list");
+    renderPlatform(res, setup, {
       mode: "add",
-      caption: platformReturnCaption(req, setup),
-      returnTo: clean(req.query.return),
-      typeOptions: PLATFORM_TYPE_OPTIONS,
-      suppliers: setup.suppliers || [],
-      platform: { name: "", type: "", managedBy: "", supplierId: "" },
+      caption: platformCaption(setup, link),
+      backHref: back,
+      link,
+      back,
+      action: "/setup/shared-infrastructure/add-platform",
+      platform: { name: "", type: "", managedBy: "", supplierId: clean(req.query.supplier) },
+      addSupplierHref: `/setup/suppliers/add?back=${encodeURIComponent(req.originalUrl)}`,
     });
   });
-
   router.post("/setup/shared-infrastructure/add-platform", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const name = clean(req.session.data.platformName);
-    const type = clean(req.session.data.platformType);
-    const managedBy = clean(req.session.data.platformManager);
-    const supplierId =
-      managedBy === "supplier-fully" || managedBy === "supplier-partly"
-        ? clean(req.session.data.whichSupplier)
-        : "";
-    const returnTo = clean(req.session.data.returnTo);
-    ["platformName", "platformType", "platformManager", "whichSupplier", "returnTo"].forEach(
-      (k) => delete req.session.data[k]
-    );
-
+    const f = take(req, ["platformName", "platformType", "platformManager", "whichSupplier", "link", "back"]);
+    const name = clean(f.platformName);
+    const link = clean(f.link);
+    const back = safeSetupPath(f.back);
+    const managedBy = clean(f.platformManager);
+    if (!name) {
+      return renderPlatform(res, setup, {
+        mode: "add", caption: platformCaption(setup, link), backHref: back || "/setup/shared-infrastructure", link, back,
+        action: "/setup/shared-infrastructure/add-platform",
+        platform: { name: "", type: clean(f.platformType), managedBy, supplierId: clean(f.whichSupplier) },
+        addSupplierHref: "/setup/suppliers/add?back=" + encodeURIComponent("/setup/shared-infrastructure/add-platform"),
+        error: { field: "platformName", text: "Enter the name of the platform" },
+      });
+    }
     const platform = {
-      id: `plat-${slugify(name)}`,
+      id: record.newId("plat", name, setup.platforms),
       name,
-      type,
+      type: clean(f.platformType),
       managedBy,
-      supplierId,
+      supplierId: managedBy === "supplier-fully" || managedBy === "supplier-partly" ? clean(f.whichSupplier) : "",
       linkedServices: [],
       linkedSystems: [],
     };
-    setup.platforms = setup.platforms || [];
     setup.platforms.push(platform);
-
-    // Link to, and return to, wherever it was added from.
-    if (returnTo.startsWith("service:")) {
-      const serviceId = returnTo.slice("service:".length);
-      if (getService(setup, serviceId)) platform.linkedServices.push(serviceId);
-      return res.redirect(
-        `/setup/essential-services/${encodeURIComponent(serviceId)}/core-infrastructure`
-      );
+    if (link.startsWith("service:") && getService(setup, link.slice(8))) {
+      platform.linkedServices.push(link.slice(8));
+      return res.redirect(back || `/setup/essential-services/${link.slice(8)}/core-infrastructure`);
     }
-    if (returnTo.startsWith("system:")) {
-      const systemId = returnTo.slice("system:".length);
-      if (getSystem(setup, systemId)) platform.linkedSystems.push(systemId);
-      return res.redirect(
-        `/setup/critical-systems/${encodeURIComponent(systemId)}/platforms`
-      );
+    if (link.startsWith("system:") && getSystem(setup, link.slice(7))) {
+      platform.linkedSystems.push(link.slice(7));
+      return res.redirect(back || `/setup/critical-systems/${link.slice(7)}/platforms`);
     }
-    // From the hub → link what relies on the new platform (S45).
-    return res.redirect(
-      `/setup/shared-infrastructure/${encodeURIComponent(platform.id)}/relies`
-    );
+    return res.redirect(`/setup/shared-infrastructure/${platform.id}/relies?from=new`);
   });
 
-  // S12c edit mode (reached from S39 "Change" on a linked platform)
-  router.get("/setup/shared-infrastructure/:platformId/edit", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
-    res.render("pages/setup/shared-infrastructure/platform", {
+  function withPlatform(handler) {
+    return (req, res) => {
+      const setup = ensureSetup(req.session.data);
+      const p = getPlatform(setup, req.params.platformId);
+      if (!p) return res.redirect("/setup/shared-infrastructure");
+      return handler(req, res, setup, p);
+    };
+  }
+  const platformPageHref = (p) => `/setup/shared-infrastructure/${p.id}`;
+
+  // S39a the platform page.
+  router.get("/setup/shared-infrastructure/:platformId", withPlatform((req, res, setup, p) => {
+    res.render("pages/setup/shared-infrastructure/platform-page", {
+      pageTitle: p.name,
+      backHref: "/setup/shared-infrastructure",
+      platform: p,
+      page: buildPlatformPage(setup, p),
+      banner: takeBanner(req),
+    });
+  }));
+
+  // S12c with answers filled in (Change on S39a). Save returns to S39a.
+  router.get("/setup/shared-infrastructure/:platformId/edit", withPlatform((req, res, setup, p) => {
+    renderPlatform(res, setup, {
       pageTitle: "Add a core infrastructure platform",
-      backHref: "/setup/shared-infrastructure",
       mode: "edit",
-      caption: platform.name,
-      platformId: platform.id,
-      typeOptions: PLATFORM_TYPE_OPTIONS,
-      suppliers: setup.suppliers || [],
-      platform,
+      caption: p.name,
+      backHref: platformPageHref(p),
+      action: `/setup/shared-infrastructure/${p.id}/edit`,
+      platform: Object.assign({}, p, clean(req.query.supplier) ? { supplierId: clean(req.query.supplier) } : {}),
+      removeHref: `/setup/shared-infrastructure/${p.id}/remove`,
+      addSupplierHref: `/setup/suppliers/add?back=${encodeURIComponent(`/setup/shared-infrastructure/${p.id}/edit`)}`,
     });
-  });
+  }));
+  router.post("/setup/shared-infrastructure/:platformId/edit", withPlatform((req, res, setup, p) => {
+    const f = take(req, ["platformName", "platformType", "platformManager", "whichSupplier", "link", "back"]);
+    p.name = clean(f.platformName) || p.name;
+    p.type = clean(f.platformType);
+    p.managedBy = clean(f.platformManager);
+    p.supplierId = p.managedBy === "supplier-fully" || p.managedBy === "supplier-partly" ? clean(f.whichSupplier) : "";
+    record.pruneSuppliers(setup);
+    return res.redirect(platformPageHref(p));
+  }));
 
-  router.post("/setup/shared-infrastructure/:platformId/edit", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
-    platform.name = clean(req.session.data.platformName) || platform.name;
-    platform.type = clean(req.session.data.platformType) || platform.type;
-    platform.managedBy = clean(req.session.data.platformManager);
-    platform.supplierId =
-      platform.managedBy === "supplier-fully" || platform.managedBy === "supplier-partly"
-        ? clean(req.session.data.whichSupplier)
-        : "";
-    ["platformName", "platformType", "platformManager", "whichSupplier"].forEach(
-      (k) => delete req.session.data[k]
-    );
-    return res.redirect("/setup/shared-infrastructure");
-  });
-
-  // S45 — What relies on [platform]? (Figma 393:1415)
-  router.get("/setup/shared-infrastructure/:platformId/relies", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
+  // S45 What relies on [platform]? → S39a (or S24, or the next missing detail).
+  router.get("/setup/shared-infrastructure/:platformId/relies", withPlatform((req, res, setup, p) => {
+    const from = clean(req.query.from);
     res.render("pages/setup/shared-infrastructure/relies", {
-      pageTitle: `What relies on ${platform.name}?`,
-      backHref: "/setup/shared-infrastructure",
-      platform,
-      model: buildPlatformReliesModel(setup, platform),
+      pageTitle: `What relies on ${p.name}?`,
+      backHref: from === "check" || from === "walk" ? "/setup/coverage-check" : platformPageHref(p),
+      platform: p,
+      from,
+      services: (setup.essentialServices || []).map((s) => ({ value: "svc:" + s.id, text: s.name, checked: (p.linkedServices || []).includes(s.id) })),
+      systems: (setup.criticalSystems || []).map((s) => ({ value: "sys:" + s.id, text: s.name, checked: (p.linkedSystems || []).includes(s.id) })),
     });
-  });
-
-  router.post("/setup/shared-infrastructure/:platformId/relies", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
-    // Services, systems and the exclusive "Nothing yet, I'll link this later" share one checkbox
-    // group (name="relies") so the exclusive option clears both lists client-side. Values are
-    // prefixed "svc:"/"sys:" so the two can be separated again here.
-    const choices = toList(req.session.data.relies);
+  }));
+  router.post("/setup/shared-infrastructure/:platformId/relies", withPlatform((req, res, setup, p) => {
+    const { relies, from } = take(req, ["relies", "from"]);
+    const choices = toList(relies);
     const later = choices.includes("later");
-    if (later) {
-      platform.linkedServices = [];
-      platform.linkedSystems = [];
-    } else {
-      platform.linkedServices = choices
-        .filter((v) => v.indexOf("svc:") === 0)
-        .map((v) => v.slice(4));
-      platform.linkedSystems = choices
-        .filter((v) => v.indexOf("sys:") === 0)
-        .map((v) => v.slice(4));
-    }
-    delete req.session.data.relies;
-    return res.redirect("/setup/shared-infrastructure");
-  });
+    p.linkedServices = later ? [] : choices.filter((v) => v.startsWith("svc:")).map((v) => v.slice(4));
+    p.linkedSystems = later ? [] : choices.filter((v) => v.startsWith("sys:")).map((v) => v.slice(4));
+    if (clean(from) === "walk") return res.redirect("/setup/coverage-check/next");
+    if (clean(from) === "check") return res.redirect("/setup/coverage-check");
+    return res.redirect(platformPageHref(p));
+  }));
 
-  // S49 — Are you sure you want to remove [platform]? (Figma 393:1569)
-  router.get("/setup/shared-infrastructure/:platformId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
+  // S49 Remove [platform]? → S39 with a banner.
+  router.get("/setup/shared-infrastructure/:platformId/remove", withPlatform((req, res, setup, p) => {
     res.render("pages/setup/shared-infrastructure/remove", {
-      pageTitle: `Remove ${platform.name}?`,
-      backHref: `/setup/shared-infrastructure/${encodeURIComponent(platform.id)}/edit`,
-      platform,
-      consequence: buildRemovePlatformConsequences(platform),
+      pageTitle: `Remove ${p.name}?`,
+      backHref: platformPageHref(p),
+      platform: p,
+      consequence: buildRemovePlatformConsequence(p),
     });
-  });
-
-  router.post("/setup/shared-infrastructure/:platformId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const platform = getPlatform(setup, req.params.platformId);
-    if (!platform) return res.redirect("/setup/shared-infrastructure");
-    setup.platforms = (setup.platforms || []).filter((p) => p.id !== platform.id);
+  }));
+  router.post("/setup/shared-infrastructure/:platformId/remove", withPlatform((req, res, setup, p) => {
+    record.removePlatform(setup, p.id);
+    setBanner(req, `${p.name} has been removed`);
     return res.redirect("/setup/shared-infrastructure");
-  });
+  }));
 
-  // S20 — Check the shared platforms this system relies on (Figma 393:1031)
-  router.get("/setup/critical-systems/:systemId/platforms", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/shared-infrastructure/system-platforms", {
-      pageTitle: "Which shared platforms does this critical system rely on?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/corporate-services`,
-      system,
-      platforms: buildPlatformChoices(
-        setup,
-        platformsForSystem(setup, system.id).map((p) => p.id)
-      ),
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
+  // ----- Task 6: critical systems ---------------------------------------------------------
 
-  router.post("/setup/critical-systems/:systemId/platforms", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    // "None yet, I'll link this later" is an exclusive option within the systemPlatforms group.
-    const platformChoices = toList(req.session.data.systemPlatforms);
-    const later = platformChoices.includes("later");
-    const ticked = later ? [] : platformChoices.filter((v) => v !== "later");
-    (setup.platforms || []).forEach((p) => {
-      p.linkedSystems = (p.linkedSystems || []).filter((id) => id !== system.id);
-      if (ticked.includes(p.id)) p.linkedSystems.push(system.id);
-    });
-    ["systemPlatforms"].forEach((k) => delete req.session.data[k]);
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    // Fallback (not reached in the current flow): continue to the supplier question.
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`);
-  });
-
-  // ----- Batch 4: Critical systems (add + supplier) ----------------------------------
-
-  // S13 empty state (Figma 393:316) / S23 hub (Figma 393:535) — two states of one page.
+  // S13 (no systems yet) or S23 Your critical systems, with a banner after a removal.
   router.get("/setup/critical-systems", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    // Honour a return target (e.g. reached from Decide's "nothing left" page) so the back link
-    // goes where the user came from. Only internal /setup/ or /decide/ paths are accepted.
     const ret = clean(req.query.return);
-    const backHref = (ret.startsWith("/setup/") || ret.startsWith("/decide/")) ? ret : "/setup/task-list";
-    if ((setup.criticalSystems || []).length === 0) {
-      return res.render("pages/setup/critical-systems/empty", {
-        pageTitle: "Your critical systems",
-        backHref: backHref,
-      });
+    const backHref = ret.startsWith("/setup/") || ret.startsWith("/decide/") ? ret : "/setup/task-list";
+    if (!(setup.criticalSystems || []).length) {
+      return res.render("pages/setup/critical-systems/empty", { pageTitle: "Your critical systems", backHref, banner: takeBanner(req) });
     }
     res.render("pages/setup/critical-systems/index", {
       pageTitle: "Your critical systems",
-      backHref: backHref,
-      rows: buildCriticalSystemsHubRows(setup),
+      backHref,
+      rows: buildSystemRows(setup),
+      banner: takeBanner(req),
     });
   });
 
-  // Per-system check-answers summary — every field with a Change link (round-1 research defect:
-  // owner, impact ratings and recovery fields were not changeable after the system was saved).
-  router.get("/setup/critical-systems/:systemId/summary", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/summary", {
-      pageTitle: `Check your answers for ${system.name}`,
-      backHref: "/setup/critical-systems",
-      system,
-      rows: buildCriticalSystemDetail(setup, system),
-    });
-  });
-
-  // S14 — Add a critical system (Figma 393:1664)
+  // S14 Add a critical system. ?service=<id> ticks that service; with ?from=service it returns to
+  // the service page with a banner, otherwise to S52.
+  function renderSystemForm(res, setup, opts) {
+    res.render("pages/setup/critical-systems/add", Object.assign({
+      pageTitle: (opts.errors && opts.errors.length ? "Error: " : "") + "Add a critical system",
+      assessedOptions: record.ASSESSED_BEFORE.map((v) => ({ value: v, text: record.ASSESSED_BEFORE_LABELS[v] })),
+    }, opts));
+  }
   router.get("/setup/critical-systems/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    res.render("pages/setup/critical-systems/add", {
-      pageTitle: "Add a critical system",
-      backHref: "/setup/critical-systems",
-      serviceOptions: buildSupportedServiceOptions(setup),
-      system: { name: "", description: "", supportedServices: [], assessedBefore: "" },
+    const svc = getService(setup, clean(req.query.service));
+    const from = clean(req.query.from);
+    const draft = { serviceIds: svc ? [svc.id] : [], functionIds: [] };
+    renderSystemForm(res, setup, {
+      mode: "add",
+      backHref: from === "service" && svc ? `/setup/essential-services/${svc.id}/systems?from=service` : "/setup/critical-systems",
+      action: "/setup/critical-systems/add",
+      system: Object.assign({ name: "", description: "", assessedBefore: "", servicesLater: false }, draft),
+      serviceOptions: buildSupportedServiceOptions(setup, draft),
+      serviceId: svc ? svc.id : "",
+      from,
     });
   });
+
+  // Read S14's answers. Values are "fn:<id>" or "svc:<id>"; "later" is the exclusive option.
+  function readSystemForm(req) {
+    const f = take(req, ["systemName", "systemDescription", "supportedServices", "assessedBefore", "serviceId", "from", "csReturn", "csFrom"]);
+    const choices = toList(f.supportedServices);
+    const later = choices.includes("later");
+    return {
+      name: clean(f.systemName),
+      description: clean(f.systemDescription),
+      serviceIds: later ? [] : choices.filter((v) => v.startsWith("svc:")).map((v) => v.slice(4)),
+      functionIds: later ? [] : choices.filter((v) => v.startsWith("fn:")).map((v) => v.slice(3)),
+      servicesLater: later,
+      assessedBefore: record.ASSESSED_BEFORE.includes(clean(f.assessedBefore)) ? clean(f.assessedBefore) : "",
+      serviceId: clean(f.serviceId),
+      from: clean(f.from),
+      csReturn: clean(f.csReturn),
+      csFrom: clean(f.csFrom),
+    };
+  }
 
   router.post("/setup/critical-systems/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const name = clean(req.session.data.systemName);
-    const description = clean(req.session.data.systemDescription);
-    // "Not sure yet, I'll link it later" is an exclusive option within the supportedServices group,
-    // so the framework keeps it mutually exclusive with the service options. Read it from there.
-    const serviceChoices = toList(req.session.data.supportedServices);
-    const notSure = serviceChoices.includes("later");
-    const supportedServices = notSure ? [] : serviceChoices.filter((v) => v !== "later");
-    const assessedBefore = clean(req.session.data.assessedBefore);
-    [
-      "systemName",
-      "systemDescription",
-      "supportedServices",
-      "assessedBefore",
-    ].forEach((k) => delete req.session.data[k]);
+    const f = readSystemForm(req);
+    if (!f.name) {
+      return renderSystemForm(res, setup, {
+        mode: "add",
+        backHref: "/setup/critical-systems",
+        action: "/setup/critical-systems/add",
+        system: f,
+        serviceOptions: buildSupportedServiceOptions(setup, f),
+        serviceId: f.serviceId,
+        from: f.from,
+        errors: [{ field: "systemName", text: "Enter the name of the system" }],
+      });
+    }
+    const sys = require("../data/seed/setup").system({
+      id: record.newId("sys", f.name, setup.criticalSystems),
+      name: f.name,
+      description: f.description,
+      serviceIds: f.serviceIds,
+      functionIds: f.functionIds,
+      servicesLater: f.servicesLater,
+      assessedBefore: f.assessedBefore,
+    });
+    setup.criticalSystems.push(sys);
+    const svc = getService(setup, f.serviceId);
+    if (f.from === "service" && svc) {
+      setBanner(req, `${sys.name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
+      return res.redirect(servicePageHref(svc));
+    }
+    return res.redirect(systemSummaryHref(sys));
+  });
 
-    const system = {
-      id: `sys-${slugify(name)}`,
-      name,
-      description,
-      supportedServices,
-      assessedBefore,
-      corporateServices: [],
-      corporateServicesOther: "",
-      managedBySupplier: "",
-      supplierId: "",
-      supplierNote: "",
-      sharedWithCouncils: false,
-      councils: [],
-      hosting: { type: "", provider: "", secondary: "" },
-      owner: { name: "", jobTitle: "" },
-      impact: { confidentiality: "", integrity: "", availability: "" },
-      recovery: { mtd: "", rto: "", rpo: "" },
-      inPlan: false,
-      detailsComplete: false,
+  function withSystem(handler) {
+    return (req, res) => {
+      const setup = ensureSetup(req.session.data);
+      const sys = getSystem(setup, req.params.systemId);
+      if (!sys) return res.redirect("/setup/critical-systems");
+      return handler(req, res, setup, sys);
     };
-    setup.criticalSystems = setup.criticalSystems || [];
-    setup.criticalSystems.push(system);
-    // Adding a system returns to its check-answers summary, where the remaining details (owner,
-    // impact, recovery, platforms, supplier, hosting, and the service link) are filled in on
-    // demand — rather than forcing a multi-page wizard at creation time.
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/summary`);
-  });
+  }
 
-  // S19 — What else does this system do for the council? (Figma 393:1729)
-  router.get("/setup/critical-systems/:systemId/corporate-services", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const selected = new Set(system.corporateServices || []);
-    res.render("pages/setup/critical-systems/corporate-services", {
+  // S52 Check your answers for [system]. ?from=service:<id>|check sets where it returns to.
+  router.get("/setup/critical-systems/:systemId/summary", withSystem((req, res, setup, sys) => {
+    const from = clean(req.query.from);
+    res.render("pages/setup/critical-systems/summary", {
+      pageTitle: `Check your answers for ${sys.name}`,
+      backHref: s52BackHref(setup, from),
+      system: sys,
+      cards: buildSystemCards(setup, sys, from),
+      removeHref: `/setup/critical-systems/${sys.id}/remove` + (from ? `?from=${encodeURIComponent(from)}` : ""),
+    });
+  }));
+
+  // S14 with answers filled in. Save returns to S52 (or S24 / the next missing detail).
+  router.get("/setup/critical-systems/:systemId/edit", withSystem((req, res, setup, sys) => {
+    renderSystemForm(res, setup, Object.assign({
+      mode: "edit",
+      backHref: questionBack(req, sys),
+      action: `/setup/critical-systems/${sys.id}/edit`,
+      system: sys,
+      serviceOptions: buildSupportedServiceOptions(setup, sys),
+      removeHref: `/setup/critical-systems/${sys.id}/remove`,
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/edit", withSystem((req, res, setup, sys) => {
+    const f = readSystemForm(req);
+    // Put the carried return fields back for afterSystemQuestion.
+    req.session.data.csReturn = f.csReturn;
+    req.session.data.csFrom = f.csFrom;
+    if (!f.name) {
+      return renderSystemForm(res, setup, {
+        mode: "edit", backHref: systemSummaryHref(sys), action: `/setup/critical-systems/${sys.id}/edit`,
+        system: Object.assign({}, sys, f), serviceOptions: buildSupportedServiceOptions(setup, f),
+        removeHref: `/setup/critical-systems/${sys.id}/remove`, csReturn: f.csReturn, csFrom: f.csFrom,
+        errors: [{ field: "systemName", text: "Enter the name of the system" }],
+      });
+    }
+    // A service with functions is linked through its functions on S14.
+    Object.assign(sys, {
+      name: f.name,
+      description: f.description,
+      serviceIds: f.serviceIds,
+      functionIds: f.functionIds,
+      servicesLater: f.servicesLater,
+      assessedBefore: f.assessedBefore,
+    });
+    return afterSystemQuestion(req, res, sys);
+  }));
+
+  // S19 Does this critical system support any other council services or functions?
+  router.get("/setup/critical-systems/:systemId/corporate-services", withSystem((req, res, setup, sys) => {
+    const selected = new Set(sys.otherFunctions || []);
+    res.render("pages/setup/critical-systems/corporate-services", Object.assign({
       pageTitle: "Does this critical system support any other council services or functions?",
-      backHref: fromSummary(req) ? systemSummaryHref(system) : `/setup/critical-systems/add`,
-      system,
-      options: CORPORATE_SERVICE_OPTIONS.map((o) => ({ ...o, checked: selected.has(o.value) })),
-      csReturn: fromSummary(req) ? "summary" : "",
+      backHref: questionBack(req, sys),
+      system: sys,
+      options: record.OTHER_FUNCTION_OPTIONS.map((o) => ({ value: o.value, text: o.label, checked: selected.has(o.value) })),
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/corporate-services", withSystem((req, res, setup, sys) => {
+    const { corporateServices, corporateServicesOther } = take(req, ["corporateServices", "corporateServicesOther"]);
+    const choices = toList(corporateServices);
+    const none = choices.includes("none");
+    sys.otherFunctionsNone = none;
+    sys.otherFunctions = none ? [] : choices.filter((v) => record.OTHER_FUNCTION_OPTIONS.some((o) => o.value === v));
+    sys.otherFunctionsDetail = sys.otherFunctions.includes("other") ? clean(corporateServicesOther) : "";
+    return afterSystemQuestion(req, res, sys);
+  }));
+
+  // S20 Which shared platforms does this critical system rely on? Pre-ticked with the platforms of
+  // the services it supports when nothing is linked yet.
+  router.get("/setup/critical-systems/:systemId/platforms", withSystem((req, res, setup, sys) => {
+    let linked = record.platformsForSystem(setup, sys.id).map((p) => p.id);
+    if (!linked.length && !sys.platformsLater) {
+      const svcIds = record.servicesForSystem(setup, sys).map((s) => s.id);
+      linked = (setup.platforms || []).filter((p) => (p.linkedServices || []).some((id) => svcIds.includes(id))).map((p) => p.id);
+    }
+    const back = `/setup/critical-systems/${sys.id}/platforms?return=summary` + (clean(req.query.from) ? "&from=" + encodeURIComponent(clean(req.query.from)) : "");
+    res.render("pages/setup/shared-infrastructure/system-platforms", Object.assign({
+      pageTitle: "Which shared platforms does this critical system rely on?",
+      backHref: questionBack(req, sys),
+      system: sys,
+      platforms: buildPlatformChoices(setup, linked),
+      later: sys.platformsLater,
+      addPlatformHref: `/setup/shared-infrastructure/add-platform?link=system:${sys.id}&back=${encodeURIComponent(back)}`,
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/platforms", withSystem((req, res, setup, sys) => {
+    const choices = toList(take(req, ["systemPlatforms"]).systemPlatforms);
+    const later = choices.includes("later");
+    const ticked = later ? [] : choices;
+    (setup.platforms || []).forEach((p) => {
+      p.linkedSystems = (p.linkedSystems || []).filter((id) => id !== sys.id);
+      if (ticked.includes(p.id)) p.linkedSystems.push(sys.id);
     });
-  });
+    sys.platformsLater = later;
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  router.post("/setup/critical-systems/:systemId/corporate-services", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    // "None of these" is an exclusive option within the corporateServices group.
-    const corporateChoices = toList(req.session.data.corporateServices);
-    const none = corporateChoices.includes("none");
-    system.corporateServices = none ? [] : corporateChoices.filter((v) => v !== "none");
-    system.corporateServicesOther =
-      !none && system.corporateServices.includes("other")
-        ? clean(req.session.data.corporateServicesOther)
-        : "";
-    ["corporateServices", "corporateServicesOther"].forEach(
-      (k) => delete req.session.data[k]
-    );
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    // S19 → S20 shared platforms (Batch 3).
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`);
-  });
-
-  // S15 — Is this system managed by a third-party supplier? (Figma 393:356) — PROPOSAL
-  router.get("/setup/critical-systems/:systemId/supplier", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/supplier", {
+  // S15 Is this critical system managed by a third-party supplier? Yes → S16.
+  router.get("/setup/critical-systems/:systemId/supplier", withSystem((req, res, setup, sys) => {
+    res.render("pages/setup/critical-systems/supplier", Object.assign({
       pageTitle: "Is this critical system managed by a third-party supplier?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/platforms`,
-      system,
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
-
-  router.post("/setup/critical-systems/:systemId/supplier", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const answer = clean(req.session.data.managedBySupplier);
-    system.managedBySupplier = answer;
-    delete req.session.data.managedBySupplier;
-    // Changing this from the summary: if they now say a supplier manages it, send them on to pick
-    // the supplier (which itself returns to the summary); otherwise go straight back.
-    const summaryBack = summaryReturnHref(req, system);
-    if (summaryBack) {
-      if (answer === "fully" || answer === "partially") {
-        return res.redirect(
-          `/setup/critical-systems/${encodeURIComponent(system.id)}/which-supplier?return=summary`
-        );
-      }
-      return res.redirect(summaryBack);
+      backHref: questionBack(req, sys),
+      system: sys,
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/supplier", withSystem((req, res, setup, sys) => {
+    const managed = clean(take(req, ["managedBySupplier"]).managedBySupplier);
+    sys.supplier = Object.assign({}, sys.supplier, { managed });
+    if (managed === "fully" || managed === "partially") {
+      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
+      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
+      return res.redirect(`/setup/critical-systems/${sys.id}/which-supplier${q ? "?" + q : ""}`);
     }
-    if (answer === "fully" || answer === "partially") {
-      return res.redirect(
-        `/setup/critical-systems/${encodeURIComponent(system.id)}/which-supplier`
-      );
-    }
-    // No / I don't know → S17 shared with councils (Batch 5).
-    return res.redirect(
-      `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`
-    );
-  });
+    sys.supplier.supplierId = "";
+    sys.supplier.note = "";
+    record.pruneSuppliers(setup);
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  // S16 — Which supplier manages all or part of this system? (Figma 393:393) — PROPOSAL
-  router.get("/setup/critical-systems/:systemId/which-supplier", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/which-supplier", {
+  // S16 Which supplier manages all or part of this critical system?
+  router.get("/setup/critical-systems/:systemId/which-supplier", withSystem((req, res, setup, sys) => {
+    const chosen = clean(req.query.supplier) || (sys.supplier || {}).supplierId;
+    res.render("pages/setup/critical-systems/which-supplier", Object.assign({
       pageTitle: "Which supplier manages all or part of this critical system?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
-      system,
+      backHref: `/setup/critical-systems/${sys.id}/supplier` + (clean(req.query.return) ? "?return=summary" : ""),
+      system: sys,
+      chosen,
       suppliers: setup.suppliers || [],
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
+      addSupplierHref: `/setup/suppliers/add?link=system:${sys.id}&back=${encodeURIComponent(req.originalUrl.split("?")[0] + "?" + new URLSearchParams(Object.assign({}, req.query, { supplier: "" })).toString())}`,
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/which-supplier", withSystem((req, res, setup, sys) => {
+    const { whichSupplier, supplierNote } = take(req, ["whichSupplier", "supplierNote"]);
+    sys.supplier = Object.assign({}, sys.supplier, { supplierId: clean(whichSupplier), note: clean(supplierNote) });
+    record.pruneSuppliers(setup);
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  router.post("/setup/critical-systems/:systemId/which-supplier", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.supplierId = clean(req.session.data.whichSupplier);
-    system.supplierNote = clean(req.session.data.supplierNote);
-    delete req.session.data.whichSupplier;
-    delete req.session.data.supplierNote;
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    return res.redirect(
-      `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`
-    );
-  });
-
-  // S41 — Add a supplier (Figma 393:1341) + S51 error (Figma 393:1634)
+  // S41 Add a supplier (S51 is its error state). Returns to ?back with the new supplier chosen.
   router.get("/setup/suppliers/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
+    const link = clean(req.query.link);
+    const sys = link.startsWith("system:") ? getSystem(setup, link.slice(7)) : null;
     res.render("pages/setup/critical-systems/add-supplier", {
       pageTitle: "Add a supplier",
-      backHref: supplierReturnHref(req, setup),
-      caption: supplierReturnCaption(req, setup),
-      returnTo: clean(req.query.return),
+      backHref: safeSetupPath(req.query.back) || "/setup/shared-infrastructure",
+      caption: sys ? sys.name : "Your core infrastructure",
+      back: safeSetupPath(req.query.back),
+      link,
       name: "",
     });
   });
-
   router.post("/setup/suppliers/add", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const name = clean(req.session.data.supplierName);
-    const returnTo = clean(req.session.data.returnTo);
-    delete req.session.data.supplierName;
-    delete req.session.data.returnTo;
-
+    const f = take(req, ["supplierName", "back", "link"]);
+    const name = clean(f.supplierName);
+    const back = safeSetupPath(f.back) || "/setup/shared-infrastructure";
+    const link = clean(f.link);
     if (!name) {
-      // S51 error state
+      const sys = link.startsWith("system:") ? getSystem(setup, link.slice(7)) : null;
       return res.render("pages/setup/critical-systems/add-supplier", {
         pageTitle: "Error: Add a supplier",
-        backHref: supplierReturnHrefFor(returnTo, setup),
-        caption: supplierReturnCaptionFor(returnTo, setup),
-        returnTo,
+        backHref: back,
+        caption: sys ? sys.name : "Your core infrastructure",
+        back,
+        link,
         name: "",
-        error: { items: [{ field: "supplierName", text: "Enter the supplier's name" }] },
+        error: { field: "supplierName", text: "Enter the supplier’s name" },
       });
     }
-
-    const supplier = { id: `sup-${slugify(name)}`, name };
-    setup.suppliers = setup.suppliers || [];
-    setup.suppliers.push(supplier);
-
-    if (returnTo.startsWith("system:")) {
-      const systemId = returnTo.slice("system:".length);
-      const system = getSystem(setup, systemId);
-      if (system) system.supplierId = supplier.id;
-      return res.redirect(
-        `/setup/critical-systems/${encodeURIComponent(systemId)}/which-supplier`
-      );
-    }
-    // From S12c (platform) — return to the add-platform form.
-    return res.redirect("/setup/shared-infrastructure/add-platform");
+    const existing = (setup.suppliers || []).find((s) => s.name.toLowerCase() === name.toLowerCase());
+    const supplier = existing || { id: record.newId("sup", name, setup.suppliers), name };
+    if (!existing) setup.suppliers.push(supplier);
+    // The new supplier is chosen when the person returns (supplier= on the return URL).
+    const url = new URL(back, "http://x");
+    url.searchParams.set("supplier", supplier.id);
+    return res.redirect(url.pathname + url.search);
   });
 
-  // ----- Batch 5: Critical systems (details + removes) -------------------------------
-
-  // S14 edit mode (reached from the S23 hub "Change" / "Link it")
-  router.get("/setup/critical-systems/:systemId/edit", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/add", {
-      pageTitle: "Add a critical system",
-      backHref: fromSummary(req) ? systemSummaryHref(system) : "/setup/critical-systems",
-      mode: "edit",
-      serviceOptions: buildSupportedServiceOptions(setup),
-      system,
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
-
-  router.post("/setup/critical-systems/:systemId/edit", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.name = clean(req.session.data.systemName) || system.name;
-    system.description = clean(req.session.data.systemDescription);
-    const serviceChoices = toList(req.session.data.supportedServices);
-    const notSure = serviceChoices.includes("later");
-    system.supportedServices = notSure ? [] : serviceChoices.filter((v) => v !== "later");
-    system.assessedBefore = clean(req.session.data.assessedBefore);
-    [
-      "systemName",
-      "systemDescription",
-      "supportedServices",
-      "assessedBefore",
-    ].forEach((k) => delete req.session.data[k]);
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    return res.redirect("/setup/critical-systems");
-  });
-
-  // S17 — Is this system shared with other councils? (Figma 393:433)
-  router.get("/setup/critical-systems/:systemId/shared-with-councils", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/shared-with-councils", {
+  // S17 Is this critical system shared with other councils? Yes → S18.
+  router.get("/setup/critical-systems/:systemId/shared-with-councils", withSystem((req, res, setup, sys) => {
+    res.render("pages/setup/critical-systems/shared-with-councils", Object.assign({
       pageTitle: "Is this critical system shared with other councils?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/supplier`,
-      system,
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
-
-  router.post("/setup/critical-systems/:systemId/shared-with-councils", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const shared = clean(req.session.data.sharedWithCouncils) === "yes";
-    system.sharedWithCouncils = shared;
-    delete req.session.data.sharedWithCouncils;
-    // Changing this from the summary: "Yes" sends them on to pick councils (which returns to the
-    // summary); "No" goes straight back.
-    const summaryBack = summaryReturnHref(req, system);
-    if (summaryBack) {
-      if (shared) {
-        return res.redirect(
-          `/setup/critical-systems/${encodeURIComponent(system.id)}/councils?return=summary`
-        );
-      }
-      return res.redirect(summaryBack);
+      backHref: questionBack(req, sys),
+      system: sys,
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/shared-with-councils", withSystem((req, res, setup, sys) => {
+    const answer = clean(take(req, ["sharedWithCouncils"]).sharedWithCouncils);
+    sys.shared = Object.assign({ councils: [] }, sys.shared, { answer: answer === "yes" ? "yes" : answer === "no" ? "no" : "" });
+    if (sys.shared.answer === "yes") {
+      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
+      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
+      return res.redirect(`/setup/critical-systems/${sys.id}/councils${q ? "?" + q : ""}`);
     }
-    if (shared) {
-      return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils`);
-    }
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/hosting`);
-  });
+    sys.shared.councils = [];
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  // S18 — Which councils share this system? (Figma 393:463)
-  router.get("/setup/critical-systems/:systemId/councils", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const added = new Set(system.councils || []);
-    const base = `/setup/critical-systems/${encodeURIComponent(system.id)}`;
-    const q = fromSummary(req) ? "?return=summary" : "";
-    res.render("pages/setup/critical-systems/councils", {
+  // S18 Which councils share this critical system?
+  router.get("/setup/critical-systems/:systemId/councils", withSystem((req, res, setup, sys) => {
+    const added = new Set((sys.shared || {}).councils || []);
+    const base = `/setup/critical-systems/${sys.id}`;
+    const qs = new URLSearchParams();
+    if (clean(req.query.return)) qs.set("return", "summary");
+    if (clean(req.query.from)) qs.set("from", clean(req.query.from));
+    const q = qs.toString() ? "?" + qs.toString() : "";
+    res.render("pages/setup/critical-systems/councils", Object.assign({
       pageTitle: "Which councils share this critical system?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `${base}/shared-with-councils`,
-      system,
-      // value = plain council name (stored); text = "name (type)" for display. Changed in build.
+      backHref: `${base}/shared-with-councils${q}`,
+      system: sys,
       register: [{ value: "", text: "Select a council" }].concat(
         COUNCIL_REGISTER.filter((c) => !added.has(c)).map((name) => ({ value: name, text: councilWithType(name) }))
       ),
-      addedCouncils: (system.councils || []).map((name) => ({
-        text: councilWithType(name),
-        removeHref: `${base}/councils/remove/${encodeURIComponent(name)}${q}`,
-      })),
+      addedCouncils: [...added].map((name) => ({ text: councilWithType(name), removeHref: `${base}/councils/remove/${encodeURIComponent(name)}${q}` })),
       addAction: `${base}/councils/add${q}`,
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/councils/add", withSystem((req, res, setup, sys) => {
+    const name = clean(take(req, ["councilSearchSelect"]).councilSearchSelect);
+    sys.shared = Object.assign({ answer: "yes", councils: [] }, sys.shared);
+    if (name && COUNCIL_REGISTER.includes(name) && !sys.shared.councils.includes(name)) sys.shared.councils.push(name);
+    take(req, ["csReturn", "csFrom"]);
+    return res.redirect(`/setup/critical-systems/${sys.id}/councils` + (req.originalUrl.includes("?") ? "?" + req.originalUrl.split("?")[1] : ""));
+  }));
+  router.get("/setup/critical-systems/:systemId/councils/remove/:councilName", withSystem((req, res, setup, sys) => {
+    sys.shared = Object.assign({ answer: "yes", councils: [] }, sys.shared);
+    sys.shared.councils = sys.shared.councils.filter((c) => c !== clean(req.params.councilName));
+    return res.redirect(`/setup/critical-systems/${sys.id}/councils` + (req.originalUrl.includes("?") ? "?" + req.originalUrl.split("?")[1] : ""));
+  }));
+  router.post("/setup/critical-systems/:systemId/councils", withSystem((req, res, setup, sys) => afterSystemQuestion(req, res, sys)));
 
-  // Add a council (server round-trip, mirrors Claim's /claim/other-councils/add).
-  router.post("/setup/critical-systems/:systemId/councils/add", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const name = clean(req.session.data.councilSearchSelect);
-    delete req.session.data.councilSearchSelect;
-    system.councils = system.councils || [];
-    if (name && COUNCIL_REGISTER.includes(name) && !system.councils.includes(name)) {
-      system.councils.push(name);
-    }
-    const q = clean(req.query.return) === "summary" ? "?return=summary" : "";
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils${q}`);
-  });
-
-  // Remove a council (mirrors Claim's /claim/other-councils/remove/:id).
-  router.get("/setup/critical-systems/:systemId/councils/remove/:councilName", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const name = clean(req.params.councilName);
-    system.councils = (system.councils || []).filter((c) => c !== name);
-    const q = clean(req.query.return) === "summary" ? "?return=summary" : "";
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/councils${q}`);
-  });
-
-  router.post("/setup/critical-systems/:systemId/councils", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    // Councils are managed via the add/remove links on the page; "Save and continue" just proceeds.
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/hosting`);
-  });
-
-  // S21 — Where is this system hosted? (Figma 393:496)
-  router.get("/setup/critical-systems/:systemId/hosting", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    const backHref = system.sharedWithCouncils
-      ? `/setup/critical-systems/${encodeURIComponent(system.id)}/councils`
-      : `/setup/critical-systems/${encodeURIComponent(system.id)}/shared-with-councils`;
-    res.render("pages/setup/critical-systems/hosting", {
+  // S21 Where is this critical system hosted?
+  router.get("/setup/critical-systems/:systemId/hosting", withSystem((req, res, setup, sys) => {
+    res.render("pages/setup/critical-systems/hosting", Object.assign({
       pageTitle: "Where is this critical system hosted?",
-      backHref: fromSummary(req) ? systemSummaryHref(system) : backHref,
-      system,
-      hostingPlatform: deriveHostingPlatformName(setup, system),
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
+      backHref: questionBack(req, sys),
+      system: sys,
+      hostingPlatform: deriveHostingPlatformName(setup, sys),
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/hosting", withSystem((req, res, setup, sys) => {
+    const f = take(req, ["hostingType", "hostingProvider", "hostingSecondary"]);
+    sys.hosting = { type: clean(f.hostingType), provider: clean(f.hostingProvider), secondary: clean(f.hostingSecondary) };
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  router.post("/setup/critical-systems/:systemId/hosting", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.hosting = {
-      type: clean(req.session.data.hostingType),
-      provider: clean(req.session.data.hostingProvider),
-      secondary: clean(req.session.data.hostingSecondary),
-    };
-    ["hostingType", "hostingProvider", "hostingSecondary"].forEach(
-      (k) => delete req.session.data[k]
-    );
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    // S21 → back to the systems hub (S23).
-    return res.redirect("/setup/critical-systems");
-  });
-
-  // S27 — Who owns this system? (Figma 393:646)
-  router.get("/setup/critical-systems/:systemId/owner", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/owner", {
+  // S27 Who owns this critical system? Goes on to S28 when the impact is not rated yet.
+  router.get("/setup/critical-systems/:systemId/owner", withSystem((req, res, setup, sys) => {
+    res.render("pages/setup/critical-systems/owner", Object.assign({
       pageTitle: "Who owns this critical system?",
-      backHref: fromSummary(req) ? systemSummaryHref(system) : "/setup/critical-systems",
-      system,
-      counter: systemDetailCounter(setup, system),
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
+      backHref: questionBack(req, sys),
+      system: sys,
+      counter: systemDetailCounter(setup, sys),
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/owner", withSystem((req, res, setup, sys) => {
+    const f = take(req, ["ownerName", "ownerJobTitle"]);
+    sys.owner = { name: clean(f.ownerName), jobTitle: clean(f.ownerJobTitle) };
+    if (!deriveCriticality(sys.impact) && clean(req.session.data.csFrom) !== "walk") {
+      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
+      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
+      return res.redirect(`/setup/critical-systems/${sys.id}/impact${q ? "?" + q : ""}`);
+    }
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  router.post("/setup/critical-systems/:systemId/owner", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.owner = {
-      name: clean(req.session.data.ownerName),
-      jobTitle: clean(req.session.data.ownerJobTitle),
-    };
-    delete req.session.data.ownerName;
-    delete req.session.data.ownerJobTitle;
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    // S27 → S28 impact ratings (Batch 6).
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/impact`);
-  });
+  // S28 What would the impact be if this critical system were compromised? → S52.
+  router.get("/setup/critical-systems/:systemId/impact", withSystem((req, res, setup, sys) => {
+    res.render("pages/setup/critical-systems/impact", Object.assign({
+      pageTitle: "What would the impact be if this critical system were compromised?",
+      backHref: questionBack(req, sys),
+      system: sys,
+      counter: systemDetailCounter(setup, sys),
+      criticality: deriveCriticality(sys.impact),
+    }, carry(req)));
+  }));
+  router.post("/setup/critical-systems/:systemId/impact", withSystem((req, res, setup, sys) => {
+    const f = take(req, ["impactConfidentiality", "impactIntegrity", "impactAvailability"]);
+    sys.impact = { confidentiality: clean(f.impactConfidentiality), integrity: clean(f.impactIntegrity), availability: clean(f.impactAvailability) };
+    return afterSystemQuestion(req, res, sys);
+  }));
 
-  // S47 — Are you sure you want to remove [system]? (Figma 393:1501)
-  // S48 — You cannot remove [system] (Figma 393:1536)
-  router.get("/setup/critical-systems/:systemId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    if (!systemCanBeRemoved(system)) {
-      return res.render("pages/setup/critical-systems/cannot-remove", {
-        pageTitle: `You cannot remove ${system.name}`,
-        backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/edit`,
-        system,
-      });
+  // S47 Remove [system]? or S48 You cannot remove [system] (in the approved plan, or assessed before).
+  router.get("/setup/critical-systems/:systemId/remove", withSystem((req, res, setup, sys) => {
+    const from = clean(req.query.from);
+    const back = systemSummaryHref(sys, from);
+    const block = record.removalBlock(req.session.data, sys);
+    if (block) {
+      return res.render("pages/setup/critical-systems/cannot-remove", { pageTitle: `You cannot remove ${sys.name}`, backHref: back, system: sys, reason: block });
     }
     res.render("pages/setup/critical-systems/remove", {
-      pageTitle: `Remove ${system.name.toLowerCase()}?`,
-      backHref: `/setup/critical-systems/${encodeURIComponent(system.id)}/edit`,
-      system,
-      consequences: buildRemoveSystemConsequences(setup, system),
+      pageTitle: `Remove ${sys.name.toLowerCase()}?`,
+      backHref: back,
+      system: sys,
+      bullets: buildRemoveSystemConsequences(setup, sys),
+      from,
     });
-  });
-
-  router.post("/setup/critical-systems/:systemId/remove", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    if (!systemCanBeRemoved(system)) return res.redirect("/setup/critical-systems");
-    unlinkSystemFromPlatforms(setup, system.id);
-    setup.criticalSystems = (setup.criticalSystems || []).filter((s) => s.id !== system.id);
+  }));
+  router.post("/setup/critical-systems/:systemId/remove", withSystem((req, res, setup, sys) => {
+    const from = clean(take(req, ["from"]).from);
+    if (record.removalBlock(req.session.data, sys)) return res.redirect(`/setup/critical-systems/${sys.id}/remove`);
+    record.removeSystem(req.session.data, sys.id);
+    setBanner(req, `${sys.name} has been removed`);
+    if (from.startsWith("service:") && getService(setup, from.slice(8))) return res.redirect(`/setup/essential-services/${from.slice(8)}`);
     return res.redirect("/setup/critical-systems");
-  });
+  }));
 
-  // ----- Batch 6: Ratings, recovery, coverage, finish -------------------------------
+  // ----- Task 8: Check and confirm ---------------------------------------------------------
 
-  // S28 — What would the impact be if this system were compromised? (Figma 393:676)
-  router.get("/setup/critical-systems/:systemId/impact", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/impact", {
-      pageTitle: "What would the impact be if this system were compromised?",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/owner`,
-      system,
-      counter: systemDetailCounter(setup, system),
-      criticality: deriveCriticality(system.impact),
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
-
-  router.post("/setup/critical-systems/:systemId/impact", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.impact = {
-      confidentiality: clean(req.session.data.impactConfidentiality),
-      integrity: clean(req.session.data.impactIntegrity),
-      availability: clean(req.session.data.impactAvailability),
-    };
-    // Owner + impact ratings complete the system's details.
-    if (system.owner && system.owner.name && deriveCriticality(system.impact)) {
-      system.detailsComplete = true;
-    }
-    ["impactConfidentiality", "impactIntegrity", "impactAvailability"].forEach(
-      (k) => delete req.session.data[k]
-    );
-    const back = summaryReturnHref(req, system);
-    if (back) return res.redirect(back);
-    return res.redirect(`/setup/critical-systems/${encodeURIComponent(system.id)}/recovery`);
-  });
-
-  // S29 — Recovery requirements (Figma 393:723) — UNDER REVIEW
-  router.get("/setup/critical-systems/:systemId/recovery", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    res.render("pages/setup/critical-systems/recovery", {
-      pageTitle: "Recovery requirements",
-      backHref: fromSummary(req)
-        ? systemSummaryHref(system)
-        : `/setup/critical-systems/${encodeURIComponent(system.id)}/impact`,
-      system,
-      counter: systemDetailCounter(setup, system),
-      csReturn: fromSummary(req) ? "summary" : "",
-    });
-  });
-
-  router.post("/setup/critical-systems/:systemId/recovery", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const system = getSystem(setup, req.params.systemId);
-    if (!system) return res.redirect("/setup/critical-systems");
-    system.recovery = {
-      mtd: clean(req.session.data.recoveryMtd),
-      rto: clean(req.session.data.recoveryRto),
-      rpo: clean(req.session.data.recoveryRpo),
-    };
-    ["recoveryMtd", "recoveryRto", "recoveryRpo"].forEach((k) => delete req.session.data[k]);
-    const back = summaryReturnHref(req, system);
-    if (back) {
-      delete req.session.data.action;
-      return res.redirect(back);
-    }
-    // "Back to the hub" vs "Save and continue" (→ coverage check).
-    if (clean(req.session.data.action) === "hub") {
-      delete req.session.data.action;
-      return res.redirect("/setup/critical-systems");
-    }
-    delete req.session.data.action;
-    return res.redirect("/setup/coverage-check");
-  });
-
-  // S24 — Check nothing is missing (coverage check) (Figma 393:591) — PROPOSAL
+  // S24 Review your progress (S24a when there is nothing to review).
   router.get("/setup/coverage-check", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const warnings = buildCoverageWarnings(setup);
-    const noSystemService = servicesWithoutSystem(setup)[0] || null;
     res.render("pages/setup/coverage-check", {
       pageTitle: "Review your progress",
       backHref: "/setup/task-list",
-      warnings,
-      concentration: buildConcentrationInset(setup),
-      noSystemService,
-      needsDetails: systemsNeedingDetails(setup).length > 0,
+      issues: record.setupIssues(setup),
+      concentration: record.concentrationNote(setup),
     });
   });
 
-  // S42 — Why does [service] not need a critical system? (Figma 393:1378)
-  router.get("/setup/essential-services/:serviceId/no-system-reason", (req, res) => {
+  // "Go to the first missing detail": opens the next unanswered question, or S24 when none are left.
+  router.get("/setup/coverage-check/next", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/coverage-check");
-    res.render("pages/setup/essential-services/no-system-reason", {
-      pageTitle: `Why does ${service.name.toLowerCase()} not need a critical system?`,
-      backHref: "/setup/coverage-check",
-      service,
-    });
+    return res.redirect(record.firstMissingDetail(setup) || "/setup/coverage-check");
   });
 
-  router.post("/setup/essential-services/:serviceId/no-system-reason", (req, res) => {
-    const setup = ensureSetup(req.session.data);
-    const service = getService(setup, req.params.serviceId);
-    if (!service) return res.redirect("/setup/coverage-check");
-    service.noSystemReason = clean(req.session.data.noSystemReason);
-    delete req.session.data.noSystemReason;
-    return res.redirect("/setup/coverage-check");
-  });
-
-  // S30 — Check your setup (Figma 393:759)
+  // S30 Check your setup (S30a when the CAF Lead or Approver is not named).
   router.get("/setup/check-your-setup", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    // After setup is finished this page is a read-only "view your setup" (reached from the
-    // dashboard council record); before, it is the pre-finish check with the Confirm button.
     const isComplete = Boolean(setup.completed);
     res.render("pages/setup/check-your-setup", {
       pageTitle: "Check your setup",
       backHref: isComplete ? "/dashboard" : "/setup/coverage-check",
-      summary: buildSetupSummary(setup),
+      sections: buildSetupCheck(setup),
       isComplete,
     });
   });
-
   router.post("/setup/check-your-setup", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    // Setup is only complete once both a CAF Lead and an Approver are confirmed (stated on S30).
-    // Named counts as confirmed (recorded / existing user) OR pending (invited, awaiting
-    // acceptance). Only a completely unnamed person blocks finishing.
     const people = setup.people || {};
-    const named = (p) => Boolean(p && (p.confirmed || p.pending));
+    const named = (p) => Boolean(p && p.name && (p.confirmed || p.pending));
     const errorList = [];
-    if (!named(people.cafLead)) {
-      errorList.push({ text: "Confirm your CAF Lead before you finish setup", href: "#cafLead-change" });
-    }
-    if (!named(people.approver)) {
-      errorList.push({ text: "Confirm your Approver before you finish setup", href: "#approver-change" });
-    }
+    if (!named(people.cafLead)) errorList.push({ text: "Confirm your CAF Lead before you finish setup", href: "#cafLead-change" });
+    if (!named(people.approver)) errorList.push({ text: "Confirm your Approver before you finish setup", href: "#approver-change" });
     if (errorList.length) {
       return res.render("pages/setup/check-your-setup", {
         pageTitle: "Error: Check your setup",
         backHref: "/setup/coverage-check",
-        summary: buildSetupSummary(setup),
-        errorList: errorList,
+        sections: buildSetupCheck(setup),
+        errorList,
       });
     }
     setup.completed = true;
     return res.redirect("/setup/complete");
   });
 
-  // S31 — Setup complete (Figma 393:819)
+  // S31 Setup complete
   router.get("/setup/complete", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    res.render("pages/setup/complete", {
-      pageTitle: "Setup complete",
-      councilName: setup.council.name,
-    });
+    res.render("pages/setup/complete", { pageTitle: "Setup complete", councilName: setup.council.name });
   });
 
-  // Shared holding page for links that leave the Setup section (Access management,
-  // Decide, Dashboard, etc.) — out of scope for this prototype.
+  // Holding page for links that leave the prototype.
   router.get("/setup/not-in-this-prototype", (req, res) => {
     res.render("pages/setup/holding", {
       pageTitle: "This part is not built in this prototype",
-      backHref: req.get("referer") && req.get("referer").includes("/setup/")
-        ? undefined
-        : "/setup/task-list",
+      backHref: req.get("referer") && req.get("referer").includes("/setup/") ? undefined : "/setup/task-list",
     });
   });
 };
 
-// S03a render (base + error).
-function renderPreviousAssessment(res, answer, showError) {
+// S03a / S03ae
+function renderPreviousAssessment(res, answer, showError, fromS30) {
   res.render("pages/setup/previous-assessment", {
-    pageTitle: (showError ? "Error: " : "") + "Has your council completed a CAF organisation assessment before?",
-    backHref: "/setup/council-context",
+    pageTitle: (showError ? "Error: " : "") + "Has your council completed a CAF organisational assessment before?",
+    backHref: fromS30 ? "/setup/check-your-setup" : "/setup/council-context",
+    from: fromS30 ? "s30" : "",
     answer,
     showError,
+    options: record.ASSESSED_BEFORE.map((v) => ({ value: v, text: record.ASSESSED_BEFORE_LABELS[v], checked: v === answer })),
   });
 }

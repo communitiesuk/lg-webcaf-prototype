@@ -1,4 +1,4 @@
-{# S42 — setup / why-no-critical-system — Figma node 393:1378 #}
+{# S42 — setup / why-no-critical-system — Setup v11 (kept; Rosa may remove it, Q40). Returns to S24. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -13,6 +13,7 @@
       }) }}
 
       <form method="post" action="/setup/essential-services/{{ service.id }}/no-system-reason" novalidate>
+        {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
         <div class="govuk-form-group">
           <label class="govuk-label govuk-label--s" for="noSystemReason">Tell us why {{ service.name | lower }} can operate without a critical system</label>
           <div id="noSystemReason-hint" class="govuk-hint">For example: It is run entirely by a contractor on their own systems, and assurance is provided through the contract</div>

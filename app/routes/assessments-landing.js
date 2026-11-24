@@ -27,7 +27,11 @@ function unfinishedSetupTasks(setup) {
   return [...tl.preServices, ...tl.servicesAndSystems, ...tl.finish]
     .filter((t) => statusLabel(t) !== "Completed")
     // AS01 (Figma v8) words tasks 4 to 6 as actions: "Identify your essential services".
-    .map((t) => ({ name: t.title.text.replace(/^\d+\.\s*/, "").replace(/^Your /, "Identify your "), href: t.href }));
+    .map((t) => {
+      const name = t.title.text.replace(/^\d+\.\s*/, "");
+      // Only tasks 4 to 6 ("Your essential services" and so on); task 2 is "Your council’s context".
+      return { name: /^[456]\./.test(t.title.text) ? name.replace(/^Your /, "Identify your ") : name, href: t.href };
+    });
 }
 
 module.exports = function (router) {

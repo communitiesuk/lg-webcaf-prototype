@@ -1,0 +1,3 @@
+{# Hidden fields a system question carries so its POST returns to the right place (routes/setup.js). #}
+{% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+{% if csFrom %}<input type="hidden" name="csFrom" value="{{ csFrom }}">{% endif %}

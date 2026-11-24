@@ -1,4 +1,4 @@
-{# S19 — setup / corporate-services-provided — Figma node 393:1729 #}
+{# S19 — setup / corporate-services-provided — Setup v11. Options A to Z, Other and None of these last. #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 
@@ -14,7 +14,7 @@
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/corporate-services" novalidate>
-        {% if csReturn %}<input type="hidden" name="csReturn" value="{{ csReturn }}">{% endif %}
+        {% include "pages/setup/critical-systems/_carry.njk" %}
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Select all that apply</legend>
@@ -28,19 +28,19 @@
                   <div class="govuk-checkboxes__conditional {% if not o.checked %}govuk-checkboxes__conditional--hidden{% endif %}" id="corporate-other-conditional">
                     <div class="govuk-form-group">
                       <label class="govuk-label" for="corporateServicesOther">What other service does it provide?</label>
-                      <input class="govuk-input" id="corporateServicesOther" name="corporateServicesOther" type="text" value="{{ system.corporateServicesOther }}">
+                      <input class="govuk-input" id="corporateServicesOther" name="corporateServicesOther" type="text" value="{{ system.otherFunctionsDetail }}">
                     </div>
                   </div>
                 {% else %}
                   <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input" id="corporateServices-{{ loop.index }}" name="corporateServices" type="checkbox" value="{{ o.value }}" {% if o.checked %}checked{% endif %}>
-                    <label class="govuk-label govuk-checkboxes__label" for="corporateServices-{{ loop.index }}">{{ o.label }}</label>
+                    <label class="govuk-label govuk-checkboxes__label" for="corporateServices-{{ loop.index }}">{{ o.text }}</label>
                   </div>
                 {% endif %}
               {% endfor %}
               <div class="govuk-checkboxes__divider">or</div>
               <div class="govuk-checkboxes__item">
-                <input class="govuk-checkboxes__input" id="noneCorporate" name="corporateServices" type="checkbox" value="none" data-behaviour="exclusive">
+                <input class="govuk-checkboxes__input" id="noneCorporate" name="corporateServices" type="checkbox" value="none" data-behaviour="exclusive"{% if system.otherFunctionsNone %} checked{% endif %}>
                 <label class="govuk-label govuk-checkboxes__label" for="noneCorporate">None of these</label>
               </div>
             </div>

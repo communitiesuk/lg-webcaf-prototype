@@ -1,0 +1,48 @@
+{# S37 — setup / essential-services / [service] — Setup v11. Three summary cards, each worked out from
+   the record. S37b: a card with nothing in it shows one row saying so. S37c: the success banner after
+   an action started here (every action started here returns here). Layout and copy: content review. #}
+{% extends "layouts/setup.html" %}
+{% from "components/page-header.njk" import appPageHeader %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% macro card(title, section) %}
+  {% set rows = [] %}
+  {% for r in section.rows %}
+    {% set _ = rows.push({
+      key: { text: r.key },
+      value: { text: r.value or "" },
+      actions: { items: [{ href: r.change.href, text: r.change.text, visuallyHiddenText: r.change.hidden }] } if r.change else undefined
+    }) %}
+  {% endfor %}
+  {% if not rows.length %}
+    {% set _ = rows.push({ key: { text: section.empty }, value: { text: section.emptyValue or "" } }) %}
+  {% endif %}
+  {{ govukSummaryList({
+    card: { title: { text: title }, actions: { items: [{ href: section.action.href, text: section.action.text }] } },
+    rows: rows
+  }) }}
+{% endmacro %}
+
+{% block content %}
+  <a class="govuk-back-link" href="{{ backHref }}">Back</a>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% include "components/setup-banner.njk" %}
+
+      {{ appPageHeader({ caption: "Your essential services", title: service.name }) }}
+
+      <p class="govuk-body">Review the functions, core infrastructure platforms and critical systems linked to this essential service.</p>
+      <p class="govuk-body">Use the links in each section to add or make changes. After you add or change something, you will return to this page.</p>
+
+      {{ card("Functions", page.functions) }}
+      {{ card("Core infrastructure", page.infrastructure) }}
+      {{ card("Critical systems", page.systems) }}
+
+      <p class="govuk-body"><a class="govuk-link" href="/setup/essential-services/{{ service.id }}/remove">Remove this service</a></p>
+
+      {{ govukButton({ text: "Back to your essential services", href: "/setup/essential-services" }) }}
+    </div>
+  </div>
+{% endblock %}
