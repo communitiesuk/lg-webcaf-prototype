@@ -1,0 +1,5 @@
+{# While a system is being added (?from=add), every question offers a way out. Saves this page, then
+   goes to S23 (or back to the service page when the system was added from there). #}
+{% if csFrom and (csFrom == "add" or csFrom.indexOf("add:service:") == 0) %}
+  <button class="govuk-button govuk-button--secondary" data-module="govuk-button" type="submit" name="action" value="later">Save and come back later</button>
+{% endif %}

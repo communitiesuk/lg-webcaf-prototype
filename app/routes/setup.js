@@ -105,20 +105,72 @@ function carry(req) {
   return { csReturn: clean(req.query.return) === "summary" ? "summary" : "", csFrom: clean(req.query.from) };
 }
 
-// After a system question is saved: the next missing detail, S52, S24, or the default next page.
-function afterSystemQuestion(req, res, sys, nextHref) {
-  const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
-  if (clean(csFrom) === "walk") return res.redirect("/setup/coverage-check/next");
-  if (clean(csReturn) === "summary") return res.redirect(systemSummaryHref(sys, clean(csFrom)));
-  if (clean(csFrom) === "check") return res.redirect("/setup/coverage-check");
-  return res.redirect(nextHref || systemSummaryHref(sys));
+// Adding a system (24 November 2026, after research): S14 is followed by every question, one page
+// at a time, then S52, so S52 never shows questions the person was not asked. ?from=add marks the
+// sequence; ?from=add:service:<id> when the system was added from a service page (S37), where the
+// sequence ends instead (S37 return rule). "Save and come back later" leaves the sequence.
+const ADD_STEPS = ["edit", "corporate-services", "platforms", "supplier", "shared-with-councils", "hosting", "owner", "impact"];
+const isAdd = (from) => from === "add" || from.startsWith("add:service:");
+
+function nextAddStep(step) {
+  if (step === "which-supplier") return "shared-with-councils";
+  if (step === "councils") return "hosting";
+  return ADD_STEPS[ADD_STEPS.indexOf(step) + 1] || "";
+}
+function prevAddStep(sys, step) {
+  if (step === "which-supplier") return "supplier";
+  if (step === "councils") return "shared-with-councils";
+  if (step === "shared-with-councils") return ["fully", "partially"].includes((sys.supplier || {}).managed) ? "which-supplier" : "supplier";
+  if (step === "hosting") return (sys.shared || {}).answer === "yes" ? "councils" : "shared-with-councils";
+  return ADD_STEPS[ADD_STEPS.indexOf(step) - 1] || "";
+}
+
+// The end of the sequence (or leaving it early): S52, or the service page with its banner.
+function leaveAdd(req, sys, from, finished) {
+  if (from.startsWith("add:service:")) {
+    const svc = getService(req.session.data.setup, from.slice(12));
+    if (svc) {
+      setBanner(req, `${sys.name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
+      return servicePageHref(svc);
+    }
+  }
+  return finished ? systemSummaryHref(sys) : "/setup/critical-systems";
+}
+
+function returnQuery(csReturn, csFrom) {
+  const q = [csReturn ? "return=summary" : "", csFrom ? "from=" + encodeURIComponent(csFrom) : ""].filter(Boolean).join("&");
+  return q ? "?" + q : "";
+}
+
+// After a system question is saved. `step` is this page; `branch` is a follow-up question the answer
+// opens (S16 after "Yes" on S15, S18 after "Yes" on S17, S28 after S27 when the impact is not rated).
+function afterSystemQuestion(req, res, sys, step, branch) {
+  const f = take(req, ["csReturn", "csFrom", "action"]);
+  const ret = clean(f.csReturn);
+  const from = clean(f.csFrom);
+  if (clean(f.action) === "later" && isAdd(from)) return res.redirect(leaveAdd(req, sys, from, false));
+  if (branch) return res.redirect(`/setup/critical-systems/${sys.id}/${branch}${returnQuery(ret, from)}`);
+  if (from === "walk") return res.redirect("/setup/coverage-check/next");
+  if (ret === "summary") return res.redirect(systemSummaryHref(sys, from));
+  if (from === "check") return res.redirect("/setup/coverage-check");
+  if (isAdd(from)) {
+    const next = nextAddStep(step);
+    return res.redirect(next ? `/setup/critical-systems/${sys.id}/${next}?from=${encodeURIComponent(from)}` : leaveAdd(req, sys, from, true));
+  }
+  return res.redirect(systemSummaryHref(sys));
 }
 
 // Back link for a system question.
-function questionBack(req, sys, fallback) {
-  if (clean(req.query.return) === "summary") return systemSummaryHref(sys, clean(req.query.from));
-  if (clean(req.query.from) === "check" || clean(req.query.from) === "walk") return "/setup/coverage-check";
-  return fallback || systemSummaryHref(sys);
+function questionBack(req, sys, step) {
+  const from = clean(req.query.from);
+  if (clean(req.query.return) === "summary") return systemSummaryHref(sys, from);
+  if (from === "check" || from === "walk") return "/setup/coverage-check";
+  if (isAdd(from)) {
+    const prev = prevAddStep(sys, step);
+    if (prev) return `/setup/critical-systems/${sys.id}/${prev}?from=${encodeURIComponent(from)}`;
+    return from.startsWith("add:service:") ? `/setup/essential-services/${from.slice(12)}` : "/setup/critical-systems";
+  }
+  return systemSummaryHref(sys);
 }
 
 module.exports = function (router) {
@@ -845,11 +897,8 @@ module.exports = function (router) {
     });
     setup.criticalSystems.push(sys);
     const svc = getService(setup, f.serviceId);
-    if (f.from === "service" && svc) {
-      setBanner(req, `${sys.name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
-      return res.redirect(servicePageHref(svc));
-    }
-    return res.redirect(systemSummaryHref(sys));
+    const from = f.from === "service" && svc ? "add:service:" + svc.id : "add";
+    return res.redirect(`/setup/critical-systems/${sys.id}/corporate-services?from=${encodeURIComponent(from)}`);
   });
 
   function withSystem(handler) {
@@ -882,7 +931,7 @@ module.exports = function (router) {
       pageTitle: sys.name,
       heading: sys.name,
       mode: "edit",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "edit"),
       action: `/setup/critical-systems/${sys.id}/edit`,
       system: shown,
       serviceOptions: buildSupportedServiceOptions(setup, shown),
@@ -917,7 +966,7 @@ module.exports = function (router) {
       servicesLater: f.servicesLater,
       assessedBefore: f.assessedBefore,
     });
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "edit");
   }));
 
   // S19 Does this critical system support any other council services or functions?
@@ -925,7 +974,7 @@ module.exports = function (router) {
     const selected = new Set(sys.otherFunctions || []);
     res.render("pages/setup/critical-systems/corporate-services", Object.assign({
       pageTitle: "Does this critical system support any other council services or functions?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "corporate-services"),
       system: sys,
       options: record.OTHER_FUNCTION_OPTIONS.map((o) => ({ value: o.value, text: o.label, checked: selected.has(o.value) })),
     }, carry(req)));
@@ -937,7 +986,7 @@ module.exports = function (router) {
     sys.otherFunctionsNone = none;
     sys.otherFunctions = none ? [] : choices.filter((v) => record.OTHER_FUNCTION_OPTIONS.some((o) => o.value === v));
     sys.otherFunctionsDetail = sys.otherFunctions.includes("other") ? clean(corporateServicesOther) : "";
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "corporate-services");
   }));
 
   // S20 Which shared platforms does this critical system rely on? Pre-ticked with the platforms of
@@ -948,10 +997,10 @@ module.exports = function (router) {
       const svcIds = record.servicesForSystem(setup, sys).map((s) => s.id);
       linked = (setup.platforms || []).filter((p) => (p.linkedServices || []).some((id) => svcIds.includes(id))).map((p) => p.id);
     }
-    const back = `/setup/critical-systems/${sys.id}/platforms?return=summary` + (clean(req.query.from) ? "&from=" + encodeURIComponent(clean(req.query.from)) : "");
+    const back = `/setup/critical-systems/${sys.id}/platforms` + returnQuery(clean(req.query.return), clean(req.query.from));
     res.render("pages/setup/shared-infrastructure/system-platforms", Object.assign({
       pageTitle: "Which shared platforms does this critical system rely on?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "platforms"),
       system: sys,
       platforms: buildPlatformChoices(setup, linked),
       later: sys.platformsLater,
@@ -967,29 +1016,25 @@ module.exports = function (router) {
       if (ticked.includes(p.id)) p.linkedSystems.push(sys.id);
     });
     sys.platformsLater = later;
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "platforms");
   }));
 
   // S15 Is this critical system managed by a third-party supplier? Yes → S16.
   router.get("/setup/critical-systems/:systemId/supplier", withSystem((req, res, setup, sys) => {
     res.render("pages/setup/critical-systems/supplier", Object.assign({
       pageTitle: "Is this critical system managed by a third-party supplier?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "supplier"),
       system: sys,
     }, carry(req)));
   }));
   router.post("/setup/critical-systems/:systemId/supplier", withSystem((req, res, setup, sys) => {
     const managed = clean(take(req, ["managedBySupplier"]).managedBySupplier);
     sys.supplier = Object.assign({}, sys.supplier, { managed });
-    if (managed === "fully" || managed === "partially") {
-      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
-      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
-      return res.redirect(`/setup/critical-systems/${sys.id}/which-supplier${q ? "?" + q : ""}`);
-    }
+    if (managed === "fully" || managed === "partially") return afterSystemQuestion(req, res, sys, "supplier", "which-supplier");
     sys.supplier.supplierId = "";
     sys.supplier.note = "";
     record.pruneSuppliers(setup);
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "supplier");
   }));
 
   // S16 Which supplier manages all or part of this critical system?
@@ -997,7 +1042,7 @@ module.exports = function (router) {
     const chosen = clean(req.query.supplier) || (sys.supplier || {}).supplierId;
     res.render("pages/setup/critical-systems/which-supplier", Object.assign({
       pageTitle: "Which supplier manages all or part of this critical system?",
-      backHref: `/setup/critical-systems/${sys.id}/supplier` + (clean(req.query.return) ? "?return=summary" + (clean(req.query.from) ? "&from=" + encodeURIComponent(clean(req.query.from)) : "") : ""),
+      backHref: `/setup/critical-systems/${sys.id}/supplier` + returnQuery(clean(req.query.return), clean(req.query.from)),
       system: sys,
       chosen,
       suppliers: setup.suppliers || [],
@@ -1008,7 +1053,7 @@ module.exports = function (router) {
     const { whichSupplier, supplierNote } = take(req, ["whichSupplier", "supplierNote"]);
     sys.supplier = Object.assign({}, sys.supplier, { supplierId: clean(whichSupplier), note: clean(supplierNote) });
     record.pruneSuppliers(setup);
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "which-supplier");
   }));
 
   // S41 Add a supplier (S51 is its error state). Returns to ?back with the new supplier chosen.
@@ -1056,20 +1101,16 @@ module.exports = function (router) {
   router.get("/setup/critical-systems/:systemId/shared-with-councils", withSystem((req, res, setup, sys) => {
     res.render("pages/setup/critical-systems/shared-with-councils", Object.assign({
       pageTitle: "Is this critical system shared with other councils?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "shared-with-councils"),
       system: sys,
     }, carry(req)));
   }));
   router.post("/setup/critical-systems/:systemId/shared-with-councils", withSystem((req, res, setup, sys) => {
     const answer = clean(take(req, ["sharedWithCouncils"]).sharedWithCouncils);
     sys.shared = Object.assign({ councils: [] }, sys.shared, { answer: answer === "yes" ? "yes" : answer === "no" ? "no" : "" });
-    if (sys.shared.answer === "yes") {
-      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
-      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
-      return res.redirect(`/setup/critical-systems/${sys.id}/councils${q ? "?" + q : ""}`);
-    }
+    if (sys.shared.answer === "yes") return afterSystemQuestion(req, res, sys, "shared-with-councils", "councils");
     sys.shared.councils = [];
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "shared-with-councils");
   }));
 
   // S18 Which councils share this critical system?
@@ -1103,13 +1144,13 @@ module.exports = function (router) {
     sys.shared.councils = sys.shared.councils.filter((c) => c !== clean(req.params.councilName));
     return res.redirect(`/setup/critical-systems/${sys.id}/councils` + (req.originalUrl.includes("?") ? "?" + req.originalUrl.split("?")[1] : ""));
   }));
-  router.post("/setup/critical-systems/:systemId/councils", withSystem((req, res, setup, sys) => afterSystemQuestion(req, res, sys)));
+  router.post("/setup/critical-systems/:systemId/councils", withSystem((req, res, setup, sys) => afterSystemQuestion(req, res, sys, "councils")));
 
   // S21 Where is this critical system hosted?
   router.get("/setup/critical-systems/:systemId/hosting", withSystem((req, res, setup, sys) => {
     res.render("pages/setup/critical-systems/hosting", Object.assign({
       pageTitle: "Where is this critical system hosted?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "hosting"),
       system: sys,
       hostingPlatform: deriveHostingPlatformName(setup, sys),
     }, carry(req)));
@@ -1117,14 +1158,14 @@ module.exports = function (router) {
   router.post("/setup/critical-systems/:systemId/hosting", withSystem((req, res, setup, sys) => {
     const f = take(req, ["hostingType", "hostingProvider", "hostingSecondary"]);
     sys.hosting = { type: clean(f.hostingType), provider: clean(f.hostingProvider), secondary: clean(f.hostingSecondary) };
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "hosting");
   }));
 
   // S27 Who owns this critical system? Goes on to S28 when the impact is not rated yet.
   router.get("/setup/critical-systems/:systemId/owner", withSystem((req, res, setup, sys) => {
     res.render("pages/setup/critical-systems/owner", Object.assign({
       pageTitle: "Who owns this critical system?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "owner"),
       system: sys,
       counter: systemDetailCounter(setup, sys),
     }, carry(req)));
@@ -1132,19 +1173,17 @@ module.exports = function (router) {
   router.post("/setup/critical-systems/:systemId/owner", withSystem((req, res, setup, sys) => {
     const f = take(req, ["ownerName", "ownerJobTitle"]);
     sys.owner = { name: clean(f.ownerName), jobTitle: clean(f.ownerJobTitle) };
-    if (!deriveCriticality(sys.impact) && clean(req.session.data.csFrom) !== "walk") {
-      const { csReturn, csFrom } = take(req, ["csReturn", "csFrom"]);
-      const q = [clean(csReturn) ? "return=summary" : "", clean(csFrom) ? "from=" + encodeURIComponent(clean(csFrom)) : ""].filter(Boolean).join("&");
-      return res.redirect(`/setup/critical-systems/${sys.id}/impact${q ? "?" + q : ""}`);
-    }
-    return afterSystemQuestion(req, res, sys);
+    // From S52, the impact question follows when it is not answered yet (S28 FROM S27).
+    const from = clean(req.session.data.csFrom);
+    const toImpact = !deriveCriticality(sys.impact) && clean(req.session.data.csReturn) === "summary" && clean(req.session.data.action) !== "later";
+    return afterSystemQuestion(req, res, sys, "owner", toImpact && from !== "walk" ? "impact" : null);
   }));
 
   // S28 What would the impact be if this critical system were compromised? → S52.
   router.get("/setup/critical-systems/:systemId/impact", withSystem((req, res, setup, sys) => {
     res.render("pages/setup/critical-systems/impact", Object.assign({
       pageTitle: "What would the impact be if this critical system were compromised?",
-      backHref: questionBack(req, sys),
+      backHref: questionBack(req, sys, "impact"),
       system: sys,
       counter: systemDetailCounter(setup, sys),
       criticality: deriveCriticality(sys.impact),
@@ -1153,7 +1192,7 @@ module.exports = function (router) {
   router.post("/setup/critical-systems/:systemId/impact", withSystem((req, res, setup, sys) => {
     const f = take(req, ["impactConfidentiality", "impactIntegrity", "impactAvailability"]);
     sys.impact = { confidentiality: clean(f.impactConfidentiality), integrity: clean(f.impactIntegrity), availability: clean(f.impactAvailability) };
-    return afterSystemQuestion(req, res, sys);
+    return afterSystemQuestion(req, res, sys, "impact");
   }));
 
   // S47 Remove [system]? or S48 You cannot remove [system] (in the approved plan, or assessed before).

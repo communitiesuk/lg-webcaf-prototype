@@ -47,7 +47,10 @@
           </fieldset>
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          {% include "pages/setup/critical-systems/_later.njk" %}
+        </div>
       </form>
     </div>
   </div>

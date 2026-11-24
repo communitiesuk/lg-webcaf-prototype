@@ -45,7 +45,10 @@
           value: system.supplier.note
         }) }}
 
-        {{ govukButton({ text: "Save and continue" }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Save and continue" }) }}
+          {% include "pages/setup/critical-systems/_later.njk" %}
+        </div>
       </form>
     </div>
   </div>

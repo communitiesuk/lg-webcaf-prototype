@@ -44,7 +44,10 @@
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/councils" novalidate>
         {% include "pages/setup/critical-systems/_carry.njk" %}
-        {{ govukButton({ text: "Save and continue" }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Save and continue" }) }}
+          {% include "pages/setup/critical-systems/_later.njk" %}
+        </div>
       </form>
     </div>
   </div>

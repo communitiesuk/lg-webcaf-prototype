@@ -103,3 +103,14 @@ The guidance headings have no anchor IDs, so the links use text fragments (`#:~:
 | S13 | Read the guidance on identifying critical systems | Prepare › Identify your critical systems › "How to identify your critical systems" |
 
 Not changed: Claim's "Read the guidance" buttons go to the guidance home page (pass 2).
+
+## Adding a critical system asks every question (24 November 2026, after research)
+
+Round 1 research: people landed on S52 straight after S14 and saw "Not answered" for questions they had never been asked. **Decision (Michael):** after "Add this system", the questions follow one page at a time, then S52 as a check-answers page.
+
+- **Order:** S14 → S19 → S20 → S15 (→ S16 if Yes) → S17 (→ S18 if Yes) → S21 → S27 → S28 → S52. This matches the S52 panel, which has S52 reached from S28 at the end of adding. It replaces the S14 panel's "S14 → S52".
+- **Back links** follow the sequence, including the branches.
+- **Every question page has "Save and come back later"** (secondary button). It saves the page, then goes to S23, where the system shows In progress. **Not in Figma.**
+- **Adding a system from a service page** (S37d "Add a critical system") runs the same questions, then returns to the service page with the S37c banner (S37 return rule).
+- **Change links on S52** still open one question and return to S52. The S24 walk is unchanged.
+- **Not built:** S52b ("complete the rest in any order"), the drawn alternative for Q33.

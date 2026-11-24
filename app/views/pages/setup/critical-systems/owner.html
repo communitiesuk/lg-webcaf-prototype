@@ -24,7 +24,10 @@
           <input class="govuk-input" id="ownerJobTitle" name="ownerJobTitle" type="text" value="{{ system.owner.jobTitle }}">
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+        <div class="govuk-button-group">
+          <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>
+          {% include "pages/setup/critical-systems/_later.njk" %}
+        </div>
       </form>
     </div>
   </div>

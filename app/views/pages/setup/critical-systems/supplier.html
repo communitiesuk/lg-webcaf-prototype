@@ -31,7 +31,10 @@
         }) }}
 
 
-        {{ govukButton({ text: "Continue" }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Continue" }) }}
+          {% include "pages/setup/critical-systems/_later.njk" %}
+        </div>
       </form>
     </div>
   </div>
