@@ -254,12 +254,13 @@ function platformSupportLine(p) {
   return "Supports " + parts.join(" and ");
 }
 
-// S39 task-list rows: type and what it supports; Completed once linked to anything.
+// S39 task-list rows: Completed once linked to anything. Only an In progress row has a hint, saying
+// what is missing (24 November 2026, Michael: as S23 and S36).
 function buildPlatformRows(setup) {
   return (setup.platforms || []).map((p) => ({
     title: { text: p.name },
     href: `/setup/shared-infrastructure/${p.id}`,
-    hint: { text: [p.type, platformSupportLine(p)].filter(Boolean).join(" · ") },
+    hint: platformLinked(p) ? undefined : { text: platformSupportLine(p) },
     status: platformLinked(p) ? COMPLETED : IN_PROGRESS,
   }));
 }
