@@ -12,15 +12,15 @@
       <h1 class="govuk-heading-xl">Assessments</h1>
 
       {% if state == "setup_incomplete" %}
-        {# AS01 — setup not finished #}
+        {# AS01 — setup not finished. No "Continue setting up" button (Michael, 24 November 2026): the
+           Setup task list drives what happens next, as on the dashboard (R03). #}
         <p class="govuk-body">You need to finish setting up your council before you can choose what to assess.</p>
-        <p class="govuk-body">Still to do in Set up your council:</p>
+        <p class="govuk-body">Still to do in <a class="govuk-link" href="/setup/task-list">Set up your council</a>:</p>
         <ul class="govuk-list govuk-list--bullet">
           {% for task in tasks %}
             <li><a class="govuk-link" href="{{ task.href }}">{{ task.name }}</a></li>
           {% endfor %}
         </ul>
-        <a class="govuk-button" data-module="govuk-button" href="{{ continueHref }}">Continue setting up</a>
 
       {% elif state == "approved" %}
         {# AS01c — plan approved #}

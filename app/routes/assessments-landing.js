@@ -6,7 +6,7 @@
 // tile here or on the dashboard. Served at /your-assessments because the alpha prototype owns
 // /assessments.
 //
-//   AS01   setup not finished  — the Setup tasks not Completed, each a link; Continue setting up
+//   AS01   setup not finished  — the Setup tasks not Completed, each a link (no button, 24 Nov 2026)
 //   AS01b  plan not approved   — the Decide tile (same state as the dashboard)
 //   AS01c  plan approved       — approval line, View your plan (D21), one row per assessment
 //   Previous assessments only when the council has one (same rule as the R04 Last assessment row).
@@ -50,9 +50,6 @@ module.exports = function (router) {
     };
     if (state === "setup_incomplete") {
       model.tasks = unfinishedSetupTasks(setup);
-      // S30 when only "Check and confirm" is left, otherwise the task list (S01).
-      const onlyCheck = model.tasks.length === 1 && model.tasks[0].name === "Check and confirm";
-      model.continueHref = onlyCheck ? "/setup/check-your-setup" : "/setup/task-list";
     } else if (state === "approved") {
       const approval = decide.approval || {};
       model.approvalLine = "Your plan was approved on " + (approval.date || "") + " by " + (approval.by || "") + ".";
