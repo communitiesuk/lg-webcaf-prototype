@@ -297,9 +297,8 @@ function buildSystemRows(setup) {
   return (setup.criticalSystems || []).map((sys) => {
     const parts = [];
     const svcs = servicesForSystem(setup, sys).map((s) => s.name);
-    if (systemComplete(setup, sys)) {
-      parts.push(sys.owner.name, deriveCriticality(sys.impact));
-    } else {
+    // S23: a Completed row has no hint (24 November 2026, Michael); an In progress row says what is missing.
+    if (!systemComplete(setup, sys)) {
       if (sys.assessedDate) parts.push(`Assessed ${sys.assessedDate}`);
       else if (svcs.length) parts.push(svcs.join(", "));
       if (!svcs.length) parts.push("Not linked to a service yet");
@@ -313,7 +312,7 @@ function buildSystemRows(setup) {
     return {
       title: { text: sys.name },
       href: `/setup/critical-systems/${sys.id}/summary`,
-      hint: { text: parts.join(" · ") },
+      hint: parts.length ? { text: parts.join(" · ") } : undefined,
       status: systemComplete(setup, sys) ? COMPLETED : IN_PROGRESS,
     };
   });
