@@ -17,7 +17,7 @@
       {% for r in requesters %}
         {% set _ = rows.push({
           key: { text: r.name },
-          value: { text: r.jobTitle + ", asked " + r.asked },
+          value: { text: r.jobTitle + ", requested " + r.asked },
           actions: { items: [{ href: "/claim/review-request?person=" + r.id, text: "Review", visuallyHiddenText: "the request from " + r.name }] }
         }) %}
       {% endfor %}

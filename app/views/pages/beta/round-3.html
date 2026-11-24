@@ -1,4 +1,4 @@
-{# Round 3 research (beta-3): Set up your council v11. Each scenario sets session data only, then opens
+{# Round 3 research (beta-3): Set up your council v11 and Claim your council v15. Each scenario sets session data only, then opens
    the page in its note. The participant plays the CAF Lead. Facilitator page, not service content. #}
 {% extends "layouts/main.html" %}
 
@@ -21,6 +21,25 @@
           </li>
         {% endfor %}
       </ul>
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-6">Claim your council (v15): naming the CAF Lead</h2>
+      <p class="govuk-body">The person who registers only claims the council and names its CAF Lead. They cannot open the council record until they are the CAF Lead, or until the person they invite accepts. Each scenario starts a new session for Westborough Borough Council.</p>
+      <ul class="govuk-list">
+        {% for sc in claimScenarios %}
+          <li class="govuk-!-margin-bottom-3">
+            <a class="govuk-link govuk-link--no-visited-state" href="/research/claim/{{ sc.key }}">{{ sc.title }}</a>
+            <span class="govuk-hint govuk-!-margin-bottom-0">{{ sc.note }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <h3 class="govuk-heading-s">“Name someone else instead” on 35 (proposal, Q26)</h3>
+      <p class="govuk-body">Currently <strong>{{ "on" if allowRename else "off" }}</strong>.
+        {% if allowRename %}<a class="govuk-link" href="/research/claim-switch/rename/off">Turn it off</a>{% else %}<a class="govuk-link" href="/research/claim-switch/rename/on">Turn it on</a>{% endif %}</p>
+
+      <h3 class="govuk-heading-s">Emails and who is signed in</h3>
+      <p class="govuk-body"><a class="govuk-link" href="/research/emails">Emails sent in this session (N00)</a>. Open an email as the person it was sent to, for example N09 as the nominee.</p>
+      {% include "pages/research/_switcher.html" %}
     </div>
   </div>
 {% endblock %}

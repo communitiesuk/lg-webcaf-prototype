@@ -16,7 +16,7 @@
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
       <h1 class="govuk-heading-l">Your requests</h1>
-      <p class="govuk-body">This is where each request has got to.</p>
+      <p class="govuk-body">This is the status of each request you have made.</p>
 
       {% set rows = [] %}
       {% for r in requests %}
@@ -26,7 +26,6 @@
 
       <p class="govuk-body">You will not be able to see a council record until its request is approved. MHCLG checks every request for a council your email address is not linked to. If a council already uses this service, its CAF Lead also approves your request.</p>
 
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", classes: "govuk-button--secondary", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
 
       {# Prototype-only control (not part of the service). #}
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">

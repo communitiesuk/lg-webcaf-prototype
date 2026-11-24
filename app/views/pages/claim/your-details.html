@@ -20,7 +20,7 @@
       <h1 class="govuk-heading-l">Your details</h1>
 
       {% if recognised %}
-        {{ govukInsetText({ text: "We recognise " + domain + " as a " + councilName + " email address." }) }}
+        {{ govukInsetText({ text: "Your email address has been recognised." }) }}
       {% endif %}
 
       <form method="post" action="/claim/your-details" novalidate>

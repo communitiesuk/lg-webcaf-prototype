@@ -86,6 +86,41 @@ const EMAILS = {
     ],
     linkLine: "", // N08 has no link
   },
+  // Claim v15 (pass 2, 24 November 2026). DRAFT, not in Figma: the shortest plain version, written in
+  // the build for Michael to draw. No council data beyond the council name and the people's names.
+  N09: {
+    draft: true,
+    recipientRole: "person invited to be CAF Lead",
+    subject: "You have been named CAF Lead for ((council_name))",
+    greeting: "Dear ((nominee_name)),",
+    paragraphs: [
+      "((claimant_name)) has named you as the CAF Lead for ((council_name)) in the service for the CAF for local government.",
+      "The CAF Lead sets up the council in the service and decides who else can use it. If you are not the CAF Lead, sign in and tell us.",
+    ],
+    linkLine: "Sign in to accept: ((service_link))",
+  },
+  N10: {
+    draft: true,
+    recipientRole: "person who registered the council",
+    subject: "Your CAF Lead has accepted",
+    greeting: "Dear ((claimant_name)),",
+    paragraphs: [
+      "((nominee_name)) has accepted. They are now the CAF Lead for ((council_name)).",
+      "They decide who can use your council record.",
+    ],
+    linkLine: "Sign in to see what happens next: ((service_link))",
+  },
+  N11: {
+    draft: true,
+    recipientRole: "person who registered the council",
+    subject: "((nominee_name)) is not your CAF Lead",
+    greeting: "Dear ((claimant_name)),",
+    paragraphs: [
+      "((nominee_name)) told us they are not the CAF Lead for ((council_name)), so we have cancelled the invitation.",
+      "You need to name your council’s CAF Lead before anyone can use your council record.",
+    ],
+    linkLine: "Sign in to name your CAF Lead: ((service_link))",
+  },
 };
 
 const EMAIL_FROM = "Assess and manage your council’s cyber resilience";

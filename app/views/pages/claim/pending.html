@@ -1,7 +1,7 @@
-{# 06 claim / registration-pending — Figma node 209:2573 #}
+{# 06 claim / registration-pending — Claim v15, copy from the content review (24 November 2026).
+   Michael: keep the "What happens next" heading, as on 18. "[n] working days" stays a placeholder. #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -17,18 +17,21 @@
 
       <p class="govuk-body">This is a one-time check because you are the first person from {{ councilName }} to register. It is not a check on you as an individual.</p>
       <p class="govuk-body">You will not be able to see your council record until the check is done.</p>
-      <p class="govuk-body">While you wait, you can read the guidance on the CAF for local government.</p>
+      <p class="govuk-body">Colleagues who join later will not need to go through this check. Once your council is registered, they can ask to join. Your council’s CAF Lead can approve their access.</p>
 
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", classes: "govuk-button--secondary", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">MHCLG will check your council and email address. This usually takes up to [n] working days. We will email you at {{ email }} when the check is complete or if we need more information.</p>
+      <p class="govuk-body">If you have not had an email from us after [n] working days, contact the CAF team at <a class="govuk-link" href="mailto:caf@localdigital.gov.uk">caf@localdigital.gov.uk</a>.</p>
+      <p class="govuk-body">While you wait, you should start thinking about who your council’s CAF Lead will be, as you will need to confirm this next. <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/roles-responsibilities/" rel="noreferrer noopener" target="_blank">Read the guidance on CAF roles and responsibilities (opens in a new tab)</a>.</p>
 
       {# Prototype-only control (not part of the service). #}
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
       <p class="govuk-caption-m">Prototype only</p>
       <p class="govuk-body">Simulate the MHCLG decision. This is not part of the service.</p>
       <ul class="govuk-list">
-        <li><a class="govuk-link" href="/claim/pending/approve">Approve this claim</a>. Access granted (frame 07).</li>
-        <li><a class="govuk-link" href="/claim/pending/reject">Do not approve</a>. Claim not approved (frame 16).</li>
-        <li><a class="govuk-link" href="/claim/pending/still-checking">Sign in again while pending</a>. Still checking (frame 18).</li>
+        <li><a class="govuk-link" href="/claim/pending/approve">Approve this registration</a>. Registration complete (07), then name the CAF Lead (31).</li>
+        <li><a class="govuk-link" href="/claim/pending/reject">Do not approve</a>. Registration not approved (16).</li>
+        <li><a class="govuk-link" href="/claim/pending/still-checking">Sign in again while pending</a>. Still checking (18).</li>
       </ul>
     </div>
   </div>

@@ -1,0 +1,16 @@
+{# 26 claim / Your email address is not linked to a council yet — built in Claim v15 pass 2 (the v9 frame
+   was never built). NOT AGREED in Figma: Internal Access lets the person in, but WebCAF has no council
+   for their address. No button or back link: there is nowhere for the person to go. Copy from the
+   content review (24 November 2026). #}
+{% extends "layouts/claim.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l">Register your council</span>
+      <h1 class="govuk-heading-l">Your email address is not linked to a council yet</h1>
+      <p class="govuk-body">You can sign in, but your email address is not linked to a council on this digital service.</p>
+      <p class="govuk-body">To link your email address, email the CAF team at <a class="govuk-link" href="mailto:caf@localdigital.gov.uk">caf@localdigital.gov.uk</a> and tell them which council or councils you work for.</p>
+    </div>
+  </div>
+{% endblock %}

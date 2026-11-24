@@ -7,6 +7,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-m">Research only · {{ record.emailId }} · sent {{ record.sentLabel }}</span>
+      {% if email.draft %}<strong class="govuk-tag govuk-tag--yellow govuk-!-margin-top-2">DRAFT, not in Figma</strong>{% endif %}
       <dl class="govuk-summary-list govuk-!-margin-top-4">
         <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">From</dt><dd class="govuk-summary-list__value">{{ email.from }}</dd></div>
         <div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">To</dt><dd class="govuk-summary-list__value">{{ email.to }}</dd></div>

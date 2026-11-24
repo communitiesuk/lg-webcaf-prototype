@@ -9,7 +9,7 @@
 
       {% set bannerHtml %}
         <p class="govuk-notification-banner__heading">You already have access</p>
-        <p class="govuk-body">There is nothing else to do here.</p>
+        <p class="govuk-body">You do not need to do anything else.</p>
       {% endset %}
       {{ govukNotificationBanner({ type: "success", titleText: "Success", html: bannerHtml }) }}
 
@@ -18,7 +18,7 @@
       <p class="govuk-body">You registered on {{ registeredDate }}. You do not need to register again.</p>
       {# v10: one person can have access to more than one council — link to 29.
          Changed in build, prototype, pending design sign-off. #}
-      <p class="govuk-body">If you also need access to another council, you can <a class="govuk-link" href="/claim/ask-another-council">ask for access to another council</a>. MHCLG will check your request.</p>
+      <p class="govuk-body">You might need access to more than one council if you work for a shared service or an organisation that supports multiple councils. MHCLG will check requests for access for other councils. <a class="govuk-link" href="/claim/ask-another-council">Ask for access to another council</a>.</p>
 
       {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
     </div>

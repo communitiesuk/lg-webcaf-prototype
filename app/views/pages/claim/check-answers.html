@@ -45,15 +45,10 @@
         ]
       }) }}
 
-      {# v12: joining a registered council — request goes to the CAF Lead, or (if none named yet) to
-         the person who registered the council. No people count shown. Changed in build, prototype,
-         pending design sign-off. #}
+      {# 05: joining a registered council. The request always goes to the CAF Lead (Claim v15); if the
+         council has not named one yet, it waits for them. 21b (the person who registered approves) is removed. #}
       {% if joining %}
-        {% if hasCafLead %}
-          {{ govukInsetText({ text: "Someone from " + council.name + " already uses this service. Your request will go to your council’s CAF Lead. They will review your request and decide what access to give you. You will get an email when they have decided." }) }}
-        {% else %}
-          {{ govukInsetText({ text: "Someone from " + council.name + " already uses this service. Your request will go to " + registeredBy + ", who registered the council, because your council has not named its CAF Lead yet. They will review your request and decide what access to give you. You will get an email when they have decided." }) }}
-        {% endif %}
+        {{ govukInsetText({ text: "Someone from " + council.name + " already uses this service. Your request will go to your council’s CAF Lead. They will review your request and decide what access to give you. You will get an email when they have decided." }) }}
       {% else %}
         {{ govukInsetText({ text: "You are the first person from this council to register. MHCLG will check this registration before giving you access." }) }}
       {% endif %}

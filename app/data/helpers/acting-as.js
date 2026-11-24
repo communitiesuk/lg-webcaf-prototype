@@ -27,7 +27,11 @@ function currentCouncil(sessionData) {
   return { id, name: lazyCouncilName(sessionData) };
 }
 
-const PERSONA_KEYS = ["caf-lead", "assurer", "approver", "previous-approver", "other-council"];
+// "claimant" and "nominee" are Claim v15 (pass 2): the person who registered the council, and the
+// person they invited to be CAF Lead. Both are available only while a registration exists, and
+// neither can open the council record until they are the CAF Lead.
+// "joiner" is a colleague who signed in to ask to join a registered council; never in the switcher.
+const PERSONA_KEYS = ["caf-lead", "assurer", "approver", "previous-approver", "other-council", "claimant", "nominee", "joiner"];
 
 // The person behind each key, built from the session's own data (never fixed names, apart from the
 // labelled example collaborator from another council).
@@ -73,6 +77,43 @@ function persona(sessionData, key) {
         available: Boolean(plan.previousApprover),
         councilIds: [], // no role at the council any more
         homeHref: "/get-started",
+      };
+    case "claimant": {
+      const reg = sessionData.registration;
+      const c = (reg && reg.claimant) || {};
+      const isLead = Boolean(reg && reg.state === "lead_is_claimant");
+      return {
+        key,
+        role: "claimant",
+        roleLabel: "registered the council",
+        name: c.name || "",
+        available: Boolean(reg && c.name && !isLead),
+        councilIds: [council.id],
+        homeHref: require("./registration").claimantLanding(reg),
+      };
+    }
+    case "nominee": {
+      const reg = sessionData.registration;
+      const n = (reg && reg.nominee) || {};
+      return {
+        key,
+        role: "nominee",
+        roleLabel: "invited to be CAF Lead",
+        name: n.name || "",
+        available: Boolean(reg && n.name && reg.state === "invitation_sent"),
+        councilIds: [council.id],
+        homeHref: "/access/named-caf-lead",
+      };
+    }
+    case "joiner":
+      return {
+        key,
+        role: "joiner",
+        roleLabel: "asked to join",
+        name: claimPerson.fullName || "",
+        available: false,
+        councilIds: [],
+        homeHref: "/claim",
       };
     case "other-council":
       return {
@@ -124,7 +165,7 @@ function signOutKeepingData(sessionData) {
 // Switcher rows for the Research only switcher.
 function switcherOptions(sessionData) {
   const current = actingAs(sessionData);
-  return PERSONA_KEYS.map((key) => {
+  return PERSONA_KEYS.filter((key) => key !== "joiner").map((key) => {
     const p = persona(sessionData, key);
     return {
       key,

@@ -86,6 +86,8 @@ router.use(saveBeforeRedirect);
 
 // Round 2 research harness (beta-2): research switch, Approver-change sync. See app/routes/research.js.
 router.use(require("./routes/research").researchMiddleware);
+// Claim v15: until a CAF Lead is in place, the claimant gets their holding page, not the council record.
+router.use(require("./routes/registration").guard);
 
 router.use((req, res, next) => {
   res.on("finish", () => {
@@ -267,6 +269,7 @@ require("./routes/setup")(router);
 require("./routes/decide")(router);
 require("./routes/assessments-landing")(router); // AS01, beta-2
 require("./routes/claim")(router);
+require("./routes/registration")(router); // Claim v15 CAF Lead nomination, beta-3
 require("./routes/internal-access")(router);
 require("./routes/get-started")(router);
 require("./routes/readiness")(router);
@@ -275,6 +278,7 @@ require("./routes/access")(router);
 require("./routes/beta")(router);
 require("./routes/research")(router);
 require("./routes/research-setup")(router); // Setup v11 research scenarios, beta-3
+require("./routes/research-claim")(router); // Claim v15 research scenarios, beta-3
 require("./routes/assurer")(router);
 require("./routes/assurer-alpha")(router);
 require("./routes/mhclg")(router);

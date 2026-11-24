@@ -43,6 +43,32 @@ const {
 } = require("../data/helpers/access");
 
 const NAMED_PERSON = "Marcus Webb"; // A24/A25 alt example: Jo Hart names someone else
+const registration = require("../data/helpers/registration");
+
+// Claim v15: the nominee accepts on A24.
+function acceptNomination(data, r) {
+  const acting = require("../data/helpers/acting-as");
+  const { sendEmail, todayLabel } = require("../data/helpers/notify");
+  r.state = "lead_confirmed";
+  r.nominee.acceptedOn = todayLabel();
+  data.claim = Object.assign(data.claim || {}, { council: Object.assign({}, r.council), person: { fullName: r.nominee.name, jobTitle: "" } });
+  registration.createCouncilRecord(data, r.nominee);
+  acting.signInAs(data, "caf-lead");
+  sendEmail(data, "N10", { name: r.claimant.name, key: "claimant" }, require("./registration").names(r));
+}
+
+// Claim v15: the nominee declines on A25.
+function declineNomination(data, r) {
+  const acting = require("../data/helpers/acting-as");
+  const { sendEmail } = require("../data/helpers/notify");
+  const personalisation = require("./registration").names(r);
+  r.declinedNominee = r.nominee;
+  r.nominee = null;
+  r.state = "nominee_declined";
+  sendEmail(data, "N11", { name: r.claimant.name, key: "claimant" }, personalisation);
+  registration.removeCouncilRecord(data);
+  acting.signInAs(data, "nominee");
+}
 
 function toList(value) {
   if (Array.isArray(value)) return value;
@@ -180,13 +206,31 @@ module.exports = function (router) {
 
   // A24 — You have been named CAF Lead (the named person’s dashboard). Prototype control: the named
   // person (Marcus Webb) signs in and sees this banner.
+  // Claim v15 (pass 2): the person invited on Claim 32 lands here after signing in. Arriving accepts:
+  // they become CAF Lead (lead_confirmed), the council record is created with them in it, the person
+  // who registered gets N10, and any requests to join that were held are waiting for them on 30.
   router.get("/access/named-caf-lead", (req, res) => {
-    ensureAccess(req.session.data);
+    const data = req.session.data;
+    const r = registration.getRegistration(data);
+    if (r && r.nominee && (r.state === "invitation_sent" || r.state === "lead_confirmed")) {
+      if (r.state === "invitation_sent") acceptNomination(data, r);
+      applyFullAccessChrome(req, res);
+      res.locals.currentUser = { name: r.nominee.name, orgName: r.council.name };
+      return res.render("pages/access/named-caf-lead", {
+        pageTitle: "Your CAF dashboard",
+        councilName: r.council.name,
+        namedBy: r.claimant.name,
+        namedDate: r.nominee.invitedOn,
+        waiting: registration.waitingRequests(r).length,
+        fromClaim: true,
+      });
+    }
+    ensureAccess(data);
     applyFullAccessChrome(req, res);
-    res.locals.currentUser = { name: NAMED_PERSON, orgName: councilNameFor(req.session.data) };
+    res.locals.currentUser = { name: NAMED_PERSON, orgName: councilNameFor(data) };
     res.render("pages/access/named-caf-lead", {
       pageTitle: "Your CAF dashboard",
-      councilName: councilNameFor(req.session.data),
+      councilName: councilNameFor(data),
       namedBy: "Jo Hart",
       namedDate: "25 September 2026",
     });
@@ -194,6 +238,16 @@ module.exports = function (router) {
 
   // A25 — Not the CAF Lead (decline).
   router.get("/access/not-caf-lead", (req, res) => {
+    const r = registration.getRegistration(req.session.data);
+    if (r && r.nominee && r.state === "lead_confirmed") {
+      applyFullAccessChrome(req, res);
+      res.locals.currentUser = { name: r.nominee.name, orgName: r.council.name };
+      return res.render("pages/access/not-caf-lead", {
+        pageTitle: "Are you sure you are not the CAF Lead?",
+        councilName: r.council.name,
+        namedBy: r.claimant.name,
+      });
+    }
     ensureAccess(req.session.data);
     applyFullAccessChrome(req, res);
     res.locals.currentUser = { name: NAMED_PERSON, orgName: councilNameFor(req.session.data) };
@@ -205,6 +259,13 @@ module.exports = function (router) {
   });
 
   router.post("/access/not-caf-lead", (req, res) => {
+    // Claim v15: the nominee says they are not the CAF Lead. The invitation is cancelled, the council
+    // record goes (nobody has access until a CAF Lead is in place), and the claimant gets N11 and 36.
+    const r = registration.getRegistration(req.session.data);
+    if (r && r.nominee && r.state === "lead_confirmed") {
+      declineNomination(req.session.data, r);
+      return res.redirect("/claim/invitation-cancelled?declined=1");
+    }
     const access = ensureAccess(req.session.data);
     clearCafLead(access, NAMED_PERSON);
     return res.redirect("/dashboard");

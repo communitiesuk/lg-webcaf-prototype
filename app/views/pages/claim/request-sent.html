@@ -1,8 +1,7 @@
-{# 20 claim / request-sent (joining others — waiting for CAF Lead approval) — v6 PROPOSAL.
-   Reached from 05 "Send request". Changed in build, prototype, pending design sign-off. #}
+{# 20 claim / request-sent (joining a council with a CAF Lead) — Claim v15, copy from the content review.
+   Banner keeps "has decided." (Michael, 24 November: "approved it" is wrong if the request is rejected). #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -17,9 +16,7 @@
       <h1 class="govuk-heading-l">Your request has been sent</h1>
 
       <p class="govuk-body">We have asked your council’s CAF Lead at {{ councilName }} to approve your request and decide what you can see. You will not be able to see your council record until your request is approved.</p>
-      <p class="govuk-body">While you wait, you can read the guidance on the CAF for local government.</p>
-
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+      <p class="govuk-body">While you wait, you can <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/" rel="noreferrer noopener" target="_blank">read the guidance on the CAF for local government (opens in new tab)</a>. Otherwise, you can close this page.</p>
     </div>
   </div>
 {% endblock %}

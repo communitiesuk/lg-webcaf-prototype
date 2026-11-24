@@ -9,14 +9,14 @@
     <div class="govuk-grid-column-two-thirds">
 
       {% set bannerHtml %}
-        <p class="govuk-notification-banner__heading">You have signed in. Before you can use this service, you need to register the council you work for.</p>
+        <p class="govuk-notification-banner__heading">You have signed in. Before you can use this service, you need to register your council.</p>
       {% endset %}
       {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
 
       <h1 class="govuk-heading-l">Register your council</h1>
 
-      <p class="govuk-body">We will suggest your council from your email address. If you work with more than one council, you can ask for access to the others.</p>
-      <p class="govuk-body">MHCLG, or someone at your council, will check your request before you get access.</p>
+      <p class="govuk-body">We will use your email address to suggest your council. You can also request access to other councils if you need it.</p>
+      <p class="govuk-body">MHCLG will check your request before giving you access.</p>
 
       <form method="post" action="/claim/start" novalidate>
         {{ govukButton({ text: "Continue" }) }}

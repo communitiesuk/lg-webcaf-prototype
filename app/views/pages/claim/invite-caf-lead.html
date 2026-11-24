@@ -1,0 +1,41 @@
+{# 32 claim / Who should we invite to be your CAF Lead? (32e is its error state) — Claim v15, NEW SCREEN.
+   Copy from the content review (32e version, used for both). The empty-email message is written in
+   the build to match the reviewed name message; the panel lists "Enter their email address". #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors.length %}
+        {% set list = [] %}
+        {% for e in errors %}{% set _ = list.push({ text: e.text, href: "#" + e.id }) %}{% endfor %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: list }) }}
+      {% endif %}
+      <span class="govuk-caption-l">Register your council</span>
+      <h1 class="govuk-heading-l">Who should we invite to be your CAF Lead?</h1>
+      <p class="govuk-body">We will email them an invitation. They need to sign in to this digital service and accept it.</p>
+      <form method="post" action="/claim/caf-lead/invite" novalidate>
+        {{ govukInput({
+          id: "nomineeName", name: "nomineeName", autocomplete: "name", spellcheck: false,
+          label: { text: "Full name", classes: "govuk-label--s" },
+          errorMessage: { text: errorById.nomineeName } if errorById.nomineeName else undefined,
+          value: values.name
+        }) }}
+        {{ govukInput({
+          id: "nomineeEmail", name: "nomineeEmail", type: "email", autocomplete: "email", spellcheck: false,
+          label: { text: "Email address", classes: "govuk-label--s" },
+          hint: { text: "Use your CAF Lead’s work email address" },
+          errorMessage: { text: errorById.nomineeEmail } if errorById.nomineeEmail else undefined,
+          value: values.email
+        }) }}
+        {{ govukButton({ text: "Send invitation" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

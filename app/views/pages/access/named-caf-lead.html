@@ -15,7 +15,15 @@
       <span class="govuk-caption-l">{{ councilName }}</span>
       <h1 class="govuk-heading-xl">Your CAF dashboard</h1>
       <p class="govuk-body">As CAF Lead, you are accountable for your council’s CAF, and MHCLG and your assurer will contact you first.</p>
+      {# Claim v15 (ADDITION, not in Figma): requests to join held until a CAF Lead was in place (Q24),
+         and a way on to the dashboard, since this stands in for it. #}
+      {% if fromClaim and waiting %}
+        <p class="govuk-body">{{ waiting }} {{ "person is" if waiting == 1 else "people are" }} waiting for you to review their request to join. <a class="govuk-link" href="/claim/requests-to-join">Review requests to join</a></p>
+      {% endif %}
       <p class="govuk-body"><a class="govuk-link" href="/access/not-caf-lead">This is not me</a></p>
+      {% if fromClaim %}
+        <a href="/dashboard" role="button" draggable="false" class="govuk-button" data-module="govuk-button">Go to your dashboard</a>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

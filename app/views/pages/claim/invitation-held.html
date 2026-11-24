@@ -1,0 +1,27 @@
+{# 34 claim / We need to check this invitation — Claim v15, NEW SCREEN. Held: no email until the
+   check passes (the check itself is not defined, Q23). Research only: "MHCLG check passed". #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% set bannerHtml %}
+        <p class="govuk-notification-banner__heading">We need to check this invitation</p>
+        <p class="govuk-body">We will email you when MHCLG has checked it.</p>
+      {% endset %}
+      {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+      <h1 class="govuk-heading-l">We need to check this invitation</h1>
+      <p class="govuk-body">{{ nominee.email }} is not a {{ councilName }} email address, so MHCLG needs to check it before we send the invitation.</p>
+      <p class="govuk-body">You will not be able to see your council record until the invitation is sent and accepted.</p>
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">This usually takes up to [n] working days. You can close this page. We will email you when the check is done.</p>
+
+      {% if researchOn %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-m">Research only</p>
+        <p class="govuk-body"><a class="govuk-link" href="/claim/caf-lead/check/passed">MHCLG check passed</a>. Sends the invitation (email N09) and shows 33.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

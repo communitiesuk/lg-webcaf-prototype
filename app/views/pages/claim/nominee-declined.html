@@ -1,0 +1,15 @@
+{# 36 claim / [Name] is not your council's CAF Lead — Claim v15, NEW SCREEN. After the nominee chose
+   "This is not me" (Access A25). Does not say why. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ nominee.name }} is not your council’s CAF Lead</h1>
+      <p class="govuk-body">{{ nomineeFirst }} told us they are not the CAF Lead for {{ councilName }}, so we have cancelled the invitation.</p>
+      <p class="govuk-body">You need to name your council’s CAF Lead before anyone can use your council record.</p>
+      {{ govukButton({ text: "Name your CAF Lead", href: "/claim/caf-lead" }) }}
+    </div>
+  </div>
+{% endblock %}

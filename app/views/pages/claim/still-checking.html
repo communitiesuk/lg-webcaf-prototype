@@ -1,7 +1,7 @@
-{# 18 claim / still-checking — Figma node 209:3045 #}
+{# 18 claim / still-checking — Claim v15, copy from the content review (24 November 2026). A comma is
+   added after "will be", as on 06. #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -15,11 +15,13 @@
 
       <h1 class="govuk-heading-l">We are still checking your registration</h1>
 
-      <p class="govuk-body">You registered for {{ councilName }} on {{ registeredDate }}. MHCLG has not finished checking it yet.</p>
+      <p class="govuk-body">You registered for {{ councilName }} on {{ registeredDate }}. MHCLG is checking your registration.</p>
       <p class="govuk-body">You will not be able to see your council record until the check is done.</p>
-      <p class="govuk-body">You can read the guidance on the CAF for local government while you wait.</p>
 
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", classes: "govuk-button--secondary", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">MHCLG will check your council and email address. This usually takes up to [n] working days. We will email you at {{ email }} when the check is complete or if we need more information.</p>
+      <p class="govuk-body">If you have not had an email from us after [n] working days, contact the CAF team at <a class="govuk-link" href="mailto:caf@localdigital.gov.uk">caf@localdigital.gov.uk</a>.</p>
+      <p class="govuk-body">While you wait, you should also start thinking about who your council’s CAF Lead will be, as you will need to confirm this next. <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/roles-responsibilities/" rel="noreferrer noopener" target="_blank">Read the guidance on different CAF roles and responsibilities (opens in a new tab)</a>.</p>
     </div>
   </div>
 {% endblock %}

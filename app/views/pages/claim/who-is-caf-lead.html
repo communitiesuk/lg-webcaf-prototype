@@ -1,0 +1,33 @@
+{# 31 claim / Who is your council's CAF Lead? (31e is its error state) — Claim v15, NEW SCREEN.
+   Copy from the content review page "v15 (content review) 2", 24 November 2026. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backHref }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if error %}
+        {{ govukErrorSummary({ titleText: "There is a problem", errorList: [{ text: error, href: "#cafLeadWho" }] }) }}
+      {% endif %}
+      <form method="post" action="/claim/caf-lead" novalidate>
+        {{ govukRadios({
+          idPrefix: "cafLeadWho",
+          name: "cafLeadWho",
+          fieldset: { legend: { html: '<span class="govuk-caption-l">Register your council</span>Who is your council’s CAF Lead?', isPageHeading: true, classes: "govuk-fieldset__legend--l" } },
+          hint: { text: "Your CAF Lead manages the CAF for local government for your council. They will set up your council in this service and decide who else can access it." },
+          errorMessage: { text: error } if error else undefined,
+          items: [
+            { value: "me", text: "Me", checked: answer == "me" },
+            { value: "someone-else", text: "Someone else", checked: answer == "someone-else" }
+          ]
+        }) }}
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

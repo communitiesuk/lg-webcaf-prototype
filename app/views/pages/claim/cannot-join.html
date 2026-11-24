@@ -1,8 +1,7 @@
-{# 22 claim / cannot-join (the council's first claim is still being checked by MHCLG) — v6.
-   Changed in build, prototype, pending design sign-off. #}
+{# 22 claim / We have saved your request (the council's registration is still being checked) — Claim v15,
+   copy from the content review. The request is held for the CAF Lead (Q24). #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -18,10 +17,8 @@
 
       <p class="govuk-body">Someone from {{ councilName }} has already registered your council. MHCLG is checking that registration.</p>
       <p class="govuk-body">We have saved your request to join.</p>
-      <p class="govuk-body">When the check is done, we will email the person who registered the council. We will email you when they have approved your request.</p>
-      <p class="govuk-body">You can read the guidance on the CAF for local government while you wait.</p>
-
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", classes: "govuk-button--secondary", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+      <p class="govuk-body">When the check is done and your council has named its CAF Lead, we will ask them to approve your request. We will email you when they have decided.</p>
+      <p class="govuk-body">While you wait, you can <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/" rel="noreferrer noopener" target="_blank">read the guidance on the CAF for local government (opens in new tab)</a>. Otherwise, you can close this page.</p>
     </div>
   </div>
 {% endblock %}

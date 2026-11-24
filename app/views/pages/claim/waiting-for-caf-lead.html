@@ -1,0 +1,35 @@
+{# 35 claim / Your CAF Lead has not accepted yet — Claim v15, NEW SCREEN. The holding page while the
+   invitation is waiting. "Name someone else instead" is a proposal (Q26), behind a research switch.
+   After the nominee accepts, the claimant still has no access: the "accepted" version below is an
+   ADDITION, not in Figma (written in the build). #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if accepted %}
+        {% set bannerHtml %}
+          <p class="govuk-notification-banner__heading">Your CAF Lead has accepted</p>
+          <p class="govuk-body">{{ nominee.name }} is now your council’s CAF Lead.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ type: "success", titleText: "Success", html: bannerHtml }) }}
+        <h1 class="govuk-heading-l">Your CAF Lead has accepted</h1>
+        <p class="govuk-body">{{ nominee.name }} ({{ nominee.email }}) accepted your invitation to be your council’s CAF Lead.</p>
+        <p class="govuk-body">You will be able to see your council record when {{ nominee.name.split(" ")[0] }} gives you access. You can close this page.</p>
+      {% else %}
+        {% set bannerHtml %}
+          <p class="govuk-notification-banner__heading">Your CAF Lead has not accepted yet</p>
+          <p class="govuk-body">You will get an email when they do.</p>
+        {% endset %}
+        {{ govukNotificationBanner({ titleText: "Important", html: bannerHtml }) }}
+        <h1 class="govuk-heading-l">Your CAF Lead has not accepted yet</h1>
+        <p class="govuk-body">You invited {{ nominee.name }} ({{ nominee.email }}) to be your council’s CAF Lead on {{ nominee.invitedOn }}.</p>
+        <p class="govuk-body">You will not be able to see your council record until they accept.</p>
+        {% if canRename %}
+          <p class="govuk-body"><a class="govuk-link" href="/claim/caf-lead/name-someone-else">Name someone else instead</a></p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

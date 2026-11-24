@@ -1,31 +1,20 @@
-{# 07 claim / access-granted (first to join) — Figma node 209:2608 #}
+{# 07 claim / Registration complete — Claim v15. Registering does not give access to the council
+   record: the claimant names the CAF Lead first (D-2026-154). No service navigation (no council
+   record yet). Copy from the content review (24 November 2026). #}
 {% extends "layouts/claim.html" %}
-{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({ titleText: "Registration complete", text: "Next, tell us who your council’s CAF Lead is." }) }}
 
-      {# Not the end of the journey — registration succeeded but the user continues into setup —
-         so a success notification banner, not the end-of-transaction confirmation panel. #}
-      {% set bannerHtml %}
-        <h3 class="govuk-notification-banner__heading">Registration complete</h3>
-      {% endset %}
-      {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">Your council’s CAF Lead manages the CAF for local government on behalf of your council. They will set up your council to use this digital service and decide who can access it.</p>
+      <p class="govuk-body">If you are the CAF Lead, you can start straight away. If someone else is the CAF Lead, you can invite them at the next step. Nobody can see your council record until your CAF Lead has accepted your invitation.</p>
 
-      <h1 class="govuk-heading-l">What happens next</h1>
-      <p class="govuk-body">Next, set up your council. The first task is confirming who your council’s CAF Lead is.</p>
-      <p class="govuk-body">You can now:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>work on the whole council record</li>
-        <li>see any earlier CAF assessment information MHCLG holds for your council</li>
-        <li>invite colleagues to use this service</li>
-        <li>approve requests from colleagues who ask to join, until your council names its CAF Lead</li>
-      </ul>
-      <p class="govuk-body">Being the first to register does not make you CAF Lead for your council. Naming the CAF Lead is the first task when you set up your council. Once a CAF Lead is named, they approve requests to join instead of you.</p>
-
-      {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
+      {{ govukButton({ text: "Continue", href: "/claim/caf-lead" }) }}
     </div>
   </div>
 {% endblock %}

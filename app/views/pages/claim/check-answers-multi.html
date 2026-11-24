@@ -42,7 +42,7 @@
         ]
       }) }}
 
-      {{ govukInsetText({ text: insetHtml }) }}
+      {{ govukInsetText({ html: insetHtml }) }}
 
       <form method="post" action="/claim/check-multi" novalidate>
         {{ govukButton({ text: "Send requests" }) }}

@@ -1,0 +1,17 @@
+{# ADDITION (not in Figma), Claim v15 build: the person invited to be CAF Lead opens their invitation
+   after it was cancelled ("Name someone else instead") or after they said it was not them. #}
+{% extends "layouts/claim.html" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if declined %}
+        <h1 class="govuk-heading-l">You are not the CAF Lead for {{ councilName }}</h1>
+        <p class="govuk-body">We have cancelled the invitation and told {{ claimantName }}. You do not need to do anything else.</p>
+      {% else %}
+        <h1 class="govuk-heading-l">This invitation is no longer valid</h1>
+        <p class="govuk-body">You are not the CAF Lead for {{ councilName }}. If you think this is wrong, contact {{ claimantName }}.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

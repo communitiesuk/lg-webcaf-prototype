@@ -179,8 +179,13 @@ module.exports = function (router) {
   // Cookie preferences and the separate Alpha journey are left untouched.
   router.get("/get-started/sign-out", (req, res) => {
     if (req.session.data) {
-      delete req.session.data.setup;
-      delete req.session.data.decide;
+      // Claim v15: the registration belongs to the council, so it stays; so does the council record
+      // once a CAF Lead is in place. Only this person's own journey is cleared.
+      const reg = require("../data/helpers/registration");
+      if (!reg.leadInPlace(reg.getRegistration(req.session.data))) {
+        delete req.session.data.setup;
+        delete req.session.data.decide;
+      }
       delete req.session.data.claim;
     }
     return res.redirect("/get-started/signed-out");

@@ -69,6 +69,42 @@ function applySignInScenario(sessionData) {
   return claim;
 }
 
+// Claim v15 (pass 2): when the council has a registration, who signs in decides where they land.
+// The person who registered gets the holding page for its state (or the dashboard once they are the
+// CAF Lead); the person invited to be CAF Lead gets A24; anyone else at that council is a colleague
+// asking to join, whose request waits for the CAF Lead. Returns a path, or "" for the usual routing.
+function landingForRegistration(sessionData) {
+  const reg = require("../data/helpers/registration");
+  const acting = require("../data/helpers/acting-as");
+  const r = reg.getRegistration(sessionData);
+  const claim = ensureClaim(sessionData);
+  if (!r || !claim.oneLoginEmail) return "";
+  if (reg.sameEmail(claim.oneLoginEmail, r.claimant.email)) {
+    claim.council = Object.assign({}, r.council);
+    claim.person = { fullName: r.claimant.name, jobTitle: r.claimant.jobTitle };
+    acting.signInAs(sessionData, r.state === "lead_is_claimant" ? "caf-lead" : "claimant");
+    return reg.claimantLanding(r);
+  }
+  if (r.nominee && reg.sameEmail(claim.oneLoginEmail, r.nominee.email)) {
+    claim.council = Object.assign({}, r.council);
+    claim.person = { fullName: r.nominee.name, jobTitle: "" };
+    if (r.state === "lead_confirmed") {
+      acting.signInAs(sessionData, "caf-lead");
+      return "/dashboard";
+    }
+    acting.signInAs(sessionData, "nominee");
+    return r.state === "invitation_sent" ? "/access/named-caf-lead" : "/claim/invitation-cancelled";
+  }
+  if (claim.council && claim.council.id === r.council.id) {
+    // A colleague at the registered council: the claim journey as a joiner.
+    claim.flagCouncilHasUsers = r.state !== "submitted";
+    claim.councilBeingChecked = r.state === "submitted";
+    claim.councilHasCafLead = reg.leadInPlace(r);
+    acting.signInAs(sessionData, "joiner"); // no council record until the CAF Lead approves them
+  }
+  return "";
+}
+
 // Round 2 research build: return after sign-in for email links (/go/:id), as the person the email
 // was for. Returns the path, or "" if there is nothing to return to.
 function takeSignInReturn(sessionData) {
@@ -131,7 +167,7 @@ module.exports = function (router) {
     if (!claim.oneLoginEmail) return res.redirect("/internal-access/email"); // nothing typed
     delete req.session.data.iaCode;
     applySignInScenario(req.session.data); // routing flags + council from the typed email
-    return res.redirect(landingForClaim(req.session.data.claim));
+    return res.redirect(landingForRegistration(req.session.data) || landingForClaim(req.session.data.claim));
   });
 
   // IA3 — continue to LG Web CAF. Only shown when already signed in to Internal Access.
@@ -145,7 +181,7 @@ module.exports = function (router) {
     const ret = takeSignInReturn(req.session.data);
     if (ret) return res.redirect(ret);
     applySignInScenario(req.session.data);
-    return res.redirect(landingForClaim(req.session.data.claim));
+    return res.redirect(landingForRegistration(req.session.data) || landingForClaim(req.session.data.claim));
   });
 
   // Prototype-only: sign out of Internal Access and start again at IA1.

@@ -1,0 +1,23 @@
+{# 37 claim / You are your council's CAF Lead — Claim v15, NEW SCREEN. Reached from 31 "Me".
+   Content review: "see any CAF assessments you have previously submitted" built as "your council has"
+   (Michael, 24 November: the CAF Lead may not be the person who submitted them). #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({ titleText: "You are your council’s CAF Lead", text: "Next, set up your council." }) }}
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">You can now:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>work on the whole council record</li>
+        <li>see any CAF assessments your council has previously submitted to MHCLG</li>
+        <li>invite colleagues to use this service</li>
+        <li>approve requests from colleagues who ask to join</li>
+      </ul>
+      {{ govukButton({ text: "Set up your council", href: "/setup/task-list" }) }}
+    </div>
+  </div>
+{% endblock %}

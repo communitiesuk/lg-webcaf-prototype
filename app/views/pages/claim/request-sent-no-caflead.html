@@ -1,9 +1,8 @@
-{# 20b claim / request sent, no CAF Lead yet — new in v10 (copy of 20, different body).
-   The person who registered the council approves until a CAF Lead is named.
-   Changed in build, prototype, pending design sign-off. #}
+{# 20b claim / request sent, no CAF Lead yet — Claim v15: the request waits for the CAF Lead, not the
+   person who registered (D-2026-154; 21b removed). Held and listed on 30 when the CAF Lead first signs
+   in (proposal, Q24). Copy from the content review. #}
 {% extends "layouts/claim.html" %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -17,11 +16,9 @@
 
       <h1 class="govuk-heading-l">Your request has been sent</h1>
 
-      <p class="govuk-body">We have asked {{ registeredBy }}, who registered {{ councilName }}, to approve your request and decide what you can see. Your council has not named its CAF Lead yet.</p>
+      <p class="govuk-body">Your council has not named its CAF Lead yet. When it has, we will ask the CAF Lead to approve your request and decide what you can see.</p>
       <p class="govuk-body">You will not be able to see your council record until your request is approved.</p>
-      <p class="govuk-body">While you wait, you can read the guidance on the CAF for local government.</p>
-
-      {{ govukButton({ text: "Read the guidance", href: "https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/", attributes: { target: "_blank", rel: "noreferrer noopener" } }) }}
+      <p class="govuk-body">While you wait, you can <a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/" rel="noreferrer noopener" target="_blank">read the guidance on the CAF for local government (opens in new tab)</a>. Otherwise, you can close this page.</p>
     </div>
   </div>
 {% endblock %}

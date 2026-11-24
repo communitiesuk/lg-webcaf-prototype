@@ -11,6 +11,7 @@ const { buildAccessEmpty, seedAccess } = require("../data/helpers/access");
 // appears through an explicit starting point on this page.
 function loadExampleCouncil(req) {
   if (!req.session.data) req.session.data = {};
+  delete req.session.data.registration; // the example council was registered under the old model
   req.session.data.setup = buildSetupSeed();
   req.session.data.decide = buildDecideSeed();
   req.session.data.access = seedAccess();
@@ -100,8 +101,8 @@ const SECTIONS = [
           { key: "/claim/requests", label: "Your requests" },
           { key: "/claim/request-sent", label: "Request sent, has CAF Lead" },
           { key: "/claim/request-sent-no-caflead", label: "Request sent, no CAF Lead yet" },
-          { key: "/claim/review-request?as=caf-lead", label: "Review a request, as the CAF Lead" },
-          { key: "/claim/review-request?as=registered", label: "Review a request, as the registered person" },
+          { key: "/claim/review-request", label: "Review a request, as the CAF Lead" },
+          { key: "/claim/email-not-linked", label: "Email address not linked to a council (26)" },
           { key: "/claim/cannot-join", label: "You cannot join yet" },
         ],
       },
@@ -250,7 +251,6 @@ const WALKTHROUGH_LINKS = [
   { href: "/beta/walkthrough/joining-with-caflead", title: "Joining a council that already has a CAF Lead" },
   { href: "/beta/walkthrough/joining-no-caflead", title: "Joining a council that has no CAF Lead yet" },
   { href: "/claim/requests-to-join", title: "Approver’s list of requests to join" },
-  { href: "/claim/review-request?as=registered", title: "The person who registered the council reviews a request" },
   { href: "/claim/access-granted", title: "First registration approved" },
   { href: "/claim/joined", title: "Join request approved (Collaborator role)" },
   { href: "/beta/walkthrough/being-checked", title: "Council still being checked by MHCLG" },
@@ -356,12 +356,18 @@ module.exports = function (router) {
     });
   });
 
-  // Round 3 (beta-3): Setup v11 scenarios (pass 1); Claim v15 scenarios follow in pass 2.
+  // Round 3 (beta-3): Setup v11 scenarios (pass 1) and Claim v15 scenarios (pass 2).
   router.get("/beta/round-3", (req, res) => {
     if (!researchOn(req)) return res.redirect("/beta");
+    const acting = require("../data/helpers/acting-as");
     res.render("pages/beta/round-3", {
       pageTitle: "Round 3 research",
       setupScenarios: require("./research-setup").SETUP_SCENARIOS,
+      claimScenarios: require("./research-claim").CLAIM_SCENARIOS,
+      allowRename: (req.session.data.research || {}).allowRename !== false,
+      switcher: acting.switcherOptions(req.session.data),
+      signedOut: acting.isSignedOut(req.session.data),
+      returnTo: "/beta/round-3",
     });
   });
 
@@ -379,6 +385,7 @@ module.exports = function (router) {
     const target = SCENES[req.params.scene];
     if (!target) return res.redirect("/beta");
     reseed(req);
+    delete req.session.data.registration;
     if (isCycleStart(target)) clearExampleCni(req);
     prepareSceneState(req, req.params.scene);
     return res.redirect(target);
@@ -427,6 +434,7 @@ module.exports = function (router) {
     const key = (req.session.data && req.session.data.signInScenario) || "";
     reseed(req);
     req.session.data.claim = {};
+    delete req.session.data.registration;
     req.session.data.signInScenario = key.toString();
     delete req.session.data.iaEmail;
     return res.redirect("/internal-access");
@@ -439,6 +447,7 @@ module.exports = function (router) {
   function startWalkthrough(req, res, opts) {
     if (!req.session.data) req.session.data = {};
     delete req.session.data.claim;
+    delete req.session.data.registration;
     if (opts.established) {
       // You already have access to an established council — clear the state so the populated demo
       // council (setup, team, decide) re-seeds, instead of an empty new one.

@@ -21,13 +21,13 @@
 
       <span class="govuk-caption-l">Register your council</span>
       <h1 class="govuk-heading-l">Do you need access to any other councils?</h1>
-      <p class="govuk-body">For example, if you work for a shared service, or for a company that supports more than one council.</p>
-      <p class="govuk-body">MHCLG will check each request.</p>
+      <p class="govuk-body">You might need access to more than one council if you work for a shared service or an organisation that supports multiple councils. MHCLG will check requests for access for other councils.</p>
 
       <form method="post" action="/claim/other-councils-needed" novalidate>
         {{ govukRadios({
           name: "otherCouncilsNeeded",
           fieldset: { legend: { text: "Do you need access to any other councils?", classes: "govuk-visually-hidden" } },
+          hint: { text: "Most people only need access to their own council. Choose ‘No’ if this applies to you." },
           errorMessage: { text: error.message } if error else undefined,
           items: [
             { value: "yes", text: "Yes", checked: answer == "yes" },

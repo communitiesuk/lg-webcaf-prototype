@@ -19,6 +19,30 @@ const { COUNCILS, EXAMPLE_EMAILS, ORGANISATIONS, matchCouncilByDomain, displayNa
 // Used by screen 21 to hand an approved "specific outcomes" request to the existing A06 screen.
 const { ensureAccess, buildAccessEmpty } = require("../data/helpers/access");
 const { buildSetupSeedEmpty, buildDecideSeedEmpty } = require("../data/seed/setup");
+// Claim v15 (pass 2): one registration per council; screens are worked out from its state.
+const registration = require("../data/helpers/registration");
+const acting = require("../data/helpers/acting-as");
+
+// The claimant registers: the registration is created and they are signed in as "the person who
+// registered" (no access to the council record until a CAF Lead is in place).
+function registerClaimant(sessionData, claim) {
+  claim.needsReview = true;
+  claim.status = "pending";
+  registration.startRegistration(sessionData, claim);
+  acting.signInAs(sessionData, "claimant");
+}
+
+// A joiner's request (05 or 22) on a council that already has a registration: held for the CAF Lead.
+function holdJoinRequest(sessionData, claim) {
+  const reg = registration.getRegistration(sessionData);
+  if (!reg || !claim.council || reg.council.id !== claim.council.id) return null;
+  const person = claim.person || {};
+  return registration.addRequest(reg, {
+    name: person.fullName || displayNameFromEmail(claim.oneLoginEmail),
+    jobTitle: person.jobTitle || "",
+    email: claim.oneLoginEmail || "",
+  });
+}
 
 function clean(value) {
   return (value || "").toString().trim();
@@ -363,8 +387,6 @@ module.exports = function (router) {
       person: claim.person || {},
       email: claim.oneLoginEmail || "",
       joining: Boolean(claim.flagCouncilHasUsers),
-      hasCafLead: Boolean(claim.councilHasCafLead),
-      registeredBy: "Sam Patel", // person who registered the council (approves until a CAF Lead is named)
     });
   });
 
@@ -374,19 +396,21 @@ module.exports = function (router) {
       // Joining a council already in use is a REQUEST — to the CAF Lead (20), or to the person who
       // registered the council if there is no CAF Lead yet (20b). Changed in build, prototype,
       // pending design sign-off.
+      // Claim v15: the request goes to the CAF Lead (20), or waits for one (20b). 21b is removed.
       claim.status = "request-sent";
       claim.joinRequest = {
         status: "sent",
         councilName: (claim.council && claim.council.name) || "",
         hasCafLead: Boolean(claim.councilHasCafLead),
-        registeredBy: "Sam Patel", // person who registered Westborough (approves until a CAF Lead is named)
         person: claim.person || {},
         email: claim.oneLoginEmail || "",
       };
-      return res.redirect(claim.councilHasCafLead ? "/claim/request-sent" : "/claim/request-sent-no-caflead"); // 20 / 20b
+      holdJoinRequest(req.session.data, claim);
+      const reg = registration.getRegistration(req.session.data);
+      const hasLead = reg ? registration.leadInPlace(reg) : Boolean(claim.councilHasCafLead);
+      return res.redirect(hasLead ? "/claim/request-sent" : "/claim/request-sent-no-caflead"); // 20 / 20b
     }
-    claim.needsReview = true;
-    claim.status = "pending";
+    registerClaimant(req.session.data, claim);
     return res.redirect("/claim/pending"); // 06
   });
 
@@ -413,6 +437,11 @@ module.exports = function (router) {
       status: requestStatusFor(c.id),
     }));
     claim.status = "requests-sent";
+    // The first person from their own council to register is its claimant (Claim v15).
+    if (claim.includePrimaryInRequests) {
+      registerClaimant(req.session.data, claim);
+      claim.status = "requests-sent";
+    }
     return res.redirect("/claim/requests"); // 25
   });
 
@@ -431,6 +460,8 @@ module.exports = function (router) {
     const claim = ensureClaim(req.session.data);
     (claim.requestedCouncils || []).forEach((c) => { c.status = "Approved"; });
     claim.status = "approved";
+    const reg = registration.getRegistration(req.session.data);
+    if (reg && reg.state === "submitted") reg.state = "approved_no_lead";
     return res.redirect("/claim/access-granted"); // 07
   });
 
@@ -483,41 +514,41 @@ module.exports = function (router) {
     res.render("pages/claim/request-sent-no-caflead", {
       pageTitle: "Your request has been sent",
       councilName: jr.councilName || (claim.council && claim.council.name) || "your council",
-      registeredBy: jr.registeredBy || "the person who registered the council",
     });
   });
 
   // ----- 30 requests-to-join (the approver's list of requests) — new in v12 ---------------------
   // Signed in as the CAF Lead (Priya Shah). Each row links to 21 to review that person.
   // Changed in build, prototype, pending design sign-off.
+  // Claim v15: with a registration, the list is the council's own requests (held ones included, Q24),
+  // shown to its CAF Lead; without one, the example requests (Priya Shah).
   router.get("/claim/requests-to-join", (req, res) => {
-    ensureClaim(req.session.data);
-    applyClaimGrantedChrome(req, res, { fullName: "Priya Shah" }, reviewCouncil(ensureClaim(req.session.data)).name);
+    const claim = ensureClaim(req.session.data);
+    const reg = registration.getRegistration(req.session.data);
+    applyClaimGrantedChrome(req, res, { fullName: reviewerName(req.session.data) }, reviewCouncil(claim).name);
+    const requesters = reg
+      ? registration.waitingRequests(reg).map((r) => ({ id: r.id, name: r.name, jobTitle: r.jobTitle, email: r.email, asked: r.requestedOn }))
+      : JOIN_REQUESTERS.map((r) => Object.assign({}, r, { email: requesterEmail(r, claim) }));
     res.render("pages/claim/requests-to-join", {
       pageTitle: "Requests to join",
-      councilName: reviewCouncil(ensureClaim(req.session.data)).name,
-      requesters: JOIN_REQUESTERS.map((r) => Object.assign({}, r, { email: requesterEmail(r, ensureClaim(req.session.data)) })),
+      councilName: reviewCouncil(claim).name,
+      requesters,
     });
   });
 
-  // ----- 21 / 21b review-request — v12. Reached from 30 (per person) as the CAF Lead (Priya Shah),
-  // or with ?as=registered for 21b (Sam Patel, who registered the council, while no CAF Lead yet).
-  // The approver picks a role (Full access / Collaborator); approving shows the requester's 07b.
-  // Changed in build, prototype, pending design sign-off.
+  // ----- 21 review-request — v12. Reached from 30 (per person). Only the CAF Lead reviews requests
+  // (Claim v15, D-2026-154): 21b, the version for the person who registered the council, is removed.
+  // The CAF Lead picks a role (Full access / Collaborator); approving shows the requester's 07b.
   router.get("/claim/review-request", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    if (clean(req.query.as) === "registered") claim.reviewerIsRegisteredPerson = true;
-    if (clean(req.query.as) === "caf-lead") claim.reviewerIsRegisteredPerson = false;
-    const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
-    const requester = currentRequester(claim, clean(req.query.person));
-    applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, reviewCouncil(claim).name);
-    renderReviewRequest(res, requester, { noCafLead: noCafLead, claim: claim });
+    const requester = currentRequester(claim, clean(req.query.person), req.session.data);
+    applyClaimGrantedChrome(req, res, { fullName: reviewerName(req.session.data) }, reviewCouncil(claim).name);
+    renderReviewRequest(res, requester, { claim: claim });
   });
 
   router.post("/claim/review-request", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    const noCafLead = Boolean(claim.reviewerIsRegisteredPerson);
-    const requester = currentRequester(claim, clean(req.session.data.reviewPerson));
+    const requester = currentRequester(claim, clean(req.session.data.reviewPerson), req.session.data);
     const action = clean(req.session.data.reviewAction);
     const role = clean(req.session.data.reviewRole);
     delete req.session.data.reviewAction;
@@ -528,16 +559,18 @@ module.exports = function (router) {
 
     // Approve — a role is required.
     if (role !== "full" && role !== "collaborator") {
-      applyClaimGrantedChrome(req, res, { fullName: noCafLead ? "Sam Patel" : "Priya Shah" }, reviewCouncil(claim).name);
-      return renderReviewRequest(res, requester, { error: { message: "Select what role they should have" }, noCafLead: noCafLead, claim: claim });
+      applyClaimGrantedChrome(req, res, { fullName: reviewerName(req.session.data) }, reviewCouncil(claim).name);
+      return renderReviewRequest(res, requester, { error: { message: "Select what role they should have" }, claim: claim });
     }
+    // A real request on this council's registration: they join the council record (People).
+    approveRegistrationRequest(req.session.data, requester, role);
 
     // Approve (either role) → the requester's "Request approved" screen (07b).
     // Keep the participant's council (approving a request must not swap it for the example one).
     claim.council = reviewCouncil(claim);
     claim.person = { fullName: requester.name };
     claim.joinRequest = {
-      approverName: noCafLead ? "Sam Patel" : "Priya Shah",
+      approverName: reviewerName(req.session.data),
       role: role === "full" ? "Full access" : "Collaborator",
     };
     return res.redirect("/claim/joined"); // 07b
@@ -571,6 +604,7 @@ module.exports = function (router) {
   // Changed in build, prototype, pending design sign-off.
   router.get("/claim/cannot-join", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    holdJoinRequest(req.session.data, claim); // saved for the CAF Lead (Q24)
     res.render("pages/claim/cannot-join", {
       pageTitle: "You cannot join yet",
       councilName: (claim.council && claim.council.name) || "this council",
@@ -583,6 +617,7 @@ module.exports = function (router) {
     res.render("pages/claim/pending", {
       pageTitle: "We are checking your registration",
       councilName: (claim.council && claim.council.name) || "",
+      email: claim.oneLoginEmail || "[email address]",
     });
   });
 
@@ -591,39 +626,27 @@ module.exports = function (router) {
   router.get("/claim/pending/approve", (req, res) => {
     const claim = ensureClaim(req.session.data);
     claim.status = "approved";
-    return res.redirect("/claim/access-granted");
+    const reg = registration.getRegistration(req.session.data);
+    if (reg && reg.state === "submitted") reg.state = "approved_no_lead";
+    return res.redirect("/claim/access-granted"); // 07 → 31
   });
   router.get("/claim/pending/reject", (req, res) => {
     ensureClaim(req.session.data).status = "not-approved";
-    return res.redirect("/claim/not-approved"); // 16 (Batch 5)
+    const reg = registration.getRegistration(req.session.data);
+    if (reg && reg.state === "submitted") reg.state = "not_approved";
+    return res.redirect("/claim/not-approved"); // 16
   });
   router.get("/claim/pending/still-checking", (req, res) => {
     return res.redirect("/claim/still-checking"); // 18 (Batch 5)
   });
 
   // ----- 07 access-granted, first to join (209:2608) ---------------------------------
+  // Claim v15: approval gives no access and creates no council record. The claimant names the CAF
+  // Lead next (31); the record is created when a CAF Lead is in place. No service navigation.
   router.get("/claim/access-granted", (req, res) => {
-    const claim = ensureClaim(req.session.data);
-    // Registering a council gives a council record with NO setup answers (round-1 research defect:
-    // Set up your council was pre-filled with demo data after registration). Seed an empty Setup
-    // (and Decide) once, so nothing is copied from the demo seed or left over from a previous run.
-    // Guarded by a flag so revisiting this screen never wipes the person's own in-progress answers.
-    if (!claim.setupInitialised) {
-      req.session.data.setup = buildSetupSeedEmpty();
-      req.session.data.decide = buildDecideSeedEmpty();
-      // A new council has only the person who registered it — no example team or invitations.
-      req.session.data.access = buildAccessEmpty();
-      claim.setupInitialised = true;
-    }
-    syncAccessCurrentUser(req.session.data, claim); // the signed-in "you" is the claimant, not Jo Hart
-    // Coherent identity when reached directly (the /beta inspect link), not just in a full journey.
-    const who = (claim.person && claim.person.fullName) ? claim.person : { fullName: "Jo Hart" };
-    const org = (claim.council && claim.council.name) || "Westborough Borough Council";
-    applyClaimGrantedChrome(req, res, who, org);
-    res.render("pages/claim/access-granted", {
-      pageTitle: "Registration complete",
-      councilName: org,
-    });
+    const reg = registration.getRegistration(req.session.data);
+    if (reg && reg.state !== "approved_no_lead") return res.redirect(registration.claimantLanding(reg));
+    res.render("pages/claim/access-granted", { pageTitle: "Registration complete" });
   });
 
   // ----- 07b access-granted, joined existing (209:2977) ------------------------------
@@ -708,9 +731,14 @@ module.exports = function (router) {
 
   router.post("/claim/check-unrecognised", (req, res) => {
     const claim = ensureClaim(req.session.data);
-    claim.needsReview = true;
-    claim.status = "pending";
+    registerClaimant(req.session.data, claim);
     return res.redirect("/claim/pending"); // 06
+  });
+
+  // ----- 26 email not linked to a council (v9 frame, built in Claim v15 pass 2; NOT AGREED) ------
+  router.get("/claim/email-not-linked", (req, res) => {
+    ensureClaim(req.session.data);
+    res.render("pages/claim/email-not-linked", { pageTitle: "Your email address is not linked to a council yet" });
   });
 
   // ----- 16 registration-not-approved (209:2913) — PROPOSAL -------------------------
@@ -739,10 +767,12 @@ module.exports = function (router) {
   // ----- 18 still-checking (209:3045) -----------------------------------------------
   router.get("/claim/still-checking", (req, res) => {
     const claim = ensureClaim(req.session.data);
+    const reg = registration.getRegistration(req.session.data);
     res.render("pages/claim/still-checking", {
       pageTitle: "We are still checking your registration",
-      councilName: (claim.council && claim.council.name) || "your council",
-      registeredDate: claim.registeredDate || "21 September 2026",
+      councilName: (reg && reg.council.name) || (claim.council && claim.council.name) || "your council",
+      registeredDate: (reg && reg.registeredOn) || claim.registeredDate || "21 September 2026",
+      email: (reg && reg.claimant.email) || claim.oneLoginEmail || "[email address]",
     });
   });
 
@@ -857,6 +887,7 @@ function connectionLabel(connection) {
 function startScenario(req, res, key) {
   const scenario = SCENARIOS.find((s) => s.key === key);
   req.session.data.claim = {};
+  delete req.session.data.registration; // a scenario starts before anyone has registered
   // Clear any prior Setup/Decide/Access state before this starting point sets up its own, so a
   // registration journey always begins with an empty council (no demo data, no leftover session).
   req.session.data.setup = buildSetupSeedEmpty();
@@ -908,21 +939,24 @@ function requestStatusFor(id) {
   return "Being checked by MHCLG";
 }
 
-// Inset for 24. Exact briefed copy for the main "register + ask for others" scenario; a parallel
-// sentence (reusing the briefed "not linked … so MHCLG will check" clause) for the add-on case.
+// Inset for 24. Copy from the Claim v15 content review (24 November 2026), one paragraph per point.
+// The add-on case (not registering the matched council) uses the same "not linked" sentence.
 function buildMultiInset(claim) {
-  const esc = (s) => (s || "").toString();
+  const esc = (s) => (s || "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const andJoin = (arr) => (arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " and " + arr[arr.length - 1]);
+  const all = requestedCouncilList(claim);
   const others = (claim.otherCouncils || []).map((c) => esc(c.name));
-  const orJoin = (arr) => (arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " or " + arr[arr.length - 1]);
+  const p = (t) => '<p class="govuk-body">' + t + "</p>";
+  const count = all.length + " " + (all.length === 1 ? "council" : "councils");
   if (claim.includePrimaryInRequests && claim.council) {
     const primary = esc(claim.council.name);
-    return "You are sending a request for each council. You are the first person from " + primary +
-      " to register, so MHCLG will check that registration. Your email address is not linked to " +
-      orJoin(others) + ", so MHCLG will check those requests too.";
+    return p("You are requesting access to " + count + ".") +
+      p("MHCLG will check your request for access to " + primary + " because you are the first person from this council to register.") +
+      (others.length ? p("MHCLG will also check your " + (others.length === 1 ? "request" : "requests") + " for access to " + andJoin(others) + " because your email address is not linked to " + (others.length === 1 ? "it" : "them") + ".") : "");
   }
-  const all = requestedCouncilList(claim).map((c) => esc(c.name));
-  return "You are sending a request for each council. Your email address is not linked to " +
-    orJoin(all) + ", so MHCLG will check these requests.";
+  const names = all.map((c) => esc(c.name));
+  return p("You are requesting access to " + count + ".") +
+    p("MHCLG will check your " + (names.length === 1 ? "request" : "requests") + " for access to " + andJoin(names) + " because your email address is not linked to " + (names.length === 1 ? "it" : "them") + ".");
 }
 
 // v12: the people waiting on screen 30 for the approver (Priya Shah) to review. Example data.
@@ -935,7 +969,16 @@ const JOIN_REQUESTERS = [
 
 // The requester being reviewed on 21: the one picked on 30 (by id, remembered across GET/POST),
 // else a real request from the 05 flow, else the first on the list.
-function currentRequester(claim, personId) {
+function currentRequester(claim, personId, sessionData) {
+  const reg = registration.getRegistration(sessionData);
+  if (reg) {
+    const waiting = registration.waitingRequests(reg);
+    const found = waiting.find((r) => r.id === personId) || waiting.find((r) => r.id === claim.reviewPersonId) || waiting[0];
+    if (found) {
+      claim.reviewPersonId = found.id;
+      return { id: found.id, name: found.name, jobTitle: found.jobTitle, email: found.email, fromRegistration: true };
+    }
+  }
   const byId = JOIN_REQUESTERS.find((r) => r.id === personId);
   if (byId) { claim.reviewPersonId = byId.id; return byId; }
   if (claim.reviewPersonId) {
@@ -950,18 +993,37 @@ function currentRequester(claim, personId) {
   return JOIN_REQUESTERS[0];
 }
 
-// Make the signed-in "you" record in Access match the person who signed in and claimed (the name
-// from Your details, the email from Internal Access) instead of the seeded Jo Hart. So "Me, [name]"
-// on the CAF Lead step, the confirmation, and the identity in the nav are the participant.
-// Changed in build, prototype, pending design sign-off.
-function syncAccessCurrentUser(sessionData, claim) {
-  if (!claim || !claim.person || !claim.person.fullName) return;
+// Who reviews requests on 30 and 21: the council's CAF Lead (Claim v15), or Priya Shah in the example.
+function reviewerName(sessionData) {
+  const reg = registration.getRegistration(sessionData);
+  const lead = sessionData.setup && sessionData.setup.people && sessionData.setup.people.cafLead;
+  if (reg && lead && lead.name) return lead.name;
+  return "Priya Shah";
+}
+
+// Approving a request on the council's registration adds the person to People with the chosen role.
+function approveRegistrationRequest(sessionData, requester, role) {
+  const reg = registration.getRegistration(sessionData);
+  if (!reg || !requester.fromRegistration) return;
+  const request = (reg.requests || []).find((r) => r.id === requester.id);
+  if (!request) return;
+  request.status = "approved";
   const access = ensureAccess(sessionData);
-  const me = (access.people || []).find((p) => p.isCurrentUser);
-  if (!me) return;
-  me.name = claim.person.fullName;
-  me.firstName = claim.person.fullName.split(" ")[0];
-  if (claim.oneLoginEmail) me.email = claim.oneLoginEmail;
+  if ((access.people || []).some((p) => registration.sameEmail(p.email, request.email))) return;
+  access.people.push({
+    id: request.id,
+    name: request.name,
+    firstName: (request.name || "").split(" ")[0],
+    role: role === "full" ? "full" : "collaborator",
+    isCafLead: false,
+    isCurrentUser: false,
+    emailType: "council",
+    email: request.email,
+    lastActive: "today",
+    hasAccount: true,
+    canChange: true,
+    outcomes: [],
+  });
 }
 
 // The council a join request is for: the participant's own council when there is one, else the
@@ -996,7 +1058,6 @@ function renderReviewRequest(res, requester, opts) {
     email: requester.email ? requesterEmail(requester, opts.claim) : "",
     domain: reviewCouncilDomain(opts.claim),
     councilName: reviewCouncil(opts.claim).name,
-    noCafLead: Boolean(opts.noCafLead),
     error: error,
   });
 }

@@ -1,0 +1,16 @@
+{# 33 claim / Invitation sent — Claim v15, NEW SCREEN. No service navigation (no council record yet).
+   The content review removed the guidance link. Sending creates email N09 to the nominee. #}
+{% extends "layouts/claim.html" %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({ titleText: "Invitation sent", text: "We have invited " + nominee.name + " to be your council’s CAF Lead" }) }}
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">We have emailed {{ nominee.email }}. {{ nomineeFirst }} needs to sign in to this service and accept the invitation.</p>
+      <p class="govuk-body">You will not be able to see your council record until {{ nomineeFirst }} accepts. We will email you when they accept, or if they tell us they are not your council’s CAF Lead.</p>
+      <p class="govuk-body">You can close this page.</p>
+    </div>
+  </div>
+{% endblock %}

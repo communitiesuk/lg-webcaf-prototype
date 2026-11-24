@@ -1,24 +1,17 @@
 {# 07b claim / access-granted (joined existing) — Figma node 209:2977 #}
 {% extends "layouts/claim.html" %}
-{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {# 07b — reached after the CAF Lead (or the person who registered the council) approves a join
-         request. Not the end of the journey (the user continues to their dashboard), so a success
-         notification banner rather than the end-of-transaction confirmation panel. #}
-      {% set bannerHtml %}
-        <h3 class="govuk-notification-banner__heading">Request approved</h3>
-        <p class="govuk-body">You have joined {{ councilName }}.</p>
-      {% endset %}
-      {{ govukNotificationBanner({ type: "success", html: bannerHtml }) }}
+      {{ govukPanel({ titleText: "Request approved", text: "You have joined " + councilName }) }}
 
-      <h1 class="govuk-heading-l">What happens next</h1>
-      <p class="govuk-body">{{ approverName }} approved your request. You now share the same council record as your colleagues already working on the CAF for local government.</p>
-      <p class="govuk-body">{{ approverFirst }} gave you the {{ role }} role. You can work on the Contributing Outcomes she has given you. She can change your role at any time.</p>
+      <h2 class="govuk-heading-m">What happens next</h2>
+      <p class="govuk-body">{{ approverName }} approved your request. You can now start working on the CAF for local government.</p>
+      <p class="govuk-body">{{ approverFirst }} gave you the {{ role }} role. You can work on the contributing outcomes they have given you. They can change your role at any time.</p>
 
       {{ govukButton({ text: "Go to your dashboard", href: "/dashboard" }) }}
     </div>

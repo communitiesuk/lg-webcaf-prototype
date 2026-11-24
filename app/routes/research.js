@@ -61,6 +61,9 @@ const EXPECTED_ROLE = { N02: "assurer", N05: "approver" };
 
 // Who the email was for, as a switcher key (a replaced Approver is now the "previous Approver").
 function recipientKey(data, record) {
+  const r = data.registration;
+  if (record.to.key === "nominee" && r && r.state === "lead_confirmed") return "caf-lead";
+  if (record.to.key === "claimant" && r && r.state === "lead_is_claimant") return "caf-lead";
   if (record.to.key !== "approver") return record.to.key || "caf-lead";
   const current = (data.setup.people && data.setup.people.approver && data.setup.people.approver.name) || "";
   return record.to.name === current ? "approver" : "previous-approver";
@@ -78,6 +81,38 @@ function onboardingBooked(data) {
 
 function banner(data, where, heading, body) {
   data.oneOffBanner = { where, heading, body };
+}
+
+// Claim v15 emails (N09 to the person invited to be CAF Lead; N10 and N11 to the person who
+// registered). Resolved from the registration's state now, signing in as the person the email was for.
+const CLAIM_EMAILS = ["N09", "N10", "N11"];
+function claimTargetFor(data, record) {
+  const reg = require("../data/helpers/registration");
+  const r = reg.getRegistration(data);
+  if (!r) return "/claim";
+  const p = record.personalisation || {};
+  if (record.emailId === "N09") {
+    const stillThem = r.nominee && r.nominee.name === p.nominee_name;
+    if (stillThem && r.state === "invitation_sent") {
+      acting.signInAs(data, "nominee");
+      return "/access/named-caf-lead";
+    }
+    if (stillThem && r.state === "lead_confirmed") {
+      acting.signInAs(data, "caf-lead");
+      banner(data, "dashboard", "You are already your council’s CAF Lead", "You accepted the invitation on " + (r.nominee.acceptedOn || "") + ".");
+      return "/dashboard";
+    }
+    acting.signInAs(data, "nominee");
+    return "/claim/invitation-cancelled";
+  }
+  // N10, N11: the person who registered.
+  if (r.state === "lead_is_claimant") {
+    acting.signInAs(data, "caf-lead");
+    banner(data, "dashboard", "You have already named your CAF Lead", "You are your council’s CAF Lead.");
+    return "/dashboard";
+  }
+  acting.signInAs(data, "claimant");
+  return reg.claimantLanding(r);
 }
 
 // Where an email link lands for the signed-in person, given the plan's state now.
@@ -476,6 +511,14 @@ function routes(router) {
   // The email-link resolver (D-2026-141, proposed). Order of checks from the A36 and R04e panels.
   router.get("/go/:id", (req, res) => {
     const data = req.session.data;
+    const claimRecord = findEmail(data, req.params.id);
+    if (claimRecord && CLAIM_EMAILS.indexOf(claimRecord.emailId) !== -1) {
+      if (acting.isSignedOut(data)) {
+        data.signInReturn = { to: "/go/" + claimRecord.id, key: recipientKey(data, claimRecord) };
+        return res.redirect("/internal-access");
+      }
+      return res.redirect(claimTargetFor(data, claimRecord));
+    }
     ensureSetup(data);
     ensureDecide(data);
     const record = findEmail(data, req.params.id);
