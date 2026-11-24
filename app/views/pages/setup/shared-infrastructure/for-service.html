@@ -14,7 +14,7 @@
 
       {% set legendHtml %}
         <span class="govuk-caption-l">{{ service.name }}</span>
-        <h1 class="govuk-fieldset__heading">List the core infrastructure platforms that support {{ service.name | lower }}</h1>
+        <h1 class="govuk-fieldset__heading">List the core infrastructure that supports {{ service.name }}</h1>
       {% endset %}
 
       {% set platformItems = [] %}
@@ -27,7 +27,7 @@
         {{ govukCheckboxes({
           name: "servicePlatforms",
           fieldset: { legend: { html: legendHtml, classes: "govuk-fieldset__legend--l" } },
-          hint: { html: '<p class="govuk-hint">This might include shared platforms such as identity, network, hosting, integration and monitoring.</p><p class="govuk-hint govuk-!-margin-bottom-0">Tick all that apply to this service, or add a new platform.</p>' },
+          hint: { html: '<p class="govuk-hint">This might include shared platforms such as identity, network, hosting, integration and monitoring.</p><p class="govuk-hint govuk-!-margin-bottom-0">Tick all that apply to this service, or add new core infrastructure.</p>' },
           items: platformItems
         }) }}
 
@@ -37,7 +37,7 @@
         }) }}
 
         <div class="govuk-!-margin-bottom-3">
-          {{ govukButton({ text: "Add a platform", href: addPlatformHref, classes: "govuk-button--secondary" }) }}
+          {{ govukButton({ text: "Add infrastructure", href: addPlatformHref, classes: "govuk-button--secondary" }) }}
         </div>
         <div class="govuk-!-margin-bottom-3">
           {{ govukButton({ text: "Save and continue", name: "action", value: "continue" }) }}

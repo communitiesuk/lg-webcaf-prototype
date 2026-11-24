@@ -65,7 +65,7 @@
         {% for o in assessedOptions %}{% set _ = assessedItems.push({ value: o.value, text: o.text, checked: system.assessedBefore == o.value }) %}{% endfor %}
         {{ govukRadios({
           name: "assessedBefore",
-          fieldset: { legend: { text: "Has this system been assessed against the CAF before?", classes: "govuk-fieldset__legend--s" } },
+          fieldset: { legend: { text: "Has this system been assessed against the CAF for local government before?", classes: "govuk-fieldset__legend--s" } },
           hint: { html: "Include assessments your council submitted to MHCLG as Excel workbooks before this digital service existed.<br><br>Critical systems you have assessed before will be listed separately. This helps you see which systems are new and decide what to assess next." },
           items: assessedItems
         }) }}

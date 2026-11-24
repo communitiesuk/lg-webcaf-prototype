@@ -33,7 +33,55 @@
         {% include "pages/setup/critical-systems/_carry.njk" %}
         <details class="govuk-details">
           <summary class="govuk-details__summary"><span class="govuk-details__summary-text">How to decide between low, medium and high impact</span></summary>
-          <div class="govuk-details__text">[Placeholder: definitions and one example per impact level, to come from MHCLG policy or NCSC wording. Not written by the design team.]</div>
+          <div class="govuk-details__text">
+            <h2 class="govuk-heading-s">Understanding the impact levels</h2>
+            <p class="govuk-body">Use the following as a guide when deciding whether the impact will be low, medium or high:</p>
+            <p class="govuk-body"><strong>High impact</strong> The consequences could be severe. This could include serious harm to residents, significant disruption to essential or statutory services, risks to health or safety, major financial loss, or serious legal or regulatory consequences.</p>
+            <p class="govuk-body"><strong>Medium impact</strong> The consequences could be significant but manageable. This could include disruption to an important service, delays or backlogs, additional costs, or impacts on a particular group of residents. Contingency arrangements may be available but could be difficult to sustain.</p>
+            <p class="govuk-body"><strong>Low impact</strong> The consequences are likely to be limited. Disruption or harm could be managed through normal processes or established contingency arrangements, with limited impact on residents or council services.</p>
+            <p class="govuk-body">You should use your council's existing risk or impact framework where appropriate when making these judgements.</p>
+
+            <h2 class="govuk-heading-s">Confidentiality impact</h2>
+            <p class="govuk-body">You will need to consider the impact of data loss, unauthorised access or compromise involving information held or processed by the system.</p>
+            <p class="govuk-body">For example, consider:</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>whether the system contains personal data</li>
+              <li>whether it contains sensitive or special category personal data</li>
+              <li>whether it contains commercially sensitive or confidential information</li>
+              <li>how many residents or organisations could be affected</li>
+              <li>the potential harm if the information was disclosed or compromised</li>
+              <li>any legal or regulatory consequences</li>
+            </ul>
+            <p class="govuk-body">Consider the sensitivity and potential impact of the data, not just how much data the system holds. A small amount of particularly sensitive information could still result in a high impact.</p>
+
+            <h2 class="govuk-heading-s">Integrity impact</h2>
+            <p class="govuk-body">You will need to consider the impact if data or processing within the system is inaccurate, altered, corrupted or can no longer be trusted.</p>
+            <p class="govuk-body">For example, consider whether this could result in:</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>the wrong payments being made</li>
+              <li>inaccurate decisions that affect residents</li>
+              <li>incorrect financial calculations</li>
+              <li>inaccurate statutory or official records</li>
+              <li>staff being unable to determine which information is correct</li>
+              <li>incorrect data being passed to other council services or organisations</li>
+            </ul>
+            <p class="govuk-body">Consider how significant the consequences of inaccurate information or processing could be, rather than only how easily the data could be corrected.</p>
+
+            <h2 class="govuk-heading-s">Availability impact</h2>
+            <p class="govuk-body">You will need to consider the impact if the system is unavailable for 12 hours.</p>
+            <p class="govuk-body">For example, consider:</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>which services would stop or be significantly disrupted</li>
+              <li>how residents would be affected</li>
+              <li>whether vulnerable residents could be affected</li>
+              <li>whether statutory duties or deadlines could be missed</li>
+              <li>whether there could be health or safety consequences</li>
+              <li>the impact on other council systems or services that depend on it</li>
+              <li>whether contingency or manual arrangements are available</li>
+              <li>how effective those arrangements would be and how long they could be sustained</li>
+            </ul>
+            <p class="govuk-body govuk-!-margin-bottom-0">The 12-hour period will give you a consistent basis for assessing and comparing systems. Your maximum tolerable downtime (MTD) will be considered separately when you provide your recovery requirements.</p>
+          </div>
         </details>
         {{ ratingGroup("Confidentiality", "impactConfidentiality", system.impact.confidentiality) }}
         {{ ratingGroup("Integrity", "impactIntegrity", system.impact.integrity) }}

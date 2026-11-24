@@ -15,16 +15,16 @@
 
       {{ appPageHeader({ caption: "Your core infrastructure", title: "Your core infrastructure" }) }}
 
-      <p class="govuk-body">Add the platforms your services and systems rely on, such as identity, network, hosting and monitoring.</p>
-      <p class="govuk-body">You can add them here or when adding a service or system. Each platform only needs to be added once.</p>
+      <p class="govuk-body">Add the core infrastructure your services and systems rely on, such as identity, network, hosting and monitoring.</p>
       <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/five-lens-approach/#:~:text=Outline%20any%20core%20underlying%20infrastructure" rel="noreferrer noopener" target="_blank">Read the guidance on identifying core infrastructure (opens in new tab)</a></p>
+      <p class="govuk-body">You can add infrastructure here or when adding a service or system. Each infrastructure only needs to be added once.</p>
 
       {% if rows.length %}
         {{ govukTaskList({ idPrefix: "platform", items: rows }) }}
       {% endif %}
 
       <div class="govuk-button-group">
-        {{ govukButton({ text: "Add a platform", href: "/setup/shared-infrastructure/add-platform", classes: "govuk-button--secondary" }) }}
+        {{ govukButton({ text: "Add infrastructure", href: "/setup/shared-infrastructure/add-platform", classes: "govuk-button--secondary" }) }}
       </div>
       {{ govukButton({ text: returnLabel or "Back to Set up your council", href: continueHref }) }}
     </div>

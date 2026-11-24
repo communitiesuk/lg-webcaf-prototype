@@ -158,7 +158,7 @@ function leaveAdd(req, sys, from, finished) {
   if (from.startsWith("add:service:")) {
     const svc = getService(req.session.data.setup, from.slice(12));
     if (svc) {
-      setBanner(req, `${sys.name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
+      setBanner(req, `${sys.name} is now linked to ${svc.name}`, "You can make changes or add details in the Critical systems section of the table on this page.");
       return servicePageHref(svc);
     }
   }
@@ -279,7 +279,7 @@ module.exports = function (router) {
     const itA = answers.itTransformation;
     if (!answers.cniSectors.length) errors.push({ id: "councilContextCni", text: "Select a CNI sector, or select ‘Not applicable’" });
     if (!answers.otTypes.length) errors.push({ id: "councilContextOt", text: "Select the types of operational technology your council runs, or select ‘None of these’" });
-    if (!itA.recent && !itA.upcoming && !itA.noneOfThese) errors.push({ id: "councilContextIt", text: "Select if any of these apply to your council, or select ‘None of these’" });
+    if (!itA.recent && !itA.upcoming && !itA.noneOfThese) errors.push({ id: "councilContextIt", text: "Select if your council has recent or planned IT changes, or select ‘None of these’" });
     if (itA.recent && !itA.recentDetail) errors.push({ id: "recentItDetail", text: "Enter what the recent IT transformation was, and roughly when" });
     if (itA.upcoming && !itA.upcomingDetail) errors.push({ id: "upcomingItDetail", text: "Enter what the upcoming IT transformation is, and roughly when" });
     if (errors.length) {
@@ -542,7 +542,7 @@ module.exports = function (router) {
   router.get("/setup/essential-services/:serviceId/core-infrastructure", withService((req, res, setup, svc) => {
     const from = clean(req.query.from);
     res.render("pages/setup/shared-infrastructure/for-service", {
-      pageTitle: `List the core infrastructure platforms that support ${svc.name.toLowerCase()}`,
+      pageTitle: `List the core infrastructure that supports ${svc.name}`,
       backHref: from === "service" ? servicePageHref(svc) : `/setup/essential-services/${svc.id}/functions`,
       service: svc,
       from,
@@ -596,7 +596,7 @@ module.exports = function (router) {
     if (clean(from) === "walk") return res.redirect("/setup/coverage-check/next");
     if (clean(from) === "check") return res.redirect("/setup/coverage-check");
     if (added.length === 1 && !removed.length) {
-      setBanner(req, `${added[0].name} is now linked to ${svc.name}`, "Check its details in the Critical systems section.");
+      setBanner(req, `${added[0].name} is now linked to ${svc.name}`, "You can make changes or add details in the Critical systems section of the table on this page.");
     } else if (added.length || removed.length) {
       const parts = [];
       if (added.length) parts.push(`${added.length} critical ${record.plural(added.length, "system")} linked`);
@@ -658,7 +658,7 @@ module.exports = function (router) {
   // S12c Add a platform. ?link=service:<id>|system:<id> links the new platform; ?back= returns there.
   function renderPlatform(res, setup, opts) {
     res.render("pages/setup/shared-infrastructure/platform", Object.assign({
-      pageTitle: (opts.error ? "Error: " : "") + "Add a core infrastructure platform",
+      pageTitle: (opts.error ? "Error: " : "") + "Add core infrastructure",
       typeOptions: record.PLATFORM_TYPES,
       suppliers: setup.suppliers || [],
     }, opts));
@@ -706,7 +706,7 @@ module.exports = function (router) {
         mode: "add", caption: platformCaption(setup, link), backHref: back || "/setup/shared-infrastructure", link, back,
         action: "/setup/shared-infrastructure/add-platform",
         platform: { name: "", type: clean(f.platformType), managedBy, supplierId: clean(f.whichSupplier) },
-        error: { field: "platformName", text: "Enter the name of the platform" },
+        error: { field: "platformName", text: "Enter the name of the infrastructure" },
       });
     }
     const platform = {
@@ -1033,7 +1033,7 @@ module.exports = function (router) {
     }
     const back = `/setup/critical-systems/${sys.id}/platforms` + returnQuery(clean(req.query.return), clean(req.query.from));
     res.render("pages/setup/shared-infrastructure/system-platforms", Object.assign({
-      pageTitle: "Which shared platforms does this critical system rely on?",
+      pageTitle: "Which core infrastructure does this critical system rely on?",
       backHref: questionBack(req, sys, "platforms"),
       system: sys,
       platforms: buildPlatformChoices(setup, linked),
@@ -1331,7 +1331,7 @@ module.exports = function (router) {
 // S03a / S03ae
 function renderPreviousAssessment(res, answer, showError, fromS30) {
   res.render("pages/setup/previous-assessment", {
-    pageTitle: (showError ? "Error: " : "") + "Has your council completed a CAF organisational assessment before?",
+    pageTitle: (showError ? "Error: " : "") + "Has your council completed a CAF for local government organisational assessment before?",
     backHref: fromS30 ? "/setup/check-your-setup" : "/setup/council-context",
     from: fromS30 ? "s30" : "",
     answer,

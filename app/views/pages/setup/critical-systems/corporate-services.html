@@ -10,7 +10,7 @@
       {{ appPageHeader({
         caption: system.name,
         title: "Does this critical system support any other council services or functions?",
-        intro: "Some systems also provide corporate or internal services. Recording this now helps you understand the potential impact of an incident before it happens."
+        intro: "Some systems also support corporate or internal services. Recording this now helps you understand the potential impact of an incident before it happens."
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/corporate-services" novalidate>
@@ -27,7 +27,7 @@
                   </div>
                   <div class="govuk-checkboxes__conditional {% if not o.checked %}govuk-checkboxes__conditional--hidden{% endif %}" id="corporate-other-conditional">
                     <div class="govuk-form-group">
-                      <label class="govuk-label" for="corporateServicesOther">What other service does it provide?</label>
+                      <label class="govuk-label" for="corporateServicesOther">What other service does it support?</label>
                       <input class="govuk-input" id="corporateServicesOther" name="corporateServicesOther" type="text" value="{{ system.otherFunctionsDetail }}">
                     </div>
                   </div>

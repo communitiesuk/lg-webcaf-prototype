@@ -118,3 +118,41 @@ Round 1 research: people landed on S52 straight after S14 and saw "Not answered"
   - It opens the first unanswered question and skips any later ones already answered.
   - It returns to S52, keeping where S52 itself returns to (service page or S24).
   - "Save and come back later" is offered on each page and returns to S52.
+
+## Second content review (Figma page "v11 (content review) 2"), applied 24 November 2026
+
+That page is a copy of v10 with new review edits. Only edits made since v10 and not yet in v11 were applied. Where the copy still had v10 content that v11 changed on purpose, v11 was kept: the S02b link, the OT list, the IT examples, the S15 scope inset, the S24 scope row and the example system names.
+
+**Applied:**
+- **"Core infrastructure" wording:**
+  - S12c (heading, labels, buttons);
+  - S38 (heading no longer lower-cased, "Add infrastructure");
+  - S39 (intro reordered, guidance link in the middle);
+  - S39a, S45, S49, S20;
+  - S46 ("core infrastructure components").
+- **S02:** the shortened statement and the new intro.
+- **S03:**
+  - the intro;
+  - the OT hint;
+  - the IT legend is now "Recent or planned IT changes", and its error now reads "Select if your council has recent or planned IT changes, or select 'None of these'".
+- **S03a:** "CAF for local government" in the question, the extra hint sentence, and a comma in the inset. S14 also says "CAF for local government".
+- **S28:** the impact definitions in the Details component.
+- **Smaller edits:**
+  - S37 family intro;
+  - the S37c banner's second line;
+  - S36 and S50 "linked yet";
+  - S35, S35b and S40 "services that";
+  - S05 full stop;
+  - S19 "support";
+  - S30 "System criticality".
+- **Fixed rather than copied:**
+  - "infrasructure" (S12c);
+  - "relies on" → "rely on" (S39);
+  - "more the 3 years" (S14);
+  - "organisational’" (S03ae).
+- **Changed for consistency:** the S12c error is now "Enter the name of the infrastructure".
+
+**Not applied, for Michael:**
+- The S28 recovery prompt and its guidance link. v11 removed the prompt.
+- The S03ae hint about choosing "Yes". It does not match S03a, and its rule disagrees with the build: "more than 3 years ago" is included automatically.
+- "Not Applicable" with a capital A in the S03 hint. The option label is "Not applicable".

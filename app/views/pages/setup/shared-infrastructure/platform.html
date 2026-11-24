@@ -18,7 +18,7 @@
       {% endif %}
       {{ appPageHeader({
         caption: caption,
-        title: pageTitle if mode == "edit" else "Add a core infrastructure platform"
+        title: pageTitle if mode == "edit" else "Add core infrastructure"
       }) }}
 
       <form method="post" action="{{ action }}" novalidate>
@@ -26,7 +26,7 @@
         {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
 
         <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label govuk-label--s" for="platformName">Name of platform</label>
+          <label class="govuk-label govuk-label--s" for="platformName">Name of infrastructure</label>
           <div id="platformName-hint" class="govuk-hint">For example: Entra ID</div>
           {% if error %}<p id="platformName-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error.text }}</p>{% endif %}
           <input class="govuk-input{% if error %} govuk-input--error{% endif %}" id="platformName" name="platformName" type="text" value="{{ platform.name }}" aria-describedby="platformName-hint{% if error %} platformName-error{% endif %}">
@@ -34,7 +34,7 @@
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">What type of platform is it?</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">What type of infrastructure is it?</legend>
             <div class="govuk-radios" data-module="govuk-radios">
               {% for type in typeOptions %}
                 <div class="govuk-radios__item">
@@ -48,7 +48,7 @@
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Who manages the platform?</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Who manages this infrastructure?</legend>
             <div class="govuk-radios" data-module="govuk-radios">
               <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="platformManager-council" name="platformManager" type="radio" value="council" {% if platform.managedBy == "council" %}checked{% endif %}>
@@ -81,11 +81,11 @@
           </fieldset>
         </div>
 
-        <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and continue" if mode == "edit" else "Add this platform" }}</button>
+        <button class="govuk-button" data-module="govuk-button" type="submit">{{ "Save and continue" if mode == "edit" else "Add this infrastructure" }}</button>
       </form>
 
       {% if removeHref %}
-        <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this platform</a></p>
+        <p class="govuk-body"><a class="govuk-link" href="{{ removeHref }}">Remove this infrastructure</a></p>
       {% endif %}
     </div>
   </div>

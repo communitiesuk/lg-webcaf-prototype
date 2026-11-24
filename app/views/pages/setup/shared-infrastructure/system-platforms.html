@@ -10,9 +10,9 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({
         caption: system.name,
-        title: "Which shared platforms does this critical system rely on?",
+        title: "Which core infrastructure does this critical system rely on?",
         intro: "Core infrastructure already identified as supporting this critical system has been automatically selected.",
-        intro2: "Review the list and add or remove platforms as needed."
+        intro2: "Review the list and add or remove core infrastructure as needed."
       }) }}
 
       <form method="post" action="/setup/critical-systems/{{ system.id }}/platforms" novalidate>
@@ -34,7 +34,7 @@
         </div>
 
         <div class="govuk-!-margin-bottom-3">
-          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ addPlatformHref }}">Add a platform</a>
+          <a class="govuk-button govuk-button--secondary" data-module="govuk-button" href="{{ addPlatformHref }}">Add infrastructure</a>
         </div>
         <div class="govuk-button-group">
           <button class="govuk-button" data-module="govuk-button" type="submit">Save and continue</button>

@@ -25,7 +25,7 @@
         {% set hintHtml %}
           <p class="govuk-body">An essential service is one that people rely on every day or that helps keep society or the economy working.</p>
           <p class="govuk-body"><a class="govuk-link" href="https://www.security.gov.uk/policy-and-guidance/cyber-assessment-framework-caf-for-local-government/prepare/identify-essential-services/#:~:text=How%20to%20identify%20your%20essential%20services" rel="noreferrer noopener" target="_blank">Read the guidance on essential services (opens in new tab)</a></p>
-          <span class="govuk-hint">These are the services {{ councilsLabel }} usually deliver. Select all that apply and add any that are missing.</span>
+          <span class="govuk-hint">These are the services that {{ councilsLabel }} usually deliver. Select all that apply and add any that are missing.</span>
         {% endset %}
         {{ govukCheckboxes({
           idPrefix: "essentialServiceChoices",

@@ -177,7 +177,7 @@ function buildServiceRows(setup) {
     const syss = systemsForService(setup, svc).length;
     let hint;
     if (status === "not_started") {
-      hint = "No functions, platforms or critical systems yet";
+      hint = "No functions, platforms or critical systems linked yet";
     } else if (status === "in_progress") {
       hint = [
         fns ? `${fns} ${plural(fns, "function")}` : "No functions yet",
@@ -237,7 +237,7 @@ function buildRemoveServiceConsequences(setup, svc) {
   const orphaned = systemsForService(setup, svc).filter((sys) => servicesForSystem(setup, sys).length === 1);
   const bullets = [];
   if (fns) bullets.push(`its ${fns} ${plural(fns, "function")} will be removed. You will need to add them again if you need them later`);
-  if (plats) bullets.push(`it will no longer be linked to ${plats} shared ${plural(plats, "platform")}. The platforms will not be removed`);
+  if (plats) bullets.push(`it will no longer be linked to ${plats} core infrastructure ${plural(plats, "component")}. ${plats === 1 ? "The component" : "The components"} will not be removed`);
   orphaned.forEach((sys) => bullets.push(`the critical system ${sys.name} will no longer be linked to any essential services`));
   return { bullets, orphaned };
 }
@@ -281,7 +281,7 @@ function buildPlatformPage(setup, p) {
 function buildRemovePlatformConsequence(p) {
   const svc = (p.linkedServices || []).length;
   const sys = (p.linkedSystems || []).length;
-  return `This core infrastructure platform supports ${svc} essential ${plural(svc, "service")} and ${sys} critical ${plural(sys, "system")}. If you remove it, these links will be removed.`;
+  return `This core infrastructure supports ${svc} essential ${plural(svc, "service")} and ${sys} critical ${plural(sys, "system")}. If you remove it, these links will be removed.`;
 }
 
 // S45 / S38 / S20 option lists.
@@ -470,7 +470,7 @@ function buildSetupCheck(setup) {
       row("Essential services", svcs.length ? `${svcs.length} added` : "", "/setup/essential-services?return=/setup/check-your-setup", "None added"),
       row("Core infrastructure", plats.length ? `${plats.length} shared ${plural(plats.length, "platform")}, ${unlinkedPlats ? `${unlinkedPlats} not linked yet` : "linked to your services"}` : "", "/setup/shared-infrastructure?return=/setup/check-your-setup", "None added"),
       row("Critical systems", syss.length ? `${syss.length} added${sysAll ? ", all with owners and ratings" : ""}` : "", "/setup/critical-systems?return=/setup/check-your-setup", "None added"),
-      row("How critical your systems are", criticalityDistribution(setup), "/setup/critical-systems?return=/setup/check-your-setup", "None added"),
+      row("System criticality", criticalityDistribution(setup), "/setup/critical-systems?return=/setup/check-your-setup", "None added"),
     ] },
   ];
 }

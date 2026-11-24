@@ -11,8 +11,8 @@
     <div class="govuk-grid-column-two-thirds">
       {{ appPageHeader({ caption: platform.name, title: "What relies on " + platform.name + "?" }) }}
 
-      <p class="govuk-body">Select the essential services and critical systems that use this core infrastructure platform.</p>
-      <p class="govuk-body">The list only includes services and systems you have already added. You can add and link more services and systems to this platform later.</p>
+      <p class="govuk-body">Select the essential services and critical systems that use this core infrastructure.</p>
+      <p class="govuk-body">The list only includes services and systems you have already added. You can add and link more services and systems to this infrastructure later.</p>
 
       <form method="post" action="/setup/shared-infrastructure/{{ platform.id }}/relies" novalidate>
         {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}

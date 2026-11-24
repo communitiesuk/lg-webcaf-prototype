@@ -23,14 +23,14 @@
         {% if from %}<input type="hidden" name="from" value="{{ from }}">{% endif %}
         {% set hintHtml %}
           <p class="govuk-hint">An organisational assessment covers objective A (Managing security risk) and objective D (Minimising the impact of cyber security incidents). It should be completed once and then reviewed and updated every 3 years.</p>
-          <p class="govuk-hint">Include assessments you completed using the CAF Excel workbooks before this digital service existed.</p>
-          {{ govukInsetText({ text: "If you have not done an organisational assessment before or it has been more than 3 years, this will automatically be included in your first assessment cycle." }) }}
+          <p class="govuk-hint">Tell us if you have completed an organisational assessment before. You should include assessments you completed using the CAF Excel workbooks before this digital service existed.</p>
+          {{ govukInsetText({ text: "If you have not done an organisational assessment before, or it has been more than 3 years, this will automatically be included in your first assessment cycle." }) }}
         {% endset %}
         {{ govukRadios({
           name: "orgAssessedBefore",
           fieldset: {
             legend: {
-              html: '<span class="govuk-caption-l">Organisational context</span>Has your council completed a CAF organisational assessment before?',
+              html: '<span class="govuk-caption-l">Organisational context</span>Has your council completed a CAF for local government organisational assessment before?',
               isPageHeading: true,
               classes: "govuk-fieldset__legend--l"
             }

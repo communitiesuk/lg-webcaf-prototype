@@ -15,13 +15,13 @@
 
       {{ appPageHeader({ caption: "Your core infrastructure", title: platform.name }) }}
 
-      <p class="govuk-body">Review the infrastructure platform details and the essential services and critical systems that rely on it.</p>
+      <p class="govuk-body">Review the core infrastructure details and the essential services and critical systems that rely on it.</p>
       <p class="govuk-body">Use the links in each section to add or make changes. After you add or change something, you will return to this page.</p>
 
       {% set editHref = "/setup/shared-infrastructure/" + platform.id + "/edit" %}
       {% set reliesHref = "/setup/shared-infrastructure/" + platform.id + "/relies" %}
       {{ govukSummaryList({
-        card: { title: { text: "About the platform" } },
+        card: { title: { text: "About the infrastructure" } },
         rows: [
           { key: { text: "Name" }, value: { text: platform.name }, actions: { items: [{ href: editHref, text: "Change", visuallyHiddenText: "name" }] } },
           { key: { text: "Type" }, value: { text: platform.type or "Not answered" }, actions: { items: [{ href: editHref, text: "Change" if platform.type else "Enter answer", visuallyHiddenText: "type" }] } },
@@ -39,9 +39,9 @@
         ]
       }) }}
 
-      <p class="govuk-body"><a class="govuk-link" href="/setup/shared-infrastructure/{{ platform.id }}/remove">Remove this platform</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="/setup/shared-infrastructure/{{ platform.id }}/remove">Remove this infrastructure</a></p>
 
-      {{ govukButton({ text: "Back to your shared infrastructure", href: "/setup/shared-infrastructure" }) }}
+      {{ govukButton({ text: "Back to your core infrastructure", href: "/setup/shared-infrastructure" }) }}
     </div>
   </div>
 {% endblock %}

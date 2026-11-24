@@ -27,7 +27,7 @@
       {{ appPageHeader({
         caption: "Organisational context",
         title: "Your council context",
-        intro: "Tell us anything that would help your assurer or MHCLG appropriately contextualise your CAF assessments."
+        intro: "Tell us anything that would help your assurer or MHCLG understand the context of your CAF for local government assessments."
       }) }}
 
       <form method="post" action="/setup/council-context" novalidate>
@@ -53,7 +53,7 @@
           idPrefix: "councilContextOt",
           name: "councilContextOt",
           fieldset: { legend: { text: "Operational Technology (OT)", classes: "govuk-fieldset__legend--s" } },
-          hint: { text: "Select all the types of operational technology your council runs or is responsible for, or select ‘None of these’." },
+          hint: { text: "Select a type of operational technology, or select ‘None of these’." },
           errorMessage: { text: errs.councilContextOt } if errs.councilContextOt else undefined,
           items: otItems
         }) }}
@@ -66,7 +66,7 @@
           <p class="govuk-body govuk-!-margin-bottom-0">Operational technology or smart infrastructure programmes: changes affecting technology supporting services such as highways, transport, CCTV, building management and other connected infrastructure.</p>
         {% endset %}
         {% set itHintHtml %}
-          <p class="govuk-body">Tell us about significant IT changes that have recently taken place or are planned. This helps your independent assurer understand changes that could affect your essential services, critical systems or the scope of your CAF assessment.</p>
+          <p class="govuk-body">Tell us about any significant IT changes that have recently taken place or are planned. This helps your independent assurer understand changes that could affect your essential services, critical systems or the scope of your CAF assessment.</p>
           {{ govukDetails({ summaryText: "Examples of IT transformation", html: examplesHtml }) }}
           <span class="govuk-hint">Select all that apply</span>
         {% endset %}
@@ -95,7 +95,7 @@
 
         <div class="govuk-form-group{% if errs.councilContextIt %} govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" aria-describedby="councilContextIt-hint{% if errs.councilContextIt %} councilContextIt-error{% endif %}">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Do any of the following also apply to your council?</legend>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Recent or planned IT changes</legend>
             <div id="councilContextIt-hint">{{ itHintHtml | safe }}</div>
             {% if errs.councilContextIt %}
               <p id="councilContextIt-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errs.councilContextIt }}</p>
