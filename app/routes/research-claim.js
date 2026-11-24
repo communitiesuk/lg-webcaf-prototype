@@ -45,8 +45,15 @@ function invited(data) {
 
 const CLAIM_SCENARIOS = [
   {
+    key: "from-sign-in",
+    title: "1. From sign-in, through Internal Access",
+    note: "Signed out, nothing registered. The participant types their own work email at Internal Access (for example name@westborough.gov.uk, or any council domain such as name@leeds.gov.uk), then any one-time code. Expect 00 Register your council, then the same journey as 2. Use “Approve this registration” on 06 to carry on to 07 and 31.",
+    build: (data) => clearSession(data),
+    to: "/internal-access",
+  },
+  {
     key: "claimant-is-lead",
-    title: "1. The person registering is the CAF Lead",
+    title: "2. The person registering is the CAF Lead",
     note: "Signed in as s.rivera@westborough.gov.uk, nothing registered. Register (00 to 04) → 06. Use “Approve this registration” on 06 → 07 → 31, choose Me → 37 → Set up your council (S01, task 1 Completed).",
     build: (data) => {
       clearSession(data);
@@ -56,28 +63,28 @@ const CLAIM_SCENARIOS = [
   },
   {
     key: "invite-colleague",
-    title: "2. They invite a colleague as CAF Lead",
+    title: "3. They invite a colleague as CAF Lead",
     note: "Registered and approved, signed in as Sam Rivera. 07 → 31 Someone else → 32 with a westborough.gov.uk address → 33. Sign out and in again as s.rivera@westborough.gov.uk → 35. On N00 (Emails sent), open N09 as the nominee → A24, which accepts → dashboard. Then open N10 as Sam → 35 says accepted; Sam still has no access.",
     build: (data) => registered(data, "approved_no_lead"),
     to: "/claim/access-granted",
   },
   {
     key: "nominee-declines",
-    title: "3. The nominee says they are not the CAF Lead",
-    note: "As 2, with the invitation already sent to Alex Moore (35). On N00, open N09 as Alex → A24 → This is not me → A25 → Yes. Open N11 as Sam → 36 → Name your CAF Lead (31) → Me → 37.",
+    title: "4. The nominee says they are not the CAF Lead",
+    note: "As 3, with the invitation already sent to Alex Moore (35). On N00, open N09 as Alex → A24 → This is not me → A25 → Yes. Open N11 as Sam → 36 → Name your CAF Lead (31) → Me → 37.",
     build: (data) => invited(data),
     to: "/claim/caf-lead/waiting",
   },
   {
     key: "different-domain",
-    title: "4. The nominee has a different email domain",
+    title: "5. The nominee has a different email domain",
     note: "Registered and approved. 31 Someone else → 32 with a.moore@partnerco.co.uk → 34. Use “MHCLG check passed” (research only) on 34 → 33, and N09 is sent.",
     build: (data) => registered(data, "approved_no_lead"),
     to: "/claim/caf-lead",
   },
   {
     key: "held-request",
-    title: "5. A colleague asks to join before there is a CAF Lead",
+    title: "6. A colleague asks to join before there is a CAF Lead",
     note: "Sam Rivera registered and invited Alex Moore, who has not accepted. The participant is a second person (j.hart@westborough.gov.uk): register → 05 → 20b. On N00, open N09 as Alex → A24 shows 1 request waiting → 30 lists it → 21 → approve.",
     build: (data) => {
       invited(data);
@@ -88,14 +95,14 @@ const CLAIM_SCENARIOS = [
   },
   {
     key: "claimant-early",
-    title: "6. The person who registered tries to get in early",
+    title: "7. The person who registered tries to get in early",
     note: "Invitation sent, not accepted. Signed in as Sam Rivera; this opens the dashboard address directly. Expect 35, never the dashboard. Setup (/setup/task-list), People (/access) and 30 (/claim/requests-to-join) also lead to 35.",
     build: (data) => invited(data),
     to: "/dashboard",
   },
   {
     key: "example-council",
-    title: "7. Old model, for comparison",
+    title: "8. Old model, for comparison",
     note: "The ready-made example council (Westborough Borough Council), untouched. Opens its dashboard.",
     href: "/beta/example?to=/dashboard",
   },
