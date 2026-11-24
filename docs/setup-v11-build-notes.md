@@ -89,3 +89,17 @@ Fixed before research. Each was checked by following the journey in the prototyp
   - "Select if any of these apply to your council, or select 'None of these'"
   - "Enter what the recent IT transformation was, and roughly when"
   - "Enter what the upcoming IT transformation is, and roughly when"
+
+## Guidance links (security.gov.uk), checked 24 November 2026
+
+The guidance headings have no anchor IDs, so the links use text fragments (`#:~:text=`). These scroll to and highlight the heading in Chrome, Edge, Safari 16.1+ and Firefox 131+. Other browsers open the top of the page.
+
+| Screen | Link | Goes to |
+|---|---|---|
+| S04 | Read the guidance on identifying your essential services and critical systems | Prepare › Set your scope › "What setting your scope involves" (Q28) |
+| S04 | What is the five lens approach? › guidance | Prepare › Use the five lens approach |
+| S35, S35b, S40 | Read the guidance on essential services | Prepare › Identify your essential services › "How to identify your essential services" |
+| S39 | Read the guidance on identifying core infrastructure | Prepare › Use the five lens approach › "3. Outline any core underlying infrastructure" |
+| S13 | Read the guidance on identifying critical systems | Prepare › Identify your critical systems › "How to identify your critical systems" |
+
+Not changed: Claim's "Read the guidance" buttons go to the guidance home page (pass 2).
