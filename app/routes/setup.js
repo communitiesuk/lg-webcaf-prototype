@@ -253,35 +253,22 @@ module.exports = function (router) {
       otTypes: record.OT_TYPES,
     });
   });
-  // S03 answers are required (MHCLG, 24 November 2026): a CNI sector or Not applicable, the OT types
-  // or None of these, and the IT transformation question, with detail for each box ticked. Only
-  // "Anything else" is optional. Error copy written in the build; not in Figma yet.
+  // S03: a CNI sector (or Not applicable) and the OT types (or None of these) are required (MHCLG,
+  // 24 November 2026). "Recent or planned IT changes" and "Anything else" are optional text boxes.
   router.post("/setup/council-context", (req, res) => {
     const setup = ensureSetup(req.session.data);
-    const f = take(req, ["councilContextCni", "councilContextOt", "councilContextIt", "recentItDetail", "upcomingItDetail", "ccAnythingElse"]);
+    const f = take(req, ["councilContextCni", "councilContextOt", "itChanges", "ccAnythingElse"]);
     const ot = toList(f.councilContextOt).map(clean).filter(Boolean);
-    const it = toList(f.councilContextIt);
-    const none = it.includes("none");
     const cni = clean(f.councilContextCni);
     const answers = {
       cniSectors: record.CNI_SECTORS.includes(cni) ? [cni] : [],
       otTypes: ot.includes("none") ? ["None of these"] : ot.filter((v) => record.OT_TYPES.includes(v)),
-      itTransformation: {
-        recent: !none && it.includes("recent"),
-        recentDetail: !none && it.includes("recent") ? clean(f.recentItDetail) : "",
-        upcoming: !none && it.includes("upcoming"),
-        upcomingDetail: !none && it.includes("upcoming") ? clean(f.upcomingItDetail) : "",
-        noneOfThese: none,
-      },
+      itChanges: clean(f.itChanges),
       anythingElse: clean(f.ccAnythingElse),
     };
     const errors = [];
-    const itA = answers.itTransformation;
     if (!answers.cniSectors.length) errors.push({ id: "councilContextCni", text: "Select a CNI sector, or select ‘Not applicable’" });
     if (!answers.otTypes.length) errors.push({ id: "councilContextOt", text: "Select the types of operational technology your council runs, or select ‘None of these’" });
-    if (!itA.recent && !itA.upcoming && !itA.noneOfThese) errors.push({ id: "councilContextIt", text: "Select if your council has recent or planned IT changes, or select ‘None of these’" });
-    if (itA.recent && !itA.recentDetail) errors.push({ id: "recentItDetail", text: "Enter what the recent IT transformation was, and roughly when" });
-    if (itA.upcoming && !itA.upcomingDetail) errors.push({ id: "upcomingItDetail", text: "Enter what the upcoming IT transformation is, and roughly when" });
     if (errors.length) {
       const back = clean(req.session.data.from) === "s30";
       return res.render("pages/setup/council-context", {

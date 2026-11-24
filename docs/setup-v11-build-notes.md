@@ -156,3 +156,14 @@ That page is a copy of v10 with new review edits. Only edits made since v10 and 
 - The S28 recovery prompt and its guidance link. v11 removed the prompt.
 - The S03ae hint about choosing "Yes". It does not match S03a, and its rule disagrees with the build: "more than 3 years ago" is included automatically.
 - "Not Applicable" with a capital A in the S03 hint. The option label is "Not applicable".
+
+## S03 IT changes: one text box (Michael, 24 November 2026)
+
+The Recent / Upcoming / None of these checkboxes and their two reveal boxes are replaced by one optional text box, "Recent or planned IT changes (optional)". It keeps the intro and "Examples of IT transformation" as its hint.
+
+- **Data:** stored as `councilContext.itChanges` (a string).
+  - `migrate()` turns an old `itTransformation` into that text, one line each for recent and upcoming, then removes it.
+  - Nothing outside S03 read the old fields.
+- **Errors:** S03 now has two (CNI and OT). The IT error and the two "Enter what the … was" errors are gone.
+- **Task 2:** complete once CNI and OT are answered and S03 is saved.
+- **Also fixed:** the assurer's "Review the council's setup and plan" read `councilContext.completed`, which v11 never sets, so it always showed "Not completed". It now uses `contextComplete()`.

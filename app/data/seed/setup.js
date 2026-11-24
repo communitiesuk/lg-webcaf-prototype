@@ -78,7 +78,7 @@ function buildSetupSeed() {
     councilContext: {
       cniSectors: ["Transport"],
       otTypes: ["Traffic signals and urban traffic control", "CCTV and public space surveillance"],
-      itTransformation: { recent: true, recentDetail: "Moved to Microsoft 365 in 2025", upcoming: false, upcomingDetail: "", noneOfThese: false },
+      itChanges: "Moved to Microsoft 365 in 2025",
       anythingElse: "",
       answered: true,
     },
@@ -203,7 +203,7 @@ function buildSetupSeedEmpty() {
     councilContext: {
       cniSectors: [],
       otTypes: [],
-      itTransformation: { recent: false, recentDetail: "", upcoming: false, upcomingDetail: "", noneOfThese: false },
+      itChanges: "",
       anythingElse: "",
       answered: false,
     },

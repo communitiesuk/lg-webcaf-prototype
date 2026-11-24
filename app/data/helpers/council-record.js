@@ -248,17 +248,15 @@ function systemComplete(setup, sys) {
   return detailsComplete(sys) && systemLinked(setup, sys);
 }
 
-// S03's three questions are required (MHCLG, 24 November): a CNI sector or Not applicable, the OT
-// types or None of these, and the IT transformation question. `answered` records a valid save.
+// S03's required questions (MHCLG, 24 November): a CNI sector or Not applicable, and the OT types or
+// None of these. The IT changes and Anything else boxes are optional. `answered` records a valid save.
 function contextComplete(setup) {
   const cc = setup.councilContext || {};
-  const it = cc.itTransformation || {};
-  return Boolean(cc.answered) && (cc.cniSectors || []).length > 0 && (cc.otTypes || []).length > 0 && Boolean(it.recent || it.upcoming || it.noneOfThese);
+  return Boolean(cc.answered) && (cc.cniSectors || []).length > 0 && (cc.otTypes || []).length > 0;
 }
 function contextStarted(setup) {
   const cc = setup.councilContext || {};
-  const it = cc.itTransformation || {};
-  return (cc.cniSectors || []).length > 0 || (cc.otTypes || []).length > 0 || Boolean(it.recent || it.upcoming || it.noneOfThese || cc.anythingElse);
+  return (cc.cniSectors || []).length > 0 || (cc.otTypes || []).length > 0 || Boolean(cc.itChanges || cc.anythingElse);
 }
 function methodologyComplete(setup) {
   const m = setup.methodology || {};
@@ -451,7 +449,7 @@ function migrate(setup) {
     setup.council.type = /metropolitan/i.test(setup.council.type) ? "metropolitan_borough" : "";
   }
   const cc = setup.councilContext || {};
-  if (!cc.itTransformation) {
+  if (!cc.itTransformation && cc.itChanges === undefined) {
     const cniName = { "emergency-services": "Emergency services", none: "Not applicable" }[cc.cni] || (cc.cni ? cc.cni.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()) : "");
     setup.councilContext = {
       cniSectors: cniName ? [cniName] : [],
@@ -461,10 +459,15 @@ function migrate(setup) {
         recentDetail: cc.recentItTransformationDetail || "",
         upcoming: Boolean(cc.upcomingItTransformation),
         upcomingDetail: cc.upcomingItTransformationDetail || "",
-        noneOfThese: Boolean(cc.noneOfThese),
       },
       anythingElse: cc.anythingElse || "",
     };
+  }
+  // Records saved before the IT checkboxes became one text box (24 November 2026): keep the details.
+  if (setup.councilContext.itTransformation) {
+    const it = setup.councilContext.itTransformation;
+    setup.councilContext.itChanges = [it.recent && (it.recentDetail || "Recent IT transformation"), it.upcoming && (it.upcomingDetail || "Upcoming IT transformation")].filter(Boolean).join("\n");
+    delete setup.councilContext.itTransformation;
   }
   // Records saved before 24 November (evening) had no `answered`: any answer counts as saved.
   if (setup.councilContext.answered === undefined) setup.councilContext.answered = contextStarted(setup);

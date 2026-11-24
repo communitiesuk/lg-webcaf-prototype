@@ -1,9 +1,9 @@
 {# S03 — setup / council-context — Setup v11.
    CNI: a select of the national CNI sectors without Government, plus "Not applicable".
    OT: checkboxes, eleven types and an exclusive "None of these" (draft list, Chris to confirm, Q19).
-   IT transformation: two checkboxes with a conditional text box each, an exclusive "None of these",
-   and "Examples of IT transformation" in a Details component. Labelled copy: content review.
-   All three questions are required (MHCLG, 24 November 2026); the error state is not in Figma yet. #}
+   Recent or planned IT changes: one optional text box (Michael, 24 November 2026: replaces the Recent /
+   Upcoming / None of these checkboxes), with "Examples of IT transformation" in a Details component.
+   CNI and OT are required (MHCLG, 24 November 2026). #}
 {% extends "layouts/setup.html" %}
 {% from "components/page-header.njk" import appPageHeader %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
@@ -58,7 +58,6 @@
           items: otItems
         }) }}
 
-        {% set it = context.itTransformation or {} %}
         {% set examplesHtml %}
           <p class="govuk-body">Cloud migration or adoption: moving key services or infrastructure from on-premises environments to cloud platforms, such as Microsoft Azure or AWS.</p>
           <p class="govuk-body">Network modernisation: significant changes to network architecture, connectivity, segmentation, firewalls or secure remote access.</p>
@@ -67,52 +66,15 @@
         {% endset %}
         {% set itHintHtml %}
           <p class="govuk-body">Tell us about any significant IT changes that have recently taken place or are planned. This helps your independent assurer understand changes that could affect your essential services, critical systems or the scope of your CAF assessment.</p>
-          {{ govukDetails({ summaryText: "Examples of IT transformation", html: examplesHtml }) }}
-          <span class="govuk-hint">Select all that apply</span>
+          {{ govukDetails({ summaryText: "Examples of IT transformation", html: examplesHtml, classes: "govuk-!-margin-bottom-0" }) }}
         {% endset %}
-
-        {% set recentHtml %}
-          {{ govukTextarea({
-            id: "recentItDetail",
-            name: "recentItDetail",
-            rows: 5,
-            label: { text: "What was it, and roughly when?" },
-            hint: { text: "For example, moved to Microsoft 365 in 2025" },
-            errorMessage: { text: errs.recentItDetail } if errs.recentItDetail else undefined,
-            value: it.recentDetail
-          }) }}
-        {% endset %}
-        {% set upcomingHtml %}
-          {{ govukTextarea({
-            id: "upcomingItDetail",
-            name: "upcomingItDetail",
-            rows: 5,
-            label: { text: "What is planned, and roughly when?" },
-            errorMessage: { text: errs.upcomingItDetail } if errs.upcomingItDetail else undefined,
-            value: it.upcomingDetail
-          }) }}
-        {% endset %}
-
-        <div class="govuk-form-group{% if errs.councilContextIt %} govuk-form-group--error{% endif %}">
-          <fieldset class="govuk-fieldset" aria-describedby="councilContextIt-hint{% if errs.councilContextIt %} councilContextIt-error{% endif %}">
-            <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Recent or planned IT changes</legend>
-            <div id="councilContextIt-hint">{{ itHintHtml | safe }}</div>
-            {% if errs.councilContextIt %}
-              <p id="councilContextIt-error" class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errs.councilContextIt }}</p>
-            {% endif %}
-            {{ govukCheckboxes({
-              idPrefix: "councilContextIt",
-              name: "councilContextIt",
-              formGroup: { classes: "govuk-!-margin-bottom-0" },
-              items: [
-                { value: "recent", text: "Recent IT transformation", checked: it.recent, conditional: { html: recentHtml } },
-                { value: "upcoming", text: "Upcoming IT transformation", checked: it.upcoming, conditional: { html: upcomingHtml } },
-                { divider: "or" },
-                { value: "none", text: "None of these", behaviour: "exclusive", checked: it.noneOfThese }
-              ]
-            }) }}
-          </fieldset>
-        </div>
+        {{ govukTextarea({
+          id: "itChanges",
+          name: "itChanges",
+          label: { text: "Recent or planned IT changes (optional)", classes: "govuk-label--s" },
+          hint: { html: itHintHtml },
+          value: context.itChanges
+        }) }}
 
         {{ govukTextarea({
           id: "ccAnythingElse",

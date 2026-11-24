@@ -41,7 +41,7 @@ function contextDone(setup) {
   setup.councilContext = {
     cniSectors: ["Not applicable"],
     otTypes: ["CCTV and public space surveillance"],
-    itTransformation: { recent: false, recentDetail: "", upcoming: false, upcomingDetail: "", noneOfThese: true },
+    itChanges: "",
     anythingElse: "",
     answered: true,
   };

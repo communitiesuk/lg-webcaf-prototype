@@ -919,8 +919,7 @@ function assurerReviewModel(setup, decide, form) {
   const serviceCount = (setup.essentialServices || []).length;
   const systemCount = (setup.criticalSystems || []).length;
   const unratedCount = (setup.criticalSystems || []).filter((s) => !deriveCriticality(s.impact)).length;
-  const ctx = setup.councilContext || {};
-  const contextDone = Boolean(setup.sectorContext && setup.sectorContext.confirmed && ctx.completed);
+  const contextDone = Boolean(setup.sectorContext && setup.sectorContext.confirmed && require("../data/helpers/council-record").contextComplete(setup));
   return {
     pageTitle: (errors.length ? "Error: " : "") + "Review the council’s setup and plan",
     backHref: "/decide/assurer/councils",

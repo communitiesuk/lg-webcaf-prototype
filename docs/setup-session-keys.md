@@ -34,9 +34,9 @@ A system supports a service when it is linked to the service, or to one of the s
 | `sectorContext.confirmed` | bool | S02 Continue |
 | `councilContext.cniSectors` | `[sector]`; never "Government"; may be `["Not applicable"]` | S03 |
 | `councilContext.otTypes` | the 11 types, or `["None of these"]` | S03 |
-| `councilContext.itTransformation` | `{ recent, recentDetail, upcoming, upcomingDetail, noneOfThese }` | S03 |
+| `councilContext.itChanges` | string, optional ("Recent or planned IT changes"); replaced `itTransformation` on 24 November 2026, which `migrate()` converts | S03 |
 | `councilContext.anythingElse` | string | S03 |
-| `councilContext.answered` | bool: S03 was saved (it has no required questions) | S03 |
+| `councilContext.answered` | bool: S03 was saved without errors (CNI and OT are required) | S03 |
 | `organisationAssessment.answer` | `within_3_years` \| `more_than_3_years` \| `no` \| `dont_know` | S03a |
 | `methodology` | `{ approach: five-lens \| other, notes, link }` | S04, S05 |
 | `essentialServices[]` | `{ id, name, source: list \| added, functions: [{id, name}], noSystemReason, infraLater }` | S35, S09, S10b, S38, S42 |
