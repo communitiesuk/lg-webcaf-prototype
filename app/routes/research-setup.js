@@ -50,7 +50,7 @@ function contextDone(setup) {
   setup.people.approver = { name: "Cllr A Morgan", jobTitle: "Leader of the council", confirmed: true, hasAccount: false };
 }
 
-const svc = (id, name, functions, extra) => Object.assign({ id, name, source: "list", functions: functions || [], noSystemReason: "", infraLater: false }, extra);
+const svc = (id, name, functions, extra) => Object.assign({ id, name, source: "list", functions: functions || [], infraLater: false }, extra);
 const fn = (id, name) => ({ id, name });
 const plat = (id, name, type, services, systems) => ({ id, name, type, managedBy: "council", supplierId: "", linkedServices: services || [], linkedSystems: systems || [] });
 const rated = { confidentiality: "high", integrity: "medium", availability: "medium" };

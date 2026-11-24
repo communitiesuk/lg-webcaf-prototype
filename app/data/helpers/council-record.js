@@ -235,8 +235,10 @@ function serviceStatus(setup, svc) {
   const fns = (svc.functions || []).length;
   const plats = platformsForService(setup, svc.id).length;
   const syss = systemsForService(setup, svc).length;
-  if (fns && (plats || svc.infraLater) && (syss || svc.noSystemReason)) return "completed";
-  if (!fns && !plats && !syss && !svc.infraLater && !svc.noSystemReason) return "not_started";
+  // A service needs a critical system to be Completed. S42 ("why none is needed") was removed on
+  // 24 November 2026 (team decision; Chris: a service with no critical system is highly unlikely).
+  if (fns && (plats || svc.infraLater) && syss) return "completed";
+  if (!fns && !plats && !syss && !svc.infraLater) return "not_started";
   return "in_progress";
 }
 
@@ -369,15 +371,12 @@ function setupIssues(setup) {
     });
   }
   services(setup)
-    .filter((svc) => !svc.noSystemReason && systemsForService(setup, svc).length === 0)
+    .filter((svc) => systemsForService(setup, svc).length === 0)
     .forEach((svc) => {
       rows.push({
         key: "service:" + svc.id,
         text: `${svc.name} has no critical system linked to it.`,
-        actions: [
-          { text: "Add a system or record why none is needed", hidden: svc.name, href: `/setup/essential-services/${svc.id}?from=check` },
-          { text: "Record why none is needed", hidden: svc.name, href: `/setup/essential-services/${svc.id}/no-system-reason` },
-        ],
+        actions: [{ text: "Add or link a critical system", hidden: svc.name, href: `/setup/essential-services/${svc.id}?from=check` }],
       });
     });
   systems(setup)
@@ -411,7 +410,7 @@ function firstMissingDetail(setup, visited) {
     if (!(sys.owner && sys.owner.name)) candidates.push(`/setup/critical-systems/${sys.id}/owner?from=walk`);
     if (!deriveCriticality(sys.impact)) candidates.push(`/setup/critical-systems/${sys.id}/impact?from=walk`);
   });
-  services(setup).filter((s) => !s.noSystemReason && systemsForService(setup, s).length === 0)
+  services(setup).filter((s) => systemsForService(setup, s).length === 0)
     .forEach((s) => candidates.push(`/setup/essential-services/${s.id}/systems?from=walk`));
   systems(setup).filter((s) => !systemLinked(setup, s)).forEach((s) => candidates.push(`/setup/critical-systems/${s.id}/edit?from=walk`));
   platforms(setup).filter((p) => !platformLinked(p)).forEach((p) => candidates.push(`/setup/shared-infrastructure/${p.id}/relies?from=walk`));
@@ -439,10 +438,27 @@ function concentrationNote(setup) {
 
 const OLD_CORPORATE = new Set(OTHER_FUNCTION_OPTIONS.map((o) => o.value));
 
+// Changes made to the v11 record after it shipped. Run on every record, v11 or older.
+function migrateV11Updates(setup) {
+  const cc = setup.councilContext;
+  if (cc) {
+    // The IT checkboxes became one text box (24 November 2026): keep any details given.
+    if (cc.itTransformation) {
+      const it = cc.itTransformation;
+      cc.itChanges = [it.recent && (it.recentDetail || "Recent IT transformation"), it.upcoming && (it.upcomingDetail || "Upcoming IT transformation")].filter(Boolean).join("\n");
+      delete cc.itTransformation;
+    }
+    // Records saved before 24 November (evening) had no `answered`: any answer counts as saved.
+    if (cc.answered === undefined) cc.answered = contextStarted(setup);
+  }
+  // S42 was removed (24 November 2026): a reason no longer completes a service.
+  services(setup).forEach((svc) => delete svc.noSystemReason);
+}
+
 function migrate(setup) {
   if (!setup) return setup;
   if (setup.recordVersion === 11) {
-    if (setup.councilContext && setup.councilContext.answered === undefined) setup.councilContext.answered = contextStarted(setup);
+    migrateV11Updates(setup);
     return setup;
   }
   setup.council = setup.council || { name: "", type: "" };
@@ -464,14 +480,6 @@ function migrate(setup) {
       anythingElse: cc.anythingElse || "",
     };
   }
-  // Records saved before the IT checkboxes became one text box (24 November 2026): keep the details.
-  if (setup.councilContext.itTransformation) {
-    const it = setup.councilContext.itTransformation;
-    setup.councilContext.itChanges = [it.recent && (it.recentDetail || "Recent IT transformation"), it.upcoming && (it.upcomingDetail || "Upcoming IT transformation")].filter(Boolean).join("\n");
-    delete setup.councilContext.itTransformation;
-  }
-  // Records saved before 24 November (evening) had no `answered`: any answer counts as saved.
-  if (setup.councilContext.answered === undefined) setup.councilContext.answered = contextStarted(setup);
   delete setup.sectorContextComment;
   const oa = setup.organisationAssessment || {};
   const mapAnswer = { yes: "within_3_years", dontknow: "dont_know" };
@@ -517,6 +525,7 @@ function migrate(setup) {
     ["detailsComplete", "inPlan", "recovery", "assessedBeforeRecord"].forEach((k) => delete sys[k]);
   });
   delete setup.councilContext.completed;
+  migrateV11Updates(setup);
   setup.recordVersion = 11;
   return setup;
 }

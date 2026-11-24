@@ -99,7 +99,6 @@ function buildSetupSeed() {
           { id: "fn-benefits-management", name: "Benefits management" },
           { id: "fn-revenue-collection", name: "Revenue collection" },
         ],
-        noSystemReason: "",
         infraLater: false,
       },
       {
@@ -110,7 +109,6 @@ function buildSetupSeed() {
           { id: "fn-assessment-casework", name: "Assessment and casework" },
           { id: "fn-safeguarding", name: "Safeguarding" },
         ],
-        noSystemReason: "",
         infraLater: false,
       },
       {
@@ -118,7 +116,6 @@ function buildSetupSeed() {
         name: "Waste collection and recycling",
         source: "list",
         functions: [],
-        noSystemReason: "",
         infraLater: true,
       },
     ],

@@ -167,3 +167,17 @@ The Recent / Upcoming / None of these checkboxes and their two reveal boxes are 
 - **Errors:** S03 now has two (CNI and OT). The IT error and the two "Enter what the … was" errors are gone.
 - **Task 2:** complete once CNI and OT are answered and S03 is saved.
 - **Also fixed:** the assurer's "Review the council's setup and plan" read `councilContext.completed`, which v11 never sets, so it always showed "Not completed". It now uses `contextComplete()`.
+
+## S42 removed (team decision, 24 November 2026)
+
+S42, "Why does [service] not need a critical system?", is removed. Chris said a service with no critical system is highly unlikely in a council (question log).
+
+- **Service status:** a service is Completed only when it has a function, its infrastructure is linked or marked "link later", and it has a critical system. Nothing else completes it.
+- **S24:**
+  - A service with no system keeps its issue row.
+  - The two actions are now one, "Add or link a critical system", which opens the service page (S37b).
+  - "Go to the first missing detail" still opens that service's S37d.
+- **S36 and S37:** "No critical system needed" is gone. The S37 card says "No critical systems linked yet".
+- **Data:** `noSystemReason` is removed from saved records by `migrate()`.
+- **Old links:** the old S42 address opens the service page.
+- **Fixed at the same time:** the 24 November conversions of saved data (IT changes, `answered`) were only applied to records older than v11. They now run on every record (`migrateV11Updates`).

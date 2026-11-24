@@ -181,7 +181,7 @@ function buildServiceRows(setup) {
     } else if (status === "in_progress") {
       hint = [
         fns ? `${fns} ${plural(fns, "function")}` : "No functions yet",
-        syss ? `${syss} critical ${plural(syss, "system")}` : svc.noSystemReason ? "No critical system needed" : "No critical systems linked yet",
+        syss ? `${syss} critical ${plural(syss, "system")}` : "No critical systems linked yet",
         plats ? `${plats} ${plural(plats, "platform")}` : svc.infraLater ? "Infrastructure: link later" : "Infrastructure not linked yet",
       ].join(" · ");
     }
@@ -224,8 +224,7 @@ function buildServicePage(setup, svc) {
         value: systemLine(s),
         change: { href: `/setup/critical-systems/${s.id}/summary?from=service:${svc.id}`, text: detailsComplete(s) ? "Change" : "Add details", hidden: s.name },
       })),
-      empty: svc.noSystemReason ? "No critical system needed" : "No critical systems linked yet",
-      emptyValue: svc.noSystemReason || "",
+      empty: "No critical systems linked yet",
     },
   };
 }

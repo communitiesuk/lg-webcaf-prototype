@@ -378,7 +378,7 @@ module.exports = function (router) {
     const existing = new Set((setup.essentialServices || []).map((s) => s.name));
     chosen.forEach((name) => {
       if (!existing.has(name)) {
-        setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name, source: "list", functions: [], noSystemReason: "", infraLater: false });
+        setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name, source: "list", functions: [], infraLater: false });
       }
     });
     (setup.essentialServices || [])
@@ -428,7 +428,7 @@ module.exports = function (router) {
     const exists = (setup.essentialServices || []).some((s) => s.name.toLowerCase() === name.toLowerCase());
     if (!exists) {
       const listed = record.essentialServiceOptions(setup).find((n) => n.toLowerCase() === name.toLowerCase());
-      setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name: listed || name, source: listed ? "list" : "added", functions: [], noSystemReason: "", infraLater: false });
+      setup.essentialServices.push({ id: record.newId("svc", name, setup.essentialServices), name: listed || name, source: listed ? "list" : "added", functions: [], infraLater: false });
     }
     return res.redirect("/setup/essential-services");
   });
@@ -611,19 +611,10 @@ module.exports = function (router) {
     return res.redirect((setup.essentialServices || []).length ? "/setup/essential-services" : "/setup/essential-services/choose");
   }));
 
-  // S42 Why does [service] not need a critical system? → back to S24 (or the next missing detail).
-  router.get("/setup/essential-services/:serviceId/no-system-reason", withService((req, res, setup, svc) => {
-    res.render("pages/setup/essential-services/no-system-reason", {
-      pageTitle: `Why does ${svc.name.toLowerCase()} not need a critical system?`,
-      backHref: "/setup/coverage-check",
-      service: svc,
-      from: clean(req.query.from),
-    });
-  }));
-  router.post("/setup/essential-services/:serviceId/no-system-reason", withService((req, res, setup, svc) => {
-    const { noSystemReason, from } = take(req, ["noSystemReason", "from"]);
-    svc.noSystemReason = clean(noSystemReason);
-    return res.redirect(clean(from) === "walk" ? "/setup/coverage-check/next" : "/setup/coverage-check");
+  // S42 ("Why does [service] not need a critical system?") was removed on 24 November 2026. An old
+  // link opens the service page, where a critical system can be added or linked.
+  router.all("/setup/essential-services/:serviceId/no-system-reason", withService((req, res, setup, svc) => {
+    return res.redirect(`/setup/essential-services/${svc.id}`);
   }));
 
   // ----- Task 5: core infrastructure ------------------------------------------------------

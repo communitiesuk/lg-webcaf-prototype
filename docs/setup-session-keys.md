@@ -39,7 +39,7 @@ A system supports a service when it is linked to the service, or to one of the s
 | `councilContext.answered` | bool: S03 was saved without errors (CNI and OT are required) | S03 |
 | `organisationAssessment.answer` | `within_3_years` \| `more_than_3_years` \| `no` \| `dont_know` | S03a |
 | `methodology` | `{ approach: five-lens \| other, notes, link }` | S04, S05 |
-| `essentialServices[]` | `{ id, name, source: list \| added, functions: [{id, name}], noSystemReason, infraLater }` | S35, S09, S10b, S38, S42 |
+| `essentialServices[]` | `{ id, name, source: list \| added, functions: [{id, name}], infraLater }` (`noSystemReason` removed with S42, 24 November 2026) | S35, S09, S10b, S38 |
 | `platforms[]` | `{ id, name, type (8 types), managedBy, supplierId, linkedServices, linkedSystems }` | S12c, S38, S45, S20 |
 | `suppliers[]` | `{ id, name }`; removed when nothing uses them | S41 |
 | `criticalSystems[]` | see below | S14 and the S52 questions |
