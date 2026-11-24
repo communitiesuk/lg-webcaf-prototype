@@ -216,7 +216,7 @@ function buildReadyToDecideModel(sessionData) {
       setupValue: `Complete, ${svc} essential service${plural(svc)} and ${sys} critical system${plural(sys)}`,
       // Previous assessment history exists only for the example council (the prototype holds no
       // assurance record for a council registered in research). Hidden otherwise.
-      lastAssessmentValue: isExampleCouncil(sessionData) ? "Council website and forms, assured March 2025" : "",
+      lastAssessmentValue: isExampleCouncil(sessionData) ? "Revenue and Benefits processing software, assured March 2025" : "",
     },
   };
 }

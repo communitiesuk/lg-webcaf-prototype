@@ -159,7 +159,7 @@ function buildSetupSeed() {
       }),
       system({
         id: "sys-website",
-        name: "Council website and forms",
+        name: "Revenue and Benefits processing software",
         functionIds: ["fn-revenue-collection"],
         assessedBefore: "within_3_years",
         assessedDate: "March 2025",
